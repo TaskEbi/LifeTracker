@@ -4,13 +4,22 @@ import { data } from './store';
 import { deleteTodo, restoreTodo, setTodoDone } from './todoActions';
 import { toast } from './ui';
 
-/** Tick or untick a task. Ticking shows what it earned (once: the XP is tied to the task). */
+/** Tasks unticked on this device this session: ticking them again restores their XP without celebrating it twice. */
+const unticked = new Set<string>();
+
+/** Tick or untick a task. The XP is tied to the task, so it counts once however often it is ticked. */
 export function toggleTask(id: string) {
   const t = data.get().todos.get(id);
   if (!t || t.deleted_at) return;
   if (t.done_at) {
     setTodoDone(id, false);
+    unticked.add(id);
     toast('Marked not done');
+    return;
+  }
+  if (unticked.has(id)) {
+    setTodoDone(id, true);
+    toast('Done again');
     return;
   }
   withReward(() => setTodoDone(id, true));

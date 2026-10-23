@@ -19,6 +19,11 @@ Milestones, newest last. Each says what works, what was verified and what remain
 - Each session = one log_entries row in the Violin topic (session type as subcategory, visible in Curio's Daily Log) + lt_details with the same id.
 - Verified: unit tests (stats, checks, target history) and a WebKit iPhone e2e test (log, reward, edit, delete/undo, reload, XP unchanged).
 
+## M4 · Tasks and calendar (done)
+- Tasks: Curio Cabinet's to-dos with a section tag, priority, due day; filters (open / due today / 7 days / done, by section), grouped by overdue/today/week/later; edit, delete with undo, clear finished; shown in their section and on Home's Today panel. XP once per task; re-ticking doesn't celebrate again.
+- Calendar: week timeline (06–22) with planned vs completed, logged activity and tasks due as marks; day agenda; section filters; events with weekly repeats, per-date cancel/move, "this and later" split, restore, delete with undo; clash warnings that never move anything; performances can carry violin pieces.
+- Google Calendar and the school calendar are shown as not connected / reference only.
+- Verified: domain tests for recurrence and conflicts; WebKit e2e for clash → cancel one date, and task add → home/section → complete once.
+
 ## Next
-- M4 Tasks + Calendar screens (event sheet is referenced by Violin's "+ Performance" but not built yet).
 - M5 Sleep + Screen time, M6 Gym, M7 Sports / Study / Chess (Chess.com live) / Coding + Road to IOI, M8 import of a Curio export for local testing, settings (topic mapping, theme, sign out), polish.

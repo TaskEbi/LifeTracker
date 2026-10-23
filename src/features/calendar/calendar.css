@@ -1,0 +1,120 @@
+.c-gantt {
+  background: var(--surf);
+  border-radius: var(--r-3);
+  box-shadow: 0 0 0 1px var(--rule);
+  overflow: hidden;
+}
+.c-axis,
+.c-row {
+  display: grid;
+  grid-template-columns: 52px 1fr;
+}
+.c-axis {
+  border-bottom: 1px solid var(--rule);
+}
+.c-hrs {
+  position: relative;
+  height: 22px;
+}
+.c-hrs span {
+  position: absolute;
+  top: 4px;
+  transform: translateX(-50%);
+  font-family: var(--f-mono);
+  font-size: 9.5px;
+  color: var(--fg-3);
+}
+.c-row {
+  border-bottom: 1px solid var(--rule);
+  min-height: 52px;
+  width: 100%;
+  text-align: left;
+}
+.c-row:last-child {
+  border-bottom: 0;
+}
+.c-row.is-today .c-dl {
+  background: var(--sig-soft);
+}
+.c-row.is-today .c-dl b {
+  color: var(--sig);
+}
+.c-row.is-sel {
+  box-shadow: inset 3px 0 0 var(--sig);
+}
+.c-dl {
+  padding: 6px;
+  font-family: var(--f-mono);
+  font-size: 10.5px;
+  color: var(--fg-2);
+  border-right: 1px solid var(--rule);
+  display: grid;
+  align-content: start;
+}
+.c-dl b {
+  font-family: var(--f-label);
+  font-size: 16px;
+  color: var(--fg);
+}
+.c-track {
+  position: relative;
+  background-image: linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+  background-size: calc(100% / 8) 100%;
+}
+.c-bar {
+  position: absolute;
+  height: 16px;
+  border-radius: 4px;
+  background: var(--c);
+}
+.c-bar.is-planned {
+  background: repeating-linear-gradient(135deg, color-mix(in srgb, var(--c) 30%, transparent) 0 3px, transparent 3px 6px);
+  box-shadow: inset 0 0 0 1.5px var(--c);
+}
+.c-bar.is-clash {
+  outline: 2px solid var(--warn);
+  outline-offset: 1px;
+}
+.c-bar.is-off {
+  opacity: 0.3;
+}
+.c-dot {
+  position: absolute;
+  bottom: 4px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--c);
+}
+.c-ev {
+  display: grid;
+  grid-template-columns: 50px 4px minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+  min-height: 54px;
+  border-bottom: 1px solid var(--rule);
+  width: 100%;
+  text-align: left;
+}
+.c-ev:last-child {
+  border-bottom: 0;
+}
+.c-stripe {
+  align-self: stretch;
+  margin: 8px 0;
+  border-radius: 2px;
+  background: var(--c);
+}
+.c-stripe.is-planned {
+  background: repeating-linear-gradient(var(--c) 0 3px, transparent 3px 6px);
+}
+.c-ti small {
+  display: block;
+  font-family: var(--f-mono);
+  font-size: 11.5px;
+  color: var(--fg-3);
+}
+.c-ti.is-off {
+  text-decoration: line-through;
+  color: var(--fg-3);
+}
