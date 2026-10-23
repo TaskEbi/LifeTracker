@@ -1,0 +1,70 @@
+.s-night {
+  background: var(--night);
+  color: var(--night-fg);
+  border-radius: var(--r-3);
+  padding: 16px;
+  display: grid;
+  gap: 8px;
+  justify-items: start;
+  background-image: linear-gradient(rgb(255 255 255 / 0.04) 1px, transparent 1px), linear-gradient(90deg, rgb(255 255 255 / 0.04) 1px, transparent 1px);
+  background-size: 20px 20px;
+}
+.s-night .i-lab,
+.s-night .i-sim,
+.s-dim {
+  color: var(--night-dim);
+}
+.s-night .i-btn:not(.i-btn--sig) {
+  background: rgb(255 255 255 / 0.08);
+  color: var(--night-fg);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.2);
+}
+.s-big {
+  font-size: 44px;
+  letter-spacing: -0.04em;
+  line-height: 1;
+  font-weight: 400;
+}
+.s-tl {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+.s-grid {
+  stroke: var(--grid);
+}
+.s-ax {
+  fill: var(--fg-3);
+  font: 9.5px var(--f-mono);
+}
+.s-d {
+  fill: var(--fg);
+  font: 10.5px var(--f-mono);
+}
+.s-win {
+  fill: color-mix(in srgb, var(--c-sleep) 12%, transparent);
+}
+.s-bar {
+  fill: var(--c-sleep);
+}
+.s-bar.is-off {
+  fill: color-mix(in srgb, var(--c-sleep) 45%, var(--surf-2));
+}
+.s-pair {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.s-time {
+  border-radius: var(--r-2);
+  box-shadow: inset 0 0 0 1px var(--rule);
+  padding: 10px;
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+}
+.s-time b {
+  font-size: 34px;
+  font-weight: 400;
+  letter-spacing: -0.03em;
+}

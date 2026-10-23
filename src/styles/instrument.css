@@ -937,6 +937,8 @@ button.i-row:active {
 }
 .i-stepper output {
   min-width: 76px;
+  padding: 0 6px;
+  white-space: nowrap;
   text-align: center;
   font-family: var(--f-mono);
   font-size: 13.5px;

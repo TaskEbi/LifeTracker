@@ -6,6 +6,8 @@ import '../features/home/QuickSheet';
 import { ViolinChannel } from '../features/violin/ViolinChannel';
 import { CalendarView } from '../features/calendar/CalendarView';
 import { TasksView } from '../features/tasks/TasksView';
+import { SleepChannel } from '../features/sleep/SleepChannel';
+import { ScreenChannel } from '../features/screen/ScreenChannel';
 
 const pending = (id: Parameters<typeof Pending>[0]['id'], note: string): ComponentType => () => createElement(Pending, { id, note });
 
@@ -18,6 +20,6 @@ export const sectionViews: Partial<Record<RouteName, ComponentType>> = {
   gym: pending('gym', 'The workout sheet comes in a later milestone.'),
   study: pending('study', 'School studies come in a later milestone.'),
   chess: pending('chess', 'Chess comes in a later milestone.'),
-  sleep: pending('sleep', 'Sleep comes in a later milestone.'),
-  screen: pending('screen', 'Screen time comes in a later milestone.'),
+  sleep: SleepChannel,
+  screen: ScreenChannel,
 };

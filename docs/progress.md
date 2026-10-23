@@ -25,5 +25,10 @@ Milestones, newest last. Each says what works, what was verified and what remain
 - Google Calendar and the school calendar are shown as not connected / reference only.
 - Verified: domain tests for recurrence and conflicts; WebKit e2e for clash → cancel one date, and task add → home/section → complete once.
 
+## M5 · Sleep and screen time (done)
+- Sleep: log/edit/clear a night (bed + wake, or total only, plus optional score) into Curio's log_metrics with times in lt_nights; nights logged in Curio appear as "total only". Stats over 7 nights (average, bedtime spread, within window, average bedtime and score), 10-night timeline with planned windows, 14-night duration trend, schedule for school nights and weekends, wind-down time shown on Today (in-app only; no push notifications).
+- Screen time: daily total (steppers or typed h/m) for today or yesterday, edit/clear with undo, 14-day bars against an optional target (target history kept), week-on-week average. Clearly manual: no claim of reading iPhone Screen Time.
+- Verified: unit tests (midnight maths, joins with Curio rows, bedtime averages, wind-down), WebKit e2e for both.
+
 ## Next
-- M5 Sleep + Screen time, M6 Gym, M7 Sports / Study / Chess (Chess.com live) / Coding + Road to IOI, M8 import of a Curio export for local testing, settings (topic mapping, theme, sign out), polish.
+- M6 Gym, M7 Sports / Study / Chess (Chess.com live) / Coding + Road to IOI, M8 import of a Curio export for local testing, settings (topic mapping, theme, sign out), polish.
