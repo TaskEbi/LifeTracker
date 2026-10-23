@@ -36,9 +36,14 @@ export interface ProgressInput {
   restDays: string[];
   /** Creation days of cabinet items (live, not examples). */
   cabinetDays: string[];
+  /** Current targets (for display). */
   targets: Targets;
+  /** Targets in force in the week starting this Monday (past weeks keep theirs). */
+  targetsAt?: (monday: string) => Targets;
   sleep: SleepSchedule;
 }
+
+const targetsFor = (input: ProgressInput, date: string) => (input.targetsAt ? input.targetsAt(weekStart(date)) : input.targets);
 
 // ─── the rules ──────────────────────────────────────────────────────────────
 
@@ -147,16 +152,17 @@ export function xpEvents(input: ProgressInput): XpEvent[] {
   }
 
   // Weekly targets: one bonus per week that reached it (the current week too, once reached).
-  const weekly = (section: XpSection, measure: (e: LogEntry) => number, target: number, xp: number, label: string) => {
+  const weekly = (section: XpSection, measure: (e: LogEntry) => number, target: (t: Targets) => number, xp: number, label: (n: number) => string) => {
     const byWeek = new Map<string, number>();
     for (const e of entries) if (e.date <= input.today && sectionOf(e, input) === section) byWeek.set(weekStart(e.date), (byWeek.get(weekStart(e.date)) ?? 0) + measure(e));
     for (const [week, total] of byWeek) {
-      if (total >= target) out.push({ key: `week:${section}:${week}`, date: [6, 5, 4, 3, 2, 1, 0].map((i) => addDays(week, i)).find((d) => d <= input.today) ?? week, section, xp, reason: label });
+      const goal = target(targetsFor(input, week));
+      if (total >= goal) out.push({ key: `week:${section}:${week}`, date: [6, 5, 4, 3, 2, 1, 0].map((i) => addDays(week, i)).find((d) => d <= input.today) ?? week, section, xp, reason: label(goal) });
     }
   };
-  weekly('violin', (e) => e.minutes, input.targets.violinWeek, RULES.violinWeekTarget, 'Weekly violin target reached');
-  weekly('gym', () => 1, input.targets.gymWeek, RULES.gymWeekTarget, `Weekly target: ${input.targets.gymWeek} gym sessions`);
-  weekly('sports', () => 1, input.targets.sportsWeek, RULES.sportsWeekTarget, `Weekly target: ${input.targets.sportsWeek} sports sessions`);
+  weekly('violin', (e) => e.minutes, (t) => t.violinWeek, RULES.violinWeekTarget, () => 'Weekly violin target reached');
+  weekly('gym', () => 1, (t) => t.gymWeek, RULES.gymWeekTarget, (n) => `Weekly target: ${n} gym sessions`);
+  weekly('sports', () => 1, (t) => t.sportsWeek, RULES.sportsWeekTarget, (n) => `Weekly target: ${n} sports sessions`);
 
   // Sleep: logging the night counts; so does keeping near the planned bedtime. Never less sleep.
   for (const m of input.metrics) {
@@ -169,7 +175,8 @@ export function xpEvents(input: ProgressInput): XpEvent[] {
       }
     } else if (m.metric === 'screen') {
       out.push({ key: `screen:${m.date}:logged`, date: m.date, section: 'screen', xp: RULES.screenLogged, reason: 'Daily total logged' });
-      if (input.targets.screenDay != null && m.minutes <= input.targets.screenDay) {
+      const screenTarget = targetsFor(input, m.date).screenDay;
+      if (screenTarget != null && m.minutes <= screenTarget) {
         out.push({ key: `screen:${m.date}:under`, date: m.date, section: 'screen', xp: RULES.screenUnderTarget, reason: 'Under your target' });
       }
     }
@@ -304,12 +311,16 @@ export function sectionStreaks(input: ProgressInput): Partial<Record<SectionId, 
   const gym = weekTotals(of('gym'), () => 1);
   const sports = weekTotals(of('sports'), () => 1);
   const t = input.targets;
+  const at = (w: string) => targetsFor(input, w);
   const sleepDays = input.metrics.filter((m) => m.metric === 'sleep');
-  const screenUnder = t.screenDay == null ? [] : input.metrics.filter((m) => m.metric === 'screen' && m.minutes <= t.screenDay!);
+  const screenUnder = input.metrics.filter((m) => {
+    const goal = targetsFor(input, m.date).screenDay;
+    return m.metric === 'screen' && goal != null && m.minutes <= goal;
+  });
   return {
-    violin: { n: weekStreak((w) => (violin.get(w) ?? 0) >= t.violinWeek, input.today), unit: 'w', label: `weeks at ${t.violinWeek} min` },
-    gym: { n: weekStreak((w) => (gym.get(w) ?? 0) >= t.gymWeek, input.today), unit: 'w', label: `weeks with ${t.gymWeek} sessions` },
-    sports: { n: weekStreak((w) => (sports.get(w) ?? 0) >= t.sportsWeek, input.today), unit: 'w', label: `weeks with ${t.sportsWeek}+ sessions` },
+    violin: { n: weekStreak((w) => (violin.get(w) ?? 0) >= at(w).violinWeek, input.today), unit: 'w', label: 'weeks at target' },
+    gym: { n: weekStreak((w) => (gym.get(w) ?? 0) >= at(w).gymWeek, input.today), unit: 'w', label: `weeks with ${t.gymWeek} sessions` },
+    sports: { n: weekStreak((w) => (sports.get(w) ?? 0) >= at(w).sportsWeek, input.today), unit: 'w', label: `weeks with ${t.sportsWeek}+ sessions` },
     coding: { n: days(of('coding')), unit: 'd', label: 'day streak' },
     study: { n: days(of('study')), unit: 'd', label: 'day streak' },
     chess: { n: days(of('chess')), unit: 'd', label: 'day streak' },

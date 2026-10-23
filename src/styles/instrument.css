@@ -1467,3 +1467,60 @@ button.i-row:active {
   font-size: 11.5px;
   color: var(--fg-3);
 }
+
+/* task rows */
+.i-task {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr) auto;
+  gap: 6px;
+  align-items: center;
+  min-height: 54px;
+  border-bottom: 1px solid var(--rule);
+}
+.i-task:last-child {
+  border-bottom: 0;
+}
+.i-task__ck {
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+}
+.i-task__ck::before {
+  content: '';
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  box-shadow: inset 0 0 0 1.5px var(--fg-3);
+}
+.i-task__ck.is-on::before {
+  background: var(--sig);
+  box-shadow: 0 0 6px var(--sig);
+}
+.i-task__t {
+  min-width: 0;
+  text-align: left;
+  padding: 6px 0;
+}
+.i-task__t span {
+  display: block;
+}
+.i-task__t .is-done {
+  text-decoration: line-through;
+  color: var(--fg-3);
+}
+.i-task__t small {
+  display: block;
+  font-family: var(--f-mono);
+  font-size: 11.5px;
+  color: var(--fg-3);
+}
+.i-task__p {
+  font-family: var(--f-mono);
+  font-size: 11px;
+  color: var(--fg-3);
+  padding-right: 2px;
+}
+.i-task__p.is-high {
+  color: var(--warn);
+}

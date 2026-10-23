@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { LogDayMetric, LogEntry, LtDetail, LtNight, SectionId, Todo } from '../../data/types';
-import { DEFAULT_SLEEP, DEFAULT_TARGETS } from '../prefs';
+import { DEFAULT_SLEEP, DEFAULT_TARGETS, targetsAt } from '../prefs';
 import { bedDelta, computeProgress, dayStreak, overallLevel, RULES, rewardBetween, sectionLevel, weekStreak, xpEvents, type ProgressInput } from './engine';
 
 const T = '2026-10-24'; // a Saturday
@@ -68,6 +68,15 @@ describe('XP from records', () => {
     expect(xpEvents(input({ entries })).some((e) => e.key.startsWith('week:violin'))).toBe(false);
     const more = [...entries, entry(T, 10)];
     expect(xpEvents(input({ entries: more })).filter((e) => e.key === `week:violin:${mon}`)).toHaveLength(1);
+  });
+
+  it('never takes back past weekly bonuses when the target is raised later', () => {
+    const entries = [entry('2026-10-12', 250), entry('2026-10-19', 250)];
+    const before = xpEvents(input({ entries }));
+    expect(before.filter((e) => e.key.startsWith('week:violin'))).toHaveLength(2);
+    const log = [{ from: '2000-01-03', targets: DEFAULT_TARGETS }, { from: '2026-10-19', targets: { ...DEFAULT_TARGETS, violinWeek: 300 } }];
+    const after = xpEvents(input({ entries, targets: log[1].targets, targetsAt: (w) => targetsAt(log, log[1].targets, w) }));
+    expect(after.filter((e) => e.key.startsWith('week:violin')).map((e) => e.key)).toEqual(['week:violin:2026-10-12']);
   });
 
   it('caps gym set XP at the plan and gives a check-in bonus', () => {

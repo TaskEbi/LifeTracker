@@ -51,6 +51,28 @@ export function normaliseTargets(raw: unknown): Targets {
   };
 }
 
+/**
+ * Target changes over time: each revision applies from its week (a Monday) on, so changing a
+ * target never re-judges past weeks (and never takes back XP they earned).
+ */
+export type TargetsLog = { from: string; targets: Targets }[];
+
+export function normaliseTargetsLog(raw: unknown): TargetsLog {
+  if (!Array.isArray(raw)) return [];
+  return raw
+    .filter((r) => r && typeof r === 'object' && typeof r.from === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(r.from))
+    .map((r) => ({ from: r.from as string, targets: normaliseTargets(r.targets) }))
+    .sort((a, b) => a.from.localeCompare(b.from));
+}
+
+/** The targets in force for the week starting `monday`: the latest revision on or before it, else the earliest known. */
+export function targetsAt(log: TargetsLog, current: Targets, monday: string): Targets {
+  if (!log.length) return current;
+  let hit = log[0].targets;
+  for (const r of log) if (r.from <= monday) hit = r.targets;
+  return hit;
+}
+
 export function normaliseSleep(raw: unknown): SleepSchedule {
   const r = (raw && typeof raw === 'object' ? raw : {}) as Partial<SleepSchedule>;
   return {

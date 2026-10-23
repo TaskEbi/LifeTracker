@@ -7,11 +7,12 @@ import { createStore, useStore } from '../lib/createStore';
 import { todayIn } from '../domain/log/dates';
 import { achievements, type Achievement } from '../domain/progress/achievements';
 import { computeProgress, rewardBetween, sectionStreaks, type Progress, type ProgressInput, type Reward, type SectionStreak } from '../domain/progress/engine';
-import { normaliseSectionTopics, normaliseSleep, normaliseTargets, type SectionTopics, type SleepSchedule, type Targets } from '../domain/prefs';
+import { normaliseSectionTopics, normaliseSleep, normaliseTargets, normaliseTargetsLog, targetsAt, type SectionTopics, type SleepSchedule, type Targets } from '../domain/prefs';
+import { weekStart } from '../domain/log/dates';
 import { TOPIC_NAME_HINTS } from '../domain/sections';
 import { createTopic, pairId } from './logActions';
 import { commit, data, type DataState } from './store';
-import { TIMED_SECTIONS, type LogTopic, type LtDayMark, type LtPref, type SectionId, type TimedSection } from './types';
+import { TIMED_SECTIONS, type LogEntry, type LogTopic, type LtDayMark, type LtPref, type SectionId, type TimedSection } from './types';
 
 const now = () => new Date().toISOString();
 
@@ -36,6 +37,7 @@ function memo1<A, R>(fn: (a: A) => R): (a: A) => R {
 }
 const targetsOf = memo1((m: DataState['lt_prefs']) => normaliseTargets(m.get('targets')?.deleted_at ? undefined : m.get('targets')?.value));
 const sleepOf = memo1((m: DataState['lt_prefs']) => normaliseSleep(m.get('sleep')?.deleted_at ? undefined : m.get('sleep')?.value));
+const targetsLogOf = memo1((m: DataState['lt_prefs']) => normaliseTargetsLog(m.get('targets_log')?.deleted_at ? undefined : m.get('targets_log')?.value));
 const topicsOf = memo1((m: DataState['lt_prefs']) => normaliseSectionTopics(m.get('section_topics')?.deleted_at ? undefined : m.get('section_topics')?.value));
 
 export const useTargets = (): Targets => useStore(data, (s) => targetsOf(s.lt_prefs));
@@ -44,6 +46,18 @@ export const useSectionTopics = (): SectionTopics => useStore(data, (s) => topic
 export const getTargets = () => targetsOf(data.get().lt_prefs);
 export const getSleepSchedule = () => sleepOf(data.get().lt_prefs);
 export const getSectionTopics = () => topicsOf(data.get().lt_prefs);
+
+/** Change targets from this week on. Earlier weeks keep the targets they were judged by. */
+export function setTargets(patch: Partial<Targets>) {
+  const current = getTargets();
+  const next = { ...current, ...patch };
+  const monday = weekStart(ltToday());
+  const log = targetsLogOf(data.get().lt_prefs);
+  // The first change also records what the earlier weeks were held to.
+  const base = log.length ? log : [{ from: '2000-01-03', targets: current }];
+  setPref('targets_log', [...base.filter((r) => r.from !== monday), { from: monday, targets: next }]);
+  setPref('targets', next);
+}
 
 // ─── today ──────────────────────────────────────────────────────────────────
 
@@ -159,6 +173,7 @@ export function progressInput(st: DataState, today: string): ProgressInput {
     restDays: live(st.lt_day_marks).filter((m) => m.kind === 'rest').map((m) => m.date),
     cabinetDays: live(st.items).filter((i) => !i.is_example).map((i) => todayIn(tz, new Date(i.created_at))),
     targets: targetsOf(st.lt_prefs),
+    targetsAt: (monday) => targetsAt(targetsLogOf(st.lt_prefs), targetsOf(st.lt_prefs), monday),
     sleep: sleepOf(st.lt_prefs),
   };
   lastState = st;
@@ -237,4 +252,33 @@ export function takeRestDay() {
   const t = now();
   const row: LtDayMark = existing ? { ...existing, deleted_at: null, updated_at: t } : { id, date, kind: 'rest', created_at: t, updated_at: t, deleted_at: null };
   withReward(() => commit('lt_day_marks', [row]), { rest: true });
+}
+
+// ─── section records ────────────────────────────────────────────────────────
+
+/** A Daily Log entry with its LifeTracker detail (if any). */
+export interface SectionEntry<D = Record<string, unknown>> {
+  entry: LogEntry;
+  detail: D | null;
+}
+
+/** Live entries belonging to a section (by topic or by detail), newest first. */
+export function sectionEntries<D = Record<string, unknown>>(st: DataState, section: SectionId): SectionEntry<D>[] {
+  const map = topicSectionMap(st.log_topics.values(), topicsOf(st.lt_prefs));
+  const out: SectionEntry<D>[] = [];
+  for (const e of st.log_entries.values()) {
+    if (e.deleted_at) continue;
+    const d = st.lt_details.get(e.id);
+    const live = d && !d.deleted_at ? d : null;
+    const s = live ? live.section : map.get(e.topic_id);
+    if (s === section) out.push({ entry: e, detail: (live?.data as D) ?? null });
+  }
+  return out.sort((a, b) => b.entry.date.localeCompare(a.entry.date) || b.entry.created_at.localeCompare(a.entry.created_at));
+}
+
+/** Live lt_records of one section and kind, in their sort order. */
+export function sectionRecords(st: DataState, section: SectionId, kind: string) {
+  return [...st.lt_records.values()]
+    .filter((r) => !r.deleted_at && r.section === section && r.kind === kind)
+    .sort((a, b) => a.sort_order - b.sort_order || a.created_at.localeCompare(b.created_at));
 }

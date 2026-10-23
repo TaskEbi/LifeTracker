@@ -10,3 +10,5 @@ supabase/.temp
 supabase/.branches
 coverage
 *.tmp.mjs
+test-results
+playwright-report

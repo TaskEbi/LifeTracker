@@ -3,11 +3,12 @@ import { createElement, type ComponentType } from 'react';
 import type { RouteName } from './router';
 import { Pending } from '../ui/i/Pending';
 import '../features/home/QuickSheet';
+import { ViolinChannel } from '../features/violin/ViolinChannel';
 
 const pending = (id: Parameters<typeof Pending>[0]['id'], note: string): ComponentType => () => createElement(Pending, { id, note });
 
 export const sectionViews: Partial<Record<RouteName, ComponentType>> = {
-  violin: pending('violin', 'Violin logging is being built next.'),
+  violin: ViolinChannel,
   coding: pending('coding', 'Competitive coding and Road to IOI come in a later milestone.'),
   sports: pending('sports', 'Sports logging comes in a later milestone.'),
   gym: pending('gym', 'The workout sheet comes in a later milestone.'),
