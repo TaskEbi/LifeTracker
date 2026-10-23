@@ -1,0 +1,38 @@
+.link-preview {
+  aspect-ratio: 8 / 5;
+  overflow: hidden;
+  isolation: isolate;
+  border-radius: 3px;
+  background: var(--paper-warm);
+}
+.link-artwork,
+.link-preview__image {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.ticket__art {
+  margin-bottom: 0.75rem;
+}
+.clipping__art {
+  margin-top: 0.65rem;
+}
+.index-card__art {
+  margin-top: 0.7rem;
+  margin-bottom: 0.35rem;
+}
+.vinyl__label .link-artwork {
+  object-fit: cover;
+}
+/* The film frame already supplies its own aspect ratio and play button. */
+.film__frame > .link-artwork {
+  position: absolute;
+  inset: 0;
+}
+:root[data-design='archive'] .link-preview {
+  aspect-ratio: 2 / 1;
+}
+:root[data-design='soft'] .link-preview {
+  border-radius: 12px;
+}

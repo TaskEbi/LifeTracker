@@ -1,0 +1,25 @@
+import type { CardBodyProps } from '../Card';
+import { useItemImage } from '../../../../lib/media';
+import { CardImage, CardMeta } from './parts';
+import { LinkArtwork } from './LinkArtwork';
+
+/** A record half out of its sleeve; the cover art is the record label. */
+export function MusicCard({ item, room }: CardBodyProps) {
+  const src = useItemImage(item);
+  return (
+    <div className="vinyl">
+      <div className="vinyl__stage">
+        <div className="vinyl__record" aria-hidden="true">
+          <span className="vinyl__label">
+            <CardImage src={src} className="vinyl__art" fallback={<LinkArtwork item={item} room={room} />} />
+          </span>
+        </div>
+        <div className="vinyl__sleeve">
+          <h3 className="vinyl__title">{item.title || 'Untitled record'}</h3>
+          {item.creator && <p className="vinyl__artist">{item.creator}</p>}
+        </div>
+      </div>
+      <CardMeta item={item} room={room} />
+    </div>
+  );
+}

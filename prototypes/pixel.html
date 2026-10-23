@@ -1,0 +1,873 @@
+<title>LifeTracker Pixel Isle</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@400;500;600;700&family=Silkscreen:wght@400;700&display=swap">
+<style>
+/* Layout: a 1-bit island map. The hero stands in the centre of a 3×3 grid; the eight buildings around it are the sections.
+   Mostly black and white with dithering; colour appears only as small accents (XP gold, streak red, window lights).
+   A deliberate single look; the sleep section inverts to white-on-black. */
+:root {
+  --paper: #E4E1D6; --paper-2: #D3D0C4; --ink: #1D1C19; --ink-2: #4A4740; --ink-3: #7A766C;
+  --gold: #E5A823; --red: #D2432F; --green: #4E9A4A; --blue: #3C6FC4;
+  --violin: #D2862F; --coding: #3C6FC4; --sports: #4E9A4A; --gym: #D2432F; --study: #8A5BC4; --chess: #9B8A5A; --sleep: #5466B8; --screen: #C24E8E;
+  --px: "Pixelify Sans", "Courier New", ui-monospace, monospace;
+  --label: "Silkscreen", "Courier New", ui-monospace, monospace;
+  color-scheme: light;
+}
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body { margin: 0; background: var(--paper); color: var(--ink); font: 17px/1.45 var(--px); -webkit-tap-highlight-color: transparent; }
+button, input, textarea { font: inherit; color: inherit; }
+button { cursor: pointer; border: 0; background: none; padding: 0; text-align: inherit; }
+:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
+h1, h2, h3, p { margin: 0; }
+.tnum { font-variant-numeric: tabular-nums; }
+.lbl { font-family: var(--label); font-size: 12px; letter-spacing: .02em; text-transform: uppercase; }
+.dim { color: var(--ink-3); } .mid { color: var(--ink-2); } .sm { font-size: 15px; }
+svg.px { shape-rendering: crispEdges; image-rendering: pixelated; display: block; }
+
+.app { max-width: 520px; margin: 0 auto; min-height: 100%; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 12px calc(100px + env(safe-area-inset-bottom, 0px)); }
+.view { animation: blink-in .22s steps(4); }
+@keyframes blink-in { from { clip-path: inset(0 0 100% 0); } to { clip-path: inset(0 0 0 0); } }
+
+/* pixel boxes */
+.box { position: relative; border: 3px solid var(--ink); background: var(--paper); padding: 12px; clip-path: polygon(3px 0, calc(100% - 3px) 0, 100% 3px, 100% calc(100% - 3px), calc(100% - 3px) 100%, 3px 100%, 0 calc(100% - 3px), 0 3px); }
+.box.dbl { box-shadow: inset 0 0 0 3px var(--paper), inset 0 0 0 5px var(--ink); padding: 14px; }
+.box.ink { background: var(--ink); color: var(--paper); }
+.dither { background-image: radial-gradient(var(--ink) 0.9px, transparent 1.1px); background-size: 4px 4px; }
+.title-strip { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin: 22px 0 8px; }
+.title-strip h2 { font-family: var(--label); font-size: 15px; font-weight: 700; text-transform: uppercase; display: flex; align-items: center; gap: 8px; }
+.title-strip h2::before { content: ""; width: 10px; height: 10px; background: var(--ink); }
+.title-strip button { font-family: var(--label); font-size: 12px; text-transform: uppercase; min-height: 36px; padding: 0 6px; text-decoration: underline; text-underline-offset: 3px; }
+
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 48px; padding: 0 16px; background: var(--ink); color: var(--paper); font-family: var(--label); font-size: 14px; text-transform: uppercase; letter-spacing: .02em; box-shadow: 0 4px 0 var(--ink-2); clip-path: polygon(3px 0, calc(100% - 3px) 0, 100% 3px, 100% calc(100% - 3px), calc(100% - 3px) 100%, 3px 100%, 0 calc(100% - 3px), 0 3px); transform: translateY(-2px); }
+.btn:active { transform: translateY(1px); box-shadow: 0 1px 0 var(--ink-2); }
+.btn.light { background: var(--paper); color: var(--ink); border: 3px solid var(--ink); box-shadow: none; transform: none; }
+.btn.gold { background: var(--gold); color: var(--ink); box-shadow: 0 4px 0 var(--ink); }
+.btn.block { width: 100%; }
+.btn.sm { min-height: 40px; font-size: 12px; padding: 0 10px; }
+.btn:disabled { opacity: .4; cursor: not-allowed; }
+.sample { font-family: var(--label); font-size: 10.5px; color: var(--ink-3); text-transform: uppercase; display: inline-flex; gap: 6px; align-items: center; line-height: 1.3; }
+.sample::before { content: "?"; display: inline-grid; place-items: center; width: 13px; height: 13px; background: var(--ink-3); color: var(--paper); font-size: 9px; flex: none; }
+
+/* HUD */
+.hud { display: grid; grid-template-columns: auto 1fr auto; gap: 10px; align-items: center; }
+.hud .lv { font-family: var(--label); font-weight: 700; font-size: 20px; line-height: 1; }
+.blocks { display: grid; grid-template-columns: repeat(var(--n, 10), 1fr); gap: 2px; height: 14px; border: 2px solid var(--ink); padding: 2px; background: var(--paper); }
+.blocks i { background: transparent; }
+.blocks i.on { background: var(--ink); }
+.blocks i.gold { background: var(--gold); }
+.streak { display: inline-flex; align-items: center; gap: 4px; font-family: var(--label); font-weight: 700; font-size: 18px; }
+.hud-sub { display: flex; justify-content: space-between; margin-top: 4px; font-size: 13.5px; color: var(--ink-2); gap: 8px; }
+
+/* island map */
+.map { margin-top: 12px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); grid-template-rows: 108px 168px 108px; gap: 6px; padding: 8px; border: 3px solid var(--ink); position: relative;
+  background-color: var(--paper); background-image: radial-gradient(var(--ink-3) 0.8px, transparent 1px); background-size: 8px 8px; background-position: 2px 2px; }
+.tile { min-width: 0; min-height: 0; display: grid; grid-template-rows: 1fr auto; justify-items: center; align-items: end; padding: 4px 2px 6px; background: var(--paper); border: 2px solid var(--ink); position: relative; }
+.tile:active { transform: translateY(2px); }
+.tile svg { width: auto; height: 100%; max-width: 80%; min-height: 0; }
+.tile > svg { align-self: center; }
+.tile .nm { font-family: var(--label); font-size: 11px; font-weight: 700; line-height: 1; text-transform: uppercase; margin-top: 2px; }
+.tile .lv { position: absolute; top: 3px; left: 4px; font-family: var(--label); font-size: 10px; color: var(--ink-2); }
+.tile .gem { position: absolute; top: 5px; right: 5px; width: 7px; height: 7px; background: var(--c); }
+.tile.center { border-style: dashed; background: transparent; padding: 2px; display: block; overflow: visible; }
+.tile.center .hero { display: grid; grid-template-rows: minmax(0, 1fr) auto; justify-items: center; width: 100%; height: 100%; }
+.hero svg { height: 100%; width: auto; max-width: 100%; }
+.bob { animation: bob 1s steps(2) infinite; }
+@keyframes bob { 50% { transform: translateY(3%); } }
+.hero.jump .bob { animation: jump .4s steps(4); }
+@keyframes jump { 50% { transform: translateY(-14%); } }
+.speech { position: absolute; z-index: 5; left: 50%; bottom: 96%; transform: translateX(-50%); width: 190px; background: var(--paper); border: 3px solid var(--ink); padding: 6px 8px; font-size: 14px; line-height: 1.3; text-align: left; animation: blink-in .2s steps(3); }
+.speech::after { content: ""; position: absolute; left: 50%; top: 100%; width: 10px; height: 8px; background: var(--ink); clip-path: polygon(0 0, 100% 0, 50% 100%); transform: translateX(-50%); }
+.stage-nm { font-family: var(--label); font-size: 10px; text-transform: uppercase; margin-top: 2px; }
+
+/* quest log (today) */
+.qlog { margin-top: 12px; }
+.qlog .row { display: grid; grid-template-columns: 64px minmax(0, 1fr) auto; gap: 8px; align-items: center; min-height: 40px; border-bottom: 2px dotted var(--ink-3); font-size: 15.5px; }
+.qlog .row:last-child { border-bottom: 0; }
+.qlog .t { font-family: var(--label); font-size: 11px; color: var(--ink-2); }
+.qlog .ttl { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sq { width: 26px; height: 26px; border: 3px solid var(--ink); display: grid; place-items: center; background: var(--paper); flex: none; }
+.sq.on { background: var(--ink); }
+.sq.on::after { content: ""; width: 10px; height: 6px; border-left: 3px solid var(--gold); border-bottom: 3px solid var(--gold); transform: rotate(-45deg) translate(1px, -1px); }
+.chk-hit { min-width: 44px; min-height: 44px; display: grid; place-items: center; }
+
+/* command bar */
+.cmd { position: fixed; left: 0; right: 0; bottom: 0; z-index: 20; background: var(--ink); color: var(--paper); padding: 8px max(10px, env(safe-area-inset-left, 0px)) calc(8px + env(safe-area-inset-bottom, 0px)) max(10px, env(safe-area-inset-right, 0px)); }
+.cmd .in { max-width: 520px; margin: 0 auto; display: grid; grid-template-columns: repeat(5, 1fr); align-items: center; gap: 4px; }
+.cmd button { min-height: 54px; display: grid; justify-items: center; align-content: center; gap: 4px; font-family: var(--label); font-size: 10.5px; text-transform: uppercase; color: var(--paper-2); }
+.cmd button svg { width: 24px; height: 24px; }
+.cmd button.on { color: var(--gold); }
+.cmd .a-btn { width: 58px; height: 58px; border-radius: 50%; background: var(--gold); color: var(--ink); justify-self: center; font-size: 22px; font-family: var(--label); font-weight: 700; box-shadow: inset -3px -4px 0 rgba(0,0,0,.25); }
+.cmd .a-btn:active { box-shadow: inset 2px 2px 0 rgba(0,0,0,.25); }
+
+/* section rooms */
+.room-head { display: grid; grid-template-columns: 44px 1fr auto; align-items: center; gap: 8px; margin-bottom: 10px; }
+.back { width: 44px; height: 44px; display: grid; place-items: center; border: 3px solid var(--ink); font-family: var(--label); font-size: 18px; }
+.room-head h1 { font-family: var(--label); font-size: 22px; font-weight: 700; text-transform: uppercase; line-height: 1; }
+.room-head .sub { font-size: 13.5px; color: var(--ink-2); margin-top: 3px; }
+.room-head svg { width: 48px; height: 48px; }
+.statrow { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; }
+.pill { font-family: var(--label); font-size: 11px; text-transform: uppercase; border: 2px solid var(--ink); padding: 4px 7px; display: inline-flex; gap: 6px; align-items: center; white-space: nowrap; }
+.pill.inv { background: var(--ink); color: var(--paper); }
+.pill.gold { background: var(--gold); border-color: var(--ink); }
+.pill.red { color: var(--red); border-color: var(--red); }
+.big { font-family: var(--label); font-weight: 700; font-size: 34px; line-height: 1; letter-spacing: -.02em; }
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.kv { border: 3px solid var(--ink); padding: 8px 10px; display: grid; gap: 2px; }
+.kv b { font-family: var(--label); font-size: 20px; line-height: 1.1; }
+.kv span { font-size: 13.5px; color: var(--ink-2); line-height: 1.25; }
+.list .it { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; align-items: center; padding: 9px 0; border-bottom: 2px solid var(--ink); min-height: 48px; }
+.list .it:last-child { border-bottom: 0; }
+.list .it small { display: block; font-size: 13.5px; color: var(--ink-2); line-height: 1.3; }
+.list .it .r { font-family: var(--label); font-size: 13px; text-align: right; }
+.list .it.fresh { animation: flash .9s steps(6); }
+@keyframes flash { 0%, 33%, 66% { background: var(--gold); } 16%, 50%, 100% { background: transparent; } }
+.cursor-list button { display: grid; grid-template-columns: 18px minmax(0, 1fr) auto; gap: 6px; align-items: center; min-height: 48px; width: 100%; padding: 4px 4px; border-bottom: 2px dotted var(--ink-3); text-align: left; }
+.cursor-list button::before { content: ""; width: 0; height: 0; border-left: 8px solid transparent; border-top: 6px solid transparent; border-bottom: 6px solid transparent; }
+.cursor-list button.on::before, .cursor-list button:hover::before { border-left-color: var(--ink); }
+.cursor-list button.on { background: var(--ink); color: var(--paper); }
+.cursor-list button.on::before { border-left-color: var(--gold); }
+.cursor-list small { font-size: 13px; opacity: .75; }
+.tabs { display: flex; gap: 0; overflow-x: auto; border: 3px solid var(--ink); scrollbar-width: none; }
+.tabs::-webkit-scrollbar { display: none; }
+.tabs button { flex: 1 0 auto; min-height: 42px; padding: 0 10px; font-family: var(--label); font-size: 11.5px; text-transform: uppercase; border-left: 2px solid var(--ink); white-space: nowrap; }
+.tabs button:first-child { border-left: 0; }
+.tabs button.on { background: var(--ink); color: var(--paper); }
+.tabs.wrap { flex-wrap: wrap; }
+.charts svg { width: 100%; height: auto; display: block; }
+.pxc text { font-family: var(--label); font-size: 9px; fill: var(--ink-2); text-transform: uppercase; }
+.pxc .hi { fill: var(--ink); }
+.dots { display: grid; grid-template-columns: repeat(14, minmax(0, 1fr)); gap: 3px; }
+.dots i { aspect-ratio: 1; border: 2px solid var(--ink); }
+.dots i.l1 { background-image: radial-gradient(var(--ink) 0.9px, transparent 1.1px); background-size: 3px 3px; }
+.dots i.l2 { background: var(--ink-2); }
+.dots i.l3 { background: var(--ink); }
+.dots i.now { border-color: var(--gold); }
+
+/* gym */
+.set { display: grid; grid-template-columns: 24px 1fr 1fr 48px; gap: 6px; align-items: center; min-height: 52px; }
+.set .n { font-family: var(--label); font-size: 13px; }
+.adj { display: flex; align-items: center; justify-content: space-between; border: 2px solid var(--ink); height: 44px; }
+.adj button { width: 34px; height: 40px; font-family: var(--label); font-size: 16px; }
+.adj output { font-family: var(--label); font-size: 13px; text-align: center; flex: 1; }
+.set.done .adj { background-image: radial-gradient(var(--ink-3) 0.8px, transparent 1px); background-size: 4px 4px; }
+.done-sq { width: 48px; height: 44px; border: 3px solid var(--ink); display: grid; place-items: center; }
+.done-sq.on { background: var(--ink); }
+.done-sq.on::after { content: ""; width: 14px; height: 8px; border-left: 4px solid var(--gold); border-bottom: 4px solid var(--gold); transform: rotate(-45deg) translate(1px, -2px); }
+.ex { margin-top: 10px; }
+.ex-h { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 4px; }
+.ex-h b { font-family: var(--label); font-size: 14px; text-transform: uppercase; }
+.week7 { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); border: 3px solid var(--ink); }
+.week7 > div { min-height: 78px; border-left: 2px solid var(--ink); padding: 3px 2px; display: grid; align-content: start; justify-items: center; gap: 2px; text-align: center; font-size: 11px; line-height: 1.1; }
+.week7 > div:first-child { border-left: 0; }
+.week7 .d { font-family: var(--label); font-size: 10px; }
+.week7 .g { background: var(--ink); color: var(--paper); font-family: var(--label); font-size: 9px; padding: 2px 3px; }
+.week7 .g.done { background: var(--gold); color: var(--ink); }
+.week7 .s { font-family: var(--label); font-size: 9px; border: 1px solid var(--ink); padding: 1px 2px; }
+.week7 .now { background-image: radial-gradient(var(--ink-3) 0.7px, transparent 0.9px); background-size: 4px 4px; }
+.restbar { position: fixed; z-index: 25; left: max(16px, env(safe-area-inset-left, 0px)); right: max(16px, env(safe-area-inset-right, 0px)); bottom: calc(86px + env(safe-area-inset-bottom, 0px)); max-width: 488px; margin: 0 auto; background: var(--paper); border: 3px solid var(--ink); padding: 8px 10px; display: grid; grid-template-columns: auto 1fr auto auto; gap: 8px; align-items: center; }
+.restbar b { font-family: var(--label); font-size: 22px; }
+.restbar .hg { display: grid; grid-template-columns: repeat(10, 1fr); gap: 2px; height: 12px; border: 2px solid var(--ink); padding: 1px; }
+.restbar .hg i.on { background: var(--ink); }
+
+/* sleep (inverted) */
+.night { background: var(--ink); color: var(--paper); margin: -12px calc(-1 * max(16px, env(safe-area-inset-left, 0px))) 0; padding: 12px max(16px, env(safe-area-inset-left, 0px)) 30px; min-height: calc(100vh - 80px); }
+.night .back { border-color: var(--paper); }
+.night .room-head .sub, .night .mid, .night .dim { color: var(--paper-2); }
+.night .box { background: var(--ink); border-color: var(--paper); color: var(--paper); }
+.night .pill { border-color: var(--paper); }
+.night .kv { border-color: var(--paper); }
+.night .kv span { color: var(--paper-2); }
+.night .btn { background: var(--paper); color: var(--ink); box-shadow: 0 4px 0 var(--ink-3); }
+.night .btn.light { background: var(--ink); color: var(--paper); border-color: var(--paper); }
+.night .title-strip h2::before { background: var(--paper); }
+.night .list .it { border-color: var(--paper-2); }
+.night .list .it small { color: var(--paper-2); }
+.night .adj { border-color: var(--paper); }
+.night .sample { color: var(--paper-2); } .night .sample::before { background: var(--paper-2); color: var(--ink); }
+.clock2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.clock2 > div { border: 3px solid var(--paper); padding: 8px; display: grid; justify-items: center; gap: 6px; }
+.clock2 .tv { font-family: var(--label); font-size: 30px; font-weight: 700; }
+.clock2 .r { display: flex; gap: 6px; }
+.clock2 button, .nbtn { min-width: 46px; min-height: 40px; border: 2px solid var(--paper); font-family: var(--label); font-size: 12px; color: var(--paper); }
+.tlx text { font-family: var(--label); font-size: 9px; fill: var(--paper-2); }
+.tlx .d { fill: var(--paper); }
+.switch { width: 54px; height: 30px; border: 3px solid currentColor; position: relative; flex: none; display: inline-block; }
+.switch::after { content: ""; position: absolute; top: 3px; left: 3px; width: 18px; height: 18px; background: currentColor; opacity: .35; }
+.switch.on::after { left: 27px; opacity: 1; background: var(--gold); }
+
+/* road */
+.road { display: grid; gap: 0; }
+.road .st { display: grid; grid-template-columns: 30px minmax(0, 1fr) auto; gap: 8px; align-items: center; min-height: 42px; position: relative; }
+.road .st::before { content: ""; position: absolute; left: 13px; top: 0; bottom: 0; width: 4px; background-image: linear-gradient(var(--ink) 50%, transparent 50%); background-size: 4px 8px; }
+.road .st:first-child::before { top: 50%; } .road .st:last-child::before { bottom: 50%; }
+.road .nd { width: 30px; height: 30px; border: 3px solid var(--ink); background: var(--paper); z-index: 1; display: grid; place-items: center; font-family: var(--label); font-size: 13px; }
+.road .done .nd { background: var(--ink); color: var(--gold); }
+.road .current .nd { background: var(--gold); }
+.road .goal .nd { background: var(--red); color: var(--paper); }
+.road .next .t, .road .goal .t { color: var(--ink-2); }
+
+/* calendar month */
+.month { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); border: 3px solid var(--ink); }
+.month .hd { font-family: var(--label); font-size: 10px; text-align: center; padding: 4px 0; background: var(--ink); color: var(--paper); }
+.month .c { min-height: 54px; border-left: 2px solid var(--ink); border-top: 2px solid var(--ink); padding: 2px 3px; display: grid; align-content: start; gap: 2px; text-align: left; }
+.month .c:nth-child(7n+1) { border-left: 0; }
+.month .c b { font-family: var(--label); font-size: 11px; }
+.month .c.out { color: var(--ink-3); background-image: radial-gradient(var(--paper-2) 1px, transparent 1.2px); background-size: 4px 4px; }
+.month .c.sel { background: var(--ink); color: var(--paper); }
+.month .c.today b { background: var(--gold); color: var(--ink); padding: 0 2px; }
+.month .c .mk { display: flex; flex-wrap: wrap; gap: 2px; }
+.month .c .mk i { width: 6px; height: 6px; background: currentColor; }
+.month .c .mk i.p { background: transparent; border: 1.5px solid currentColor; }
+.month .c .mk i.x { background: var(--red); }
+.evr { display: grid; grid-template-columns: 50px minmax(0, 1fr) auto; gap: 8px; align-items: center; padding: 8px 0; min-height: 52px; border-bottom: 2px solid var(--ink); width: 100%; text-align: left; }
+.evr .tm { font-family: var(--label); font-size: 12px; }
+.evr .ti small { display: block; font-size: 13px; color: var(--ink-2); }
+.evr .tag { font-family: var(--label); font-size: 10px; border: 2px solid var(--ink); padding: 2px 5px; white-space: nowrap; }
+.evr.done .tag { background: var(--ink); color: var(--paper); }
+.evr.planned .tag { border-style: dashed; }
+.evr .tag.clash { border-color: var(--red); color: var(--red); border-style: solid; }
+.evr.cancelled .ti { text-decoration: line-through; color: var(--ink-3); }
+.warn { border: 3px solid var(--red); padding: 10px; color: var(--ink); display: grid; grid-template-columns: 22px 1fr; gap: 8px; font-size: 15px; margin: 10px 0; }
+.warn::before { content: "!"; width: 22px; height: 22px; background: var(--red); color: var(--paper); font-family: var(--label); display: grid; place-items: center; font-weight: 700; }
+
+/* tasks */
+.quest { display: grid; grid-template-columns: 44px minmax(0, 1fr) auto; gap: 6px; align-items: center; min-height: 56px; border-bottom: 2px solid var(--ink); }
+.quest.done .qt { text-decoration: line-through; color: var(--ink-3); }
+.quest small { display: block; font-size: 13px; color: var(--ink-2); }
+.prio { font-family: var(--label); font-weight: 700; font-size: 14px; }
+.prio.high { color: var(--red); }
+
+/* hero sheet */
+.lineup { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; align-items: end; text-align: center; }
+.lineup svg { width: 100%; height: auto; }
+.lineup b { font-family: var(--label); font-size: 9.5px; display: block; text-transform: uppercase; }
+.lineup small { font-size: 11px; color: var(--ink-2); display: block; line-height: 1.2; }
+.lineup .cur b { color: var(--ink); background: var(--gold); }
+.statline { display: grid; grid-template-columns: 74px minmax(0, 1fr) 44px; gap: 8px; align-items: center; min-height: 44px; width: 100%; text-align: left; }
+.statline .k { font-family: var(--label); font-size: 11.5px; text-transform: uppercase; }
+.statline .v { font-family: var(--label); font-size: 12px; text-align: right; }
+.badges { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.badge { border: 3px solid var(--ink); padding: 8px 6px; display: grid; justify-items: center; gap: 4px; text-align: center; }
+.badge svg { width: 36px; height: 36px; }
+.badge b { font-family: var(--label); font-size: 10px; text-transform: uppercase; line-height: 1.2; }
+.badge small { font-size: 11.5px; color: var(--ink-2); line-height: 1.2; }
+.badge.locked { border-style: dashed; color: var(--ink-3); }
+
+/* sheets as RPG dialog */
+.scrim { position: fixed; inset: 0; z-index: 40; background-image: radial-gradient(var(--ink) 1px, transparent 1.3px); background-size: 4px 4px; background-color: rgba(29,28,25,.25); }
+.dlg { position: fixed; z-index: 41; left: max(10px, env(safe-area-inset-left, 0px)); right: max(10px, env(safe-area-inset-right, 0px)); bottom: calc(10px + env(safe-area-inset-bottom, 0px)); max-width: 540px; margin: 0 auto; max-height: calc(100% - 30px); display: flex; flex-direction: column; background: var(--paper); border: 4px solid var(--ink); box-shadow: inset 0 0 0 3px var(--paper), inset 0 0 0 5px var(--ink); animation: dlg .18s steps(3); }
+@keyframes dlg { from { transform: translateY(24px); } }
+.dlg-h { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 12px 14px 4px; }
+.dlg-h h2 { font-family: var(--label); font-size: 16px; text-transform: uppercase; }
+.dlg-h .x { min-width: 44px; min-height: 44px; font-family: var(--label); font-size: 16px; }
+.dlg-steps { display: flex; gap: 4px; padding: 0 14px 6px; }
+.dlg-steps i { flex: 1; height: 8px; border: 2px solid var(--ink); }
+.dlg-steps i.on { background: var(--ink); }
+.dlg-b { overflow-y: auto; padding: 6px 14px 12px; display: grid; gap: 12px; align-content: start; }
+.dlg-f { display: flex; gap: 8px; padding: 10px 14px 14px; border-top: 3px solid var(--ink); }
+.say { font-size: 16px; }
+.say::before { content: "▶ "; color: var(--gold); }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { min-height: 40px; padding: 6px 10px; border: 2px solid var(--ink); font-size: 15px; text-align: left; display: inline-flex; gap: 6px; align-items: center; }
+.chip.on { background: var(--ink); color: var(--paper); }
+.chip.on::before { content: ""; width: 8px; height: 8px; background: var(--gold); }
+.minpick { display: grid; grid-template-columns: 56px 1fr 56px; gap: 8px; align-items: center; }
+.minpick output { text-align: center; font-family: var(--label); font-size: 50px; font-weight: 700; line-height: 1; }
+.minpick output small { display: block; font-size: 11px; color: var(--ink-2); }
+.sqbtn { width: 56px; height: 56px; border: 3px solid var(--ink); font-family: var(--label); font-size: 15px; }
+.stepper { display: inline-flex; border: 2px solid var(--ink); align-items: center; }
+.stepper button { width: 40px; height: 40px; font-family: var(--label); font-size: 16px; }
+.stepper output { min-width: 70px; text-align: center; font-family: var(--label); font-size: 12.5px; }
+.kvrow { display: flex; justify-content: space-between; align-items: center; gap: 8px; min-height: 48px; border-bottom: 2px dotted var(--ink-3); }
+.togrow { display: flex; justify-content: space-between; align-items: center; gap: 8px; min-height: 48px; width: 100%; text-align: left; }
+input[type=text], textarea { width: 100%; min-height: 46px; border: 3px solid var(--ink); background: var(--paper); padding: 8px 10px; font-size: 16px; border-radius: 0; }
+textarea { min-height: 76px; resize: vertical; }
+.nums5 { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; }
+.nums5 button { min-height: 46px; border: 3px solid var(--ink); font-family: var(--label); font-size: 15px; }
+.nums5 button.on { background: var(--ink); color: var(--gold); }
+.notice { font-size: 14px; color: var(--ink-2); }
+.notice.red { color: var(--red); }
+
+/* reward */
+.reward { position: fixed; inset: 0; z-index: 60; display: grid; place-items: center; padding: 20px max(16px, env(safe-area-inset-left, 0px)); background: var(--ink); }
+.reward .card { width: min(360px, 100%); background: var(--paper); border: 4px solid var(--paper); box-shadow: inset 0 0 0 4px var(--ink), inset 0 0 0 7px var(--paper), inset 0 0 0 10px var(--ink); padding: 22px 20px 18px; display: grid; gap: 10px; text-align: center; animation: dlg .2s steps(3); }
+.reward .ban { font-family: var(--label); font-weight: 700; font-size: 26px; line-height: 1.05; }
+.reward .coins { font-family: var(--label); font-weight: 700; font-size: 40px; color: var(--ink); display: inline-flex; gap: 10px; align-items: center; justify-content: center; }
+.reward .coin { width: 26px; height: 26px; background: var(--gold); border: 3px solid var(--ink); border-radius: 50%; }
+.reward ul { list-style: none; padding: 0; margin: 0; display: grid; gap: 2px; text-align: left; }
+.reward li { display: flex; justify-content: space-between; gap: 8px; font-size: 15px; border-bottom: 2px dotted var(--ink-3); padding: 3px 0; }
+.reward li b { font-family: var(--label); font-size: 13px; }
+.reward .up { background: var(--ink); color: var(--gold); font-family: var(--label); font-size: 14px; padding: 8px; text-transform: uppercase; }
+.reward .ach { border: 3px solid var(--ink); padding: 8px; font-size: 14px; }
+.reward .ach b { font-family: var(--label); font-size: 12px; display: block; text-transform: uppercase; }
+.evo { width: 150px; height: 170px; margin: 0 auto; position: relative; }
+.evo > div { position: absolute; inset: 0; }
+.evo .a { animation: evoA 1.8s steps(1) forwards; }
+.evo .b { animation: evoB 1.8s steps(1) forwards; }
+@keyframes evoA { 0%, 20%, 40%, 56%, 68% { opacity: 1; } 10%, 30%, 48%, 62%, 74%, 100% { opacity: 0; } }
+@keyframes evoB { 0%, 20%, 40%, 56%, 68% { opacity: 0; } 10%, 30%, 48%, 62%, 74%, 100% { opacity: 1; } }
+.evo .b svg, .evo .a svg { width: 100%; height: 100%; }
+.toast { position: fixed; z-index: 70; left: 50%; bottom: calc(92px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); background: var(--paper); border: 3px solid var(--ink); padding: 8px 12px; font-family: var(--label); font-size: 12px; text-transform: uppercase; max-width: calc(100% - 32px); animation: dlg .15s steps(2); }
+.foot { margin-top: 26px; display: grid; gap: 8px; }
+.linkbtn { font-family: var(--label); font-size: 12px; text-transform: uppercase; text-decoration: underline; min-height: 40px; justify-self: start; }
+
+@media (min-width: 900px) {
+  .app { max-width: 1000px; }
+  .homegrid { display: grid; grid-template-columns: 1.1fr .9fr; gap: 24px; align-items: start; }
+  .homegrid .qlog { margin-top: 0; }
+  .two { display: grid; grid-template-columns: 1fr 1fr; gap: 0 24px; align-items: start; }
+  .night { margin: -12px 0 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+  .evo .a { opacity: 0; } .evo .b { opacity: 1; }
+}
+</style>
+
+<div class="app" id="app"></div>
+<div id="layer"></div>
+<nav class="cmd" id="nav" aria-label="Main"></nav>
+
+<script src="core.js"></script>
+<script src="shell.js"></script>
+<script>
+(() => {
+'use strict';
+const E = LT.esc, F = LT.fmt, D = LT.date, T = LT.TODAY;
+
+/* ---------- pixel renderer ----------
+   K ink · W paper · D dither (checker of ink/paper) · G gold · R red · C section accent · . transparent */
+const PAL = { K: 'var(--ink)', W: 'var(--paper)', G: 'var(--gold)', R: 'var(--red)', S: 'var(--ink-2)' };
+function sprite(rows, opts = {}) {
+  const h = rows.length, w = rows[0].length; let r = '';
+  for (let y = 0; y < h; y++) {
+    let x = 0;
+    while (x < w) {
+      let ch = rows[y][x];
+      if (ch === 'D') ch = (x + y) % 2 ? 'W' : 'K';
+      if (ch === '.') { x++; continue; }
+      let x2 = x + 1;
+      while (x2 < w) { let c2 = rows[y][x2]; if (c2 === 'D') c2 = (x2 + y) % 2 ? 'W' : 'K'; if (c2 !== ch) break; x2++; }
+      const fill = ch === 'C' ? (opts.accent || 'var(--gold)') : PAL[ch] || 'var(--ink)';
+      r += `<rect x="${x}" y="${y}" width="${x2 - x}" height="1" fill="${opts.invert && ch === 'K' ? 'var(--paper)' : opts.invert && ch === 'W' ? 'var(--ink)' : opts.silhouette && ch !== '.' ? 'var(--ink)' : fill}"/>`;
+      x = x2;
+    }
+  }
+  return `<svg class="px" viewBox="0 0 ${w} ${h}" ${opts.label ? `role="img" aria-label="${opts.label}"` : 'aria-hidden="true"'}>${opts.wrap ? `<g class="${opts.wrap}">${r}</g>` : r}</svg>`;
+}
+const layer = (base, ...overs) => base.map((row, y) => row.split('').map((c, x) => { let o = c; overs.forEach(ov => { const ch = ov[y] && ov[y][x]; if (ch && ch !== '.') o = ch; }); return o; }).join(''));
+
+/* hero: 16×20 */
+const BLANK = Array(20).fill('................');
+const BASE = [
+  '................', '................', '................',
+  '.....KKKKKK.....', '....KWWWWWWK....', '...KWWWWWWWWK...', '...KWWWWWWWWK...', '...KWKWWWWKWK...', '...KWKWWWWKWK...', '...KWWWWWWWWK...', '....KWWKKWWK....', '.....KKKKKK.....',
+  '....KDDDDDDK....', '...KWKDDDDKWK...', '...KWKDDDDKWK...', '....KKDDDDKK....', '.....KDDDDK.....', '.....KWKKWK.....', '.....KWKKWK.....', '....KKK..KKK....'];
+const CAP = ['................', '................', '.....KKKKKK.....', '....KDDDDDDK....', '...KKKKKKKKKKK..'];
+const SCARF = [...Array(11).fill('................'), '....KRRRRRRK....', '.......RR.......'];
+const CAPE = [...Array(12).fill('................'), '..KK........KK..', '..KD........DK..', '..KD........DK..', '..KD........DK..', '..KDD......DDK..', '..KDD......DDK..', '..KKK......KKK..'];
+const CAPE_R = CAPE.map(r => r.replace(/D/g, 'R'));
+const STAFF = [...Array(5).fill('................'), '..............G.', '.............GKG', '..............G.', ...Array(12).fill('..............K.')];
+const HELM = ['........RR......', '.......RR.......', '.....KKKKKK.....', '....KSSSSSSK....', '...KKKKKKKKKK...'];
+const SHIELD = [...Array(12).fill('................'), 'KKKK............', 'KGGK............', 'KGGK............', '.KK.............'];
+const CROWN = ['....G..G..G.....', '....GGGGGGG.....', '....GKGGGKG.....', '...KKKKKKKKKK...'];
+const SPARK = ['G..............G', '................', '................', '................', '................', '................', '...............G', 'G...............'];
+const HERO_STAGES = [
+  layer(BASE),
+  layer(BASE, CAP, SCARF),
+  layer(BLANK, CAPE, BASE, CAP, SCARF, STAFF),
+  layer(BLANK, CAPE, BASE, HELM, SCARF, STAFF, SHIELD),
+  layer(BLANK, CAPE_R, BASE, CROWN, SCARF, STAFF, SHIELD, SPARK),
+];
+const STAGE = ['Novice', 'Wanderer', 'Ranger', 'Champion', 'Legend'];
+const hero = (stage, o = {}) => sprite(HERO_STAGES[stage], { label: o.still ? undefined : `${STAGE[stage]}, your hero`, wrap: o.still ? '' : 'bob', silhouette: o.silhouette, invert: o.invert });
+
+/* buildings: 14×14 with a 5×5 emblem */
+const EMB = {
+  violin: ['..KK.', '..K.K', '..K..', 'KKK..', 'KK...'],
+  coding: ['K....', '.K...', '..K..', '.K...', 'K.KKK'],
+  sports: ['.KKK.', 'K.K.K', 'KKKKK', 'K.K.K', '.KKK.'],
+  gym: ['K...K', 'K...K', 'KKKKK', 'K...K', 'K...K'],
+  study: ['KK.KK', 'K.K.K', 'K.K.K', 'K.K.K', 'KKKKK'],
+  chess: ['K.K.K', 'KKKKK', '.KKK.', '.KKK.', 'KKKKK'],
+  sleep: ['.KKK.', 'KK...', 'K....', 'KK...', '.KKK.'],
+  screen: ['KKKKK', 'K...K', 'K...K', 'K...K', 'KKKKK'],
+};
+const ROOFS = {
+  gable: ['......KK......', '.....KDDK.....', '....KDDDDK....', '...KDDDDDDK...', '..KDDDDDDDDK..', '.KKKKKKKKKKKK.'],
+  tower: ['..K.K....K.K..', '..KKK....KKK..', '..KDK....KDK..', '..KDKKKKKKDK..', '..KDDDDDDDDK..', '.KKKKKKKKKKKK.'],
+  dome: ['......CC......', '.....KKKK.....', '....KDDDDK....', '...KDDDDDDK...', '..KDDDDDDDDK..', '.KKKKKKKKKKKK.'],
+  flat: ['..............', '..........KK..', '..........KK..', '.KKKKKKKKKKKK.', '.KDDDDDDDDDDK.', '.KKKKKKKKKKKK.'],
+};
+const BLD = { violin: 'gable', coding: 'tower', sports: 'flat', gym: 'flat', study: 'gable', chess: 'tower', sleep: 'gable', screen: 'dome' };
+function building(id) {
+  const roof = ROOFS[BLD[id]];
+  const body = ['.KWWWWWWWWWWK.', '.KWWWWWWWWWWK.', '.KWWWWWWWWWWK.', '.KWWWWWWWWWWK.', '.KWWWWWWWWWWK.', '.KCWWWWWWWWCK.', '.KWWWWKKWWWWK.', '.KKKKKKKKKKKK.'];
+  const rows = [...roof, ...body].map(r => r.split(''));
+  EMB[id].forEach((er, y) => er.split('').forEach((c, x) => { if (c === 'K') rows[6 + y][4 + x + 1] = 'K'; }));
+  return sprite(rows.map(r => r.join('')), { accent: `var(--${id})` });
+}
+const flame = (size = 18) => `<span style="width:${size}px;display:inline-block">${sprite(['...R....', '..RR....', '..RRR.R.', '.RRGRRR.', '.RGGGRR.', 'RRGGGGRR', '.RGGGGR.', '..RRRR..'])}</span>`;
+const trophy = on => sprite(['.GGGGGG.', 'GGGGGGGG', 'G.GGGG.G', '.GGGGGG.', '..GGGG..', '...GG...', '..KKKK..', '.KKKKKK.'].map(r => on ? r : r.replace(/G/g, 'D')));
+
+/* ---------- small builders ---------- */
+const blocks = (pct, n = 10, cls = 'on') => `<span class="blocks" style="--n:${n}" role="progressbar" aria-valuenow="${Math.round(pct * 100)}" aria-valuemin="0" aria-valuemax="100">${Array.from({ length: n }, (_, i) => `<i class="${i < Math.round(pct * n) ? cls : ''}"></i>`).join('')}</span>`;
+const stepper = (act, val, label, extra = '') => `<span class="stepper" role="group" aria-label="${label}"><button data-a="${act}" data-d="-1" ${extra} aria-label="Decrease ${label}">−</button><output>${val}</output><button data-a="${act}" data-d="1" ${extra} aria-label="Increase ${label}">+</button></span>`;
+const strip = (t, right = '') => `<div class="title-strip"><h2>${t}</h2>${right}</div>`;
+function room(id, sub) {
+  const s = LT.section(id), L = LT.level(id), st = LT.sectionStreak(id);
+  return `<div class="room-head"><button class="back" data-a="home" aria-label="Back to the map">◀</button><div><h1>${s.full}</h1><div class="sub">${sub}</div></div>${building(id)}</div>
+  <div class="statrow"><span class="pill inv">LV ${L.level}</span><span class="pill">${L.into}/${L.need} XP</span>${st.n ? `<span class="pill">${flame(12)} ${st.n} ${st.label}</span>` : ''}</div>`;
+}
+// pixel block chart: one block = `per` units
+function blockChart(values, labels, { per = 30, target = null, hi = [], unit = 'min', h = 10 } = {}) {
+  const cols = values.length, cw = 10, gap = 3, W = cols * (cw + gap) + 26, rows = Math.max(h, Math.ceil(Math.max(...values, target || 0) / per));
+  const H = rows * 5 + 14; let s = '';
+  values.forEach((v, i) => {
+    const n = Math.round(v / per), x = 24 + i * (cw + gap);
+    for (let k = 0; k < n; k++) {
+      const y = H - 12 - (k + 1) * 5;
+      const fill = hi.includes(i) ? 'var(--gold)' : target && v >= target ? 'var(--ink)' : 'url(#dith)';
+      s += `<rect x="${x}" y="${y}" width="${cw}" height="4" fill="${fill}" stroke="var(--ink)" stroke-width=".6"/>`;
+    }
+    s += `<text x="${x + cw / 2}" y="${H - 3}" text-anchor="middle" class="${hi.includes(i) ? 'hi' : ''}">${labels[i]}</text>`;
+  });
+  if (target) { const ty = H - 12 - (target / per) * 5; s += `<line x1="22" x2="${W}" y1="${ty}" y2="${ty}" stroke="var(--red)" stroke-width="1" stroke-dasharray="2 2"/><text x="0" y="${ty + 3}">${target}</text>`; }
+  for (let k = 0; k <= rows; k += Math.max(1, Math.round(rows / 3))) s += `<text x="0" y="${H - 12 - k * 5 + 3}">${k * per}</text>`;
+  return `<svg class="px pxc" viewBox="0 0 ${W} ${H}" role="img" aria-label="Chart, one block = ${per} ${unit}" style="width:100%;height:auto"><defs><pattern id="dith" width="2" height="2" patternUnits="userSpaceOnUse"><rect width="2" height="2" fill="var(--paper)"/><rect width="1" height="1" fill="var(--ink)"/><rect x="1" y="1" width="1" height="1" fill="var(--ink)"/></pattern></defs>${s}</svg>`;
+}
+function stepLine(values, labels, { every = 3 } = {}) {
+  const W = 300, H = 120, l = 34, b = 16, t = 6, lo = Math.min(...values), hiV = Math.max(...values), span = hiV - lo || 1;
+  const x = i => l + i * (W - l - 6) / (values.length - 1), y = v => t + (H - t - b) * (1 - (v - lo) / span);
+  let d = `M${x(0)} ${y(values[0])}`; values.forEach((v, i) => { if (i) d += ` H${x(i)} V${y(v)}`; });
+  let s = `<path d="${d}" fill="none" stroke="var(--ink)" stroke-width="3"/>`;
+  values.forEach((v, i) => { s += `<rect x="${x(i) - 3}" y="${y(v) - 3}" width="6" height="6" fill="${i === values.length - 1 ? 'var(--gold)' : 'var(--paper)'}" stroke="var(--ink)" stroke-width="2"/>`; if (i % every === 0 || i === values.length - 1) s += `<text x="${x(i)}" y="${H - 3}" text-anchor="middle">${labels[i]}</text>`; });
+  [lo, Math.round((lo + hiV) / 2), hiV].forEach(v => { s += `<text x="0" y="${y(v) + 3}">${v}</text><line x1="${l - 4}" x2="${W}" y1="${y(v)}" y2="${y(v)}" stroke="var(--ink-3)" stroke-dasharray="1 3"/>`; });
+  return `<svg class="px pxc" viewBox="0 0 ${W} ${H}" role="img" aria-label="Trend from ${values[0]} to ${values[values.length - 1]}" style="width:100%;height:auto">${s}</svg>`;
+}
+function quest(t) {
+  const s = LT.section(t.section);
+  return `<div class="quest ${t.done ? 'done' : ''}"><button class="chk-hit" data-a="task" data-v="${t.id}" aria-label="${t.done ? 'Mark not done' : 'Complete'}: ${E(t.title)}"><span class="sq ${t.done ? 'on' : ''}"></span></button>
+    <div><span class="qt">${E(t.title)}</span><small>${s ? s.name : 'General'}${t.due ? ` · <span style="${LT.tasks.overdue(t) ? 'color:var(--red)' : ''}">${F.rel(t.due)}</span>` : ''}</small></div><span class="prio ${t.priority}" aria-label="${t.priority} priority">${t.priority === 'high' ? '!!!' : t.priority === 'medium' ? '!!' : '!'}</span></div>`;
+}
+const related = id => { const t = LT.tasks.list({ section: id, status: 'open' }); return t.length ? strip('Quests here', `<button data-a="go" data-v="tasks" data-sec="${id}">All tasks</button>`) + t.map(quest).join('') : ''; };
+
+/* ---------- views ---------- */
+const V = {};
+V.home = S => {
+  const O = LT.overall(), st = LT.streak(), td = LT.today(), ui = S.ui;
+  const order = ['violin', 'coding', 'sports', 'gym', null, 'study', 'chess', 'sleep', 'screen'];
+  return `<div class="view">
+  <div class="homegrid"><div>
+  <div class="hud"><span class="lv">LV ${O.level}</span>${blocks(O.pct, 12, 'gold')}<span class="streak" title="Overall streak">${flame()} ${st.n}</span></div>
+  <div class="hud-sub"><span>${F.num(O.into)} / ${F.num(O.need)} XP · ${O.nextStage ? `evolves at LV ${O.nextStage.level}` : 'final form'}</span><span>${st.today ? (st.rest ? 'rest day ✓' : 'today ✓') : 'day ' + (st.n + 1) + '?'}</span></div>
+  <div class="map" role="navigation" aria-label="Sections">
+    ${order.map(id => id ? (() => { const s = LT.section(id); return `<button class="tile" data-a="open" data-v="${id}" style="--c: var(--${id})" aria-label="${s.full}, level ${LT.level(id).level}"><span class="lv">${LT.level(id).level}</span><span class="gem"></span>${building(id)}<span class="nm">${id === 'screen' ? 'Screen' : s.name}</span></button>`; })()
+      : `<div class="tile center"><button class="hero ${ui.jump ? 'jump' : ''}" data-a="poke" aria-label="Talk to your hero" style="position:relative">${ui.bubble ? `<span class="speech">${E(ui.bubble)}</span>` : ''}${hero(O.stage)}<span class="stage-nm">${STAGE[O.stage]}</span></button></div>`).join('')}
+  </div>
+  </div><div>
+  <div class="box dbl qlog">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px"><span class="lbl" style="font-weight:700">Today</span><button class="lbl" data-a="go" data-v="calendar" style="min-height:32px;text-decoration:underline">Calendar ▶</button></div>
+    ${td.events.slice(0, 3).map(i => `<div class="row"><span class="t">${E(i.when.replace('Tomorrow ', 'TMRW '))}</span><span class="ttl">${E(i.title)}</span><span class="lbl dim">${i.type === 'reminder' ? 'zz' : ''}</span></div>`).join('')}
+    ${td.tasks.slice(0, 2).map(i => `<div class="row"><span class="t" style="${i.when === 'Overdue' ? 'color:var(--red)' : ''}">${i.when === 'Due today' ? 'TODAY' : i.when === 'Overdue' ? 'LATE' : 'TMRW'}</span><span class="ttl">${E(i.title)}</span><button class="chk-hit" data-a="task" data-v="${i.task.id}" aria-label="Complete ${E(i.title)}"><span class="sq"></span></button></div>`).join('')}
+  </div>
+  </div></div>
+  <p class="foot"><span class="sample">${E(LT.LABELS.sample)} · ${E(LT.LABELS.xp)}</span></p>
+  </div>`;
+};
+
+V.violin = S => {
+  const Vn = LT.violin, wk = Vn.weekTotal(), tgt = LT.state.violin.target, weeks = Vn.weeks(8);
+  const nm = id => { const p = Vn.item(id); return p ? (p.kind === 'piece' ? p.composer : p.title.replace(', 3 octaves', '')) : id; };
+  return `<div class="view">
+  ${room('violin', 'Music hall · practice journal')}
+  <div class="box">
+    <div style="display:flex;justify-content:space-between;align-items:flex-end;gap:8px"><div><span class="lbl dim">This week</span><div class="big tnum">${wk}<span style="font-size:16px">/${tgt} MIN</span></div></div>${wk >= tgt ? '<span class="pill gold">Target met</span>' : `<span class="pill">${tgt - wk} to go</span>`}</div>
+    <div style="margin:8px 0">${blocks(Math.min(1, wk / tgt), 12)}</div>
+    <p class="sm mid">Lessons, orchestra and trio count. Played ${Vn.daysPractised(28)} of the last 28 days.</p>
+    <button class="btn gold block" data-a="vlog" style="margin-top:10px">+ Log practice</button>
+  </div>
+  ${strip('Performances')}
+  <div class="grid2">${Vn.performances.filter(p => !p.past).map(p => `<div class="box" style="padding:10px"><span class="lbl dim">${F.date(p.date)}</span><div style="font-weight:600">${E(p.title)}</div><div class="big tnum" style="font-size:28px">${D.diffDays(T, p.date)}<span class="lbl"> days</span></div><small class="sm mid">${p.pieces.map(id => E(Vn.item(id).composer)).join(', ')} · ${E(p.venue)}</small></div>`).join('')}</div>
+  <div class="two"><div>
+  ${strip('Pieces & scales')}
+  <div class="list">${Vn.pieces.map(p => { const s = Vn.itemStats(p.id); return `<div class="it"><div>${E(p.kind === 'piece' ? p.composer + ': ' + p.title : p.title)}<small>${p.kind === 'piece' ? p.status : 'Scale'} · ${s.sessions} sessions${s.preciseMinutes ? ' · ' + s.preciseMinutes + ' min split' : ''}</small></div><span class="r">${s.last ? F.rel(s.last) : ''}</span></div>`; }).join('')}</div>
+  <p class="notice">Per-piece minutes only appear when you split a session.</p>
+  </div><div>
+  ${strip('Weekly totals', '<span class="lbl dim">1 block = 30 min</span>')}
+  <div class="box">${blockChart(weeks.map(w => w.minutes), weeks.map(w => D.parse(w.week).getDate()), { per: 30, target: tgt, hi: [7] })}<p class="notice" style="margin-top:6px">Solid = target met · gold = this week</p></div>
+  ${strip('28 days')}
+  <div class="dots">${Vn.dayGrid(28).map(d => `<i class="${d.minutes === 0 ? '' : d.minutes < 40 ? 'l1' : d.minutes < 90 ? 'l2' : 'l3'} ${d.date === T ? 'now' : ''}" title="${F.date(d.date)}: ${d.minutes} min"></i>`).join('')}</div>
+  </div></div>
+  ${strip('Practice log')}
+  <div class="list">${LT.state.violin.sessions.slice(0, 10).map(s => `<div class="it ${s.fresh ? 'fresh' : ''}"><div><b style="font-weight:600">${Vn.typeName(s.type)}</b> <span class="dim sm">${F.date(s.date)}</span><small>${s.items.map(id => E(nm(id)) + (s.split && s.split[id] ? ` ${s.split[id]}m` : '')).join(' · ')}${s.notes ? `<br>“${E(s.notes)}”` : ''}</small></div><span class="r">${s.minutes}M</span></div>`).join('')}</div>
+  ${strip('Repertoire')}
+  <div class="list">${Vn.archive.map(a => `<div class="it"><div>${E(a.composer)}: ${E(a.title)}<small>${a.when}</small></div><span class="pill ${a.status === 'Performed' ? 'inv' : ''}">${a.status}</span></div>`).join('')}</div>
+  ${related('violin')}
+  </div>`;
+};
+
+V.gym = S => {
+  const G = LT.gym, a = LT.state.gym.active;
+  if (a) {
+    const p = G.progress();
+    return `<div class="view">
+    <div class="room-head"><button class="back" data-a="home" aria-label="Back to the map">◀</button><div><h1>${E(a.name)}</h1><div class="sub">${p.done}/${p.total} sets · ${p.elapsed} min</div></div><button class="btn light sm" data-a="gcancel">Quit</button></div>
+    ${blocks(p.done / p.total, p.total)}
+    ${a.exercises.map((e, ei) => `<div class="box ex"><div class="ex-h"><b>${E(e.name)}</b><button class="btn light sm" data-a="gswap" data-v="${ei}">Swap</button></div>${e.swappedFrom ? `<p class="notice">Swapped from ${E(e.swappedFrom)}</p>` : ''}
+      <div class="set lbl dim"><span>#</span><span style="text-align:center">KG</span><span style="text-align:center">${e.unit === 's' ? 'SEC' : 'REPS'}</span><span></span></div>
+      ${e.sets.map((s, si) => `<div class="set ${s.done ? 'done' : ''}"><span class="n">${si + 1}</span>
+        <span class="adj"><button data-a="gbump" data-e="${ei}" data-s="${si}" data-f="weight" data-d="-2.5" aria-label="Less weight">−</button><output>${s.weight || 'BW'}</output><button data-a="gbump" data-e="${ei}" data-s="${si}" data-f="weight" data-d="2.5" aria-label="More weight">+</button></span>
+        <span class="adj"><button data-a="gbump" data-e="${ei}" data-s="${si}" data-f="reps" data-d="-1" aria-label="Fewer reps">−</button><output>${s.reps}</output><button data-a="gbump" data-e="${ei}" data-s="${si}" data-f="reps" data-d="1" aria-label="More reps">+</button></span>
+        <button class="done-sq ${s.done ? 'on' : ''}" data-a="gset" data-e="${ei}" data-s="${si}" aria-label="Set ${si + 1} done"></button></div>`).join('')}
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px"><span class="lbl dim">Rest ${e.rest}s</span><span style="display:flex;gap:6px"><button class="btn light sm" data-a="grem" data-v="${ei}">− Set</button><button class="btn light sm" data-a="gadd" data-v="${ei}">+ Set</button></span></div></div>`).join('')}
+    <button class="btn gold block" data-a="gfinish" style="margin-top:14px">Finish session</button>
+    <p class="notice" style="margin-top:8px">${E(LT.LABELS.gym)}. Stop if something hurts.</p></div>`;
+  }
+  const next = G.nextPlanned(), tpl = next ? G.templates[next.template] : G.templates.upperA, mon = D.weekStart(T);
+  const occ = LT.cal.occurrences(mon, D.addDays(mon, 6), { includeLogs: false, tasks: false }).filter(o => !o.cancelled && o.section === 'sports');
+  const prog = G.progression(S.ui.gymLift);
+  return `<div class="view">
+  ${room('gym', 'Training grounds · workout sheet')}
+  <div class="box dbl">
+    <div style="display:flex;justify-content:space-between;gap:8px;align-items:center"><span class="lbl">${next && next.date === T ? 'Today' : next ? 'Next · ' + F.date(next.date) : 'No session planned'}</span><span class="pill">${G.weekCount()}/2 this week</span></div>
+    <div class="big" style="font-size:28px;margin:6px 0 2px">${tpl.name.toUpperCase()}</div><p class="sm mid">${tpl.focus} · about ${tpl.estimate} min</p>
+    <div class="list" style="margin:8px 0">${tpl.exercises.map(e => `<div class="it" style="min-height:38px;padding:5px 0;border-bottom-width:1px"><span>${e.name}</span><span class="r">${e.sets}×${e.reps}${e.unit === 's' ? 'S' : ''}${e.weight ? ' · ' + e.weight + 'KG' : ''}</span></div>`).join('')}</div>
+    <button class="btn gold block" data-a="gstart" data-v="${tpl.id}">▶ Start ${tpl.name}</button>
+    <p class="sample" style="margin-top:8px">${E(LT.LABELS.gym)}</p>
+  </div>
+  ${strip('Week plan')}
+  <div class="week7">${[0, 1, 2, 3, 4, 5, 6].map(i => { const d = D.addDays(mon, i), p = LT.state.gym.plan.find(x => x.date === d), done = LT.state.gym.history.find(h => h.date === d), sp = [...new Set(occ.filter(o => o.date === d).map(o => o.title.includes('Volley') ? 'VB' : 'RUN'))]; return `<div class="${d === T ? 'now' : ''}"><span class="d">${F.day(d).toUpperCase()}</span><b class="lbl">${D.parse(d).getDate()}</b>${p ? `<span class="g ${done ? 'done' : ''}">${G.templates[p.template].name.toUpperCase()}</span>` : ''}${sp.map(x => `<span class="s">${x}</span>`).join('')}</div>`; }).join('')}</div>
+  <p class="notice" style="margin-top:8px">Legs on Saturday keep Sunday free before Monday volleyball. Upper body on Wednesday keeps legs fresh for Thursday morning. Running stays modest on gym weeks (past shin discomfort).</p>
+  <div class="two"><div>
+  ${strip('Progress', '<span class="lbl dim">top set kg</span>')}
+  <div class="tabs wrap">${['Bench press', 'Overhead press', 'Goblet squat', 'Romanian deadlift'].map(l => `<button class="${S.ui.gymLift === l ? 'on' : ''}" data-a="glift" data-v="${l}">${l.replace('Romanian deadlift', 'RDL')}</button>`).join('')}</div>
+  <div class="box" style="border-top:0">${prog.length > 1 ? stepLine(prog.map(p => p.weight), prog.map(p => D.parse(p.date).getDate() + '/' + (D.parse(p.date).getMonth() + 1)), { every: 2 }) : '<p class="notice">Not enough sessions yet.</p>'}</div>
+  </div><div>
+  ${strip('History')}
+  <div class="list">${LT.state.gym.history.slice(0, 6).map(h => `<div class="it ${h.fresh ? 'fresh' : ''}"><div>${G.templates[h.template].name} <span class="dim sm">${F.date(h.date)}</span><small>${h.sets} sets${h.effort ? ' · effort ' + h.effort : ''}${h.soreness != null ? ' · sore ' + h.soreness : ''}${h.pain ? ' · pain noted' : ''}</small></div><span class="r">${h.minutes}M</span></div>`).join('')}</div>
+  </div></div>
+  ${related('gym')}
+  </div>`;
+};
+
+function sleepTL(nights) {
+  const W = 300, rh = 14, top = 14, l = 40, r = 38, start = 21 * 60, span = 13 * 60, iw = W - l - r;
+  const x = m => { const v = m < 720 ? m + 1440 : m; return Math.round(l + (v - start) / span * iw); };
+  let s = '';
+  ['21', '00', '03', '06', '09'].forEach(t => { const xx = x(+t * 60); s += `<text x="${xx}" y="8" text-anchor="middle">${t}</text><line x1="${xx}" x2="${xx}" y1="11" y2="${top + nights.length * rh}" stroke="var(--ink-2)" stroke-dasharray="1 2"/>`; });
+  nights.forEach((n, i) => {
+    const y = top + i * rh, tg = LT.sleep.targetFor(n.date), inW = Math.abs(LT.sleep.delta(n)) <= 30;
+    s += `<rect x="${x(D.toMin(tg.bed))}" y="${y + 2}" width="${x(D.toMin(tg.wake)) - x(D.toMin(tg.bed))}" height="${rh - 4}" fill="none" stroke="var(--ink-3)" stroke-dasharray="1 1"/>`;
+    s += `<rect x="${x(D.toMin(n.bed))}" y="${y + 4}" width="${x(D.toMin(n.wake)) - x(D.toMin(n.bed))}" height="${rh - 8}" fill="${n.fresh ? 'var(--gold)' : inW ? 'var(--paper)' : 'url(#dithN)'}"><title>${F.date(n.date)} ${n.bed}–${n.wake}</title></rect>`;
+    s += `<text class="d" x="0" y="${y + 10}">${F.day(n.date).toUpperCase()} ${D.parse(n.date).getDate()}</text><text class="d" x="${W}" y="${y + 10}" text-anchor="end">${F.hm(LT.sleep.duration(n)).replace(' ', '').replace('m', '')}</text>`;
+  });
+  return `<svg class="px tlx" viewBox="0 0 ${W} ${top + nights.length * rh + 2}" style="width:100%;height:auto" role="img" aria-label="Sleep timeline"><defs><pattern id="dithN" width="2" height="2" patternUnits="userSpaceOnUse"><rect width="2" height="2" fill="var(--ink)"/><rect width="1" height="1" fill="var(--paper)"/><rect x="1" y="1" width="1" height="1" fill="var(--paper)"/></pattern></defs>${s}</svg>`;
+}
+V.sleep = S => {
+  const Sl = LT.state.sleep, st = LT.sleep.stats(7), logged = LT.sleep.lastNightLogged(), f = S.ui.sleepDraft, sch = Sl.schedule, L = LT.level('sleep'), k = LT.sectionStreak('sleep');
+  const moon = sprite(['..WWWW..', '.WWWW...', 'WWWW....', 'WWW.....', 'WWW.....', 'WWWW....', '.WWWWW..', '..WWWW..']);
+  return `<div class="view"><div class="night">
+  <div class="room-head"><button class="back" data-a="home" aria-label="Back to the map">◀</button><div><h1>Sleep</h1><div class="sub">The cottage · night log</div></div><span style="width:40px">${moon}</span></div>
+  <div class="statrow"><span class="pill" style="background:var(--paper);color:var(--ink)">LV ${L.level}</span><span class="pill">${L.into}/${L.need} XP</span><span class="pill">${k.n} nights near bedtime</span></div>
+  <div class="box" style="display:grid;gap:10px">
+    ${logged ? (() => { const n = Sl.nights.find(x => x.date === T); return `<span class="lbl mid">Last night saved</span><div class="big tnum">${F.hm(LT.sleep.duration(n))}</div><span class="mid">${n.bed} → ${n.wake}${n.score ? ' · score ' + n.score : ''}</span><button class="btn light sm" data-a="sleepedit" style="justify-self:start">Edit</button>`; })() : `
+    <span class="lbl mid">Fri night → Sat</span>
+    <div class="clock2"><div><span class="lbl mid">Bed</span><span class="tv tnum">${f.bed}</span><span class="r"><button data-a="sadj" data-f="bed" data-d="-15">-15</button><button data-a="sadj" data-f="bed" data-d="15">+15</button></span></div>
+      <div><span class="lbl mid">Wake</span><span class="tv tnum">${f.wake}</span><span class="r"><button data-a="sadj" data-f="wake" data-d="-15">-15</button><button data-a="sadj" data-f="wake" data-d="15">+15</button></span></div></div>
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><span class="lbl">${F.hm(LT.sleep.duration(f))}</span><span style="display:flex;gap:6px;align-items:center"><span class="lbl mid">Score</span><button class="nbtn" data-a="sscore" data-d="-5" aria-label="Lower score">-</button><b class="lbl" style="min-width:28px;text-align:center">${f.score == null ? '--' : f.score}</b><button class="nbtn" data-a="sscore" data-d="5" aria-label="Higher score">+</button></span></div>
+    <button class="btn block" data-a="sleepsave">Save night</button>`}
+    <span class="sample">${E(LT.LABELS.sleep)}</span>
+  </div>
+  <div class="grid2" style="margin-top:10px"><div class="kv"><b>${F.hm(st.avgDuration)}</b><span>average, 7 nights</span></div><div class="kv"><b>±${st.spread}M</b><span>bedtime spread</span></div><div class="kv"><b>${st.inWindow}/7</b><span>near your bedtime</span></div><div class="kv"><b>${st.avgBed}</b><span>usual bedtime</span></div></div>
+  ${strip('Timeline', '<span class="lbl mid">dotted = plan</span>')}
+  <div class="box">${sleepTL(Sl.nights.slice(-10).reverse())}</div>
+  ${strip('Schedule')}
+  <div class="list">
+    ${['weekday', 'weekend'].map(kk => `<div class="it"><div>${kk === 'weekday' ? 'School nights' : 'Weekends'}<small>${kk === 'weekday' ? 'Sun–Thu' : 'Fri–Sat'}</small></div><div style="display:grid;gap:4px;justify-items:end">
+      <span style="display:flex;gap:4px;align-items:center"><span class="lbl mid">Bed</span><button class="nbtn" data-a="ssched" data-k="${kk}" data-f="bed" data-d="-1" aria-label="Earlier bedtime">-</button><b class="lbl">${sch[kk].bed}</b><button class="nbtn" data-a="ssched" data-k="${kk}" data-f="bed" data-d="1" aria-label="Later bedtime">+</button></span>
+      <span style="display:flex;gap:4px;align-items:center"><span class="lbl mid">Up</span><button class="nbtn" data-a="ssched" data-k="${kk}" data-f="wake" data-d="-1" aria-label="Earlier wake">-</button><b class="lbl">${sch[kk].wake}</b><button class="nbtn" data-a="ssched" data-k="${kk}" data-f="wake" data-d="1" aria-label="Later wake">+</button></span></div></div>`).join('')}
+    <div class="it"><div>Early mornings<small>${sch.early.days}: up ${sch.early.wake} · ${sch.early.why}</small></div></div>
+    <button class="it" data-a="sremind" style="width:100%;text-align:left;color:inherit"><div>Wind-down reminder<small>${sch.windDown} min before bed · tonight ${LT.sleep.windDownTime(T)}</small></div><span class="switch ${sch.reminders ? 'on' : ''}"></span></button>
+  </div>
+  <p class="notice" style="color:var(--paper-2);margin-top:8px">Reminders are simulated. XP is for logging and a steady bedtime, never for sleeping less.</p>
+  </div></div>`;
+};
+
+V.screen = S => {
+  const Sc = LT.state.screen, days = Sc.days.slice(-14), f = S.ui.screenDraft, logged = LT.screen.todayLogged(), tw = LT.screen.weekAvg(0), lw = LT.screen.weekAvg(1);
+  return `<div class="view">
+  ${room('screen', 'The arcade · daily totals')}
+  <div class="box dbl" style="display:grid;gap:10px">
+    ${logged ? `<span class="lbl dim">Today saved</span><div class="big tnum">${F.hm(Sc.days.find(d => d.date === T).minutes)}</div>` : `<span class="lbl dim">Today’s total from Screen Time</span>
+    <div class="minpick"><button class="sqbtn" data-a="scr" data-d="-15" aria-label="15 minutes less">-15</button><output class="tnum" style="font-size:34px">${F.hm(f.minutes).replace(' ', '')}<small>${f.minutes <= Sc.target ? 'under target' : (f.minutes - Sc.target) + ' min over'}</small></output><button class="sqbtn" data-a="scr" data-d="15" aria-label="15 minutes more">+15</button></div>
+    <button class="btn gold block" data-a="scrsave">Save today</button>`}
+    <span class="sample">${E(LT.LABELS.screen)}</span>
+  </div>
+  <div class="grid2" style="margin-top:10px"><div class="kv"><b>${F.hm(tw)}</b><span>daily avg this week</span></div><div class="kv"><b>${tw <= lw ? '-' : '+'}${Math.abs(tw - lw)}M</b><span>vs last week (${F.hm(lw)})</span></div></div>
+  ${strip('14 days', '<span class="lbl dim">1 block = 30 min</span>')}
+  <div class="box">${blockChart(days.map(d => d.minutes), days.map(d => F.day(d.date)[0]), { per: 30, target: Sc.target, hi: [days.length - 1] })}</div>
+  ${strip('Target')}
+  <div class="kvrow"><span>Daily target <span class="dim sm">(optional)</span></span>${stepper('scrtgt', F.hm(Sc.target), 'daily target')}</div>
+  ${related('screen')}
+  </div>`;
+};
+
+V.coding = S => {
+  const C = LT.coding;
+  return `<div class="view">
+  ${room('coding', 'Dragon tower · Road to IOI')}
+  <div class="box dbl" style="display:grid;gap:8px">
+    <span class="lbl dim">Current training</span><b style="font-size:19px;font-weight:600">${E(C.focus)}</b>
+    ${C.plan.map(p => `<div><div style="display:flex;justify-content:space-between" class="sm"><span>${E(p.label)}</span><span class="lbl">${p.done}/${p.total}</span></div>${blocks(p.done / p.total, p.total)}</div>`).join('')}
+    <a class="btn gold block" href="${C.dragonUrl}" target="_blank" rel="noopener" style="text-decoration:none">Open DragonCode ↗</a>
+    <span class="sample">${E(LT.LABELS.dragon)}</span>
+  </div>
+  <div class="two"><div>
+  ${strip('Road to IOI')}
+  <div class="road">${C.road.map((r, i) => `<div class="st ${r.status}"><span class="nd">${r.status === 'done' ? '✓' : r.status === 'goal' ? '★' : i + 1}</span><span class="t">${E(r.label)}</span><span class="lbl dim">${E(r.when)}</span></div>`).join('')}</div>
+  </div><div>
+  <div class="grid2" style="margin-top:16px"><div class="kv"><b>${C.rating.value}</b><span>contest rating · peak ${C.rating.peak}</span></div><div class="kv"><b>${C.solved}</b><span>solved · +${C.solvedWeek} this week</span></div></div>
+  ${strip('Rating', '<span class="lbl dim">12 contests</span>')}
+  <div class="box">${stepLine(C.rating.hist, C.rating.hist.map((_, i) => '#' + (i + 1)))}</div>
+  ${strip('28 days')}
+  <div class="dots">${C.days.map((m, i) => `<i class="${m === 0 ? '' : m < 40 ? 'l1' : m < 60 ? 'l2' : 'l3'} ${i === 27 ? 'now' : ''}" title="${m} min"></i>`).join('')}</div>
+  </div></div>
+  ${strip('Recent')}
+  <div class="list">${C.recent.map(r => `<div class="it"><div>${E(r.title)}<small>${E(r.note)}</small></div><span class="r">${F.short(r.date)}</span></div>`).join('')}</div>
+  ${related('coding')}
+  </div>`;
+};
+
+V.sports = S => {
+  const Sp = LT.sports, ui = S.ui, log = LT.state.sports.log.filter(x => ui.sport === 'all' || x.sport === ui.sport).slice(0, 8);
+  return `<div class="view">
+  ${room('sports', 'The field · run, ride, swim, court')}
+  <div class="tabs">${['all', ...Object.keys(Sp.kinds)].map(k => `<button class="${ui.sport === k ? 'on' : ''}" data-a="sport" data-v="${k}">${k === 'all' ? 'All' : Sp.kinds[k].name}</button>`).join('')}</div>
+  <button class="btn gold block" data-a="slog" style="margin-top:10px">+ Log ${ui.sport === 'all' ? 'session' : Sp.kinds[ui.sport].name}</button>
+  <div class="grid2" style="margin-top:10px"><div class="kv"><b>${Sp.weekCount()}</b><span>sessions this week · aim 3+</span></div><div class="kv"><b>1:58:12</b><span>half marathon PB</span></div></div>
+  ${strip('Log')}
+  <div class="list">${log.length ? log.map(e => `<div class="it ${e.fresh ? 'fresh' : ''}"><div>${Sp.kinds[e.sport].name}${e.kind ? ' · ' + e.kind : ''} <span class="dim sm">${F.date(e.date)}</span><small>${e.km ? e.km + ' km · ' + Sp.metric(e) : ''}${e.score ? 'Score ' + E(e.score) : ''}${e.route ? ' · ' + E(e.route) : ''}${e.notes ? ' · ' + E(e.notes) : ''}${e.source ? ' · sample import' : ''}</small></div><span class="r">${e.minutes}M</span></div>`).join('') : '<p class="notice">No sessions for this sport yet.</p>'}</div>
+  <p class="sample" style="margin-top:6px">${E(LT.LABELS.garmin)}</p>
+  <div class="two"><div>
+  ${strip('Personal bests')}
+  <div class="list">${Sp.pbs.filter(p => ui.sport === 'all' || p.sport === ui.sport).map(p => `<div class="it"><div>${Sp.kinds[p.sport].name} · ${p.label}<small>${F.short(p.date)} ${D.parse(p.date).getFullYear()}${p.note ? ' · ' + p.note : ''}</small></div><span class="r" style="font-size:16px">${p.value}</span></div>`).join('') || '<p class="notice">No bests yet for this sport.</p>'}</div>
+  </div><div>
+  ${strip('Weekly minutes', '<span class="lbl dim">1 block = 30</span>')}
+  <div class="box">${blockChart(Sp.weeks.map(w => w.run + w.ride + w.swim + w.court), Sp.weeks.map(w => D.parse(w.week).getDate()), { per: 30, hi: [7] })}</div>
+  </div></div>
+  ${strip('Volleyball schedule')}
+  <div class="cursor-list">${LT.state.cal.rules.filter(r => r.section === 'sports').map(r => `<button data-a="rule" data-v="${r.id}"><span>${E(r.title)}<br><small>${r.days.map(x => D.DAYS[x]).join(' & ')} · ${r.start}–${r.end} · ${r.until ? 'until ' + F.short(r.until) : 'from ' + F.short(r.from)}</small></span><span class="lbl">Edit</span></button>`).join('')}</div>
+  <p class="notice" style="margin-top:6px">Change one practice or every practice from a date onward.</p>
+  ${related('sports')}
+  </div>`;
+};
+
+V.study = S => {
+  const St = LT.study, sub = St.subject(S.ui.subject), logs = LT.state.study.log.filter(l => l.subject === sub.id).slice(0, 5);
+  return `<div class="view">
+  ${room('study', 'The library · A-levels')}
+  <div class="tabs" role="tablist">${St.subjects.map(s => `<button class="${S.ui.subject === s.id ? 'on' : ''}" data-a="subject" data-v="${s.id}" role="tab" aria-selected="${S.ui.subject === s.id}">${s.id === 'fm' ? 'F.Maths' : s.id === 'cs' ? 'CS' : s.name}</button>`).join('')}</div>
+  <div class="box" style="border-top:0;display:grid;gap:8px">
+    <div style="display:flex;justify-content:space-between;align-items:baseline"><b style="font-size:20px">${sub.name}</b><span class="lbl">${F.dur(St.weekMinutes(sub.id) || sub.week[5])} this wk</span></div>
+    ${blockChart(sub.week, St.weeks.map(w => D.parse(w).getDate()), { per: 30, hi: [5], h: 8 })}
+    <button class="btn gold block" data-a="studylog">+ Log study</button>
+  </div>
+  <div class="two"><div>
+  ${strip('Topics covered')}<div class="list">${sub.topics.map(t => `<div class="it"><span>${E(t)}</span></div>`).join('')}</div>
+  ${strip('Needs work')}<div class="list">${sub.hard.map(t => `<div class="it"><span>${E(t)}</span><span class="pill red">Tricky</span></div>`).join('')}</div>
+  </div><div>
+  ${strip('Marks')}<div class="list">${sub.marks.map(m => `<div class="it"><div>${E(m.title)}<small>${F.short(m.date)}</small></div><span class="r" style="font-size:18px">${m.note || m.score + '%'}</span></div>`).join('')}</div>
+  ${strip('Sessions')}<div class="list">${logs.length ? logs.map(l => `<div class="it ${l.fresh ? 'fresh' : ''}"><div>${E(l.topic)}<small>${F.date(l.date)}${l.source ? ' · from maths/physics app (sample)' : ''}</small></div><span class="r">${l.minutes}M</span></div>`).join('') : '<p class="notice">No sessions this week.</p>'}</div>
+  </div></div>
+  ${strip('Exams')}<div class="list">${St.exams.map(e => `<div class="it"><div>${E(e.title)}<small>${F.date(e.date)}</small></div><span class="pill inv">${F.rel(e.date)}</span></div>`).join('')}</div>
+  ${strip('Homework', '<button data-a="go" data-v="tasks" data-sec="study">All tasks</button>')}${LT.tasks.list({ section: 'study', status: 'open' }).map(quest).join('')}
+  <p class="sample" style="margin-top:8px">${E(LT.LABELS.studyApp)}</p>
+  </div>`;
+};
+
+V.chess = S => {
+  const C = LT.chess.data, tc = C.tcs.find(t => t.id === S.ui.tc), rec = LT.chess.record();
+  return `<div class="view">
+  ${room('chess', 'The keep · ratings and games')}
+  <p class="sample" style="margin-bottom:8px">${E(LT.LABELS.chess)} · GM_TaskTaskPro</p>
+  <div class="grid2">${C.tcs.map(t => { const d = t.rating - t.hist[t.hist.length - 2]; return `<button class="kv" data-a="tc" data-v="${t.id}" style="text-align:left;${S.ui.tc === t.id ? 'background:var(--ink);color:var(--paper)' : ''}"><span class="lbl" style="color:inherit">${t.name}</span><b>${t.rating}</b><span style="color:inherit;opacity:.8">${d >= 0 ? '▲' : '▼'}${Math.abs(d)} · best ${t.best}</span></button>`; }).join('')}</div>
+  ${strip(tc.name + ' trend', '<span class="lbl dim">12 weeks</span>')}
+  <div class="box">${stepLine(tc.hist, tc.hist.map((_, i) => i === 11 ? 'now' : '-' + (11 - i) + 'w'))}</div>
+  <div class="grid2" style="margin-top:10px"><div class="kv"><b>${rec.win}W ${rec.draw}D ${rec.loss}L</b><span>recent games</span></div><div class="kv"><b>${F.hm(C.weekMinutes.reduce((a, b) => a + b, 0))}</b><span>played this week</span></div></div>
+  ${strip('Recent games')}
+  <div class="list">${C.games.map(g => `<div class="it"><div><span class="pill ${g.result === 'win' ? 'inv' : g.result === 'loss' ? 'red' : ''}" style="margin-right:6px">${g.result === 'win' ? 'W' : g.result === 'loss' ? 'L' : '½'}</span>vs ${E(g.opp)} (${g.oppRating})<small>${g.tc} ${g.clock} · ${g.color} · ${E(g.opening)} · ${g.moves} moves</small></div><span class="r">${F.short(g.date)}</span></div>`).join('')}</div>
+  ${strip('Puzzles & study', '<button data-a="chesslog">+ Log</button>')}
+  <div class="list"><div class="it"><div>Puzzle rating<small>best ${C.puzzle.best}</small></div><span class="r" style="font-size:16px">${C.puzzle.rating}</span></div>
+  ${LT.state.chess.puzzles.slice(0, 3).map(p => `<div class="it ${p.fresh ? 'fresh' : ''}"><div>${p.solved} puzzles<small>${F.date(p.date)}</small></div><span class="r">${p.minutes}M</span></div>`).join('')}
+  ${LT.state.chess.study.slice(0, 2).map(p => `<div class="it ${p.fresh ? 'fresh' : ''}"><div>${E(p.topic)}<small>${F.date(p.date)}</small></div><span class="r">${p.minutes}M</span></div>`).join('')}</div>
+  ${related('chess')}
+  </div>`;
+};
+
+V.calendar = S => {
+  const ui = S.ui, sel = ui.calSel, first = sel.slice(0, 8) + '01', firstD = D.parse(first);
+  const gridStart = D.weekStart(first), end = D.addDays(gridStart, 41);
+  const occ = LT.cal.occurrences(gridStart, end, { sections: ui.calFilter });
+  const conf = LT.cal.conflicts(gridStart, end);
+  const dayList = occ.filter(o => o.date === sel);
+  const monthShift = n => { const d = new Date(firstD); d.setMonth(d.getMonth() + n); return D.toISO(d); };
+  return `<div class="view">
+  <div class="room-head"><button class="back" data-a="home" aria-label="Back to the map">◀</button><div><h1>Calendar</h1><div class="sub">All sections in one place</div></div><button class="btn light sm" data-a="cald" data-v="${T}">Today</button></div>
+  <div class="tabs" style="margin-bottom:8px"><button class="${!ui.calFilter.length ? 'on' : ''}" data-a="calfclear">All</button>${LT.SECTIONS.map(s => `<button class="${ui.calFilter.includes(s.id) ? 'on' : ''}" data-a="calf" data-v="${s.id}">${s.id === 'screen' ? 'Screen' : s.name}</button>`).join('')}</div>
+  <div style="display:flex;justify-content:space-between;align-items:center;margin:6px 0"><button class="back" data-a="cald" data-v="${monthShift(-1)}" aria-label="Previous month">◀</button><b class="lbl" style="font-size:15px">${D.MONTHS_LONG[firstD.getMonth()]} ${firstD.getFullYear()}</b><button class="back" data-a="cald" data-v="${monthShift(1)}" aria-label="Next month">▶</button></div>
+  <div class="month">${['M', 'T', 'W', 'T', 'F', 'S', 'S'].map(d => `<span class="hd">${d}</span>`).join('')}
+    ${Array.from({ length: 42 }, (_, i) => { const d = D.addDays(gridStart, i), o = occ.filter(x => x.date === d && !x.cancelled); const out = d.slice(5, 7) !== first.slice(5, 7); return `<button class="c ${out ? 'out' : ''} ${d === sel ? 'sel' : ''} ${d === T ? 'today' : ''}" data-a="cald" data-v="${d}" aria-label="${F.long(d)}, ${o.length} items"><b>${D.parse(d).getDate()}</b><span class="mk">${o.slice(0, 6).map(x => `<i class="${x.conflict ? 'x' : x.status === 'done' ? '' : 'p'}"></i>`).join('')}</span></button>`; }).join('')}
+  </div>
+  <p class="notice" style="margin-top:6px">■ done · □ planned · <span style="color:var(--red)">■</span> clash</p>
+  ${conf.length ? `<div class="warn"><span>${[...new Set(conf.map(c => F.date(c.date)))].join(', ')}: ${E(conf[0].title)} overlaps ${E(conf[0].conflictWith.join(', '))}. Nothing is moved automatically.</span></div>` : ''}
+  ${strip(F.long(sel))}
+  <div>${dayList.length ? dayList.map(o => { const tap = o.kind !== 'log' && o.kind !== 'task'; const tag = o.cancelled ? 'OFF' : o.conflict ? 'CLASH' : o.status === 'done' ? 'DONE' : o.status === 'unlogged' ? 'NOT LOGGED' : o.kind === 'task' ? 'TASK' : o.kind === 'exam' ? 'EXAM' : o.kind === 'performance' ? 'CONCERT' : o.kind === 'competition' ? 'MATCH' : 'PLAN';
+    return `<${tap ? 'button' : 'div'} class="evr ${o.status === 'done' ? 'done' : 'planned'} ${o.cancelled ? 'cancelled' : ''}" ${tap ? `data-a="ev" data-v="${o.id}"` : ''}><span class="tm">${o.start || '--:--'}</span><span class="ti">${E(o.title)}<small>${LT.section(o.section) ? LT.section(o.section).name : 'General'}${o.recurring ? ' · weekly' : ''}${o.changed ? ' · moved' : ''}${o.note ? ' · ' + E(o.note) : ''}</small></span><span class="tag ${o.conflict && !o.cancelled ? 'clash' : ''}">${tag}</span></${tap ? 'button' : 'div'}>`; }).join('') : '<p class="notice">Nothing on this day.</p>'}</div>
+  <div class="foot"><span class="sample">${E(LT.LABELS.google)}</span><span class="sample">${E(LT.LABELS.school)}</span><button class="linkbtn" data-a="addev">+ Add event</button></div>
+  </div>`;
+};
+
+V.tasks = S => {
+  const ui = S.ui, f = { section: ui.taskSec, status: ui.taskWhen === 'done' ? 'done' : 'open' };
+  if (ui.taskWhen === 'today') f.when = 'today'; if (ui.taskWhen === 'week') f.when = 'week';
+  const list = LT.tasks.list(f);
+  return `<div class="view">
+  <div class="room-head"><button class="back" data-a="home" aria-label="Back to the map">◀</button><div><h1>Tasks</h1><div class="sub">Quest log for every section</div></div><button class="btn gold sm" data-a="addtask">+ New</button></div>
+  <div class="tabs">${[['open', 'Open'], ['today', 'Today'], ['week', '7 days'], ['done', 'Done']].map(([k, l]) => `<button class="${ui.taskWhen === k ? 'on' : ''}" data-a="tw" data-v="${k}">${l}</button>`).join('')}</div>
+  <div class="tabs" style="margin-top:6px"><button class="${!ui.taskSec ? 'on' : ''}" data-a="ts" data-v="">Any</button>${LT.SECTIONS.map(s => `<button class="${ui.taskSec === s.id ? 'on' : ''}" data-a="ts" data-v="${s.id}">${s.id === 'screen' ? 'Screen' : s.name}</button>`).join('')}</div>
+  <div style="margin-top:8px">${list.length ? list.map(quest).join('') : `<div class="box" style="text-align:center;margin-top:10px"><p>${ui.taskWhen === 'done' ? 'No finished quests with these filters.' : 'Quest log empty. Well played.'}</p></div>`}</div>
+  <p class="notice" style="margin-top:10px">!!! high · !! medium · ! low. Each task gives 5 XP once.</p>
+  </div>`;
+};
+
+V.you = S => {
+  const O = LT.overall(), st = LT.streak(), ach = LT.achievements();
+  return `<div class="view">
+  <div class="room-head"><button class="back" data-a="home" aria-label="Back to the map">◀</button><div><h1>Hero</h1><div class="sub">Character sheet</div></div><span></span></div>
+  <div class="box dbl" style="display:grid;grid-template-columns:110px 1fr;gap:12px;align-items:center">
+    <div>${hero(O.stage)}</div>
+    <div style="display:grid;gap:6px"><span class="lbl">${STAGE[O.stage]} · stage ${O.stage + 1}/5</span><span class="big">LV ${O.level}</span>${blocks(O.pct, 10, 'gold')}<span class="sm mid">${O.toNext} XP to LV ${O.level + 1} · ${flame(12)} ${st.n} days</span></div>
+  </div>
+  <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap"><button class="btn gold" data-a="preview">Preview evolution</button><button class="btn light" data-a="rest" ${st.today ? 'disabled' : ''}>${st.rest ? 'Resting today' : 'Rest day'}</button></div>
+  <p class="notice" style="margin-top:6px">A rest day keeps the streak. Missed targets never take away XP or levels.</p>
+  ${strip('Evolution', '<span class="lbl dim">months · years</span>')}
+  <div class="lineup">${LT.STAGES.map((s, i) => `<div class="${i === O.stage ? 'cur' : ''}">${hero(i, { still: true, silhouette: i > O.stage })}<b>${i > O.stage ? '???' : STAGE[i]}</b><small>${s.since || (i > O.stage ? 'LV ' + s.level : 'now')}</small></div>`).join('')}</div>
+  <div class="two"><div>
+  ${strip('Stats')}
+  <div>${LT.SECTIONS.map(s => { const L = LT.level(s.id); return `<button class="statline" data-a="open" data-v="${s.id}"><span class="k">${s.id === 'screen' ? 'Screen' : s.name}</span>${blocks(L.pct, 10)}<span class="v">LV${L.level}</span></button>`; }).join('')}</div>
+  </div><div>
+  ${strip('Trophies', `<span class="lbl dim">${ach.filter(a => a.unlocked).length}/${ach.length}</span>`)}
+  <div class="badges">${ach.map(a => `<div class="badge ${a.unlocked ? '' : 'locked'}">${trophy(!!a.unlocked)}<b>${E(a.title)}</b><small>${a.unlocked ? E(a.desc) : a.progress + '/' + a.goal + ' · ' + E(a.desc)}</small></div>`).join('')}</div>
+  </div></div>
+  ${strip('XP rules (draft)')}
+  <div class="box sm" style="display:grid;gap:4px"><p>Time: ~1 XP per 2 min, capped per session.</p><p>Logging: small flat bonus. Weekly targets and milestones: bigger bonus.</p><p>Gym XP stops at the planned sets. Sleep XP is for logging and a steady bedtime.</p><p class="dim">${E(LT.LABELS.xp)}.</p></div>
+  <div class="foot"><button class="linkbtn" data-a="reset">Reset prototype data</button></div>
+  </div>`;
+};
+
+/* ---------- command bar ---------- */
+const ICONS = {
+  map: ['KKKKKKKK', 'KWWKWWWK', 'KWWKWWWK', 'KWWKKKKK', 'KKKKWWWK', 'KWWWWWWK', 'KWWWWWWK', 'KKKKKKKK'],
+  cal: ['.K....K.', 'KKKKKKKK', 'KWWWWWWK', 'KWKWKWWK', 'KWWWWWWK', 'KWKWKWKK', 'KWWWWWWK', 'KKKKKKKK'],
+  tasks: ['KKKKKKKK', 'KWWWWWWK', 'KWKKKKWK', 'KWWWWWWK', 'KWKKKKWK', 'KWWWWWWK', 'KWKKWWWK', 'KKKKKKKK'],
+  hero: ['..KKKK..', '.KWWWWK.', '.KWKKWK.', '.KWWWWK.', '..KKKK..', '.KKKKKK.', 'KKKKKKKK', 'KK....KK'],
+};
+const icn = (n, on) => sprite(ICONS[n].map(r => r.split('').map(c => c === 'K' ? (on ? 'G' : 'W') : '.').join('')));
+function nav(S) {
+  const v = S.ui.view, cur = ['calendar', 'tasks', 'you'].includes(v) ? v : 'home';
+  const b = (id, l, ic) => `<button class="${cur === id ? 'on' : ''}" data-a="go" data-v="${id}" ${cur === id ? 'aria-current="page"' : ''}>${icn(ic, cur === id)}${l}</button>`;
+  return `<div class="in">${b('home', 'Map', 'map')}${b('calendar', 'Calendar', 'cal')}<button class="a-btn" data-a="quick" aria-label="Log something">+</button>${b('tasks', 'Tasks', 'tasks')}${b('you', 'Hero', 'hero')}</div>`;
+}
+
+/* ---------- dialogs ---------- */
+const dlg = (title, inner, steps = '') => `<div class="scrim" data-a="close"></div><div class="dlg" role="dialog" aria-modal="true" aria-label="${E(title)}"><div class="dlg-h"><h2>${E(title)}</h2><button class="x" data-a="close" aria-label="Close">✕</button></div>${steps}${inner}</div>`;
+const SH = {};
+SH.violin = S => {
+  const f = S.sheet, Vn = LT.violin, steps = `<div class="dlg-steps">${[1, 2, 3].map(i => `<i class="${f.step >= i ? 'on' : ''}"></i>`).join('')}</div>`;
+  let body, foot;
+  if (f.step === 1) {
+    const hint = { solo: 'On your own', lesson: 'Thu 16:00', orchestra: 'Thu 17:15', trio: 'Elgar trio' };
+    body = `<p class="say">What kind of session?</p><div class="cursor-list">${Vn.TYPES.map(t => `<button class="${f.typeId === t.id ? 'on' : ''}" data-a="vtype" data-v="${t.id}"><span>${t.name}</span><small>${hint[t.id]}</small></button>`).join('')}</div>`;
+    foot = `<button class="btn light block" data-a="close">Cancel</button>`;
+  } else if (f.step === 2) {
+    body = `<p class="say">How long, in total?</p>` + (f.timer ? `<div style="text-align:center;display:grid;gap:8px"><b id="vtimer" class="big tnum" style="font-size:52px">${S.clock(f.timerSec)}</b><div style="display:flex;gap:8px;justify-content:center"><button class="btn sm ${f.timerRunning ? 'light' : 'gold'}" data-a="vtimer">${f.timerRunning ? 'Pause' : f.timerSec ? 'Resume' : 'Start'}</button><button class="btn sm light" data-a="vtimerdone" ${f.timerSec ? '' : 'disabled'}>Use time</button></div></div>`
+      : `<div class="minpick"><button class="sqbtn" data-a="vmin" data-d="-5" aria-label="5 minutes less">-5</button><output class="tnum">${f.minutes}<small>MINUTES</small></output><button class="sqbtn" data-a="vmin" data-d="5" aria-label="5 minutes more">+5</button></div><div class="chips" style="justify-content:center">${[15, 20, 30, 45, 60, 90].map(m => `<button class="chip ${f.minutes === m ? 'on' : ''}" data-a="vset" data-v="${m}">${m}</button>`).join('')}</div>`) +
+      `<button class="togrow" data-a="vtimermode"><span>Start/stop timer instead</span><span class="switch ${f.timer ? 'on' : ''}"></span></button><p class="notice">One total can cover several pieces.</p>`;
+    foot = `<button class="btn light" data-a="vback">◀</button><button class="btn gold block" data-a="vnext">Next ▶</button>`;
+  } else {
+    const alloc = Object.values(f.split).reduce((a, b) => a + b, 0);
+    const pk = kind => Vn.pieces.filter(p => p.kind === kind).map(p => `<button class="chip ${f.items.includes(p.id) ? 'on' : ''}" data-a="vitem" data-v="${p.id}">${E(p.kind === 'piece' ? p.composer + ' · ' + p.title.split(' — ')[0].split(',')[0] : p.title)}</button>`).join('');
+    body = `<p class="say">${f.minutes} min of ${Vn.typeName(f.typeId).toLowerCase()}. Which pieces?</p><div><span class="lbl dim">Pieces</span><div class="chips" style="margin-top:4px">${pk('piece')}</div></div><div><span class="lbl dim">Scales</span><div class="chips" style="margin-top:4px">${pk('scale')}</div></div>
+      <button class="togrow" data-a="vsplitmode" ${f.items.length > 1 ? '' : 'disabled style="opacity:.45"'}><span>Split time by piece <span class="dim">(optional)</span></span><span class="switch ${f.splitOn ? 'on' : ''}"></span></button>
+      ${f.splitOn && f.items.length > 1 ? `<div>${f.items.map(id => `<div class="kvrow"><span>${E(Vn.item(id).kind === 'piece' ? Vn.item(id).composer : Vn.item(id).title)}</span>${stepper('vsplit', (f.split[id] || 0) + 'M', 'minutes', `data-v="${id}"`)}</div>`).join('')}<p class="notice ${alloc > f.minutes ? 'red' : ''}" style="margin-top:6px">${alloc > f.minutes ? `${alloc - f.minutes} min over the total.` : `${alloc}/${f.minutes} min assigned${alloc < f.minutes ? ', rest unassigned' : ''}.`}</p></div>` : ''}
+      ${f.noteOpen ? `<textarea id="vnote" data-in="notes" placeholder="Note (optional)">${E(f.notes)}</textarea>` : `<button class="linkbtn" data-a="vnote">+ Add note</button>`}`;
+    foot = `<button class="btn light" data-a="vback">◀</button><button class="btn gold block" data-a="vsave" ${f.items.length && !(f.splitOn && alloc > f.minutes) ? '' : 'disabled'}>Save ${f.minutes} min</button>`;
+  }
+  return dlg('Violin', `<div class="dlg-b" data-sheet-body>${body}</div><div class="dlg-f">${foot}</div>`, steps);
+};
+SH.quick = S => dlg('Log what?', `<div class="dlg-b" data-sheet-body><div class="cursor-list">${[['violin', 'Violin practice', 'type · min · pieces'], ['gym', 'Gym session', LT.state.gym.active ? 'resume' : 'follow plan'], ['sleep', 'Last night', LT.sleep.lastNightLogged() ? 'saved' : 'bed · wake'], ['screen', 'Screen time', LT.screen.todayLogged() ? 'saved' : 'today total'], ['sports', 'Sport', 'run · ride · swim · court'], ['study', 'Study', 'subject · min'], ['chess', 'Chess', 'puzzles · study'], ['tasks', 'New task', 'quest log']].map(([id, t, s], i) => `<button class="${i === 0 ? 'on' : ''}" data-a="ql" data-v="${id}"><span>${t}</span><small>${s}</small></button>`).join('')}</div></div>`);
+SH.sport = S => {
+  const f = S.sheet, K = LT.sports.kinds, end = ['running', 'cycling', 'swimming'].includes(f.sport);
+  const metric = end ? (f.sport === 'running' ? F.pace(f.minutes, f.km) : f.sport === 'cycling' ? F.speed(f.minutes, f.km) : F.swim(f.minutes, f.km)) : '';
+  return dlg('Sport', `<div class="dlg-b" data-sheet-body><div class="chips">${Object.keys(K).map(k => `<button class="chip ${f.sport === k ? 'on' : ''}" data-a="ssport" data-v="${k}">${K[k].name}</button>`).join('')}</div>
+    <div class="kvrow"><span>Duration</span>${stepper('smin', F.dur(f.minutes), 'duration')}</div>
+    ${end ? `<div class="kvrow"><span>Distance</span>${stepper('skm', f.km.toFixed(f.sport === 'swimming' ? 2 : 1) + 'KM', 'distance')}</div><div class="kvrow"><span>${f.sport === 'cycling' ? 'Speed' : 'Pace'} (auto)</span><b class="lbl">${metric}</b></div>`
+      : `<div class="kvrow"><span>Type</span><span class="chips">${['Training', 'Match'].map(x => `<button class="chip ${f.kind === x ? 'on' : ''}" data-a="skind" data-v="${x}">${x}</button>`).join('')}</span></div>${f.kind === 'Match' ? `<input type="text" id="sscore" data-in="score" placeholder="Score (optional)" value="${E(f.score)}">` : ''}`}
+    <textarea id="snotes" data-in="notes" placeholder="${end ? 'Route or notes (optional)' : 'Skill notes (optional)'}">${E(f.notes)}</textarea></div>
+    <div class="dlg-f"><button class="btn light" data-a="close">✕</button><button class="btn gold block" data-a="ssave">Save</button></div>`);
+};
+SH.study = S => { const f = S.sheet; return dlg('Study', `<div class="dlg-b" data-sheet-body><div class="chips">${LT.study.subjects.map(s => `<button class="chip ${f.subject === s.id ? 'on' : ''}" data-a="stsub" data-v="${s.id}">${s.name}</button>`).join('')}</div><div class="kvrow"><span>Duration</span>${stepper('stmin', F.dur(f.minutes), 'duration')}</div><input type="text" id="sttopic" data-in="topic" placeholder="Topic covered" value="${E(f.topic)}"></div><div class="dlg-f"><button class="btn light" data-a="close">✕</button><button class="btn gold block" data-a="stsave">Save</button></div>`); };
+SH.chess = S => { const f = S.sheet; return dlg('Chess', `<div class="dlg-b" data-sheet-body><div class="chips">${[['puzzles', 'Puzzles'], ['study', 'Study']].map(([k, l]) => `<button class="chip ${f.kind === k ? 'on' : ''}" data-a="chkind" data-v="${k}">${l}</button>`).join('')}</div><div class="kvrow"><span>Duration</span>${stepper('chmin', F.dur(f.minutes), 'duration')}</div>${f.kind === 'puzzles' ? `<div class="kvrow"><span>Solved</span>${stepper('chsolved', f.solved, 'solved')}</div>` : `<input type="text" id="chtopic" data-in="topic" placeholder="What did you study?" value="${E(f.topic)}">`}<p class="notice">Games would come from Chess.com. These are fictional samples.</p></div><div class="dlg-f"><button class="btn light" data-a="close">✕</button><button class="btn gold block" data-a="chsave">Save</button></div>`); };
+SH.swap = S => { const e = LT.state.gym.active.exercises[S.sheet.ei]; return dlg('Swap', `<div class="dlg-b" data-sheet-body><p class="say">Replace ${E(e.name)} today with…</p><div class="cursor-list">${e.alts.map(a => `<button data-a="gswapto" data-v="${E(a)}"><span>${E(a)}</span><small></small></button>`).join('')}</div></div>`); };
+SH.finish = S => { const f = S.sheet; return dlg('Check-in', `<div class="dlg-b" data-sheet-body><p class="say">How did it go? All optional.</p>
+  <div><span class="lbl dim">Effort /10</span><div class="nums5" style="margin-top:4px">${[5, 6, 7, 8, 9].map(v => `<button class="${f.effort === v ? 'on' : ''}" data-a="fin" data-f="effort" data-v="${v}">${v}</button>`).join('')}</div></div>
+  <div><span class="lbl dim">Soreness 0–4</span><div class="nums5" style="margin-top:4px">${[0, 1, 2, 3, 4].map(v => `<button class="${f.soreness === v ? 'on' : ''}" data-a="fin" data-f="soreness" data-v="${v}">${v}</button>`).join('')}</div></div>
+  <button class="togrow" data-a="finpain"><span>Any pain? <span class="dim">(e.g. shins)</span></span><span class="switch ${f.pain ? 'on' : ''}"></span></button>
+  ${f.pain ? `<input type="text" id="painnote" data-in="painNote" placeholder="Where? What made it worse?" value="${E(f.painNote)}">` : ''}</div>
+  <div class="dlg-f"><button class="btn light" data-a="close">◀</button><button class="btn gold block" data-a="gdone">Save session</button></div>`); };
+SH.ev = S => {
+  const f = S.sheet, o = f.occ, s = LT.section(o.section);
+  return dlg(o.title, `<div class="dlg-b" data-sheet-body><p class="sm mid">${s ? s.name : 'General'} · ${F.date(o.date)}${o.start ? ' · ' + o.start + '–' + o.end : ''}${o.recurring ? ' · weekly' : ''}</p>
+    ${o.conflict && !o.cancelled ? `<div class="warn" style="margin:0"><span>Overlaps ${E(o.conflictWith.join(', '))}. You decide what moves.</span></div>` : ''}
+    ${o.status === 'done' ? `<p class="notice">Done: ${E(o.logged.title)}</p>` : ''}
+    ${o.cancelled ? `<button class="btn block" data-a="evrestore">Restore</button>` : `
+    <div class="kvrow"><span>Date</span>${stepper('evd', F.date(f.date), 'date')}</div>${o.start ? `<div class="kvrow"><span>Start</span>${stepper('evt', f.start, 'start time')}</div>` : ''}
+    ${o.recurring ? `<div class="cursor-list"><button class="${f.scope === 'one' ? 'on' : ''}" data-a="evscope" data-v="one"><span>This one only</span><small>${F.date(o.origDate)}</small></button><button class="${f.scope === 'future' ? 'on' : ''}" data-a="evscope" data-v="future"><span>This and later</span><small>series</small></button></div>` : ''}
+    <div style="display:flex;gap:8px"><button class="btn light" data-a="evcancel" style="color:var(--red);border-color:var(--red)">Cancel ${o.recurring && f.scope === 'future' ? 'series' : 'event'}</button><button class="btn gold" data-a="evsave" style="flex:1">Save</button></div>`}
+    <p class="sample">${E(LT.LABELS.google)}</p></div>`);
+};
+SH.task = S => { const f = S.sheet; return dlg('New task', `<div class="dlg-b" data-sheet-body><input type="text" id="tasktitle" data-in="title" placeholder="Quest name" value="${E(f.title)}" aria-label="Task">
+  <div><span class="lbl dim">Section</span><div class="chips" style="margin-top:4px"><button class="chip ${!f.section ? 'on' : ''}" data-a="tsec" data-v="">None</button>${LT.SECTIONS.map(s => `<button class="chip ${f.section === s.id ? 'on' : ''}" data-a="tsec" data-v="${s.id}">${s.name}</button>`).join('')}</div></div>
+  <div><span class="lbl dim">Priority</span><div class="chips" style="margin-top:4px">${['high', 'medium', 'low'].map(p => `<button class="chip ${f.priority === p ? 'on' : ''}" data-a="tpri" data-v="${p}">${p === 'high' ? '!!! High' : p === 'medium' ? '!! Medium' : '! Low'}</button>`).join('')}</div></div>
+  <div><span class="lbl dim">Due</span><div class="chips" style="margin-top:4px">${[['', 'None'], [T, 'Today'], [D.addDays(T, 1), 'Tomorrow'], [D.addDays(T, 7), 'Next week']].map(([d, l]) => `<button class="chip ${f.due === d ? 'on' : ''}" data-a="tdue" data-v="${d}">${l}</button>`).join('')}</div></div></div>
+  <div class="dlg-f"><button class="btn light" data-a="close">✕</button><button class="btn gold block" data-a="tsave">Add quest</button></div>`); };
+SH.addev = S => { const f = S.sheet; return dlg('Add event', `<div class="dlg-b" data-sheet-body><input type="text" id="evtitle" data-in="title" placeholder="Event name" value="${E(f.title)}" aria-label="Event title"><div class="chips">${LT.SECTIONS.map(s => `<button class="chip ${f.section === s.id ? 'on' : ''}" data-a="aesec" data-v="${s.id}">${s.name}</button>`).join('')}</div><div class="kvrow"><span>Date</span>${stepper('aed', F.date(f.date), 'date')}</div><div class="kvrow"><span>Start</span>${stepper('aet', f.start, 'start time')}</div></div><div class="dlg-f"><button class="btn light" data-a="close">✕</button><button class="btn gold block" data-a="aesave">Add</button></div>`); };
+
+/* ---------- reward ---------- */
+function reward(r) {
+  const O = LT.overall();
+  const evo = r.evolved ? `<div class="ban">What?<br>${STAGE[r.evolved.from]} is evolving!</div><div class="evo"><div class="a">${hero(r.evolved.from, { still: true })}</div><div class="b">${hero(r.evolved.to, { still: true })}</div></div><div class="up">${STAGE[r.evolved.from]} became ${STAGE[r.evolved.to]}! · LV ${r.overallUp.to}</div>` : '';
+  return `<div class="reward" data-reward role="dialog" aria-modal="true" aria-label="Reward"><div class="card">
+    ${r.rest ? `<div style="width:90px;margin:0 auto">${hero(O.stage)}</div><div class="ban">Rest day</div><p class="sm">Streak safe: ${r.streak} days. Recovery is training too.</p>` : `
+    ${evo || `<div style="width:84px;margin:0 auto">${hero(O.stage)}</div>`}
+    ${r.preview ? '<span class="pill gold" style="justify-self:center">Preview only</span>' : `<div class="coins"><span class="coin"></span><span class="tnum">+${r.total} XP</span></div><ul>${r.lines.map(l => `<li><span>${E(l.reason)}</span><b>+${l.xp}</b></li>`).join('')}</ul>`}`}
+    ${r.sectionUps.map(u => `<div class="up">${E(u.name)} level up! LV ${u.from} → ${u.to}</div>`).join('')}
+    ${r.overallUp && !r.evolved ? `<div class="up">Level up! LV ${r.overallUp.to}</div>` : ''}
+    ${(r.unlocked || []).map(a => `<div class="ach"><b>Trophy: ${E(a.title)}</b>${E(a.desc)}</div>`).join('')}
+    ${r.pain ? '<p class="notice red" style="text-align:left">You noted pain. Consider resting or easing the next session, and talk to a coach or physio if it keeps happening.</p>' : ''}
+    ${r.streakUp ? `<p class="sm">${flame(12)} Streak ${r.streak} days</p>` : ''}
+    <button class="btn gold block" data-a="rclose">▶ Continue</button></div></div>`;
+}
+
+Shell({
+  key: 'pixel', navId: 'nav', views: V, sheets: SH, reward, nav,
+  restBar: (left, S) => { const tot = S.rest.total || 90, n = Math.round(10 * left / tot); return `<div class="restbar" role="status"><span class="lbl">Rest</span><span class="hg">${Array.from({ length: 10 }, (_, i) => `<i class="${i < n ? 'on' : ''}"></i>`).join('')}</span><b class="tnum">${S.clock(left)}</b><span style="display:flex;gap:4px"><button class="btn light sm" data-a="rest30">+30</button><button class="btn light sm" data-a="restskip">Skip</button></span></div>`; },
+  pokeLines: () => { const O = LT.overall(), st = LT.streak(); return [`Streak: ${st.n} days! Rest days count too.`, `${O.toNext} XP to LV ${O.level + 1}.`, `Violin: ${LT.violin.weekTotal()}/${LT.state.violin.target} min this week.`, 'Quest: Lower A at 10:00.']; },
+  onPoke: S => { S.ui.jump = true; S.render(true); setTimeout(() => { S.ui.jump = false; }, 450); },
+});
+})();
+</script>

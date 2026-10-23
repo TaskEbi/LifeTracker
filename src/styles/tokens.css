@@ -1,0 +1,125 @@
+/* ── LifeTracker · Instrument design tokens ────────────────────────────────────
+   A bright lab instrument by day, a dark console by night. Signal orange is the one accent;
+   each section has a channel colour used only for small marks (LEDs, bars, stripes).
+   Names avoid Curio Cabinet's tokens (--ink, --panel, --paper…) so both sheets can coexist. */
+
+:root {
+  --bg: #eceeec;
+  --bg-dot: #d2d6d2;
+  --surf: #fafbfa;
+  --surf-2: #e3e6e3;
+  --surf-3: #d7dbd7;
+  --fg: #111316;
+  --fg-2: #444b53;
+  --fg-3: #6f767d;
+  --rule: #d0d4d0;
+  --grid: #e1e4e1;
+  --sig: #f2541b;
+  --sig-fg: #ffffff;
+  --sig-soft: rgb(242 84 27 / 0.12);
+  --ok: #138a5c;
+  --ok-soft: rgb(19 138 92 / 0.12);
+  --warn: #d23f17;
+  --warn-soft: rgb(210 63 23 / 0.1);
+  --led-off: #c6cac6;
+  --night: #0c1030;
+  --night-fg: #e6e9ff;
+  --night-dim: #9aa3d8;
+
+  --c-violin: #d9701a;
+  --c-coding: #2753e6;
+  --c-sports: #0f9662;
+  --c-gym: #d9342a;
+  --c-study: #7144db;
+  --c-chess: #5a636d;
+  --c-sleep: #3442b0;
+  --c-screen: #cf367f;
+  --c-cabinet: #8a6a2c;
+  --c-general: #6f767d;
+
+  --key-shadow: 0 1px 0 rgb(255 255 255 / 0.85) inset, 0 1px 2px rgb(0 0 0 / 0.07), 0 3px 0 rgb(0 0 0 / 0.06);
+  --lift: 0 0 0 1px var(--rule), 0 24px 60px rgb(0 0 0 / 0.22);
+
+  --f-label: 'Chakra Petch', 'Eurostile', 'Bank Gothic', ui-sans-serif, sans-serif;
+  --f-body: 'IBM Plex Sans', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --f-mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+
+  --r-1: 8px;
+  --r-2: 12px;
+  --r-3: 16px;
+  --gutter: max(16px, env(safe-area-inset-left, 0px));
+  --gutter-r: max(16px, env(safe-area-inset-right, 0px));
+  --cmd-h: 76px;
+  --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --bg: #0d0f11;
+    --bg-dot: #1d2125;
+    --surf: #15181b;
+    --surf-2: #1e2226;
+    --surf-3: #272c31;
+    --fg: #eaedef;
+    --fg-2: #aab1b8;
+    --fg-3: #7a828a;
+    --rule: #2a2f34;
+    --grid: #1b1f23;
+    --sig: #ff6a33;
+    --sig-fg: #170a04;
+    --sig-soft: rgb(255 106 51 / 0.14);
+    --ok: #3dd196;
+    --ok-soft: rgb(61 209 150 / 0.12);
+    --warn: #ff7a52;
+    --warn-soft: rgb(255 122 82 / 0.12);
+    --led-off: #353a40;
+    --c-violin: #ff9b45;
+    --c-coding: #7095ff;
+    --c-sports: #3dd196;
+    --c-gym: #ff6b60;
+    --c-study: #aa8dff;
+    --c-chess: #9ca5af;
+    --c-sleep: #8290ff;
+    --c-screen: #ff7ab8;
+    --c-cabinet: #d8b46a;
+    --c-general: #8b939b;
+    --key-shadow: 0 1px 0 rgb(255 255 255 / 0.04) inset, 0 2px 0 rgb(0 0 0 / 0.45);
+    --lift: 0 0 0 1px var(--rule), 0 24px 60px rgb(0 0 0 / 0.55);
+    color-scheme: dark;
+  }
+}
+
+:root[data-theme='dark'] {
+  --bg: #0d0f11;
+  --bg-dot: #1d2125;
+  --surf: #15181b;
+  --surf-2: #1e2226;
+  --surf-3: #272c31;
+  --fg: #eaedef;
+  --fg-2: #aab1b8;
+  --fg-3: #7a828a;
+  --rule: #2a2f34;
+  --grid: #1b1f23;
+  --sig: #ff6a33;
+  --sig-fg: #170a04;
+  --sig-soft: rgb(255 106 51 / 0.14);
+  --ok: #3dd196;
+  --ok-soft: rgb(61 209 150 / 0.12);
+  --warn: #ff7a52;
+  --warn-soft: rgb(255 122 82 / 0.12);
+  --led-off: #353a40;
+  --c-violin: #ff9b45;
+  --c-coding: #7095ff;
+  --c-sports: #3dd196;
+  --c-gym: #ff6b60;
+  --c-study: #aa8dff;
+  --c-chess: #9ca5af;
+  --c-sleep: #8290ff;
+  --c-screen: #ff7ab8;
+  --c-cabinet: #d8b46a;
+  --c-general: #8b939b;
+  --key-shadow: 0 1px 0 rgb(255 255 255 / 0.04) inset, 0 2px 0 rgb(0 0 0 / 0.45);
+  --lift: 0 0 0 1px var(--rule), 0 24px 60px rgb(0 0 0 / 0.55);
+  color-scheme: dark;
+}
