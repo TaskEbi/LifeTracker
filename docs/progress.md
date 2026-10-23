@@ -30,5 +30,11 @@ Milestones, newest last. Each says what works, what was verified and what remain
 - Screen time: daily total (steppers or typed h/m) for today or yesterday, edit/clear with undo, 14-day bars against an optional target (target history kept), week-on-week average. Clearly manual: no claim of reading iPhone Screen Time.
 - Verified: unit tests (midnight maths, joins with Curio rows, bedtime averages, wind-down), WebKit e2e for both.
 
+## M6 · Gym (done)
+- Templates (starter placeholders, labelled; editor for exercises/sets/reps/weight/rest/alternatives; archive), planning a session into the calendar, a week strip that shows sport alongside gym and a note when a legs-heavy day sits next to sport.
+- Session in progress on the device (survives reloads): weight/reps steppers (weight carries to later sets), set LEDs, rest timer (+30s/skip), swap for today, add/remove sets and exercises, discard with confirmation.
+- Finish: duration and an optional check-in (effort, soreness, pain + note) → one log entry (template as subcategory) + detail; reward shows set XP capped at the plan and a gentle pain note. History with edit/delete, progression of the heaviest completed set, weekly target with history.
+- Verified: unit tests (template parsing, progression), WebKit e2e (sets, swap, reload mid-session, check-in, saved once).
+
 ## Next
-- M6 Gym, M7 Sports / Study / Chess (Chess.com live) / Coding + Road to IOI, M8 import of a Curio export for local testing, settings (topic mapping, theme, sign out), polish.
+- M7 Gym, M7 Sports / Study / Chess (Chess.com live) / Coding + Road to IOI, M8 import of a Curio export for local testing, settings (topic mapping, theme, sign out), polish.

@@ -19,7 +19,7 @@ interface Cmd {
 
 const CMDS: Cmd[] = [
   { id: 'violin', label: 'log violin', hint: 'type · minutes · pieces', section: 'violin', sheet: 'violin', route: 'violin' },
-  { id: 'gym', label: 'log gym', hint: 'run the plan', section: 'gym', route: 'gym' },
+  { id: 'gym', label: 'start gym', hint: 'follow a template', section: 'gym', route: 'gym' },
   { id: 'sleep', label: 'log sleep', hint: 'bed · wake', section: 'sleep', sheet: 'sleep', route: 'sleep' },
   { id: 'screen', label: 'log screen time', hint: "today's total", section: 'screen', sheet: 'screen', route: 'screen' },
   { id: 'sports', label: 'log sport', hint: 'run · ride · swim · court', section: 'sports', sheet: 'sports', route: 'sports' },
