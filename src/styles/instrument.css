@@ -1049,6 +1049,9 @@ button.i-row:active {
   margin-top: 6px;
 }
 .i-sq {
+  display: grid;
+  place-items: center;
+  flex: none;
   width: 56px;
   height: 56px;
   border-radius: var(--r-2);

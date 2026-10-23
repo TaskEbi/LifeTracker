@@ -43,5 +43,16 @@ Milestones, newest last. Each says what works, what was verified and what remain
 - Coding: Road to IOI rebuilt in the Instrument style from AnyStop's rules (unchanged, shared tests): live countdown to the current stage (JOI first round 25 Oct 14:00 JST), stage ladder with stage sheet (date, target, why, cleared + memory), today's two tasks from DragonCode's upsolve queue, low-energy mode, 7-day strip, gates this season, a note from past self, side-path contests, my why, DragonCode link (read-only key) and Open DragonCode. Road settings are the same `settings.road` AnyStop uses. All coding entries count as Road training. "All coding" tab for kind/platform/solved and weekly minutes.
 - Verified: unit tests (pace/bests, study marks/subjects, Chess.com parsing incl. draws/variants/duration/opening names), WebKit e2e for each channel (Chess.com mocked: live label, and a failed fetch shows no numbers). Live Chess.com fetch also checked by hand in the dev server.
 
-## Next
-- (M7 done) Gym, M7 Sports / Study / Chess (Chess.com live) / Coding + Road to IOI, M8 import of a Curio export for local testing, settings (topic mapping, theme, sign out), polish.
+## M8 · Progress, Settings, All activity, polish (done)
+- /progress: the drone and its five forms (locked ones previewed), overall and per-section levels, streak with a planned rest day, all achievements with progress, a plain "How XP works" list built from the engine's RULES, recent XP by section.
+- /settings: data mode and sync status (pending count, errors, Sync now), sign out (warns when changes haven't uploaded; tries to flush first), theme per device, section ↔ Daily Log topic mapping (one topic per section, never moves entries), time zone (read-only, shared with AnyStop), export backup (AnyStop format; says LifeTracker's own tables aren't in it), import offered only in local mode so test data can't reach the shared database, list of integrations that are not connected.
+- /log (All activity): every live Daily Log entry incl. topics no section uses, filter by section or "Other topics", search, grouped by day, edit topic/subcategory/minutes/day/note, delete with Undo (section details are kept).
+- LifeTracker's own icon set (favicon, PWA 192/512/maskable, apple-touch) replacing AnyStop's cabinet icon.
+- Accessibility/layout sweep in e2e: every route has one h1, every visible control has an accessible name, no sideways scroll at iPhone width.
+- Verified: 161 unit/DB tests, 14 WebKit e2e tests, typecheck, production build.
+
+## Next (needs your review or your input)
+- Review the working app locally (`npm run dev`, local-only by default).
+- Production migration (docs/migration.md): back up, apply `20261025120000_lifetracker_core.sql`, verify — a separate step after review.
+- Deployment: a new Vercel project with Production-only env vars; add the LifeTracker origin to DragonCode's `ROAD_LINK_ORIGINS`.
+- Later: LifeTracker tables in the backup export; Strava import (needs an app registration); maths/physics app link once it exists.

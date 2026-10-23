@@ -12,6 +12,9 @@ import { SportsChannel } from '../features/sports/SportsChannel';
 import { StudyChannel } from '../features/study/StudyChannel';
 import { ChessChannel } from '../features/chess/ChessChannel';
 import { CodingChannel } from '../features/coding/CodingChannel';
+import { ProgressView } from '../features/progress/ProgressView';
+import { SettingsView } from '../features/settings/SettingsView';
+import { ActivityView } from '../features/log/ActivityView';
 
 export const sectionViews: Partial<Record<RouteName, ComponentType>> = {
   violin: ViolinChannel,
@@ -24,4 +27,7 @@ export const sectionViews: Partial<Record<RouteName, ComponentType>> = {
   chess: ChessChannel,
   sleep: SleepChannel,
   screen: ScreenChannel,
+  progress: ProgressView,
+  settings: SettingsView,
+  log: ActivityView,
 };
