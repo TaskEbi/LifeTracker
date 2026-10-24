@@ -12,3 +12,4 @@ coverage
 *.tmp.mjs
 test-results
 playwright-report
+graphify-out
