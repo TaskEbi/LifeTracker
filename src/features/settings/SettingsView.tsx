@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { ChannelBar } from '../../app/Shell';
 import { applyTheme, setTheme, themeChoice, type ThemeChoice } from '../../app/theme';
 import { flushSync, syncNow } from '../../app/syncHandle';
 import { navigate } from '../../app/router';
@@ -179,6 +180,7 @@ export function SettingsView() {
   }, [theme]);
   return (
     <div>
+      <ChannelBar current="settings" />
       <header className="i-chhead">
         <div>
           <span className="i-chhead__k">SYS · settings</span>

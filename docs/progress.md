@@ -51,6 +51,16 @@ Milestones, newest last. Each says what works, what was verified and what remain
 - Accessibility/layout sweep in e2e: every route has one h1, every visible control has an accessible name, no sideways scroll at iPhone width.
 - Verified: 161 unit/DB tests, 14 WebKit e2e tests, typecheck, production build.
 
+## M9 · Game layer, colour and navigation (done)
+- Phone navigation: the bottom bar is Home · Calendar · Log · Tasks · Progress (shows your level and a badge with open daily quests). The channel strip at the top of every page also links Progress, All activity and Settings; Home has quick links to all four.
+- Quests (`src/domain/progress/quests.ts`): three daily, three weekly and three monthly quests drawn by date from fixed pools (same on every device, nothing stored), progress from the records of that period, XP per quest (15/50/150) plus a bonus for clearing all three (20/60/200). Quest XP is a keyed event like every other award and only counts from 1 Oct 2026, so old Daily Log history doesn't flood the levels.
+- Levels: smaller steps (overall 120 + 25n, sections 60 + 15n), overall ranks (Rookie → Legend at LV 100) and section ranks (Novice → Legend).
+- Transformations: ten drone forms (Core, Ring, Rotor, Array, Halo, Prism, Nova, Aurora, Titan, Singularity at LV 1/3/6/10/15/22/30/40/55/75), each adding hardware and its own colours.
+- Achievements: 39, in bronze/silver/gold/platinum tiers, adding streaks (7–365 days), levels and forms, quests and sweeps, per-section milestones; shown as a badge grid with progress.
+- Progress page: Overview (character, stats, today's quests, forms strip, sections with ranks, recent XP, how XP works) · Quests · Achievements tabs (/progress/quests, /progress/achievements).
+- Colour and cleanup: section-tinted keys, headers, meters and chips; stage-coloured drone scope and hero; gradient log button; softer page glows in light and dark; stepper buttons centred; setting hints in plain text; clearer violin target meter.
+- Verified: 169 unit/DB tests (quests, achievements, levels), 15 WebKit e2e tests incl. the new progress/quests/achievements flow and the new routes in the accessibility sweep, typecheck; screenshots at iPhone and desktop size, light and dark.
+
 ## Next (needs your review or your input)
 - Review the working app locally (`npm run dev`, local-only by default).
 - Production migration (docs/migration.md): back up, apply `20261025120000_lifetracker_core.sql`, verify — a separate step after review.

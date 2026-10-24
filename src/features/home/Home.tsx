@@ -1,19 +1,21 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, type CSSProperties } from 'react';
 import { navigate } from '../../app/router';
 import { StatusBar } from '../../app/Shell';
 import { openSheet } from '../../app/sheets';
 import { toggleTask } from '../../data/ltActions';
-import { getSleepSchedule, progressInput, useProgress, useSectionStreaks, useToday } from '../../data/lt';
+import { getSleepSchedule, progressInput, useAchievements, useProgress, useQuests, useSectionStreaks, useToday } from '../../data/lt';
 import { data, liveItems } from '../../data/store';
 import type { SectionId } from '../../data/types';
 import { conflicts, occurrences } from '../../domain/calendar/occurrences';
 import { addDays, shortDay, weekdayIndex } from '../../domain/log/dates';
-import { sectionLevel, STAGES } from '../../domain/progress/engine';
+import { rankFor, sectionLevel, STAGES } from '../../domain/progress/engine';
 import { scheduleFor } from '../../domain/progress/engine';
 import { SECTIONS, sectionInfo } from '../../domain/sections';
 import { useStore } from '../../lib/createStore';
 import { accent, Seg } from '../../ui/i/bits';
 import { Drone } from '../../ui/i/Drone';
+import { Icon } from '../../ui/i/Icon';
+import { QuestCard } from '../progress/QuestsPanel';
 import './home.css';
 
 const pad2 = (n: number) => String(n).padStart(2, '0');
@@ -27,7 +29,9 @@ function Key({ id }: { id: SectionId }) {
   return (
     <button type="button" className="h-key" style={accent(id)} onClick={() => navigate(id)} aria-label={`${info.full}, level ${lv.level}${streak?.n ? `, ${streak.n} ${streak.label}` : ''}`}>
       <span className="h-key__ch">
-        <span>{info.code}</span>
+        <span className="h-key__ic">
+          <Icon name={id} size={15} />
+        </span>
         <span className={`i-led${streak?.n ? ' is-on' : ''}`} />
       </span>
       <b>{info.name}</b>
@@ -95,7 +99,11 @@ export function Home() {
   const examples = allItems.length - items;
   const cab = sectionLevel(p.bySection.cabinet);
   const next = STAGES[p.overall.stage + 1];
+  const stage = STAGES[p.overall.stage];
   const input = progressInput(st, today);
+  const quests = useQuests();
+  const ach = useAchievements();
+  const dailyDone = quests.daily.quests.filter((q) => q.doneOn).length;
 
   const poke = () => {
     const violinWeek = input.entries.filter((e) => e.date >= addDays(today, -weekdayIndex(today)) && input.topicSection.get(e.topic_id) === 'violin').reduce((s, e) => s + e.minutes, 0);
@@ -128,7 +136,7 @@ export function Home() {
                 <Key key={s.id} id={s.id} />
               ))}
             </div>
-            <button type="button" className="h-scope i-pnl--grid" onClick={poke} aria-label="Ping your drone for a status line">
+            <button type="button" className="h-scope" style={{ '--c': stage.c, '--c2': stage.c2 } as CSSProperties} onClick={poke} aria-label="Ping your drone for a status line">
               {bubble && (
                 <span className="h-tip i-mono" role="status">
                   &gt; {bubble}
@@ -138,13 +146,15 @@ export function Home() {
                 <Drone stage={p.overall.stage} />
               </span>
               <span className="h-scope__name">
-                {STAGES[p.overall.stage].name} · form {p.overall.stage + 1}/5
+                {stage.name} · form {p.overall.stage + 1}/{STAGES.length}
               </span>
               <span className="h-scope__lv">LV {p.overall.level}</span>
+              <span className="h-scope__rank">{rankFor(p.overall.level)}</span>
               <Seg pct={p.overall.pct} label="Overall level progress" />
               <span className="h-scope__xp i-mono">
-                {p.overall.into.toLocaleString('en-GB')}/{p.overall.need.toLocaleString('en-GB')} XP{next ? ` · upgrade @ LV ${next.level}` : ''}
+                {p.overall.into.toLocaleString('en-GB')}/{p.overall.need.toLocaleString('en-GB')} XP
               </span>
+              {next && <span className="h-scope__xp i-mono">{next.name} at LV {next.level}</span>}
             </button>
             <div className="h-rail h-rail--right">
               {SECTIONS.slice(4, 8).map((s) => (
@@ -165,6 +175,22 @@ export function Home() {
             </span>
           </button>
         </div>
+        <div>
+        <section className="h-quests i-pnl" aria-label="Today's quests">
+          <div className="h-today__h">
+            <span className="i-lab">
+              Daily quests · {dailyDone}/3
+            </span>
+            <button type="button" className="i-link" onClick={() => navigate('progress', ['quests'])}>
+              All quests →
+            </button>
+          </div>
+          <div className="pg-quests">
+            {quests.daily.quests.map((q) => (
+              <QuestCard key={q.key} q={q} />
+            ))}
+          </div>
+        </section>
         <section className="h-today i-pnl" aria-label="Today and tomorrow">
           <div className="h-today__h">
             <span className="i-lab">Today / tomorrow</span>
@@ -193,6 +219,31 @@ export function Home() {
             ))
           )}
         </section>
+        <nav className="h-sys" aria-label="More">
+          <button type="button" className="h-sys__btn" style={{ '--c': 'var(--sig)' } as CSSProperties} onClick={() => navigate('progress')}>
+            <Icon name="progress" />
+            <b>Progress</b>
+            <small>{rankFor(p.overall.level)}</small>
+          </button>
+          <button type="button" className="h-sys__btn" style={{ '--c': 'var(--t-gold)' } as CSSProperties} onClick={() => navigate('progress', ['achievements'])}>
+            <Icon name="trophy" />
+            <b>Achievements</b>
+            <small>
+              {ach.filter((a) => a.unlockedOn).length}/{ach.length}
+            </small>
+          </button>
+          <button type="button" className="h-sys__btn" style={{ '--c': 'var(--c-coding)' } as CSSProperties} onClick={() => navigate('log')}>
+            <Icon name="log" />
+            <b>All activity</b>
+            <small>Daily Log</small>
+          </button>
+          <button type="button" className="h-sys__btn" style={{ '--c': 'var(--c-general)' } as CSSProperties} onClick={() => navigate('settings')}>
+            <Icon name="settings" />
+            <b>Settings</b>
+            <small>Sync · data</small>
+          </button>
+        </nav>
+        </div>
       </div>
     </div>
   );

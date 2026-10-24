@@ -7,6 +7,7 @@ import { createStore, useStore } from '../lib/createStore';
 import { todayIn } from '../domain/log/dates';
 import { achievements, type Achievement } from '../domain/progress/achievements';
 import { computeProgress, rewardBetween, sectionStreaks, type Progress, type ProgressInput, type Reward, type SectionStreak } from '../domain/progress/engine';
+import { questBoard, questHistory, type QuestPeriod, type QuestSet } from '../domain/progress/quests';
 import { normaliseSectionTopics, normaliseSleep, normaliseTargets, normaliseTargetsLog, targetsAt, type SectionTopics, type SleepSchedule, type Targets } from '../domain/prefs';
 import { weekStart } from '../domain/log/dates';
 import { TOPIC_NAME_HINTS } from '../domain/sections';
@@ -205,10 +206,23 @@ export function useSectionStreaks(): Partial<Record<SectionId, SectionStreak>> {
   return useMemo(() => sectionStreaks(progressInput(st, today)), [st, today]);
 }
 
+/** Achievements for a state, reusing the XP events already worked out for it. */
+function achievementsOf(st: DataState, today: string): Achievement[] {
+  const input = progressInput(st, today);
+  return achievements(input, { events: progressOf(st, today).events, quests: questHistory(input) });
+}
+
 export function useAchievements(): Achievement[] {
   const today = useToday();
   const st = useStore(data, (s) => s);
-  return useMemo(() => achievements(progressInput(st, today)), [st, today]);
+  return useMemo(() => achievementsOf(st, today), [st, today]);
+}
+
+/** Today's daily, weekly and monthly quests with their progress. */
+export function useQuests(): Record<QuestPeriod, QuestSet> {
+  const today = useToday();
+  const st = useStore(data, (s) => s);
+  return useMemo(() => questBoard(progressInput(st, today)), [st, today]);
 }
 
 // ─── rewards ────────────────────────────────────────────────────────────────
@@ -228,11 +242,11 @@ export const rewardStore = createStore<{ reward: RewardView | null }>({ reward: 
 export function withReward(save: () => boolean | void, extra: Partial<RewardView> = {}): boolean {
   const today = ltToday();
   const before = progressOf(data.get(), today);
-  const beforeAch = achievements(progressInput(data.get(), today));
+  const beforeAch = achievementsOf(data.get(), today);
   const ok = save();
   if (ok === false) return false;
   const after = progressOf(data.get(), today);
-  const afterAch = achievements(progressInput(data.get(), today));
+  const afterAch = achievementsOf(data.get(), today);
   const unlocked = afterAch.filter((a) => a.unlockedOn && !beforeAch.find((b) => b.id === a.id)?.unlockedOn);
   const r = rewardBetween(before, after);
   if (r.total > 0 || r.sectionUps.length || r.overallUp || unlocked.length || extra.rest) rewardStore.set({ reward: { ...r, unlocked, ...extra } });

@@ -1,6 +1,7 @@
 import { useProgress, useSectionStreaks } from '../../data/lt';
 import type { SectionId } from '../../data/types';
 import { sectionInfo } from '../../domain/sections';
+import { sectionRankFor } from '../../domain/progress/engine';
 import { ChannelBar } from '../../app/Shell';
 import { accent, Seg } from './bits';
 
@@ -20,6 +21,7 @@ export function ChannelHead({ id, sub }: { id: SectionId; sub?: string }) {
             {info.code} · {sub ?? info.sub}
           </span>
           <h1>{info.full}</h1>
+          <span className="i-chhead__rank">{sectionRankFor(lv.level)}</span>
           {streak && streak.n > 0 && (
             <p className="i-chhead__sub">
               {streak.n} {streak.label}

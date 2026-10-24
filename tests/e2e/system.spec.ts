@@ -44,7 +44,29 @@ test('settings: local mode says nothing is sent, theme applies', async ({ page }
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
 });
 
-const ROUTES = ['/', '/violin', '/coding', '/sports', '/gym', '/study', '/chess', '/sleep', '/screen', '/calendar', '/tasks', '/progress', '/settings', '/log'];
+test('game: Progress is one tap away on a phone, with quests and achievements', async ({ page }) => {
+  await page.goto('/violin');
+  await page.getByRole('navigation', { name: 'Commands' }).getByRole('button', { name: /^LV \d+/ }).click();
+  await expect(page).toHaveURL(/\/progress$/);
+  await expect(page.getByRole('heading', { name: 'Progress', level: 1 })).toBeVisible();
+  await expect(page.getByRole('list', { name: 'Forms' }).getByRole('listitem')).toHaveCount(10);
+
+  const tabs = page.getByRole('navigation', { name: 'Progress sections' });
+  await tabs.getByRole('button', { name: /Quests/ }).click();
+  await expect(page).toHaveURL(/\/progress\/quests$/);
+  for (const period of ['Daily', 'Weekly', 'Monthly']) {
+    await expect(page.getByRole('region', { name: `${period} quests` }).getByRole('progressbar')).toHaveCount(3);
+  }
+
+  await tabs.getByRole('button', { name: /Achievements/ }).click();
+  await expect(page).toHaveURL(/\/progress\/achievements$/);
+  const badges = page.getByRole('list', { name: 'Achievements' }).getByRole('listitem');
+  expect(await badges.count()).toBeGreaterThanOrEqual(30);
+  await page.getByRole('group', { name: 'Show' }).getByRole('button', { name: /^Unlocked/ }).click();
+  await expect(page.getByText('Nothing unlocked yet.')).toBeVisible();
+});
+
+const ROUTES = ['/', '/violin', '/coding', '/sports', '/gym', '/study', '/chess', '/sleep', '/screen', '/calendar', '/tasks', '/progress', '/progress/quests', '/progress/achievements', '/settings', '/log'];
 
 test('every screen: one h1, every control named, no sideways scroll', async ({ page }) => {
   await page.route('https://api.chess.com/**', (r) => r.fulfill({ status: 404, body: '{}' }));

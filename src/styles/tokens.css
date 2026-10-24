@@ -4,16 +4,16 @@
    Names avoid Curio Cabinet's tokens (--ink, --panel, --paper…) so both sheets can coexist. */
 
 :root {
-  --bg: #eceeec;
-  --bg-dot: #d2d6d2;
-  --surf: #fafbfa;
-  --surf-2: #e3e6e3;
-  --surf-3: #d7dbd7;
+  --bg: #eef0f4;
+  --bg-dot: #d5d9e1;
+  --surf: #fdfdfe;
+  --surf-2: #e6e9ef;
+  --surf-3: #d9dde5;
   --fg: #111316;
   --fg-2: #444b53;
   --fg-3: #6f767d;
-  --rule: #d0d4d0;
-  --grid: #e1e4e1;
+  --rule: #d6dae2;
+  --grid: #e5e8ee;
   --sig: #f2541b;
   --sig-fg: #ffffff;
   --sig-soft: rgb(242 84 27 / 0.12);
@@ -21,7 +21,7 @@
   --ok-soft: rgb(19 138 92 / 0.12);
   --warn: #d23f17;
   --warn-soft: rgb(210 63 23 / 0.1);
-  --led-off: #c6cac6;
+  --led-off: #c8cdd6;
   --night: #0c1030;
   --night-fg: #e6e9ff;
   --night-dim: #9aa3d8;
@@ -36,6 +36,17 @@
   --c-screen: #cf367f;
   --c-cabinet: #8a6a2c;
   --c-general: #6f767d;
+  --c-quests: #0e9f9a;
+
+  --t-bronze: #c27238;
+  --t-silver: #8d99a8;
+  --t-gold: #d9a100;
+  --t-platinum: #7a63f0;
+
+  /* soft colour washes behind the page */
+  --glow-1: rgb(242 84 27 / 0.1);
+  --glow-2: rgb(39 83 230 / 0.08);
+  --glow-3: rgb(14 159 154 / 0.08);
 
   --key-shadow: 0 1px 0 rgb(255 255 255 / 0.85) inset, 0 1px 2px rgb(0 0 0 / 0.07), 0 3px 0 rgb(0 0 0 / 0.06);
   --lift: 0 0 0 1px var(--rule), 0 24px 60px rgb(0 0 0 / 0.22);
@@ -56,16 +67,16 @@
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme='light']) {
-    --bg: #0d0f11;
-    --bg-dot: #1d2125;
-    --surf: #15181b;
-    --surf-2: #1e2226;
-    --surf-3: #272c31;
+    --bg: #0b0d13;
+    --bg-dot: #1b1f29;
+    --surf: #141720;
+    --surf-2: #1c2029;
+    --surf-3: #262b36;
     --fg: #eaedef;
     --fg-2: #aab1b8;
     --fg-3: #7a828a;
-    --rule: #2a2f34;
-    --grid: #1b1f23;
+    --rule: #2a2f3b;
+    --grid: #1a1e27;
     --sig: #ff6a33;
     --sig-fg: #170a04;
     --sig-soft: rgb(255 106 51 / 0.14);
@@ -84,6 +95,14 @@
     --c-screen: #ff7ab8;
     --c-cabinet: #d8b46a;
     --c-general: #8b939b;
+    --c-quests: #2dd4c4;
+    --t-bronze: #e39a62;
+    --t-silver: #c3ccd6;
+    --t-gold: #ffcc33;
+    --t-platinum: #ab9cff;
+    --glow-1: rgb(255 106 51 / 0.1);
+    --glow-2: rgb(112 149 255 / 0.09);
+    --glow-3: rgb(45 212 196 / 0.07);
     --key-shadow: 0 1px 0 rgb(255 255 255 / 0.04) inset, 0 2px 0 rgb(0 0 0 / 0.45);
     --lift: 0 0 0 1px var(--rule), 0 24px 60px rgb(0 0 0 / 0.55);
     color-scheme: dark;
@@ -91,16 +110,16 @@
 }
 
 :root[data-theme='dark'] {
-  --bg: #0d0f11;
-  --bg-dot: #1d2125;
-  --surf: #15181b;
-  --surf-2: #1e2226;
-  --surf-3: #272c31;
+  --bg: #0b0d13;
+  --bg-dot: #1b1f29;
+  --surf: #141720;
+  --surf-2: #1c2029;
+  --surf-3: #262b36;
   --fg: #eaedef;
   --fg-2: #aab1b8;
   --fg-3: #7a828a;
-  --rule: #2a2f34;
-  --grid: #1b1f23;
+  --rule: #2a2f3b;
+  --grid: #1a1e27;
   --sig: #ff6a33;
   --sig-fg: #170a04;
   --sig-soft: rgb(255 106 51 / 0.14);
@@ -119,6 +138,14 @@
   --c-screen: #ff7ab8;
   --c-cabinet: #d8b46a;
   --c-general: #8b939b;
+  --c-quests: #2dd4c4;
+  --t-bronze: #e39a62;
+  --t-silver: #c3ccd6;
+  --t-gold: #ffcc33;
+  --t-platinum: #ab9cff;
+  --glow-1: rgb(255 106 51 / 0.1);
+  --glow-2: rgb(112 149 255 / 0.09);
+  --glow-3: rgb(45 212 196 / 0.07);
   --key-shadow: 0 1px 0 rgb(255 255 255 / 0.04) inset, 0 2px 0 rgb(0 0 0 / 0.45);
   --lift: 0 0 0 1px var(--rule), 0 24px 60px rgb(0 0 0 / 0.55);
   color-scheme: dark;

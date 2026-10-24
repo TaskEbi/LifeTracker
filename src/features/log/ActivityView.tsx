@@ -1,4 +1,5 @@
 /** All activity: every Daily Log entry (including topics no section uses), with a plain editor. */
+import { ChannelBar } from '../../app/Shell';
 import { useMemo, useState } from 'react';
 import { registerSheet } from '../../app/sheetRegistry';
 import { closeSheet, openSheet, type SheetSpec } from '../../app/sheets';
@@ -121,6 +122,7 @@ export function ActivityView() {
 
   return (
     <div>
+      <ChannelBar current="log" />
       <header className="i-chhead">
         <div>
           <span className="i-chhead__k">SYS · Daily Log</span>

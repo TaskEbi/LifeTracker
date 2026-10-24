@@ -62,9 +62,9 @@ export function RewardOverlay() {
               </div>
             </div>
             <div className="i-reward__up">
-              Upgrade complete · <em>{STAGES[r.evolved.from].name} → {STAGES[r.evolved.to].name}</em>
+              Transformation · <em>{STAGES[r.evolved.from].name} → {STAGES[r.evolved.to].name}</em>
             </div>
-            <p className="i-note">{r.preview ? 'A preview of the next form. Nothing was added.' : `Level ${r.overallUp?.to}. New hardware, earned over months.`}</p>
+            <p className="i-note">{r.preview ? 'A preview of the next form. Nothing was added.' : `Level ${r.overallUp?.to}. Form ${r.evolved.to + 1} of ${STAGES.length}: new hardware, new colours.`}</p>
           </>
         ) : (
           <div style={{ width: 96, margin: '0 auto' }} className="i-drone">
@@ -83,13 +83,22 @@ export function RewardOverlay() {
               <small> XP</small>
             </div>
             <ul>
-              {r.lines.map((l, i) => (
-                <li key={i}>
-                  <span>{l.reason}</span>
-                  <b>+{l.xp}</b>
-                </li>
-              ))}
+              {r.lines
+                .filter((l) => l.section !== 'quests')
+                .map((l, i) => (
+                  <li key={i}>
+                    <span>{l.reason}</span>
+                    <b>+{l.xp}</b>
+                  </li>
+                ))}
             </ul>
+            {r.lines
+              .filter((l) => l.section === 'quests')
+              .map((l, i) => (
+                <div key={`q${i}`} className="i-reward__up i-reward__up--quest">
+                  {l.reason.replace(/^(Daily|Weekly|Monthly) quest: /, '$1 quest · ')} · <em>+{l.xp} XP</em>
+                </div>
+              ))}
           </>
         ) : null}
         {r.sectionUps.map((u) => (
@@ -104,8 +113,8 @@ export function RewardOverlay() {
         )}
         {r.unlocked.map((a) => (
           <div key={a.id}>
-            <div className="i-reward__up" style={{ background: 'var(--surf-2)', color: 'var(--fg)' }}>
-              Achievement · <em>{a.title}</em>
+            <div className="i-reward__up i-reward__up--ach">
+              {a.tier} achievement · <em>{a.title}</em>
             </div>
             <p className="i-note">{a.desc}</p>
           </div>

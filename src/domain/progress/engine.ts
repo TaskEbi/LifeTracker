@@ -7,8 +7,10 @@
 import { addDays, weekdayIndex, weekStart } from '../log/dates';
 import type { LogDayMetric, LogEntry, LtDetail, LtNight, SectionId, Todo } from '../../data/types';
 import type { SleepSchedule, Targets } from '../prefs';
+import { questEvents } from './quests';
 
-export type XpSection = SectionId | 'general';
+/** Where XP comes from: a section, Daily Log topics no section uses, or quests. */
+export type XpSection = SectionId | 'general' | 'quests';
 
 export interface XpEvent {
   /** Stable identity: the same record always produces the same key. */
@@ -71,17 +73,56 @@ export const RULES = {
   cabinetPerDay: 10,
 } as const;
 
-const SECTION_STEP = (n: number) => 80 + 20 * n;
-const OVERALL_STEP = (n: number) => 200 + 60 * n;
+/** XP to go from level n to n + 1. Small steps early, so the first levels come quickly. */
+const SECTION_STEP = (n: number) => 60 + 15 * n;
+const OVERALL_STEP = (n: number) => 120 + 25 * n;
 
-/** Character forms and the overall level each one starts at. */
+/**
+ * The character's forms and the overall level each one starts at. Each form adds hardware and a
+ * colour (`c`, `c2`) the drone wears.
+ */
 export const STAGES = [
-  { level: 1, name: 'Core' },
-  { level: 6, name: 'Ring' },
-  { level: 16, name: 'Rotor' },
-  { level: 28, name: 'Array' },
-  { level: 45, name: 'Halo' },
+  { level: 1, name: 'Core', c: '#f2541b', c2: '#ffb347' },
+  { level: 3, name: 'Ring', c: '#0ea5a4', c2: '#5eead4' },
+  { level: 6, name: 'Rotor', c: '#2563eb', c2: '#7dd3fc' },
+  { level: 10, name: 'Array', c: '#7c3aed', c2: '#c4b5fd' },
+  { level: 15, name: 'Halo', c: '#e0a100', c2: '#fde68a' },
+  { level: 22, name: 'Prism', c: '#db2777', c2: '#67e8f9' },
+  { level: 30, name: 'Nova', c: '#ef4444', c2: '#fbbf24' },
+  { level: 40, name: 'Aurora', c: '#10b981', c2: '#a78bfa' },
+  { level: 55, name: 'Titan', c: '#64748b', c2: '#f59e0b' },
+  { level: 75, name: 'Singularity', c: '#8b5cf6', c2: '#f472b6' },
 ] as const;
+
+/** Overall rank titles by level. */
+export const RANKS = [
+  { level: 1, name: 'Rookie' },
+  { level: 5, name: 'Initiate' },
+  { level: 10, name: 'Apprentice' },
+  { level: 15, name: 'Adept' },
+  { level: 20, name: 'Specialist' },
+  { level: 30, name: 'Expert' },
+  { level: 40, name: 'Veteran' },
+  { level: 50, name: 'Elite' },
+  { level: 65, name: 'Master' },
+  { level: 80, name: 'Grandmaster' },
+  { level: 100, name: 'Legend' },
+] as const;
+
+/** Section rank titles by section level. */
+export const SECTION_RANKS = [
+  { level: 1, name: 'Novice' },
+  { level: 5, name: 'Apprentice' },
+  { level: 10, name: 'Adept' },
+  { level: 15, name: 'Expert' },
+  { level: 25, name: 'Master' },
+  { level: 40, name: 'Grandmaster' },
+  { level: 60, name: 'Legend' },
+] as const;
+
+const byLevel = <T extends { level: number }>(list: readonly T[], level: number): T => list.reduce((r, x) => (level >= x.level ? x : r), list[0]);
+export const rankFor = (level: number) => byLevel(RANKS, level).name;
+export const sectionRankFor = (level: number) => byLevel(SECTION_RANKS, level).name;
 
 export interface LevelInfo {
   level: number;
@@ -243,15 +284,30 @@ export interface Progress {
   streak: { n: number; today: boolean; rest: boolean };
 }
 
-const ALL: XpSection[] = ['violin', 'coding', 'sports', 'gym', 'study', 'chess', 'sleep', 'screen', 'cabinet', 'general'];
+const ALL: XpSection[] = ['violin', 'coding', 'sports', 'gym', 'study', 'chess', 'sleep', 'screen', 'cabinet', 'general', 'quests'];
+
+/** Total XP needed to reach an overall level. */
+export function xpForLevel(level: number): number {
+  let xp = 0;
+  for (let n = 1; n < level; n++) xp += OVERALL_STEP(n);
+  return xp;
+}
+export function xpForSectionLevel(level: number): number {
+  let xp = 0;
+  for (let n = 1; n < level; n++) xp += SECTION_STEP(n);
+  return xp;
+}
+
+/** Every XP event: records first, then quests. */
+export const allXpEvents = (input: ProgressInput): XpEvent[] => [...xpEvents(input), ...questEvents(input)];
 
 export function computeProgress(input: ProgressInput): Progress {
-  const events = xpEvents(input);
+  const events = allXpEvents(input);
   const bySection = Object.fromEntries(ALL.map((s) => [s, 0])) as Record<XpSection, number>;
   for (const e of events) bySection[e.section] += e.xp;
   const total = events.reduce((n, e) => n + e.xp, 0);
   const o = overallLevel(total);
-  const sections = Object.fromEntries(ALL.filter((s) => s !== 'general').map((s) => [s, sectionLevel(bySection[s])])) as Record<SectionId, LevelInfo>;
+  const sections = Object.fromEntries(ALL.filter((s) => s !== 'general' && s !== 'quests').map((s) => [s, sectionLevel(bySection[s])])) as Record<SectionId, LevelInfo>;
   const st = dayStreak(activeDays(input), input.today);
   return { events, total, bySection, overall: { ...o, stage: stageFor(o.level) }, sections, streak: { ...st, rest: input.restDays.includes(input.today) } };
 }

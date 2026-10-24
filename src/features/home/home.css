@@ -28,9 +28,9 @@
   gap: 8px;
 }
 .h-key {
-  background: var(--surf);
-  border-radius: 10px;
-  box-shadow: var(--key-shadow), 0 0 0 1px var(--rule);
+  background: linear-gradient(165deg, color-mix(in srgb, var(--c) 16%, var(--surf)), var(--surf) 75%);
+  border-radius: 12px;
+  box-shadow: var(--key-shadow), 0 0 0 1px color-mix(in srgb, var(--c) 25%, var(--rule));
   padding: 8px 8px 7px;
   display: grid;
   gap: 4px;
@@ -43,12 +43,18 @@
   transform: translateY(2px);
 }
 .h-key__ch {
-  font-family: var(--f-mono);
-  font-size: 10px;
-  color: var(--fg-3);
   display: flex;
   justify-content: space-between;
   align-items: center;
+}
+.h-key__ic {
+  width: 24px;
+  height: 24px;
+  border-radius: 7px;
+  display: grid;
+  place-items: center;
+  color: #fff;
+  background: var(--c);
 }
 .h-key b {
   font-family: var(--f-label);
@@ -64,7 +70,7 @@
   color: var(--fg-2);
 }
 .h-key__bar {
-  height: 3px;
+  height: 4px;
   background: var(--surf-2);
   border-radius: 2px;
   overflow: hidden;
@@ -72,7 +78,9 @@
 .h-key__bar i {
   display: block;
   height: 100%;
+  border-radius: 2px;
   background: var(--c);
+  min-width: 3px;
 }
 .h-rail--right .h-key {
   text-align: right;
@@ -82,8 +90,14 @@
 }
 
 .h-scope {
-  border-radius: 14px;
-  box-shadow: var(--key-shadow), 0 0 0 1px var(--rule);
+  border-radius: 16px;
+  box-shadow: var(--key-shadow), 0 0 0 1px color-mix(in srgb, var(--c) 35%, var(--rule));
+  background:
+    radial-gradient(80% 50% at 50% 30%, color-mix(in srgb, var(--c2) 26%, transparent), transparent 70%),
+    radial-gradient(100% 60% at 50% 100%, color-mix(in srgb, var(--c) 22%, transparent), transparent 70%),
+    linear-gradient(var(--grid) 1px, transparent 1px) 0 0 / 20px 20px,
+    linear-gradient(90deg, var(--grid) 1px, transparent 1px) 0 0 / 20px 20px,
+    var(--surf);
   position: relative;
   overflow: hidden;
   display: grid;
@@ -102,9 +116,9 @@
 .h-scope__name {
   font-family: var(--f-label);
   font-weight: 600;
-  letter-spacing: 0.14em;
+  letter-spacing: 0.12em;
   font-size: 11px;
-  color: var(--fg-3);
+  color: var(--c);
   text-transform: uppercase;
 }
 .h-scope__lv {
@@ -114,14 +128,28 @@
   letter-spacing: 0.02em;
   line-height: 1;
 }
+.h-scope__rank {
+  font-family: var(--f-label);
+  font-weight: 600;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 2px 9px;
+  border-radius: 99px;
+  color: #fff;
+  background: linear-gradient(135deg, var(--c), color-mix(in srgb, var(--c2) 70%, var(--c)));
+}
 .h-scope .i-seg {
   width: 90%;
   margin-top: 6px;
 }
+.h-scope .i-seg i.is-on {
+  background: linear-gradient(90deg, var(--c), var(--c2));
+}
 .h-scope__xp {
   font-size: 11px;
   color: var(--fg-2);
-  margin-top: 4px;
+  margin-top: 2px;
 }
 .h-tip {
   position: absolute;
@@ -148,8 +176,8 @@
   gap: 4px 10px;
   padding: 10px 12px;
   border-radius: 12px;
-  background: var(--surf);
-  box-shadow: var(--key-shadow), 0 0 0 1px var(--rule);
+  background: linear-gradient(100deg, color-mix(in srgb, var(--c) 14%, var(--surf)), var(--surf) 60%);
+  box-shadow: var(--key-shadow), 0 0 0 1px color-mix(in srgb, var(--c) 25%, var(--rule));
   text-align: left;
 }
 .h-bay:active {
@@ -187,9 +215,64 @@
   background: var(--c);
 }
 
-.h-today {
+.h-today,
+.h-quests {
   margin-top: 12px;
   padding: 12px 14px;
+}
+.h-quests {
+  background: linear-gradient(170deg, color-mix(in srgb, var(--c-quests) 10%, var(--surf)), var(--surf) 50%);
+  box-shadow: var(--key-shadow), 0 0 0 1px color-mix(in srgb, var(--c-quests) 30%, var(--rule));
+}
+.h-quests .h-today__h {
+  margin-bottom: 4px;
+}
+.h-quests .pg-q {
+  padding: 10px;
+}
+.h-sys {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 12px;
+}
+.h-sys__btn {
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr);
+  grid-template-rows: auto auto;
+  column-gap: 10px;
+  align-items: center;
+  padding: 10px 12px;
+  border-radius: 14px;
+  background: var(--surf);
+  box-shadow: var(--key-shadow), 0 0 0 1px var(--rule);
+  text-align: left;
+}
+.h-sys__btn svg {
+  grid-row: span 2;
+  width: 34px;
+  height: 34px;
+  padding: 7px;
+  border-radius: 10px;
+  color: var(--c);
+  background: color-mix(in srgb, var(--c) 15%, transparent);
+}
+.h-sys__btn b {
+  font-family: var(--f-label);
+  font-size: 12.5px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+.h-sys__btn small {
+  font-family: var(--f-mono);
+  font-size: 11px;
+  color: var(--fg-3);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.h-sys__btn:active {
+  transform: translateY(2px);
 }
 .h-today__h {
   display: flex;
@@ -247,7 +330,7 @@
   .h-drone {
     max-width: 240px;
   }
-  .h-today {
+  .h-quests {
     margin-top: 8px;
   }
 }

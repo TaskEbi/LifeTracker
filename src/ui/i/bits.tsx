@@ -2,7 +2,7 @@
 import type { CSSProperties, ReactNode } from 'react';
 import type { SectionId } from '../../data/types';
 
-export const accent = (id: SectionId | 'general' | null | undefined): CSSProperties => ({ '--c': `var(--c-${id ?? 'general'})` }) as CSSProperties;
+export const accent = (id: SectionId | 'general' | 'quests' | null | undefined): CSSProperties => ({ '--c': `var(--c-${id ?? 'general'})` }) as CSSProperties;
 
 export function Seg({ pct, n = 20, thin, label }: { pct: number; n?: number; thin?: boolean; label?: string }) {
   const on = Math.round(Math.max(0, Math.min(1, pct)) * n);

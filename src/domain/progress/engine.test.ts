@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { LogDayMetric, LogEntry, LtDetail, LtNight, SectionId, Todo } from '../../data/types';
 import { DEFAULT_SLEEP, DEFAULT_TARGETS, targetsAt } from '../prefs';
-import { bedDelta, computeProgress, dayStreak, overallLevel, RULES, rewardBetween, sectionLevel, weekStreak, xpEvents, type ProgressInput } from './engine';
+import { bedDelta, computeProgress, dayStreak, overallLevel, rankFor, RULES, rewardBetween, sectionLevel, STAGES, stageFor, weekStreak, xpEvents, xpForLevel, type ProgressInput } from './engine';
 
 const T = '2026-10-24'; // a Saturday
 const VIOLIN = 'topic-violin';
@@ -116,10 +116,21 @@ describe('XP from records', () => {
 
 describe('levels', () => {
   it('follows the illustrative curves', () => {
-    expect(sectionLevel(1599).level).toBe(9);
-    expect(sectionLevel(1620).level).toBe(10);
-    expect(overallLevel(10100).level).toBe(15);
-    expect(overallLevel(10200).level).toBe(16);
+    expect(sectionLevel(1214).level).toBe(9);
+    expect(sectionLevel(1215).level).toBe(10);
+    expect(overallLevel(4304).level).toBe(14);
+    expect(overallLevel(4305).level).toBe(15);
+    expect(xpForLevel(15)).toBe(4305);
+  });
+
+  it('gives ranks and forms by level', () => {
+    expect(rankFor(1)).toBe('Rookie');
+    expect(rankFor(12)).toBe('Apprentice');
+    expect(STAGES).toHaveLength(10);
+    expect(stageFor(1)).toBe(0);
+    expect(stageFor(STAGES[4].level)).toBe(4);
+    expect(stageFor(STAGES[4].level - 1)).toBe(3);
+    expect(stageFor(500)).toBe(9);
   });
 });
 
@@ -150,7 +161,9 @@ describe('rewards', () => {
     const before = computeProgress(input({ entries: base }));
     const after = computeProgress(input({ entries: [...base, entry(T, 45, VIOLIN, 'new')] }));
     const r = rewardBetween(before, after);
-    expect(r.lines.map((l) => l.reason)).toEqual(['45 min logged', 'Session logged', 'Weekly violin target reached']);
-    expect(r.total).toBe(23 + 10 + 30);
+    const records = r.lines.filter((l) => l.section !== 'quests');
+    expect(records.map((l) => l.reason)).toEqual(['45 min logged', 'Session logged', 'Weekly violin target reached']);
+    const quests = r.lines.filter((l) => l.section === 'quests').reduce((s, l) => s + l.xp, 0);
+    expect(r.total).toBe(23 + 10 + 30 + quests);
   });
 });

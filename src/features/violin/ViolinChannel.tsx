@@ -64,8 +64,11 @@ export function ViolinChannel() {
       <ChannelHead id="violin" />
       <div className="i-pnl i-stack">
         <div className="i-meters">
-          <Meter value={<>{thisWeek.minutes}<small>/{target}</small></>} label="Min this week · lessons + rehearsals count" />
-          <Meter value={<span style={{ color: thisWeek.minutes >= target ? 'var(--ok)' : undefined }}>{thisWeek.minutes >= target ? 'MET' : `−${target - thisWeek.minutes}`}</span>} label="Weekly target" />
+          <Meter value={<>{thisWeek.minutes}<small>/{target} min</small></>} label="This week · lessons count" />
+          <Meter
+            value={thisWeek.minutes >= target ? <span style={{ color: 'var(--ok)' }}>Met ✓</span> : <>{target - thisWeek.minutes}<small> min</small></>}
+            label={thisWeek.minutes >= target ? 'Weekly target' : 'To weekly target'}
+          />
         </div>
         <Seg pct={thisWeek.minutes / target} n={24} label="This week against the target" />
         {thisWeek.minutes > 0 && (
