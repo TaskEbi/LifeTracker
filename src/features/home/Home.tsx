@@ -8,39 +8,43 @@ import { data, liveItems } from '../../data/store';
 import type { SectionId } from '../../data/types';
 import { conflicts, occurrences } from '../../domain/calendar/occurrences';
 import { addDays, shortDay, weekdayIndex } from '../../domain/log/dates';
-import { rankFor, sectionLevel, STAGES } from '../../domain/progress/engine';
-import { scheduleFor } from '../../domain/progress/engine';
-import { SECTIONS, sectionInfo } from '../../domain/sections';
+import { activeDays, rankFor, scheduleFor, sectionLevel, STAGES } from '../../domain/progress/engine';
+import { SECTIONS, sectionInfo, SYSTEM_KANJI } from '../../domain/sections';
 import { useStore } from '../../lib/createStore';
-import { accent, Seg } from '../../ui/i/bits';
+import { accent } from '../../ui/i/bits';
 import { Drone } from '../../ui/i/Drone';
-import { Icon } from '../../ui/i/Icon';
 import { QuestCard } from '../progress/QuestsPanel';
 import './home.css';
 
 const pad2 = (n: number) => String(n).padStart(2, '0');
 const DAYS = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
 
-function Key({ id }: { id: SectionId }) {
+/** One section as a 技 technique: kanji, name, level and its streak light. */
+function Technique({ id }: { id: SectionId }) {
   const p = useProgress();
   const streak = useSectionStreaks()[id];
+  const items = useStore(data, (s) => s.items);
   const info = sectionInfo(id);
-  const lv = p.sections[id];
+  const lv = id === 'cabinet' ? sectionLevel(p.bySection.cabinet) : p.sections[id];
+  const saved = id === 'cabinet' ? liveItems(items).filter((i) => !i.is_example).length : 0;
   return (
-    <button type="button" className="h-key" style={accent(id)} onClick={() => navigate(id)} aria-label={`${info.full}, level ${lv.level}${streak?.n ? `, ${streak.n} ${streak.label}` : ''}`}>
-      <span className="h-key__ch">
-        <span className="h-key__ic">
-          <Icon name={id} size={15} />
-        </span>
-        <span className={`i-led${streak?.n ? ' is-on' : ''}`} />
+    <button
+      type="button"
+      className="h-tech"
+      style={accent(id)}
+      onClick={() => navigate(id)}
+      aria-label={`${info.full}, level ${lv.level}${streak?.n ? `, ${streak.n} ${streak.label}` : ''}${id === 'cabinet' ? `, ${saved} saved` : ''}`}
+    >
+      <span className="h-tech__k" aria-hidden="true">
+        {info.kanji}
       </span>
-      <b>{info.name}</b>
-      <span className="h-key__lv">
-        LV {pad2(lv.level)}
-        {streak?.n ? ` · ${streak.n}${streak.unit.toUpperCase()}` : ''}
+      <span className="h-tech__name">
+        {info.name}
+        {streak?.n ? <i className="i-led is-on" /> : null}
       </span>
-      <span className="h-key__bar">
-        <i style={{ width: `${(lv.pct * 100).toFixed(0)}%` }} />
+      <span className="h-tech__lv">LV {pad2(lv.level)}</span>
+      <span className="h-tech__bar">
+        <i style={{ width: `${Math.round(lv.pct * 100)}%` }} />
       </span>
     </button>
   );
@@ -92,26 +96,26 @@ export function Home() {
   const p = useProgress();
   const st = useStore(data, (s) => s);
   const rows = useTodayRows(today);
-  const [bubble, setBubble] = useState<string | null>(null);
-  const [n, setN] = useState(0);
-  const allItems = liveItems(st.items);
-  const items = allItems.filter((i) => !i.is_example).length;
-  const examples = allItems.length - items;
-  const cab = sectionLevel(p.bySection.cabinet);
-  const next = STAGES[p.overall.stage + 1];
-  const stage = STAGES[p.overall.stage];
-  const input = progressInput(st, today);
   const quests = useQuests();
   const ach = useAchievements();
-  const dailyDone = quests.daily.quests.filter((q) => q.doneOn).length;
+  const [bubble, setBubble] = useState<string | null>(null);
+  const [n, setN] = useState(0);
+  const input = progressInput(st, today);
+  const chapter = useMemo(() => [...activeDays(input)].filter((d) => d <= today).length || 1, [input, today]);
+  const stage = STAGES[p.overall.stage];
+  const next = STAGES[p.overall.stage + 1];
+  const daily = quests.daily.quests;
+  const dailyDone = daily.filter((q) => q.doneOn).length;
 
   const poke = () => {
     const violinWeek = input.entries.filter((e) => e.date >= addDays(today, -weekdayIndex(today)) && input.topicSection.get(e.topic_id) === 'violin').reduce((s, e) => s + e.minutes, 0);
+    const open = daily.find((q) => !q.doneOn);
     const lines = [
-      p.streak.n ? `streak=${p.streak.n}d · rest days count` : 'streak=0 · log anything to start one',
-      `xp_to_next=${p.overall.toNext}`,
-      `violin_week=${violinWeek}/${input.targets.violinWeek} min`,
-      rows[0] ? `next: ${rows[0].title.toLowerCase()} @ ${rows[0].when}` : 'nothing planned · clear skies',
+      next ? `${p.overall.toNext} XP to the next level. ${next.name} form at LV ${next.level}!` : 'Final form. Nothing left to unlock, only to keep.',
+      p.streak.n ? `${p.streak.n} days in a row. Rest days count too.` : 'Log anything today to start a streak.',
+      open ? `Next training: ${open.title.toLowerCase()} (${open.progress}/${open.goal}).` : 'All three of today’s training done!',
+      `Violin this week: ${violinWeek} of ${input.targets.violinWeek} min.`,
+      rows[0] ? `Coming up: ${rows[0].title} at ${rows[0].when}.` : 'Nothing planned. Clear skies.',
     ];
     setBubble(lines[n % lines.length]);
     setN(n + 1);
@@ -120,129 +124,157 @@ export function Home() {
   return (
     <div className="h-home">
       <StatusBar />
-      <div className="h-status2 i-mono">
-        <span>
-          {shortDay(today).toUpperCase()} · <b>{['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY'][weekdayIndex(today)]}</b>
-        </span>
-        <span title="Overall streak: days with anything logged, rest days included">
-          <span className={`i-led${p.streak.n ? ' is-on' : ''}`} /> STREAK <b>{String(p.streak.n).padStart(3, '0')}</b>
-        </span>
-      </div>
+      <header className="h-head">
+        <div className="h-head__ep" aria-hidden="true">
+          第<span className="h-head__num">{chapter}</span>話
+        </div>
+        <div className="h-head__t">
+          <h1>LifeTracker</h1>
+          <p>
+            Chapter {chapter} · the {stage.name} arc · {shortDay(today)}
+          </p>
+        </div>
+        <div className="h-head__streak" title="Days in a row with anything logged; planned rest days count">
+          <b>{p.streak.n}日</b>
+          <span>Streak</span>
+        </div>
+      </header>
+
       <div className="h-grid">
         <div>
-          <div className="h-console">
-            <div className="h-rail">
-              {SECTIONS.slice(0, 4).map((s) => (
-                <Key key={s.id} id={s.id} />
-              ))}
-            </div>
-            <button type="button" className="h-scope" style={{ '--c': stage.c, '--c2': stage.c2 } as CSSProperties} onClick={poke} aria-label="Ping your drone for a status line">
+          <section className="h-hero" style={{ '--c': stage.c, '--c2': stage.c2 } as CSSProperties} aria-label="Your character">
+            <div className="h-hero__in">
+              <span className="h-hero__speed" aria-hidden="true" />
+              <button type="button" className="h-hero__drone i-drone" onClick={poke} aria-label="Talk to your drone">
+                <Drone stage={p.overall.stage} label={false} />
+              </button>
+              <span className="h-hero__lv">
+                <span className="h-hero__lvk">LV</span>
+                <b>{p.overall.level}</b>
+                <span className="h-hero__tag h-hero__tag--rank">{rankFor(p.overall.level)}</span>
+                <span className="h-hero__tag h-hero__tag--form">
+                  Form {p.overall.stage + 1} · {stage.name}
+                </span>
+              </span>
+              <span className="h-hero__sfx" aria-hidden="true">
+                ゴゴゴゴ
+              </span>
+              <span className="h-hero__power">
+                <span className="h-hero__powerl">
+                  <span>Power</span>
+                  <span>
+                    {p.overall.into.toLocaleString('en-GB')} / {p.overall.need.toLocaleString('en-GB')}
+                    {next ? ` · 覚醒 → ${next.name.toUpperCase()} @ LV ${next.level}` : ' · 極 MAX FORM'}
+                  </span>
+                </span>
+                <span className="h-hero__bar" role="progressbar" aria-label="Overall level progress" aria-valuenow={Math.round(p.overall.pct * 100)} aria-valuemin={0} aria-valuemax={100}>
+                  {Array.from({ length: 24 }, (_, i) => (
+                    <i key={i} className={i < Math.round(p.overall.pct * 24) ? 'is-on' : ''} />
+                  ))}
+                </span>
+              </span>
               {bubble && (
-                <span className="h-tip i-mono" role="status">
-                  &gt; {bubble}
+                <span className="h-hero__bubble" role="status">
+                  {bubble}
                 </span>
               )}
-              <span className="h-drone i-drone">
-                <Drone stage={p.overall.stage} />
-              </span>
-              <span className="h-scope__name">
-                {stage.name} · form {p.overall.stage + 1}/{STAGES.length}
-              </span>
-              <span className="h-scope__lv">LV {p.overall.level}</span>
-              <span className="h-scope__rank">{rankFor(p.overall.level)}</span>
-              <Seg pct={p.overall.pct} label="Overall level progress" />
-              <span className="h-scope__xp i-mono">
-                {p.overall.into.toLocaleString('en-GB')}/{p.overall.need.toLocaleString('en-GB')} XP
-              </span>
-              {next && <span className="h-scope__xp i-mono">{next.name} at LV {next.level}</span>}
-            </button>
-            <div className="h-rail h-rail--right">
-              {SECTIONS.slice(4, 8).map((s) => (
-                <Key key={s.id} id={s.id} />
+            </div>
+          </section>
+
+          <section className="h-sec" aria-label="Techniques: your sections">
+            <h2 className="h-h2">
+              <span aria-hidden="true">技</span> Techniques
+            </h2>
+            <div className="h-techs">
+              {SECTIONS.map((s) => (
+                <Technique key={s.id} id={s.id} />
               ))}
             </div>
-          </div>
-          <button type="button" className="h-bay" style={accent('cabinet')} onClick={() => navigate('cabinet')}>
-            <span className="i-mono h-bay__code">CH09</span>
-            <b>Cabinet</b>
-            <span className="i-mono i-small i-mid">
-              {items || !examples ? `${items} saved` : `${examples} examples`} · LV {pad2(cab.level)}
-            </span>
-            <span className="h-bay__slots" aria-hidden="true">
-              {Array.from({ length: 12 }, (_, i) => (
-                <i key={i} className={i < Math.min(12, Math.ceil(items / 10)) ? 'is-on' : ''} />
-              ))}
-            </span>
-          </button>
+          </section>
         </div>
+
         <div>
-        <section className="h-quests i-pnl" aria-label="Today's quests">
-          <div className="h-today__h">
-            <span className="i-lab">
-              Daily quests · {dailyDone}/3
-            </span>
-            <button type="button" className="i-link" onClick={() => navigate('progress', ['quests'])}>
-              All quests →
+          <section className="h-sec" aria-label="Today's training">
+            <div className="h-h2row">
+              <h2 className="h-h2">
+                <span aria-hidden="true">修行</span> Training · {dailyDone}/3
+              </h2>
+              <button type="button" className="i-link" onClick={() => navigate('progress', ['quests'])}>
+                All missions ▶
+              </button>
+            </div>
+            <div className="pg-quests">
+              {daily.map((q) => (
+                <QuestCard key={q.key} q={q} now={q === daily.find((x) => !x.doneOn)} />
+              ))}
+            </div>
+          </section>
+
+          <section className="h-sec" aria-label="Today and tomorrow">
+            <div className="h-h2row">
+              <h2 className="h-h2">
+                <span aria-hidden="true">予定</span> Today / tomorrow
+              </h2>
+              <button type="button" className="i-link" onClick={() => navigate('calendar')}>
+                Calendar ▶
+              </button>
+            </div>
+            <div className="h-today">
+              {rows.length === 0 ? (
+                <p className="i-note" style={{ padding: '10px 0' }}>
+                  Nothing planned or due. Add events in the calendar, or{' '}
+                  <button type="button" className="i-link" style={{ minHeight: 0 }} onClick={() => openSheet({ type: 'task' })}>
+                    add a task
+                  </button>
+                  .
+                </p>
+              ) : (
+                rows.slice(0, 7).map((r) => (
+                  <div key={r.key} className="h-trow" style={accent(r.section)}>
+                    <span className="h-trow__t" style={r.when === 'LATE' ? { color: 'var(--warn)' } : undefined}>
+                      {r.when}
+                    </span>
+                    <span className="h-trow__k" aria-hidden="true">
+                      {r.section ? sectionInfo(r.section).kanji : '・'}
+                    </span>
+                    <span className="h-trow__x">{r.title}</span>
+                    {r.taskId ? (
+                      <button type="button" className="h-ck" onClick={() => toggleTask(r.taskId!)} aria-label={`Complete: ${r.title}`} />
+                    ) : (
+                      <span className={`h-trow__tag${r.clash ? ' is-warn' : ''}`}>{r.clash ? 'CLASH' : r.tag ?? ''}</span>
+                    )}
+                  </div>
+                ))
+              )}
+            </div>
+          </section>
+
+          <nav className="h-sys" aria-label="More">
+            <button type="button" className="h-sys__btn" onClick={() => navigate('progress')}>
+              <span aria-hidden="true">{SYSTEM_KANJI.progress}</span>
+              <b>Awakening</b>
+              <small>
+                {STAGES.length} forms · {rankFor(p.overall.level)}
+              </small>
             </button>
-          </div>
-          <div className="pg-quests">
-            {quests.daily.quests.map((q) => (
-              <QuestCard key={q.key} q={q} />
-            ))}
-          </div>
-        </section>
-        <section className="h-today i-pnl" aria-label="Today and tomorrow">
-          <div className="h-today__h">
-            <span className="i-lab">Today / tomorrow</span>
-            <button type="button" className="i-link" onClick={() => navigate('calendar')}>
-              Calendar →
+            <button type="button" className="h-sys__btn" onClick={() => navigate('progress', ['achievements'])}>
+              <span aria-hidden="true">紋</span>
+              <b>Emblems</b>
+              <small>
+                {ach.filter((a) => a.unlockedOn).length}/{ach.length} earned
+              </small>
             </button>
-          </div>
-          {rows.length === 0 ? (
-            <p className="i-note" style={{ padding: '8px 0 4px' }}>
-              Nothing planned or due. Add events in the calendar, or <button type="button" className="i-link" style={{ minHeight: 0 }} onClick={() => openSheet({ type: 'task' })}>add a task</button>.
-            </p>
-          ) : (
-            rows.slice(0, 7).map((r) => (
-              <div key={r.key} className="h-trow" style={accent(r.section)}>
-                <span className="h-trow__t i-mono" style={r.when === 'LATE' ? { color: 'var(--warn)' } : undefined}>
-                  {r.when}
-                </span>
-                <span className="i-led is-on" />
-                <span className="h-trow__x">{r.title}</span>
-                {r.taskId ? (
-                  <button type="button" className="h-ck" onClick={() => toggleTask(r.taskId!)} aria-label={`Complete: ${r.title}`} />
-                ) : (
-                  <span className={`i-mono i-small ${r.clash ? 'i-warn-text' : 'i-dim'}`}>{r.clash ? 'CLASH' : r.tag ?? ''}</span>
-                )}
-              </div>
-            ))
-          )}
-        </section>
-        <nav className="h-sys" aria-label="More">
-          <button type="button" className="h-sys__btn" style={{ '--c': 'var(--sig)' } as CSSProperties} onClick={() => navigate('progress')}>
-            <Icon name="progress" />
-            <b>Progress</b>
-            <small>{rankFor(p.overall.level)}</small>
-          </button>
-          <button type="button" className="h-sys__btn" style={{ '--c': 'var(--t-gold)' } as CSSProperties} onClick={() => navigate('progress', ['achievements'])}>
-            <Icon name="trophy" />
-            <b>Achievements</b>
-            <small>
-              {ach.filter((a) => a.unlockedOn).length}/{ach.length}
-            </small>
-          </button>
-          <button type="button" className="h-sys__btn" style={{ '--c': 'var(--c-coding)' } as CSSProperties} onClick={() => navigate('log')}>
-            <Icon name="log" />
-            <b>All activity</b>
-            <small>Daily Log</small>
-          </button>
-          <button type="button" className="h-sys__btn" style={{ '--c': 'var(--c-general)' } as CSSProperties} onClick={() => navigate('settings')}>
-            <Icon name="settings" />
-            <b>Settings</b>
-            <small>Sync · data</small>
-          </button>
-        </nav>
+            <button type="button" className="h-sys__btn" onClick={() => navigate('log')}>
+              <span aria-hidden="true">{SYSTEM_KANJI.log}</span>
+              <b>All activity</b>
+              <small>Daily Log</small>
+            </button>
+            <button type="button" className="h-sys__btn" onClick={() => navigate('settings')}>
+              <span aria-hidden="true">{SYSTEM_KANJI.settings}</span>
+              <b>Settings</b>
+              <small>Themes · sync</small>
+            </button>
+          </nav>
         </div>
       </div>
     </div>

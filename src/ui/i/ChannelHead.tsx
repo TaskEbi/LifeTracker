@@ -1,14 +1,30 @@
+import type { ReactNode } from 'react';
 import { useProgress, useSectionStreaks } from '../../data/lt';
 import type { SectionId } from '../../data/types';
 import { sectionInfo } from '../../domain/sections';
 import { sectionRankFor } from '../../domain/progress/engine';
 import { ChannelBar } from '../../app/Shell';
+import { navigate } from '../../app/router';
 import { accent, Seg } from './bits';
+import { Icon } from './Icon';
 
 const pad2 = (n: number) => String(n).padStart(2, '0');
 
-/** Channel strip (phone) and the section's heading: code, name, level, streak. */
-export function ChannelHead({ id, sub }: { id: SectionId; sub?: string }) {
+/** The way out of every section: same place, same words, whatever the section looks like. */
+export function HomeLink() {
+  return (
+    <button type="button" className="i-home" onClick={() => navigate('home')}>
+      <Icon name="left" size={18} />
+      <span>Home</span>
+    </button>
+  );
+}
+
+/**
+ * Channel strip (phone) and the section's heading: way home, name, level, streak. `art` is the
+ * section's own illustration (features/<section>/Art.tsx), drawn behind the heading.
+ */
+export function ChannelHead({ id, sub, art }: { id: SectionId; sub?: string; art?: ReactNode }) {
   const info = sectionInfo(id);
   const lv = useProgress().sections[id];
   const streak = useSectionStreaks()[id];
@@ -16,7 +32,12 @@ export function ChannelHead({ id, sub }: { id: SectionId; sub?: string }) {
     <>
       <ChannelBar current={id} />
       <header className="i-chhead" style={accent(id)}>
-        <div>
+        {art ?? <span className="i-chhead__art" aria-hidden="true" />}
+        <span className="i-chhead__kanji" aria-hidden="true">
+          {info.kanji}
+        </span>
+        <HomeLink />
+        <div className="i-chhead__t">
           <span className="i-chhead__k">
             {info.code} · {sub ?? info.sub}
           </span>

@@ -1,0 +1,345 @@
+/* ── Study · chalkboard and notebooks ────────────────────────────────────────
+   A classroom: the page is squared maths paper, the header a framed green chalkboard with chalk
+   formulas, a sketched triangle and a chalk tray; panels are spiral notebook pages with a margin;
+   handwritten Caveat headings with highlighter, teacher's red pen for links, a ruler for a bar. */
+
+.i-shell[data-sect='study'] {
+  --bg: #f5f7fb;
+  --bg-dot: transparent;
+  --surf: #ffffff;
+  --surf-2: #f1f4f9;
+  --surf-3: #e2e8f1;
+  --fg: #1d2a4d;
+  --fg-2: #3a4669;
+  --fg-3: #56617f;
+  --rule: #dbe2ee;
+  --grid: #e8eef7;
+  --led-off: #dde3ee;
+  --sig: #2848a8;
+  --sig-fg: #ffffff;
+  --sig-soft: rgb(40 72 168 / 0.1);
+  --acc2: #b8322a;
+  --acc2-fg: #ffffff;
+  --ok: #1d7a4f;
+  --ok-soft: rgb(29 122 79 / 0.1);
+  --warn: #b8322a;
+  --warn-soft: rgb(184 50 42 / 0.08);
+  --c-study: #2848a8;
+  --f-label: 'Caveat', 'Bradley Hand', 'Segoe Print', cursive;
+  --f-body: 'Source Sans 3', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --f-mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+  --w-label: 700;
+  --tt-label: none;
+  --slant: 0deg;
+  --r-1: 3px;
+  --r-2: 4px;
+  --r-3: 4px;
+  --lift: 0 0 0 1px rgb(29 42 77 / 0.12), 0 24px 50px rgb(29 42 77 / 0.22);
+  color-scheme: light;
+  background-image:
+    linear-gradient(rgb(110 140 200 / 0.28) 1px, transparent 1px),
+    linear-gradient(90deg, rgb(110 140 200 / 0.28) 1px, transparent 1px),
+    linear-gradient(rgb(110 140 200 / 0.12) 1px, transparent 1px),
+    linear-gradient(90deg, rgb(110 140 200 / 0.12) 1px, transparent 1px);
+  background-size: 100px 100px, 100px 100px, 20px 20px, 20px 20px;
+}
+
+/* ── the chalkboard ── */
+.i-shell[data-sect='study'] .i-chhead {
+  --fg: #f4f1e6;
+  --fg-2: #dfe3d6;
+  --fg-3: #c3cbbd;
+  --acc2: #f6e27a;
+  color: var(--fg);
+  min-height: 250px;
+  padding: 24px 24px 36px;
+  clip-path: none;
+  border: 0;
+  border-radius: 4px;
+  background: radial-gradient(120% 90% at 30% 20%, #3c6149, #2a4535 70%, #223a2c);
+  box-shadow: inset 0 0 0 10px #9a6838, inset 0 0 0 12px #6b431f, inset 0 0 30px 12px rgb(0 0 0 / 0.35), 0 12px 24px -10px rgb(29 42 77 / 0.5);
+}
+.i-shell[data-sect='study'] .i-chhead::before,
+.i-shell[data-sect='study'] .i-chhead__kanji {
+  display: none;
+}
+.st-board {
+  overflow: hidden;
+  border-radius: inherit;
+}
+.st-dust {
+  position: absolute;
+  inset: 12px;
+  background:
+    radial-gradient(40% 18% at 70% 30%, rgb(255 255 255 / 0.07), transparent),
+    radial-gradient(30% 20% at 25% 75%, rgb(255 255 255 / 0.06), transparent),
+    linear-gradient(100deg, transparent 40%, rgb(255 255 255 / 0.05) 50%, transparent 62%);
+}
+.st-f {
+  position: absolute;
+  font-family: 'Caveat', cursive;
+  font-weight: 600;
+  color: #f4f1e6;
+  opacity: 0.55;
+  white-space: nowrap;
+}
+.st-f1 {
+  right: 24px;
+  top: 22px;
+  font-size: 20px;
+  transform: rotate(-5deg);
+}
+.st-f2 {
+  right: 26px;
+  top: 106px;
+  font-size: 18px;
+  transform: rotate(3deg);
+  color: #f6e27a;
+}
+.st-f3 {
+  right: 120px;
+  top: 58px;
+  font-size: 17px;
+  transform: rotate(-2deg);
+  color: #f4b3c2;
+}
+.st-tri {
+  position: absolute;
+  right: 34px;
+  top: 46px;
+  width: 64px;
+  opacity: 0.6;
+}
+.st-tray {
+  position: absolute;
+  left: 10px;
+  right: 10px;
+  bottom: 10px;
+  height: 12px;
+  background: linear-gradient(#b07a45, #7d5026);
+  box-shadow: 0 -2px 4px rgb(0 0 0 / 0.3);
+}
+.st-chalk {
+  position: absolute;
+  bottom: 8px;
+  left: 30px;
+  width: 30px;
+  height: 7px;
+  border-radius: 3px;
+  background: #f7f5ee;
+  transform: rotate(-4deg);
+}
+.st-chalk--y {
+  left: 70px;
+  width: 22px;
+  background: #f6e27a;
+  transform: rotate(3deg);
+}
+.st-eraser {
+  position: absolute;
+  bottom: 8px;
+  right: 40px;
+  width: 50px;
+  height: 14px;
+  border-radius: 2px;
+  background: linear-gradient(#5b4632 0 55%, #e9e4d6 55%);
+}
+.i-shell[data-sect='study'] .i-home {
+  margin-left: -8px;
+  font-family: var(--f-label);
+  font-weight: 700;
+  font-size: 22px;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--fg);
+}
+.i-shell[data-sect='study'] .i-chhead__k {
+  font-family: var(--f-label);
+  font-weight: 600;
+  font-size: 19px;
+  letter-spacing: 0.02em;
+  text-transform: none;
+  color: #f6e27a;
+}
+.i-shell[data-sect='study'] .i-chhead h1 {
+  font-size: clamp(44px, 13vw, 60px);
+  line-height: 0.95;
+  letter-spacing: 0;
+  text-shadow: 0 0 1px rgb(255 255 255 / 0.6), 0 0 8px rgb(255 255 255 / 0.15);
+  max-width: 70%;
+}
+.i-shell[data-sect='study'] .i-chhead__rank {
+  margin-top: 6px;
+  clip-path: none;
+  background: none;
+  padding: 0 0 2px;
+  color: #f4b3c2;
+  font-family: var(--f-label);
+  font-weight: 700;
+  font-size: 20px;
+  letter-spacing: 0;
+  text-transform: none;
+  border-bottom: 2px solid #f4b3c2;
+}
+/* the level, circled in chalk */
+.i-shell[data-sect='study'] .i-chhead__lv {
+  width: 84px;
+  height: 84px;
+  display: grid;
+  place-content: center;
+  text-align: center;
+  border-radius: 50%;
+  border: 2.5px solid rgb(244 241 230 / 0.85);
+  transform: rotate(-6deg);
+  font-family: var(--f-label);
+  font-weight: 600;
+  font-size: 15px;
+  letter-spacing: 0;
+  margin-bottom: 4px;
+}
+.i-shell[data-sect='study'] .i-chhead__lv b {
+  font-family: var(--f-label);
+  font-weight: 700;
+  font-size: 40px;
+  line-height: 0.8;
+  text-shadow: none;
+}
+.i-shell[data-sect='study'] .i-chhead .i-seg i {
+  background: rgb(244 241 230 / 0.18);
+  height: 4px;
+}
+.i-shell[data-sect='study'] .i-chhead .i-seg i.is-on {
+  background: #f4f1e6;
+}
+.i-shell[data-sect='study'] .i-seg {
+  transform: none;
+  gap: 3px;
+}
+.i-shell[data-sect='study'] .i-seg i {
+  height: 6px;
+  border-radius: 3px;
+}
+
+/* ── spiral notebook pages ── */
+.i-shell[data-sect='study'] .i-pnl {
+  position: relative;
+  margin-left: 8px;
+  padding-left: 40px;
+  border-radius: 2px 4px 4px 2px;
+  background:
+    radial-gradient(circle at 10px 50%, #c5cddb 3.5px, transparent 4px) 0 0 / 20px 24px repeat-y,
+    linear-gradient(90deg, transparent 0 28px, rgb(200 60 60 / 0.4) 28px 29px, transparent 29px),
+    repeating-linear-gradient(transparent 0 25px, rgb(82 120 196 / 0.16) 25px 26px),
+    #ffffff;
+  box-shadow: 0 1px 0 var(--rule), 0 8px 18px -10px rgb(29 42 77 / 0.35);
+}
+.i-shell[data-sect='study'] .i-pnl::before {
+  content: '';
+  position: absolute;
+  left: -9px;
+  top: 0;
+  bottom: 0;
+  width: 22px;
+  background: repeating-linear-gradient(180deg, transparent 0 9px, #8b93a3 9px 12px, #c9ced8 12px 13px, transparent 13px 24px);
+  border-radius: 6px;
+  pointer-events: none;
+}
+.i-shell[data-sect='study'] .i-h2 {
+  margin-top: 30px;
+}
+.i-shell[data-sect='study'] .i-h2 h2 {
+  font-size: 32px;
+  line-height: 1;
+  letter-spacing: 0;
+  padding: 0 6px;
+  background: linear-gradient(176deg, transparent 52%, rgb(255 226 60 / 0.6) 52% 88%, transparent 88%);
+}
+.i-shell[data-sect='study'] .i-h2 h2::before {
+  display: none;
+}
+.i-shell[data-sect='study'] :is(.i-link, .i-h2__aside) {
+  font-family: var(--f-label);
+  font-weight: 700;
+  font-size: 20px;
+  letter-spacing: 0;
+  text-transform: none;
+}
+.i-shell[data-sect='study'] :is(.i-meter__l, .i-chip, .i-chbar__btn b, .i-cmd__btn) {
+  font-weight: 700;
+  letter-spacing: 0.06em;
+}
+/* index cards, a little crooked */
+.i-shell[data-sect='study'] .i-meter {
+  background: repeating-linear-gradient(transparent 0 19px, rgb(82 120 196 / 0.2) 19px 20px) 0 34px / 100% calc(100% - 34px) no-repeat, #fff;
+  box-shadow: inset 0 30px 0 -28px #e05555, 0 2px 6px rgb(29 42 77 / 0.15);
+  transform: rotate(-1deg);
+}
+.i-shell[data-sect='study'] .i-meter:nth-child(even) {
+  transform: rotate(1.2deg);
+}
+.i-shell[data-sect='study'] .i-meter__v {
+  font-size: 38px;
+  line-height: 1;
+}
+.i-shell[data-sect='study'] .i-btn {
+  font-size: 22px;
+  letter-spacing: 0;
+}
+.i-shell[data-sect='study'] :is(.i-btn, .i-chip, .i-chbar__btn)::before {
+  border-radius: 4px;
+}
+.i-shell[data-sect='study'] .i-btn--sig::before {
+  box-shadow: 0 3px 0 #18307a;
+}
+.i-shell[data-sect='study'] .i-chip[aria-pressed='true'],
+.i-shell[data-sect='study'] .i-chbar__btn[aria-current='page'],
+.i-shell[data-sect='study'] .i-chbar__btn[aria-current='page'] b {
+  color: #fff;
+}
+.i-shell[data-sect='study'] .i-chbar {
+  background: rgb(245 247 251 / 0.92);
+}
+.i-shell[data-sect='study'] .i-sheet {
+  border-top: 0;
+  box-shadow: inset 0 3px 0 var(--sig), var(--lift);
+}
+/* the bottom bar: a wooden ruler */
+.i-shell[data-sect='study'] .i-cmd {
+  background:
+    repeating-linear-gradient(90deg, #6b4a1a 0 1px, transparent 1px 10px) top / 100% 8px no-repeat,
+    repeating-linear-gradient(90deg, #6b4a1a 0 1px, transparent 1px 50px) top / 100% 14px no-repeat,
+    linear-gradient(#f1d79a, #e2bf73);
+  border-top: 1px solid #b38a3e;
+}
+.i-shell[data-sect='study'] .i-cmd__btn {
+  color: #5a3f14;
+}
+.i-shell[data-sect='study'] .i-cmd__btn[aria-current='page'] {
+  color: #18307a;
+}
+.i-shell[data-sect='study'] .i-cmd__btn[aria-current='page']::after {
+  transform: none;
+  background: #18307a;
+}
+.i-shell[data-sect='study'] .i-cmd__prompt {
+  transform: none;
+  border-radius: 6px;
+  border: 0;
+  box-shadow: 0 0 0 4px #e9cb86, 0 4px 10px rgb(40 72 168 / 0.35);
+}
+.i-shell[data-sect='study'] .i-cmd__prompt svg {
+  transform: none;
+}
+
+/* entering: the notebook opens */
+.i-shell[data-sect='study'] .i-view,
+.i-shell[data-sect='study'] .i-view[data-dir='back'] {
+  transform-origin: 0 30%;
+  animation: st-enter 0.32s var(--ease);
+}
+@keyframes st-enter {
+  from {
+    opacity: 0;
+    transform: perspective(1400px) rotateY(-12deg);
+  }
+}

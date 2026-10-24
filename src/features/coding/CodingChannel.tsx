@@ -20,6 +20,8 @@ import { dragon, dragonBase, fetchDragon, STALE_MS } from './road/dragon';
 import { countdown, currentStage, daysUntil, gatesThisSeason, isHardDay, lastSeven, proofNote, seasonYear, STAGE_INFO, stageWhen, trainingByDay, upsolveLine, zonedInstant, type StageWhen } from './road/rules';
 import './road/sheets';
 import './coding.css';
+import { CodingArt } from './Art';
+import './theme.css';
 
 const KINDS = ['Problems', 'Contest', 'Upsolve', 'Learning', 'Project'] as const;
 const CODING = '__coding__';
@@ -455,7 +457,7 @@ export function CodingChannel() {
   const [tab, setTab] = useState<'road' | 'all'>(() => (location.hash === '#all' ? 'all' : 'road'));
   return (
     <div style={accent('coding')}>
-      <ChannelHead id="coding" />
+      <ChannelHead id="coding" art={<CodingArt />} />
       <Chips label="View" value={tab} onChange={setTab} options={[{ id: 'road', label: 'Road to IOI' }, { id: 'all', label: 'All coding' }]} />
       {tab === 'road' ? <Road /> : <AllCoding />}
       <RelatedTasks section="coding" />

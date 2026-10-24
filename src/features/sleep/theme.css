@@ -1,0 +1,344 @@
+/* ── Sleep · the night sky ───────────────────────────────────────────────────
+   Indigo to violet with a slow field of stars and a crescent moon; Instrument Serif over light
+   Lexend; soft rounded glass panels; gentle, slow motion that stops under reduced motion. */
+
+.i-shell[data-sect='sleep'] {
+  --bg: #0a0d26;
+  --bg-dot: transparent;
+  --surf: #151b40;
+  --surf-2: #1c234c;
+  --surf-3: #272f5c;
+  --fg: #e9ebff;
+  --fg-2: #bcc1ea;
+  --fg-3: #959cce;
+  --rule: #2b3364;
+  --grid: #1a2048;
+  --led-off: #2b3364;
+  --sig: #b6bdff;
+  --sig-fg: #0d1030;
+  --sig-soft: rgb(182 189 255 / 0.14);
+  --acc2: #f4d68e;
+  --acc2-fg: #1a1530;
+  --ok: #92e4c2;
+  --warn: #ffa08f;
+  --c-sleep: #aab4ff;
+  --night: rgb(14 18 48 / 0.6);
+  --night-fg: #e9ebff;
+  --night-dim: #a9afe0;
+  --f-label: 'Instrument Serif', 'Iowan Old Style', Georgia, serif;
+  --f-body: 'Lexend', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --f-mono: 'Lexend', ui-sans-serif, system-ui, sans-serif;
+  --w-label: 400;
+  --tt-label: none;
+  --slant: 0deg;
+  --r-1: 10px;
+  --r-2: 14px;
+  --r-3: 20px;
+  --lift: 0 0 0 1px rgb(182 189 255 / 0.15), 0 30px 70px rgb(0 0 10 / 0.6);
+  color-scheme: dark;
+  font-weight: 400;
+  background: transparent;
+}
+/* the sky sits behind everything; the stars breathe very slowly */
+.i-shell[data-sect='sleep']::before,
+.i-shell[data-sect='sleep']::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+}
+.i-shell[data-sect='sleep']::before {
+  background:
+    radial-gradient(1.2px 1.2px at 12% 18%, #fff 50%, transparent),
+    radial-gradient(1px 1px at 28% 8%, #dfe3ff 50%, transparent),
+    radial-gradient(1.4px 1.4px at 46% 22%, #fff 50%, transparent),
+    radial-gradient(1px 1px at 63% 12%, #e6e9ff 50%, transparent),
+    radial-gradient(1.3px 1.3px at 82% 26%, #fff 50%, transparent),
+    radial-gradient(1px 1px at 92% 6%, #dfe3ff 50%, transparent),
+    radial-gradient(1px 1px at 8% 44%, #dfe3ff 50%, transparent),
+    radial-gradient(1.2px 1.2px at 36% 52%, #fff 50%, transparent),
+    radial-gradient(1px 1px at 71% 48%, #e6e9ff 50%, transparent),
+    radial-gradient(1px 1px at 88% 62%, #fff 50%, transparent),
+    radial-gradient(1px 1px at 18% 74%, #e6e9ff 50%, transparent),
+    radial-gradient(1px 1px at 55% 80%, #dfe3ff 50%, transparent),
+    radial-gradient(80% 50% at 80% 110%, rgb(140 90 200 / 0.35), transparent 70%),
+    linear-gradient(180deg, #070a1d 0%, #10153d 50%, #221a4c 100%);
+}
+.i-shell[data-sect='sleep']::after {
+  background:
+    radial-gradient(1.6px 1.6px at 22% 30%, #fff 50%, transparent),
+    radial-gradient(1.4px 1.4px at 58% 34%, #fff 50%, transparent),
+    radial-gradient(1.6px 1.6px at 77% 16%, #fff 50%, transparent),
+    radial-gradient(1.3px 1.3px at 40% 66%, #fff 50%, transparent),
+    radial-gradient(1.5px 1.5px at 90% 40%, #fff 50%, transparent);
+  animation: sl-twinkle 7s ease-in-out infinite alternate;
+}
+@keyframes sl-twinkle {
+  from {
+    opacity: 0.25;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* header: a window onto moonlit hills */
+.i-shell[data-sect='sleep'] .i-chhead {
+  min-height: 300px;
+  padding: 18px 18px 96px;
+  clip-path: none;
+  border: 0;
+  border-radius: 28px;
+  background: linear-gradient(180deg, #0b1030 0%, #1b2160 60%, #3a2e74 100%);
+  box-shadow: 0 0 0 1px rgb(182 189 255 / 0.18), 0 20px 50px -20px rgb(0 0 10 / 0.9);
+}
+.i-shell[data-sect='sleep'] .i-chhead::before,
+.i-shell[data-sect='sleep'] .i-chhead__kanji {
+  display: none;
+}
+.sl-scene {
+  overflow: hidden;
+  border-radius: inherit;
+}
+.sl-stars {
+  position: absolute;
+  left: 46%;
+  top: 22px;
+  width: 120px;
+}
+.sl-moon {
+  position: absolute;
+  right: 18px;
+  top: 16px;
+  width: 78px;
+  filter: drop-shadow(0 0 22px rgb(255 226 150 / 0.55));
+  animation: sl-moonrise 1.2s var(--ease) both;
+}
+@keyframes sl-moonrise {
+  from {
+    transform: translateY(26px);
+    opacity: 0;
+  }
+}
+.sl-cloud {
+  position: absolute;
+  width: 120px;
+  animation: sl-drift 60s linear infinite alternate;
+}
+.sl-cloud--a {
+  right: 60px;
+  top: 74px;
+}
+.sl-cloud--b {
+  left: 4%;
+  bottom: 64px;
+  width: 150px;
+  animation-duration: 80s;
+  animation-direction: alternate-reverse;
+}
+@keyframes sl-drift {
+  to {
+    transform: translateX(-60px);
+  }
+}
+.sl-hills {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100%;
+  height: 92px;
+}
+.sl-house {
+  position: absolute;
+  right: 22%;
+  bottom: 30px;
+  width: 64px;
+}
+.sl-window {
+  filter: drop-shadow(0 0 6px #ffd77a);
+}
+.sl-z {
+  position: absolute;
+  right: calc(22% - 46px);
+  bottom: 56px;
+  font: italic 400 16px 'Instrument Serif', serif;
+  color: #dfe3ff;
+  opacity: 0.8;
+  animation: sl-zz 4s ease-in-out infinite;
+}
+.sl-z b {
+  font-weight: 400;
+  font-size: 20px;
+  margin-left: 2px;
+}
+.sl-z i {
+  font-size: 26px;
+  margin-left: 2px;
+}
+@keyframes sl-zz {
+  50% {
+    transform: translate(6px, -6px);
+    opacity: 0.45;
+  }
+}
+.i-shell[data-sect='sleep'] .i-home {
+  margin-left: -6px;
+  font-weight: 500;
+  font-size: 14px;
+  letter-spacing: 0.02em;
+  text-transform: none;
+  color: var(--fg-2);
+}
+.i-shell[data-sect='sleep'] .i-chhead__k {
+  font-weight: 400;
+  font-size: 12.5px;
+  letter-spacing: 0.06em;
+  text-transform: none;
+  color: var(--fg-3);
+}
+.i-shell[data-sect='sleep'] .i-chhead h1 {
+  font-size: clamp(46px, 14vw, 62px);
+  line-height: 0.95;
+  letter-spacing: -0.01em;
+}
+.i-shell[data-sect='sleep'] .i-chhead__rank {
+  clip-path: none;
+  background: none;
+  color: var(--sig);
+  padding: 0;
+  font-family: var(--f-label);
+  font-style: italic;
+  font-weight: 400;
+  font-size: 18px;
+  letter-spacing: 0;
+  text-transform: none;
+}
+.i-shell[data-sect='sleep'] .i-chhead__lv {
+  font-weight: 400;
+  letter-spacing: 0.08em;
+  color: var(--fg-3);
+}
+.i-shell[data-sect='sleep'] .i-chhead__lv b {
+  font-size: 50px;
+  color: var(--fg);
+  text-shadow: 0 0 22px rgb(182 189 255 / 0.5);
+}
+.i-shell[data-sect='sleep'] .i-seg {
+  transform: none;
+  gap: 0;
+  border-radius: 99px;
+  overflow: hidden;
+  background: var(--surf-3);
+}
+.i-shell[data-sect='sleep'] .i-seg i {
+  height: 5px;
+  background: transparent;
+}
+.i-shell[data-sect='sleep'] .i-seg i.is-on {
+  background: var(--sig);
+}
+
+/* soft glass */
+.i-shell[data-sect='sleep'] .i-pnl {
+  background: rgb(21 27 64 / 0.72);
+  box-shadow: 0 0 0 1px rgb(182 189 255 / 0.12);
+  border-radius: 20px;
+}
+.i-shell[data-sect='sleep'] .s-night {
+  border-radius: 22px;
+  background: linear-gradient(160deg, rgb(48 56 120 / 0.65), rgb(30 24 70 / 0.7));
+  box-shadow: 0 0 0 1px rgb(182 189 255 / 0.16);
+}
+.i-shell[data-sect='sleep'] .s-big {
+  font-family: var(--f-label);
+  font-size: 58px;
+  letter-spacing: -0.01em;
+}
+.i-shell[data-sect='sleep'] .s-win {
+  fill: rgb(244 214 142 / 0.12);
+}
+.i-shell[data-sect='sleep'] .i-h2 h2 {
+  font-style: italic;
+  font-size: 26px;
+  letter-spacing: 0;
+}
+.i-shell[data-sect='sleep'] .i-h2 h2::before {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  transform: none;
+  background: var(--acc2);
+  box-shadow: 0 0 10px var(--acc2);
+}
+.i-shell[data-sect='sleep'] :is(.i-meter__l, .i-chip, .i-link, .i-h2__aside, .i-chbar__btn b, .i-cmd__btn) {
+  font-weight: 500;
+  letter-spacing: 0.05em;
+}
+.i-shell[data-sect='sleep'] .i-meter {
+  background: rgb(28 35 76 / 0.6);
+  box-shadow: 0 0 0 1px rgb(182 189 255 / 0.1);
+}
+.i-shell[data-sect='sleep'] .i-meter__v {
+  font-size: 32px;
+}
+.i-shell[data-sect='sleep'] .i-btn {
+  font-family: var(--f-body);
+  font-weight: 500;
+  font-size: 15px;
+  letter-spacing: 0.02em;
+}
+.i-shell[data-sect='sleep'] :is(.i-btn, .i-chip, .i-chbar__btn)::before {
+  border-radius: 999px;
+}
+.i-shell[data-sect='sleep'] .i-btn--sig::before {
+  box-shadow: 0 0 24px rgb(182 189 255 / 0.35);
+}
+.i-shell[data-sect='sleep'] .i-chip[aria-pressed='true'],
+.i-shell[data-sect='sleep'] .i-chbar__btn[aria-current='page'],
+.i-shell[data-sect='sleep'] .i-chbar__btn[aria-current='page'] b {
+  color: #0d1030;
+}
+.i-shell[data-sect='sleep'] .i-chbar {
+  background: rgb(10 13 38 / 0.75);
+  border-bottom-color: rgb(182 189 255 / 0.12);
+}
+.i-shell[data-sect='sleep'] .i-sheet {
+  border-top: 0;
+  border-radius: 24px;
+}
+.i-shell[data-sect='sleep'] .i-cmd {
+  background: rgb(10 13 38 / 0.82);
+  border-top: 1px solid rgb(182 189 255 / 0.15);
+}
+.i-shell[data-sect='sleep'] .i-cmd__btn[aria-current='page']::after {
+  transform: none;
+  border-radius: 2px;
+}
+.i-shell[data-sect='sleep'] .i-cmd__prompt {
+  transform: none;
+  border-radius: 50%;
+  border: 0;
+  box-shadow: 0 0 0 4px #0a0d26, 0 0 22px rgb(182 189 255 / 0.5);
+}
+.i-shell[data-sect='sleep'] .i-cmd__prompt svg {
+  transform: none;
+}
+@media (min-width: 900px) {
+  .i-shell[data-sect='sleep'] .i-rail {
+    background: rgb(10 13 38 / 0.6);
+  }
+}
+
+/* entering: eyes adjust to the dark */
+.i-shell[data-sect='sleep'] .i-view,
+.i-shell[data-sect='sleep'] .i-view[data-dir='back'] {
+  animation: sl-enter 0.45s ease-out;
+}
+@keyframes sl-enter {
+  from {
+    opacity: 0;
+    filter: blur(5px);
+  }
+}

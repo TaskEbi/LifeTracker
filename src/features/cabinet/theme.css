@@ -1,0 +1,95 @@
+/* ── Cabinet · Curio Cabinet's museum ────────────────────────────────────────
+   The cabinet is Curio Cabinet's tactile desk, scrapbook and shelves, in whatever palette and
+   design was picked there. LifeTracker's shared chrome borrows its tokens (desk, paper, ink,
+   thread) and its type (hand, serif, typewriter) so the whole screen feels like the museum. */
+
+.i-shell[data-sect='cabinet'] {
+  --bg: var(--desk);
+  --bg-dot: transparent;
+  --surf: var(--paper);
+  --surf-2: var(--paper-warm);
+  --surf-3: var(--paper-edge);
+  --fg: var(--desk-ink);
+  --fg-2: var(--desk-ink-soft);
+  --fg-3: var(--desk-ink-soft);
+  --rule: color-mix(in srgb, var(--desk-ink) 22%, transparent);
+  --led-off: var(--paper-edge);
+  --sig: var(--thread);
+  --sig-fg: var(--on-thread);
+  --sig-soft: var(--thread-soft);
+  --acc2: var(--thread);
+  --acc2-fg: var(--on-thread);
+  --c-cabinet: var(--thread);
+  --f-label: var(--font-hand);
+  --f-body: var(--font-serif);
+  --f-mono: var(--font-type);
+  --w-label: 700;
+  --tt-label: none;
+  --slant: -1.5deg;
+  --r-1: 3px;
+  --r-2: 4px;
+  --r-3: 6px;
+}
+.i-shell[data-sect='cabinet'] .i-chbar {
+  background: color-mix(in srgb, var(--desk) 90%, transparent);
+}
+.i-shell[data-sect='cabinet'] .i-chbar__btn b,
+.i-shell[data-sect='cabinet'] .i-cmd__btn {
+  font-family: var(--font-type);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+/* the tabs are paper, so their labels use the paper's ink, not the desk's */
+.i-shell[data-sect='cabinet'] .i-chbar__btn b {
+  color: var(--ink-soft);
+}
+.i-shell[data-sect='cabinet'] .i-chbar__btn::before {
+  background: var(--paper);
+  border: 0;
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.18);
+}
+.i-shell[data-sect='cabinet'] .i-chbar__btn[aria-current='page'],
+.i-shell[data-sect='cabinet'] .i-chbar__btn[aria-current='page'] b {
+  color: var(--on-thread);
+}
+.i-shell[data-sect='cabinet'] .i-chbar__sep {
+  background: var(--desk-ink-soft);
+}
+.i-shell[data-sect='cabinet'] .i-home {
+  font-family: var(--font-type);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: none;
+  font-size: 13px;
+  color: var(--desk-ink);
+}
+.i-shell[data-sect='cabinet'] .i-cmd {
+  background: color-mix(in srgb, var(--desk) 94%, transparent);
+  border-top: 2px dashed color-mix(in srgb, var(--desk-ink) 35%, transparent);
+}
+.i-shell[data-sect='cabinet'] .i-cmd__btn[aria-current='page'] {
+  color: var(--thread);
+}
+.i-shell[data-sect='cabinet'] .i-cmd__btn[aria-current='page']::after {
+  background: var(--thread);
+}
+.i-shell[data-sect='cabinet'] .i-cmd__prompt {
+  transform: rotate(-4deg);
+  border-radius: 4px;
+  border: 0;
+  box-shadow: 0 0 0 4px var(--desk), 0 3px 6px rgb(0 0 0 / 0.25);
+}
+.i-shell[data-sect='cabinet'] .i-cmd__prompt svg {
+  transform: rotate(4deg);
+}
+
+/* entering: the drawer slides open */
+.i-shell[data-sect='cabinet'] .i-cabinet-host {
+  animation: cb-enter 0.32s var(--ease);
+}
+@keyframes cb-enter {
+  from {
+    opacity: 0;
+    transform: translateY(16px) rotate(-0.4deg);
+  }
+}

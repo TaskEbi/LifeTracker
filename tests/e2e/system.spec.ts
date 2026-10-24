@@ -34,14 +34,22 @@ test('activity: any Daily Log entry can be found, edited, deleted and restored',
   await expect(row).toHaveCount(1);
 });
 
-test('settings: local mode says nothing is sent, theme applies', async ({ page }) => {
+test('settings: local mode says nothing is sent, colour themes apply and stay', async ({ page }) => {
   await page.goto('/settings');
   await expect(page.getByText('This browser only')).toBeVisible();
   await expect(page.getByText(/Nothing here is sent anywhere/)).toBeVisible();
-  await page.getByRole('group', { name: 'Theme · this device' }).getByRole('button', { name: 'Dark' }).click();
-  await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
+  const html = page.locator('html');
+  await expect(html).toHaveAttribute('data-look', 'shonen');
+  const themes = page.getByRole('group', { name: 'Theme · this device' });
+  expect(await themes.getByRole('button').count()).toBeGreaterThanOrEqual(11);
+  await themes.getByRole('button', { name: /^Manga paper/ }).click();
+  await expect(html).toHaveAttribute('data-theme', 'light');
+  await themes.getByRole('button', { name: /^Cyber/ }).click();
+  await expect(html).toHaveAttribute('data-look', 'cyber');
+  await expect(html).toHaveAttribute('data-theme', 'dark');
   await page.reload();
-  await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
+  await expect(html).toHaveAttribute('data-look', 'cyber');
+  expect(await page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue('--acc2').trim())).toBe('#2ef2ff');
 });
 
 test('game: Progress is one tap away on a phone, with quests and achievements', async ({ page }) => {
@@ -49,7 +57,7 @@ test('game: Progress is one tap away on a phone, with quests and achievements', 
   await page.getByRole('navigation', { name: 'Commands' }).getByRole('button', { name: /^LV \d+/ }).click();
   await expect(page).toHaveURL(/\/progress$/);
   await expect(page.getByRole('heading', { name: 'Progress', level: 1 })).toBeVisible();
-  await expect(page.getByRole('list', { name: 'Forms' }).getByRole('listitem')).toHaveCount(10);
+  await expect(page.getByRole('list', { name: 'Forms' }).getByRole('listitem')).toHaveCount(20);
 
   const tabs = page.getByRole('navigation', { name: 'Progress sections' });
   await tabs.getByRole('button', { name: /Quests/ }).click();
@@ -58,7 +66,7 @@ test('game: Progress is one tap away on a phone, with quests and achievements', 
     await expect(page.getByRole('region', { name: `${period} quests` }).getByRole('progressbar')).toHaveCount(3);
   }
 
-  await tabs.getByRole('button', { name: /Achievements/ }).click();
+  await tabs.getByRole('button', { name: /Emblems/ }).click();
   await expect(page).toHaveURL(/\/progress\/achievements$/);
   const badges = page.getByRole('list', { name: 'Achievements' }).getByRole('listitem');
   expect(await badges.count()).toBeGreaterThanOrEqual(30);

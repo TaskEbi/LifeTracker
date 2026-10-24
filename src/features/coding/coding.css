@@ -31,10 +31,10 @@
 }
 .r-stage {
   font-family: var(--f-label);
-  font-weight: 700;
+  font-weight: var(--w-label);
   font-size: 22px;
   letter-spacing: 0.03em;
-  text-transform: uppercase;
+  text-transform: var(--tt-label);
 }
 .r-ladder {
   list-style: none;
@@ -64,9 +64,10 @@
 }
 .r-step b {
   font-family: var(--f-label);
+  font-weight: var(--w-label);
   font-size: 11px;
   letter-spacing: 0.04em;
-  text-transform: uppercase;
+  text-transform: var(--tt-label);
   line-height: 1.1;
   text-align: center;
 }
@@ -165,11 +166,16 @@
   width: 100%;
   text-align: left;
   margin-top: 12px;
-  padding: 12px 14px;
-  border-radius: 12px;
-  background: var(--fg);
-  color: var(--bg);
+  padding: 12px 16px;
+  background: var(--sig);
+  color: var(--sig-fg);
   font-size: 16px;
+  font-weight: 700;
+  clip-path: polygon(0 0, 100% 0, calc(100% - 10px) 100%, 0 100%);
+}
+.r-why .i-lab {
+  color: inherit;
+  opacity: 0.8;
 }
 .r-why small {
   opacity: 0.7;

@@ -13,6 +13,8 @@ import { Icon } from '../../ui/i/Icon';
 import { RelatedTasks } from '../../ui/i/RelatedTasks';
 import { Sheet } from '../../ui/i/Sheet';
 import { clearScreen, saveScreen } from '../sleep/actions';
+import { ScreenArt } from './Art';
+import './theme.css';
 
 function useScreenDays(): Map<string, number> {
   const metrics = useStore(data, (s) => s.log_metrics);
@@ -119,7 +121,7 @@ export function ScreenChannel() {
 
   return (
     <div style={accent('screen')}>
-      <ChannelHead id="screen" />
+      <ChannelHead id="screen" art={<ScreenArt />} />
       <div className="i-pnl i-stack">
         {todayVal != null ? (
           <>

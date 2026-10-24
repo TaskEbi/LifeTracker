@@ -1,0 +1,282 @@
+/* ── Screen time · the zen garden ────────────────────────────────────────────
+   Calm and uncluttered: washi paper, a raked-sand garden in the header with two stones and their
+   ripples and a sprig of bamboo, the level inside a brushed ensō; Zen Maru Gothic over Manrope;
+   soft stone-shaped cards, one moss green, thin continuous gauges, a slow ripple on the way in. */
+
+.i-shell[data-sect='screen'] {
+  --bg: #f3eee4;
+  --bg-dot: transparent;
+  --surf: #fbf8f2;
+  --surf-2: #f1ece2;
+  --surf-3: #e2dacb;
+  --fg: #2e2a24;
+  --fg-2: #514b43;
+  --fg-3: #675f55;
+  --rule: #e4dccd;
+  --grid: #ece6da;
+  --led-off: #e2dacb;
+  --sig: #3d5a45;
+  --sig-fg: #ffffff;
+  --sig-soft: rgb(61 90 69 / 0.1);
+  --acc2: #3d5a45;
+  --acc2-fg: #ffffff;
+  --ok: #3d5a45;
+  --ok-soft: rgb(61 90 69 / 0.1);
+  --warn: #a8432c;
+  --warn-soft: rgb(168 67 44 / 0.08);
+  --c-screen: #5f7d53;
+  --f-label: 'Zen Maru Gothic', 'Hiragino Maru Gothic ProN', ui-rounded, sans-serif;
+  --f-body: 'Manrope', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --f-mono: 'Manrope', ui-sans-serif, system-ui, sans-serif;
+  --w-label: 500;
+  --tt-label: none;
+  --slant: 0deg;
+  --r-1: 12px;
+  --r-2: 18px;
+  --r-3: 24px;
+  --lift: 0 1px 2px rgb(60 50 30 / 0.08), 0 30px 60px rgb(60 50 30 / 0.18);
+  color-scheme: light;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='w'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.02 .4' numOctaves='2' seed='3'/%3E%3CfeColorMatrix values='0 0 0 0 .55 0 0 0 0 .48 0 0 0 0 .38 0 0 0 .07 0'/%3E%3C/filter%3E%3Crect width='240' height='240' filter='url(%23w)'/%3E%3C/svg%3E");
+}
+
+/* ── the garden ── */
+.i-shell[data-sect='screen'] .i-chhead {
+  min-height: 260px;
+  padding: 18px 20px 20px;
+  clip-path: none;
+  border: 0;
+  border-radius: 24px;
+  background: repeating-linear-gradient(180deg, #ebe3d2 0 5px, #ddd2bd 5px 6.5px);
+  box-shadow: inset 0 0 0 6px #b9a888, inset 0 0 0 7px #8e7c5c, 0 12px 26px -16px rgb(60 50 30 / 0.5);
+}
+.i-shell[data-sect='screen'] .i-chhead::before,
+.i-shell[data-sect='screen'] .i-chhead__kanji {
+  display: none;
+}
+.zn-garden {
+  overflow: hidden;
+  border-radius: inherit;
+}
+.zn-sand {
+  position: absolute;
+  right: -10px;
+  bottom: -6px;
+  width: 270px;
+}
+.zn-rings {
+  transform-origin: 150px 86px;
+  animation: zn-ripple 1.4s var(--ease) both;
+}
+@keyframes zn-ripple {
+  from {
+    transform: scale(0.8);
+    opacity: 0;
+  }
+}
+.zn-bamboo {
+  position: absolute;
+  right: 16px;
+  top: 10px;
+  width: 30px;
+  opacity: 0.85;
+}
+.i-shell[data-sect='screen'] .i-home {
+  margin-left: -6px;
+  font-family: var(--f-label);
+  font-weight: 500;
+  font-size: 15px;
+  letter-spacing: 0.04em;
+  text-transform: none;
+  color: var(--fg-2);
+}
+.i-shell[data-sect='screen'] .i-chhead__k {
+  font-family: var(--f-label);
+  font-weight: 500;
+  font-size: 13px;
+  letter-spacing: 0.14em;
+  text-transform: none;
+  color: var(--fg-3);
+}
+.i-shell[data-sect='screen'] .i-chhead h1 {
+  font-size: clamp(34px, 10.5vw, 46px);
+  font-weight: 500;
+  line-height: 1.05;
+  letter-spacing: 0.02em;
+  max-width: 62%;
+}
+.i-shell[data-sect='screen'] .i-chhead__rank {
+  margin-top: 10px;
+  clip-path: none;
+  background: #6e6a62;
+  color: #fbf8f2;
+  border-radius: 99px 80px 99px 70px;
+  font-family: var(--f-label);
+  font-weight: 500;
+  font-size: 12px;
+  letter-spacing: 0.1em;
+  text-transform: none;
+  padding: 3px 12px;
+}
+/* level inside an ensō */
+.i-shell[data-sect='screen'] .i-chhead__lv {
+  grid-row: 3;
+  grid-column: 1;
+  justify-self: start;
+  width: 96px;
+  height: 96px;
+  display: grid;
+  place-content: center;
+  text-align: center;
+  margin-top: 6px;
+  font-family: var(--f-label);
+  font-weight: 500;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  color: var(--fg-3);
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpath d='M64 12A40 40 0 1 1 30 16' fill='none' stroke='%232e2a24' stroke-width='7' stroke-linecap='round' opacity='.82'/%3E%3Cpath d='M58 10A42 42 0 0 1 90 44' fill='none' stroke='%232e2a24' stroke-width='3' stroke-linecap='round' opacity='.35'/%3E%3C/svg%3E") center / contain no-repeat;
+}
+.i-shell[data-sect='screen'] .i-chhead__lv b {
+  font-family: var(--f-label);
+  font-weight: 700;
+  font-size: 30px;
+  line-height: 1;
+  color: var(--fg);
+  text-shadow: none;
+}
+.i-shell[data-sect='screen'] .i-chhead .i-seg {
+  grid-row: 4;
+  max-width: 62%;
+}
+.i-shell[data-sect='screen'] .i-seg {
+  transform: none;
+  gap: 0;
+  border-radius: 99px;
+  overflow: hidden;
+  background: var(--surf-3);
+}
+.i-shell[data-sect='screen'] .i-seg i {
+  height: 4px;
+  background: transparent;
+}
+.i-shell[data-sect='screen'] .i-seg i.is-on {
+  background: var(--sig);
+}
+
+/* ── stone-smooth cards ── */
+.i-shell[data-sect='screen'] .i-pnl {
+  border-radius: 26px;
+  box-shadow: 0 1px 1px rgb(60 50 30 / 0.05), 0 10px 24px -14px rgb(60 50 30 / 0.3);
+}
+.i-shell[data-sect='screen'] .i-h2 {
+  margin-top: 30px;
+}
+.i-shell[data-sect='screen'] .i-h2 h2 {
+  font-size: 19px;
+  letter-spacing: 0.06em;
+}
+.i-shell[data-sect='screen'] .i-h2 h2::before {
+  width: 12px;
+  height: 8px;
+  border-radius: 50%;
+  transform: none;
+  background: radial-gradient(circle at 35% 30%, #a39e94, #55524c);
+}
+.i-shell[data-sect='screen'] :is(.i-meter__l, .i-chip, .i-link, .i-h2__aside, .i-chbar__btn b, .i-cmd__btn) {
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: none;
+}
+.i-shell[data-sect='screen'] .i-meter__l,
+.i-shell[data-sect='screen'] .i-link {
+  font-size: 13px;
+}
+.i-shell[data-sect='screen'] .i-meter {
+  border-radius: 22px 26px 20px 28px;
+  background: var(--surf-2);
+  box-shadow: none;
+}
+.i-shell[data-sect='screen'] .i-meter__v {
+  font-size: 32px;
+}
+.i-shell[data-sect='screen'] .i-dial output {
+  font-weight: 500;
+}
+.i-shell[data-sect='screen'] .i-dial output small {
+  letter-spacing: 0.04em;
+  text-transform: none;
+}
+.i-shell[data-sect='screen'] .i-chart .bar {
+  fill: color-mix(in srgb, var(--c-screen) 30%, var(--surf));
+}
+.i-shell[data-sect='screen'] .i-chart .bar.hi,
+.i-shell[data-sect='screen'] .i-chart .bar.met {
+  fill: var(--c-screen);
+}
+.i-shell[data-sect='screen'] .i-chart .tg {
+  stroke: var(--fg-3);
+}
+.i-shell[data-sect='screen'] .i-chart .tgl {
+  fill: var(--fg-3);
+}
+.i-shell[data-sect='screen'] .i-btn {
+  font-size: 16px;
+  letter-spacing: 0.04em;
+}
+.i-shell[data-sect='screen'] :is(.i-btn, .i-chip, .i-chbar__btn)::before {
+  border-radius: 99px;
+  border-color: var(--surf-3);
+}
+.i-shell[data-sect='screen'] .i-btn--sig::before {
+  box-shadow: 0 4px 12px -4px rgb(61 90 69 / 0.6);
+}
+.i-shell[data-sect='screen'] .i-chip[aria-pressed='true'],
+.i-shell[data-sect='screen'] .i-chbar__btn[aria-current='page'],
+.i-shell[data-sect='screen'] .i-chbar__btn[aria-current='page'] b {
+  color: #fff;
+}
+.i-shell[data-sect='screen'] .i-chbar {
+  border-bottom: 0;
+  background: rgb(243 238 228 / 0.92);
+}
+.i-shell[data-sect='screen'] .i-chbar__sep {
+  background: var(--surf-3);
+  transform: none;
+  width: 1px;
+}
+.i-shell[data-sect='screen'] .i-sheet {
+  border-top: 0;
+  border-radius: 28px;
+}
+.i-shell[data-sect='screen'] .i-cmd {
+  background: rgb(243 238 228 / 0.94);
+  border-top: 1px solid var(--rule);
+}
+.i-shell[data-sect='screen'] .i-cmd__btn[aria-current='page'] {
+  color: var(--sig);
+}
+.i-shell[data-sect='screen'] .i-cmd__btn[aria-current='page']::after {
+  transform: none;
+  background: var(--sig);
+  border-radius: 2px;
+}
+.i-shell[data-sect='screen'] .i-cmd__prompt {
+  transform: none;
+  border-radius: 46% 54% 50% 50% / 52% 46% 54% 48%;
+  border: 0;
+  box-shadow: 0 0 0 4px var(--bg), 0 6px 14px -4px rgb(61 90 69 / 0.6);
+}
+.i-shell[data-sect='screen'] .i-cmd__prompt svg {
+  transform: none;
+}
+
+/* entering: a slow ripple settles */
+.i-shell[data-sect='screen'] .i-view,
+.i-shell[data-sect='screen'] .i-view[data-dir='back'] {
+  animation: zn-enter 0.4s ease-out;
+}
+@keyframes zn-enter {
+  from {
+    opacity: 0;
+    transform: scale(0.985);
+  }
+}

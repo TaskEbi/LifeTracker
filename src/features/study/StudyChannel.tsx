@@ -17,6 +17,8 @@ import { RelatedTasks } from '../../ui/i/RelatedTasks';
 import { Sheet } from '../../ui/i/Sheet';
 import { isStudyDetail, LEVEL_LABEL, markOf, minutesBySubject, pct, STUDY_KINDS, subjectMarks, subjectsOf, topicOf, type HardTopic, type Mark, type StudyDetail } from './model';
 import './study.css';
+import { StudyArt } from './Art';
+import './theme.css';
 
 const subjectsNow = () => subjectsOf(prefValue(data.get(), 'study_subjects'));
 
@@ -211,7 +213,7 @@ export function StudyChannel() {
 
   return (
     <div style={accent('study')}>
-      <ChannelHead id="study" />
+      <ChannelHead id="study" art={<StudyArt />} />
       <button type="button" className="i-btn i-btn--sig i-btn--block" onClick={() => openSheet({ type: 'study' })}>
         <Icon name="plus" /> Log study
       </button>

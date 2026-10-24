@@ -53,6 +53,7 @@
 }
 .c-dl b {
   font-family: var(--f-label);
+  font-weight: var(--w-label);
   font-size: 16px;
   color: var(--fg);
 }

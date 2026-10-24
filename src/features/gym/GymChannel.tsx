@@ -8,7 +8,7 @@ import { addDays, shortDay, weekdayIndex, weekStart } from '../../domain/log/dat
 import { useStore } from '../../lib/createStore';
 import { accent, Chips, H2, Meter, Seg, Source, Stepper } from '../../ui/i/bits';
 import { Line } from '../../ui/i/charts';
-import { ChannelHead } from '../../ui/i/ChannelHead';
+import { ChannelHead, HomeLink } from '../../ui/i/ChannelHead';
 import { ChannelBar } from '../../app/Shell';
 import { Icon } from '../../ui/i/Icon';
 import { RelatedTasks } from '../../ui/i/RelatedTasks';
@@ -16,6 +16,8 @@ import { active, addExercise, addSet, bump, discardWorkout, removeSet, startWork
 import { isGymDetail, legsHeavy, progression, setsDone, setsTotal, STARTER_TEMPLATES, templateOf, trackedExercises, type GymDetail, type Template } from './model';
 import './sheets';
 import './gym.css';
+import { GymArt } from './Art';
+import './theme.css';
 
 const DAYS = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
 
@@ -60,7 +62,9 @@ function Session() {
   return (
     <div style={accent('gym')}>
       <header className="i-chhead">
-        <div>
+        <GymArt />
+        <HomeLink />
+        <div className="i-chhead__t">
           <span className="i-chhead__k">CH04 · session running · {shortDay(a.date)}</span>
           <h1>{a.detail.name}</h1>
         </div>
@@ -171,7 +175,7 @@ export function GymChannel() {
 
   return (
     <div style={accent('gym')}>
-      <ChannelHead id="gym" />
+      <ChannelHead id="gym" art={<GymArt />} />
       <div className="i-pnl i-stack">
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
           <span className="i-lab">{next ? `${next.date === today ? 'Planned today' : `Next · ${shortDay(next.date)}`}${next.start ? ` ${next.start}` : ''}` : 'Nothing planned'}</span>

@@ -1,0 +1,356 @@
+/* ── Coding · the green-phosphor terminal ────────────────────────────────────
+   An old CRT: phosphor green on black with an amber second colour, scanlines over everything, a
+   bezel round the header with a boot log and the road to IOI in ASCII, VT323 pixel headings over
+   JetBrains Mono, panels boxed in double rules, a vim-style status bar. The screen powers on. */
+
+.i-shell[data-sect='coding'] {
+  --bg: #030a05;
+  --bg-dot: transparent;
+  --surf: #06140b;
+  --surf-2: #0a1f11;
+  --surf-3: #113019;
+  --fg: #b9f7c8;
+  --fg-2: #84dc9e;
+  --fg-3: #5fae78;
+  --rule: #1c5a33;
+  --grid: #0b2414;
+  --led-off: #113019;
+  --sig: #39ff7a;
+  --sig-fg: #021006;
+  --sig-soft: rgb(57 255 122 / 0.14);
+  --acc2: #ffb000;
+  --acc2-fg: #120a00;
+  --ok: #39ff7a;
+  --ok-soft: rgb(57 255 122 / 0.12);
+  --warn: #ff6b5a;
+  --warn-soft: rgb(255 107 90 / 0.12);
+  --c-coding: #ffb000;
+  --f-label: 'VT323', 'JetBrains Mono', ui-monospace, monospace;
+  --f-body: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+  --f-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+  --w-label: 400;
+  --tt-label: uppercase;
+  --slant: 0deg;
+  --r-1: 0;
+  --r-2: 0;
+  --r-3: 0;
+  --lift: 0 0 0 1px #2c8a50, 0 0 0 4px #030a05, 0 0 0 5px #1c5a33, 0 30px 60px rgb(0 0 0 / 0.8);
+  color-scheme: dark;
+  font-size: 14px;
+  text-shadow: 0 0 5px rgb(57 255 122 / 0.35);
+  background-image: radial-gradient(120% 80% at 50% 30%, #07170c, #020603 80%);
+  background-attachment: fixed;
+}
+/* scanlines and a vignette over the whole screen, sheets included */
+.i-shell[data-sect='coding']::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  pointer-events: none;
+  background:
+    repeating-linear-gradient(rgb(0 0 0 / 0.28) 0 1px, transparent 1px 3px),
+    radial-gradient(130% 100% at 50% 50%, transparent 60%, rgb(0 0 0 / 0.55));
+}
+
+/* ── the monitor ── */
+.i-shell[data-sect='coding'] .i-chhead {
+  grid-template-columns: minmax(0, 1fr) auto;
+  margin: 12px 10px 30px;
+  padding: 16px 18px 16px;
+  clip-path: none;
+  border: 0;
+  border-radius: 26px / 22px;
+  background: radial-gradient(ellipse at 50% 45%, #0c2a16, #031008 78%);
+  box-shadow: inset 0 0 50px rgb(57 255 122 / 0.16), inset 0 0 0 2px #0c2a16, 0 0 0 10px #1d211d, 0 0 0 11px #424a42, 0 0 0 12px #0d0f0d, 0 22px 36px rgb(0 0 0 / 0.7);
+}
+.i-shell[data-sect='coding'] .i-chhead::before {
+  inset: 0;
+  opacity: 1;
+  -webkit-mask-image: none;
+  mask-image: none;
+  background: repeating-linear-gradient(rgb(0 0 0 / 0.3) 0 1px, transparent 1px 3px);
+}
+.i-shell[data-sect='coding'] .i-chhead__kanji {
+  display: none;
+}
+.cd-boot {
+  position: absolute;
+  left: 20px;
+  top: 58px;
+  font: 400 15px/1.1 'VT323', monospace;
+  color: var(--fg-3);
+}
+.cd-ascii {
+  position: absolute;
+  right: 8px;
+  bottom: 34px;
+  margin: 0;
+  font: 400 13px/1 'VT323', monospace;
+  color: #2fd468;
+  text-shadow: 0 0 6px rgb(57 255 122 / 0.6);
+  white-space: pre;
+}
+.i-shell[data-sect='coding'] .i-home {
+  grid-column: 1;
+  grid-row: 1;
+  align-self: start;
+  margin: 0 0 0 -6px;
+  font-family: var(--f-label);
+  font-size: 22px;
+  letter-spacing: 0.04em;
+  color: var(--sig);
+}
+.i-shell[data-sect='coding'] .i-chhead__t {
+  grid-column: 1 / -1;
+  grid-row: 2;
+  margin: 6px 0 70px;
+}
+.i-shell[data-sect='coding'] .i-chhead__k {
+  font-family: var(--f-label);
+  font-weight: 400;
+  font-size: 18px;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--acc2);
+  text-shadow: 0 0 6px rgb(255 176 0 / 0.45);
+}
+.i-shell[data-sect='coding'] .i-chhead__k::before {
+  content: 'C:\\LIFE\\';
+}
+.i-shell[data-sect='coding'] .i-chhead h1 {
+  font-size: clamp(40px, 12.5vw, 58px);
+  line-height: 0.9;
+  letter-spacing: 0.01em;
+  color: var(--sig);
+  text-shadow: 0 0 10px rgb(57 255 122 / 0.75), 0 0 2px #fff;
+}
+.i-shell[data-sect='coding'] .i-chhead h1::after {
+  content: '';
+  display: inline-block;
+  width: 0.5em;
+  height: 0.8em;
+  margin-left: 6px;
+  vertical-align: -0.05em;
+  background: var(--sig);
+  box-shadow: 0 0 10px var(--sig);
+  animation: cd-caret 1s steps(2, jump-none) infinite;
+}
+@keyframes cd-caret {
+  50% {
+    opacity: 0;
+  }
+}
+.i-shell[data-sect='coding'] .i-chhead__rank {
+  margin-top: 8px;
+  clip-path: none;
+  background: var(--sig);
+  color: var(--sig-fg);
+  text-shadow: none;
+  font-family: var(--f-label);
+  font-weight: 400;
+  font-size: 18px;
+  letter-spacing: 0.06em;
+  padding: 0 8px;
+}
+.i-shell[data-sect='coding'] .i-chhead__lv {
+  grid-column: 2;
+  grid-row: 1;
+  align-self: start;
+  font-family: var(--f-label);
+  font-weight: 400;
+  font-size: 16px;
+  letter-spacing: 0.06em;
+  color: var(--fg-3);
+}
+.i-shell[data-sect='coding'] .i-chhead__lv b {
+  font-family: var(--f-label);
+  font-size: 52px;
+  line-height: 0.8;
+  color: var(--acc2);
+  text-shadow: 0 0 10px rgb(255 176 0 / 0.6);
+}
+.i-shell[data-sect='coding'] .i-chhead .i-seg {
+  grid-row: 3;
+}
+.i-shell[data-sect='coding'] .i-seg {
+  transform: none;
+  gap: 2px;
+}
+.i-shell[data-sect='coding'] .i-seg i {
+  height: 10px;
+  background: #0f2e19;
+}
+.i-shell[data-sect='coding'] .i-seg i.is-on {
+  background: var(--sig);
+  box-shadow: 0 0 6px var(--sig);
+}
+
+/* ── boxed windows ── */
+.i-shell[data-sect='coding'] .i-pnl {
+  background: rgb(6 20 11 / 0.9);
+  box-shadow: 0 0 0 1px #2c8a50, 0 0 0 4px #030a05, 0 0 0 5px #1c5a33, 0 0 22px rgb(57 255 122 / 0.08);
+  margin: 0 5px;
+}
+.i-shell[data-sect='coding'] .i-h2 {
+  margin-top: 30px;
+}
+.i-shell[data-sect='coding'] .i-h2 h2 {
+  font-size: 26px;
+  letter-spacing: 0.04em;
+  color: var(--sig);
+}
+.i-shell[data-sect='coding'] .i-h2 h2::before {
+  content: '>';
+  width: auto;
+  height: auto;
+  background: none;
+  transform: none;
+  color: var(--acc2);
+}
+.i-shell[data-sect='coding'] :is(.i-link, .i-h2__aside, .i-meter__l, .i-chip, .i-chbar__btn b, .i-cmd__btn) {
+  font-family: var(--f-label);
+  font-weight: 400;
+  font-size: 17px;
+  letter-spacing: 0.04em;
+}
+.i-shell[data-sect='coding'] .i-link::before {
+  content: '[';
+}
+.i-shell[data-sect='coding'] .i-link::after {
+  content: ']';
+}
+.i-shell[data-sect='coding'] .i-meter {
+  background: #030a05;
+  box-shadow: 0 0 0 1px #1c5a33;
+}
+.i-shell[data-sect='coding'] .i-meter__v {
+  font-size: 38px;
+  line-height: 1;
+}
+.i-shell[data-sect='coding'] .r-count b {
+  font-family: var(--f-label);
+  font-weight: 400;
+  font-size: clamp(64px, 20vw, 92px);
+  text-shadow: 0 0 14px rgb(255 176 0 / 0.6);
+}
+.i-shell[data-sect='coding'] .r-stage {
+  font-size: 28px;
+}
+.i-shell[data-sect='coding'] .r-step {
+  border-radius: 0;
+}
+.i-shell[data-sect='coding'] .r-step b {
+  font-size: 15px;
+}
+.i-shell[data-sect='coding'] .r-why {
+  clip-path: none;
+  font-size: 14px;
+  text-shadow: none;
+}
+.i-shell[data-sect='coding'] .r-why .i-lab {
+  font-size: 18px;
+}
+.i-shell[data-sect='coding'] .r-note {
+  border-radius: 0;
+  border-left-color: var(--acc2);
+}
+.i-shell[data-sect='coding'] .r-week i {
+  border-radius: 0;
+}
+.i-shell[data-sect='coding'] .i-btn {
+  font-size: 22px;
+  letter-spacing: 0.06em;
+}
+.i-shell[data-sect='coding'] .i-btn--sm {
+  font-size: 18px;
+}
+.i-shell[data-sect='coding'] .i-btn::before {
+  background: transparent;
+  border: 1px solid var(--sig);
+}
+.i-shell[data-sect='coding'] .i-btn--sig {
+  text-shadow: none;
+}
+.i-shell[data-sect='coding'] .i-btn--sig::before {
+  background: var(--sig);
+  box-shadow: 0 0 18px rgb(57 255 122 / 0.45);
+}
+.i-shell[data-sect='coding'] .i-chip[aria-pressed='true'],
+.i-shell[data-sect='coding'] .i-chbar__btn[aria-current='page'],
+.i-shell[data-sect='coding'] .i-chbar__btn[aria-current='page'] b {
+  color: #021006;
+  text-shadow: none;
+}
+.i-shell[data-sect='coding'] :is(.i-chip, .i-chbar__btn)::before {
+  background: transparent;
+  border-color: #1c5a33;
+}
+.i-shell[data-sect='coding'] .i-chip[aria-pressed='true']::before,
+.i-shell[data-sect='coding'] .i-chbar__btn[aria-current='page']::before {
+  background: var(--sig);
+}
+.i-shell[data-sect='coding'] .i-chbar {
+  background: rgb(3 10 5 / 0.92);
+  border-bottom-color: #1c5a33;
+}
+.i-shell[data-sect='coding'] .i-input,
+.i-shell[data-sect='coding'] .i-textarea {
+  border-radius: 0;
+  background: #030a05;
+}
+.i-shell[data-sect='coding'] .i-sheet {
+  border-top: 0;
+  background: #06140b;
+}
+/* the bottom bar is a status line */
+.i-shell[data-sect='coding'] .i-cmd {
+  background: var(--sig);
+  border-top: 0;
+  text-shadow: none;
+  backdrop-filter: none;
+}
+.i-shell[data-sect='coding'] .i-cmd__btn {
+  color: #0a3a1a;
+}
+.i-shell[data-sect='coding'] .i-cmd__btn[aria-current='page'] {
+  color: var(--sig);
+  background: #021006;
+}
+.i-shell[data-sect='coding'] .i-cmd__btn[aria-current='page']::after {
+  display: none;
+}
+.i-shell[data-sect='coding'] .i-cmd__prompt {
+  transform: none;
+  background: #021006;
+  color: var(--sig);
+  border: 2px solid #021006;
+  box-shadow: 0 0 0 3px var(--sig), 0 0 0 5px #021006;
+}
+.i-shell[data-sect='coding'] .i-cmd__prompt svg {
+  transform: none;
+}
+.i-shell[data-sect='coding'] .i-cmd__badge {
+  background: #021006;
+  color: var(--acc2);
+}
+
+/* entering: the tube warms up */
+.i-shell[data-sect='coding'] .i-view,
+.i-shell[data-sect='coding'] .i-view[data-dir='back'] {
+  animation: cd-on 0.38s ease-out;
+}
+@keyframes cd-on {
+  0% {
+    transform: scale(1, 0.004);
+    filter: brightness(5);
+  }
+  45% {
+    transform: scale(1, 1.02);
+    filter: brightness(1.8);
+  }
+  100% {
+    transform: none;
+    filter: none;
+  }
+}

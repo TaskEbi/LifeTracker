@@ -14,6 +14,8 @@ import { Icon } from '../../ui/i/Icon';
 import { fromMin, nightsFrom, plannedFor, sleepStats, toMin, windDownAt, type Night } from './model';
 import './SleepSheet';
 import './sleep.css';
+import { SleepArt } from './Art';
+import './theme.css';
 
 const DAYS = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
 
@@ -101,7 +103,7 @@ export function SleepChannel() {
 
   return (
     <div style={accent('sleep')}>
-      <ChannelHead id="sleep" />
+      <ChannelHead id="sleep" art={<SleepArt />} />
       <div className="s-night">
         {last ? (
           <>

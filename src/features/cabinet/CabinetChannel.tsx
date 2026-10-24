@@ -10,6 +10,7 @@ import { ui } from '../../data/ui';
 import { useStore } from '../../lib/createStore';
 import { flushSync } from '../../app/syncHandle';
 import { ChannelBar } from '../../app/Shell';
+import { HomeLink } from '../../ui/i/ChannelHead';
 import { AddSheet } from './capture/AddSheet';
 import { DetailDrawer } from './drawer/DetailDrawer';
 import { Filters } from './filters/Filters';
@@ -32,22 +33,31 @@ import './styles/designs.css';
 import './styles/base.css';
 import './app/app.css';
 import './instrument.css';
+import './theme.css';
 
-/** The cabinet's look inside LifeTracker: the gallery layout in instrument colours. Curio Cabinet's own setting is left alone. */
+/**
+ * The cabinet keeps Curio Cabinet's own personality: the palette, design and day/night setting
+ * chosen in Curio Cabinet (shared settings row). LifeTracker's colour theme comes back on the way out.
+ */
 function useCabinetLook() {
+  const look = useStore(data, (s) => s.settings);
+  const dark = look.theme === 'dark' || (look.theme === 'system' && matchMedia('(prefers-color-scheme: dark)').matches);
+  useEffect(() => {
+    ui.set({ section: 'cabinet' });
+  }, []);
   useEffect(() => {
     const root = document.documentElement;
-    const prev = { palette: root.dataset.palette, design: root.dataset.design };
-    root.dataset.palette = 'instrument';
-    root.dataset.design = 'gallery';
-    ui.set({ section: 'cabinet' });
+    const prev = { palette: root.dataset.palette, design: root.dataset.design, mode: root.dataset.mode };
+    root.dataset.palette = look.palette;
+    root.dataset.design = look.design;
+    root.dataset.mode = dark ? 'dark' : 'light';
     return () => {
-      if (prev.palette) root.dataset.palette = prev.palette;
-      else delete root.dataset.palette;
-      if (prev.design) root.dataset.design = prev.design;
-      else delete root.dataset.design;
+      for (const k of ['palette', 'design', 'mode'] as const) {
+        if (prev[k]) root.dataset[k] = prev[k];
+        else delete root.dataset[k];
+      }
     };
-  }, []);
+  }, [look.palette, look.design, dark]);
 }
 
 /** An empty cabinet that has never had examples gets them once (they are marked and easy to clear). */
@@ -91,6 +101,7 @@ export default function CabinetChannel() {
     <div className="cabinet app">
       <div className="cabinet-top">
         <ChannelBar current="cabinet" />
+        <HomeLink />
       </div>
       <Header filterCount={filterCount} />
       <div className="app__body">

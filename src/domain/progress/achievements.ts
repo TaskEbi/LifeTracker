@@ -252,7 +252,9 @@ export function achievements(input: ProgressInput, extras: AchievementExtras = {
   for (const [id, form, title, t] of [
     ['form2', 1, 'First Upgrade', 'bronze'],
     ['form5', 4, 'Metamorphosis', 'gold'],
-    ['form10', 9, 'Event Horizon', 'platinum'],
+    ['form10', 9, 'Ten Forms', 'gold'],
+    ['form15', 14, 'Dragon Rising', 'platinum'],
+    ['form20', 19, 'Ascension', 'platinum'],
   ] as const) {
     as(t);
     const r = reachedOn(events, xpForLevel(STAGES[form].level));

@@ -1,9 +1,9 @@
 .g-title {
   font-family: var(--f-label);
-  font-weight: 700;
+  font-weight: var(--w-label);
   font-size: 26px;
   letter-spacing: 0.03em;
-  text-transform: uppercase;
+  text-transform: var(--tt-label);
 }
 .g-ex {
   padding: 12px 0;
@@ -21,10 +21,10 @@
 }
 .g-ex__h b {
   font-family: var(--f-label);
-  font-weight: 700;
+  font-weight: var(--w-label);
   font-size: 15px;
   letter-spacing: 0.04em;
-  text-transform: uppercase;
+  text-transform: var(--tt-label);
 }
 .g-ex__f {
   margin-top: 4px;
@@ -92,7 +92,7 @@
   margin: 0 auto;
   background: var(--fg);
   color: var(--bg);
-  border-radius: 12px;
+  border-radius: var(--r-3);
   padding: 8px 8px 8px 14px;
   display: grid;
   grid-template-columns: auto 1fr auto auto auto;
@@ -127,9 +127,10 @@
   border-radius: 8px;
   background: color-mix(in srgb, var(--bg) 14%, transparent);
   font-family: var(--f-label);
+  font-weight: var(--w-label);
   font-size: 11px;
   letter-spacing: 0.06em;
-  text-transform: uppercase;
+  text-transform: var(--tt-label);
 }
 .g-week {
   display: grid;
@@ -154,6 +155,7 @@
 }
 .g-week b {
   font-family: var(--f-label);
+  font-weight: var(--w-label);
   font-size: 15px;
 }
 .g-chip {

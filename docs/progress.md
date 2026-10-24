@@ -61,6 +61,44 @@ Milestones, newest last. Each says what works, what was verified and what remain
 - Colour and cleanup: section-tinted keys, headers, meters and chips; stage-coloured drone scope and hero; gradient log button; softer page glows in light and dark; stepper buttons centred; setting hints in plain text; clearer violin target meter.
 - Verified: 169 unit/DB tests (quests, achievements, levels), 15 WebKit e2e tests incl. the new progress/quests/achievements flow and the new routes in the accessibility sweep, typecheck; screenshots at iPhone and desktop size, light and dark.
 
+## M10 · Shōnen design, colour themes, twenty forms (done)
+- Look: the "7b Shōnen battle" direction from the design canvas. Dela Gothic One headings, Zen Kaku Gothic New body, M PLUS 1 Code numbers; slanted panels, buttons, chips and bars; speed-line section headers with each section's kanji (弦 算 走 力 学 将 眠 画 蔵); kanji navigation (家 暦 + 務 覚) with a diamond log button.
+- Home is a chapter page: 第N話 (N = days with anything logged), the drone in a speed-line power-up panel with level, rank, form and a POWER bar; 技 Techniques (sections), 修行 Training (daily quests as CLEAR / NOW / NEXT bars), 予定 Today / tomorrow, and links to Awakening, Emblems, All activity, Settings. Tapping the drone gives a status line.
+- Progress: 覚醒 header; tabs Overview · Quests (mission board) · Emblems (hexagonal achievement badges); forms as a staircase, unlocked in their colours, the next one greyed, the rest as silhouettes.
+- Colour themes (Settings → Colour theme, per device): Auto, Shōnen (default), Cyber (the 7c colours), Manga paper, Oni, Ocean, Jade, Ember, Royal, Vapor, Toxic, Ink, Sakura, Ice, Matcha. A theme sets surfaces, text and two accents; section colours follow its light or dark mode. The old light/dark choice carries over (light → Manga paper).
+- Twenty forms (was ten): Core, Ring, Rotor, Array, Halo, Prism, Ronin, Nova, Blade, Aurora, Oni, Titan, Kitsune, Raijin, Ryu, Phoenix, Shogun, Eclipse, Singularity, Kami at LV 1/3/6/10/15/20/25/30/36/42/48/55/62/70/78/86/95/105/115/125; each adds a part (headband, crossed blades, horns, fox tails, lightning, dragon, flame wings, kabuto crest, eclipse corona, sacred rings). Two more achievements (form 15, form 20): 41 in all.
+- Verified: 169 unit/DB tests, 15 WebKit e2e tests (theme switch and persistence, 20 forms, every route's names and no sideways scroll), typecheck, production build; screenshots in Shōnen, Cyber and Manga paper.
+
+## M11 · Each section its own space (done, needs your review)
+- Home and the shared pages keep the Shōnen look and the chosen colour theme. Each section now has its own designed space, switched on by `data-sect` on the shell and defined in `src/features/<section>/theme.css` (scoped to `.i-shell[data-sect='…']`, so nothing leaks between sections). Fonts load the first time a section is opened (`src/app/sectionLook.ts`); the browser bar colour follows the section.
+  - Violin: music room. Walnut and lamplight, cream manuscript-paper panels with their own ink, Cormorant Garamond and Spectral, a bar of music in the header, bordeaux pill buttons, practice days as round notes. Entering: the lamp comes up.
+  - Coding: contest workspace. Editor tab bar holding the way home, `// comments`, prompt and caret on the title, a gutter down every panel, JetBrains Mono and IBM Plex Sans, AC-green actions. Entering: drawn line by line.
+  - Sports: training journal. Chalk with lane lines and an orange start band, the header as a race bib with a route behind it, Anton numbers, hard offset shadows. Entering: off the blocks.
+  - Gym: workout floor. Black, white and one lime; Barlow Condensed; a bumper plate in the header; set controls about 58 px tall with the set label on its own line, a lime rest bar. Entering: a quick scale-in.
+  - Study: quiet desk. A navy exercise-book cover with a paper label, ruled pages with a margin line, Newsreader and Source Sans 3. Entering: the book opens.
+  - Chess: club room. Green baize, ivory and brass, Bodoni Moda and Lato, a board in the header corner, gauges as ranks of squares, results as light/dark squares. Entering: a slow settle.
+  - Sleep: night sky. Indigo-to-violet sky with slowly twinkling stars and a crescent moon, Instrument Serif and Lexend, soft rounded panels. Entering: eyes adjust (fade from blur).
+  - Screen time: quiet room. Manrope only, borderless white cards, one calm teal, sentence case, thin continuous gauges. Entering: plain fade.
+  - Cabinet: Curio Cabinet's own look again (its palette, design and day/night from the shared settings) instead of the instrument palette; the channel strip and command bar wear its desk, paper, thread and typewriter type. Entering: the drawer slides up.
+- The same in every section: a "Home" button first in the header (Cabinet: under the channel strip), the channel strip and the command bar in the same places, the same sheets with Save / Cancel / Delete and Undo, 44 px+ targets, shared data, tasks, calendar and XP. All entrance animations are 0.2–0.45 s and switch off with reduced motion, as do the caret and stars.
+- Shared CSS: label weight and case are tokens (`--w-label`, `--tt-label`) so a section can replace Dela Gothic One's heavy capitals.
+- Settings → Colour theme says what the theme covers.
+- Verified: 169 unit/DB tests, 15 WebKit e2e tests (accessibility sweep and no sideways scroll included), typecheck; screenshots of every section at phone size, plus the gym session and a violin sheet. Note: Playwright's Windows WebKit draws Google's variable fonts at their default (thin) weight, so weights were checked in Chromium; the fonts are requested as weight ranges, which Safari handles.
+
+## M12 · Illustrated section worlds (done, needs your review)
+- Each section is now its own illustrated world, unrelated to the others (art in `src/features/<section>/Art.tsx`, passed to `ChannelHead` as `art`; look in `theme.css`):
+  - Violin: an evening recital. Velvet hall, a lit stage whose curtains open on entry and tie back with gold tassels, plank floor and footlights, a drawn violin (true proportions) and bow in the spotlight, Pinyon Script titles on a fading stave, cream concert-programme cards with gold frames, progress as a piano keyboard with black keys.
+  - Coding: a green-phosphor CRT. Bezel round the header, boot log, the road to IOI in ASCII, VT323 headings, scanlines over everything, double-ruled windows, a vim-style status bar; the tube powers on.
+  - Sports: a trail map. Contour-line page, forest-green topo header with a dotted route to a summit flag, pines and a compass, a summit-marker level badge, pinned folded map cards, trail-blaze headings, a wooden trail-board bar.
+  - Gym: an iron warehouse. Concrete, hazard tape, a riveted steel header with a loaded barbell and a swinging kettlebell, Black Ops One stencil, riveted steel panels, big set controls.
+  - Study: a classroom. Squared maths paper, a framed chalkboard with formulas, a triangle and a chalk tray, handwritten Caveat headings with highlighter, spiral notebook pages, crooked index cards, a ruler for a bar.
+  - Chess: an old newspaper chess column (replaced the first Art Deco take). Newsprint, black ink and one spot red, a blackletter masthead with ears, a dateline between double rules, the day's problem as a hatched diagram (Scholar's Mate, White to play) with the move drawn in red, the level as the paper's number, ruled columns, Playfair Display and Old Standard TT.
+  - Sleep: moonlit hills. A cratered moon rising, a constellation, drifting clouds, a cottage with a lit window, sleepy z's.
+  - Screen time: a zen garden. Washi paper, raked sand with two stones and their ripples, bamboo, the level inside an ensō, stone-smooth cards.
+  - Cabinet: unchanged (Curio Cabinet's own look).
+- Shared: the header title block has its own class (`.i-chhead__t`); way home, sheets, Save/Cancel/Delete, data and XP are unchanged. Decorative motion (curtains, moonrise, clouds, z's, kettlebell, caret, stars) stops under reduced motion.
+- Verified: 169 unit/DB tests, 15 WebKit e2e tests, typecheck; phone screenshots of every section (Chromium, since Playwright's Windows WebKit draws variable fonts thin).
+
 ## Next (needs your review or your input)
 - Review the working app locally (`npm run dev`, local-only by default).
 - Production migration (docs/migration.md): back up, apply `20261025120000_lifetracker_core.sql`, verify — a separate step after review.

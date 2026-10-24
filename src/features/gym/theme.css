@@ -1,0 +1,359 @@
+/* ── Gym · the iron warehouse ────────────────────────────────────────────────
+   Bare concrete, brushed steel and hazard tape; the header is a riveted steel plate with a loaded
+   barbell and a kettlebell on the wall; Black Ops One stencil headings, Barlow Condensed numbers;
+   one hazard yellow; set controls big enough for chalky hands. It lands with a thud. */
+
+.i-shell[data-sect='gym'] {
+  --bg: #1d1e20;
+  --bg-dot: transparent;
+  --surf: #2a2d30;
+  --surf-2: #33373b;
+  --surf-3: #41464b;
+  --fg: #f2f2f2;
+  --fg-2: #c8cbce;
+  --fg-3: #a2a7ac;
+  --rule: #43484d;
+  --grid: #2f3236;
+  --led-off: #41464b;
+  --sig: #ffcc00;
+  --sig-fg: #111111;
+  --sig-soft: rgb(255 204 0 / 0.14);
+  --acc2: #ffcc00;
+  --acc2-fg: #111111;
+  --ok: #ffcc00;
+  --ok-soft: rgb(255 204 0 / 0.12);
+  --warn: #ff6a4d;
+  --c-gym: #ffcc00;
+  --f-label: 'Black Ops One', 'Impact', sans-serif;
+  --f-body: 'Barlow', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --f-mono: 'Barlow Condensed', 'Arial Narrow', sans-serif;
+  --w-label: 400;
+  --tt-label: uppercase;
+  --slant: 0deg;
+  --r-1: 2px;
+  --r-2: 2px;
+  --r-3: 3px;
+  --hazard: repeating-linear-gradient(-45deg, #ffcc00 0 12px, #111 12px 24px);
+  color-scheme: dark;
+  background-image:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.75' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 .09 0'/%3E%3C/filter%3E%3Crect width='220' height='220' filter='url(%23n)'/%3E%3C/svg%3E"),
+    radial-gradient(90% 60% at 50% 0%, #34373b, transparent 70%),
+    linear-gradient(90deg, transparent calc(50% - 1px), rgb(0 0 0 / 0.25) 50%, transparent calc(50% + 1px));
+  background-size: 220px 220px, 100% 100%, 260px 100%;
+}
+
+/* ── the steel plate ── */
+.i-shell[data-sect='gym'] .i-chhead {
+  padding: 30px 18px 112px;
+  clip-path: none;
+  border: 0;
+  border-radius: 3px;
+  background:
+    var(--hazard) top / 100% 12px no-repeat,
+    var(--hazard) bottom / 100% 12px no-repeat,
+    radial-gradient(circle, #8a9096 2px, #2a2d30 3px, transparent 3.5px) 10px 20px / 10px 10px no-repeat,
+    radial-gradient(circle, #8a9096 2px, #2a2d30 3px, transparent 3.5px) right 10px top 20px / 10px 10px no-repeat,
+    radial-gradient(circle, #8a9096 2px, #2a2d30 3px, transparent 3.5px) left 10px bottom 20px / 10px 10px no-repeat,
+    radial-gradient(circle, #8a9096 2px, #2a2d30 3px, transparent 3.5px) right 10px bottom 20px / 10px 10px no-repeat,
+    repeating-linear-gradient(90deg, rgb(255 255 255 / 0.03) 0 1px, transparent 1px 3px),
+    linear-gradient(160deg, #3d4247, #24272a 60%, #1c1e20);
+  box-shadow: 0 0 0 1px #4a4f55, 0 16px 30px -12px rgb(0 0 0 / 0.8);
+}
+.i-shell[data-sect='gym'] .i-chhead::before,
+.i-shell[data-sect='gym'] .i-chhead__kanji {
+  display: none;
+}
+.gy-barbell {
+  position: absolute;
+  left: 4%;
+  right: 4%;
+  bottom: 20px;
+  width: 92%;
+  height: 84px;
+  filter: drop-shadow(0 6px 4px rgb(0 0 0 / 0.6));
+}
+.gy-kettle {
+  position: absolute;
+  right: 22px;
+  top: 14px;
+  width: 52px;
+  height: 60px;
+  transform-origin: 50% 0;
+  animation: gy-swing 2.4s ease-in-out 1;
+  filter: drop-shadow(0 6px 4px rgb(0 0 0 / 0.6));
+}
+@keyframes gy-swing {
+  20% {
+    transform: rotate(8deg);
+  }
+  50% {
+    transform: rotate(-5deg);
+  }
+  75% {
+    transform: rotate(2deg);
+  }
+}
+.i-shell[data-sect='gym'] .i-home {
+  margin-top: -4px;
+  font-family: var(--f-mono);
+  font-weight: 700;
+  font-size: 16px;
+  color: var(--fg);
+}
+.i-shell[data-sect='gym'] .i-chhead__k {
+  font-family: var(--f-mono);
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--sig);
+}
+.i-shell[data-sect='gym'] .i-chhead h1 {
+  font-size: clamp(50px, 17vw, 78px);
+  line-height: 0.9;
+  letter-spacing: 0.01em;
+  color: #f2f2f2;
+  text-shadow: 3px 3px 0 #000, -1px -1px 0 rgb(255 255 255 / 0.15);
+}
+.i-shell[data-sect='gym'] .i-chhead__rank {
+  margin-top: 8px;
+  clip-path: none;
+  transform: rotate(-2deg);
+  background: var(--sig);
+  color: #111;
+  font-family: var(--f-label);
+  font-weight: 400;
+  font-size: 14px;
+  letter-spacing: 0.08em;
+  box-shadow: 3px 3px 0 #000;
+}
+.i-shell[data-sect='gym'] .i-chhead__lv {
+  font-family: var(--f-mono);
+  font-weight: 700;
+  font-size: 14px;
+  margin-bottom: 2px;
+}
+.i-shell[data-sect='gym'] .i-chhead__lv b {
+  font-family: var(--f-label);
+  font-size: 60px;
+  line-height: 0.9;
+  color: var(--sig);
+  text-shadow: 3px 3px 0 #000;
+}
+.i-shell[data-sect='gym'] .i-seg {
+  transform: none;
+  gap: 3px;
+}
+.i-shell[data-sect='gym'] .i-seg i {
+  height: 12px;
+  background: #17191b;
+  box-shadow: inset 0 0 0 1px #4a4f55;
+}
+.i-shell[data-sect='gym'] .i-seg i.is-on {
+  background: var(--sig);
+  box-shadow: none;
+}
+
+/* ── riveted steel panels ── */
+.i-shell[data-sect='gym'] .i-pnl {
+  background:
+    radial-gradient(circle, #7a8086 1.5px, transparent 2.5px) 4px 4px / 8px 8px no-repeat,
+    radial-gradient(circle, #7a8086 1.5px, transparent 2.5px) right 4px top 4px / 8px 8px no-repeat,
+    radial-gradient(circle, #7a8086 1.5px, transparent 2.5px) left 4px bottom 4px / 8px 8px no-repeat,
+    radial-gradient(circle, #7a8086 1.5px, transparent 2.5px) right 4px bottom 4px / 8px 8px no-repeat,
+    repeating-linear-gradient(90deg, rgb(255 255 255 / 0.025) 0 1px, transparent 1px 3px),
+    linear-gradient(#2e3135, #25282b);
+  box-shadow: 0 0 0 1px #4a4f55, 0 8px 16px -8px rgb(0 0 0 / 0.7);
+}
+.i-shell[data-sect='gym'] .i-h2 {
+  margin-top: 28px;
+}
+.i-shell[data-sect='gym'] .i-h2 h2 {
+  font-size: 21px;
+  letter-spacing: 0.06em;
+}
+.i-shell[data-sect='gym'] .i-h2 h2::before {
+  width: 30px;
+  height: 14px;
+  transform: none;
+  background: var(--hazard);
+  background-size: 34px 34px;
+}
+.i-shell[data-sect='gym'] :is(.i-meter__l, .i-chip, .i-link, .i-h2__aside, .i-cmd__btn, .i-chbar__btn b) {
+  font-family: var(--f-mono);
+  font-weight: 700;
+  font-size: 14px;
+  letter-spacing: 0.08em;
+}
+.i-shell[data-sect='gym'] .i-meter {
+  background: #17191b;
+  box-shadow: 0 0 0 1px #4a4f55, inset 0 4px 0 var(--c, var(--sig));
+}
+.i-shell[data-sect='gym'] .i-meter__v {
+  font-family: var(--f-mono);
+  font-weight: 800;
+  font-size: 40px;
+  line-height: 1;
+}
+.i-shell[data-sect='gym'] .i-btn {
+  min-height: 52px;
+  font-size: 17px;
+  letter-spacing: 0.06em;
+}
+.i-shell[data-sect='gym'] .i-btn--sm {
+  min-height: 44px;
+  font-size: 14px;
+}
+.i-shell[data-sect='gym'] .i-btn::before {
+  background: linear-gradient(#41464b, #2e3135);
+  border: 1px solid #5a6066;
+}
+.i-shell[data-sect='gym'] .i-btn--sig::before {
+  background: var(--sig);
+  border: 0;
+  box-shadow: 4px 4px 0 #000;
+}
+.i-shell[data-sect='gym'] .g-title {
+  font-size: 34px;
+}
+.i-shell[data-sect='gym'] .g-ex__h b {
+  font-size: 20px;
+}
+
+/* the session: big set controls, label on its own line */
+.i-shell[data-sect='gym'] .g-set {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 58px;
+  gap: 2px 8px;
+  padding: 6px 0;
+}
+.i-shell[data-sect='gym'] .g-set > :first-child {
+  grid-column: 1 / -1;
+  font-family: var(--f-mono);
+  font-weight: 700;
+  font-size: 13px;
+  letter-spacing: 0.08em;
+}
+.i-shell[data-sect='gym'] .g-adj {
+  height: 58px;
+  border-radius: 2px;
+  background: #17191b;
+  box-shadow: inset 0 0 0 1.5px #4a4f55;
+}
+.i-shell[data-sect='gym'] .g-adj button {
+  width: 42px;
+  height: 56px;
+  font-size: 28px;
+  font-weight: 600;
+  color: var(--fg);
+}
+.i-shell[data-sect='gym'] .g-adj button:active {
+  background: var(--sig);
+  color: #111;
+}
+.i-shell[data-sect='gym'] .g-adj output {
+  font-family: var(--f-mono);
+  font-weight: 700;
+  font-size: 24px;
+}
+.i-shell[data-sect='gym'] .g-adj output small {
+  font-size: 12px;
+}
+.i-shell[data-sect='gym'] .g-led {
+  width: 58px;
+  height: 58px;
+  border-radius: 2px;
+  background: #17191b;
+  box-shadow: inset 0 0 0 1.5px #4a4f55;
+}
+.i-shell[data-sect='gym'] .g-led.is-on {
+  background: var(--sig);
+}
+.i-shell[data-sect='gym'] .g-led i {
+  width: 18px;
+  height: 18px;
+}
+.i-shell[data-sect='gym'] .g-led.is-on i {
+  background: #111;
+  box-shadow: none;
+}
+.i-shell[data-sect='gym'] .g-rest {
+  background: var(--sig);
+  color: #111;
+  border-radius: 2px;
+  box-shadow: 0 0 0 3px #111, 0 0 0 6px var(--sig);
+}
+.i-shell[data-sect='gym'] .g-rest b {
+  color: #111;
+  font-family: var(--f-label);
+  font-size: 28px;
+}
+.i-shell[data-sect='gym'] .g-rest__track i {
+  background: #111;
+}
+.i-shell[data-sect='gym'] .g-rest button {
+  min-height: 44px;
+  font-size: 14px;
+  border-radius: 2px;
+}
+.i-shell[data-sect='gym'] .i-stepper button {
+  width: 48px;
+  height: 48px;
+  font-size: 24px;
+  color: var(--fg);
+}
+.i-shell[data-sect='gym'] .g-chip.is-done {
+  color: #111;
+}
+.i-shell[data-sect='gym'] .i-chbar__btn[aria-current='page'],
+.i-shell[data-sect='gym'] .i-chbar__btn[aria-current='page'] b,
+.i-shell[data-sect='gym'] .i-chip[aria-pressed='true'] {
+  color: #111;
+}
+.i-shell[data-sect='gym'] .i-chbar {
+  background: rgb(29 30 32 / 0.94);
+}
+.i-shell[data-sect='gym'] .i-sheet {
+  border-top: 0;
+  box-shadow: 0 0 0 1px #4a4f55, var(--lift);
+  background: linear-gradient(#2e3135, #25282b);
+}
+.i-shell[data-sect='gym'] .i-sheet::before {
+  content: '';
+  height: 8px;
+  flex: none;
+  background: var(--hazard);
+  border-radius: 3px 3px 0 0;
+}
+.i-shell[data-sect='gym'] .i-cmd {
+  background: #111;
+  border-top: 0;
+}
+.i-shell[data-sect='gym'] .i-cmd::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto;
+  height: 6px;
+  background: var(--hazard);
+}
+.i-shell[data-sect='gym'] .i-cmd__btn[aria-current='page']::after {
+  transform: none;
+}
+.i-shell[data-sect='gym'] .i-cmd__prompt {
+  transform: none;
+  border-radius: 2px;
+  border: 0;
+  box-shadow: 0 0 0 4px #111, 4px 4px 0 4px #000;
+}
+.i-shell[data-sect='gym'] .i-cmd__prompt svg {
+  transform: none;
+}
+
+/* entering: dropped from the rack */
+.i-shell[data-sect='gym'] .i-view,
+.i-shell[data-sect='gym'] .i-view[data-dir='back'] {
+  animation: gy-enter 0.3s cubic-bezier(0.3, 1.5, 0.5, 1);
+}
+@keyframes gy-enter {
+  from {
+    opacity: 0;
+    transform: translateY(-26px);
+  }
+}

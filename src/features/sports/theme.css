@@ -1,0 +1,292 @@
+/* ── Sports · the trail map ──────────────────────────────────────────────────
+   An outdoor map spread on the table: contour lines across the page, the header a forest-green
+   topographic sheet with a dotted route to a summit flag, pines and a compass rose; panels are
+   pinned, folded map cards; Zilla Slab like park signage; trail blazes mark the headings. */
+
+.i-shell[data-sect='sports'] {
+  --bg: #ebe2c6;
+  --bg-dot: transparent;
+  --surf: #fbf6e6;
+  --surf-2: #f1e9d2;
+  --surf-3: #e0d4b2;
+  --fg: #1d3324;
+  --fg-2: #3b503f;
+  --fg-3: #566856;
+  --rule: #d8cba6;
+  --grid: #ece3c9;
+  --led-off: #e0d4b2;
+  --sig: #2d5537;
+  --sig-fg: #fff8e4;
+  --sig-soft: rgb(45 85 55 / 0.12);
+  --acc2: #a83d0a;
+  --acc2-fg: #ffffff;
+  --ok: #2d6b3a;
+  --ok-soft: rgb(45 107 58 / 0.12);
+  --warn: #b3261e;
+  --warn-soft: rgb(179 38 30 / 0.1);
+  --c-sports: #c4500e;
+  --f-label: 'Zilla Slab', 'Rockwell', Georgia, serif;
+  --f-body: 'Archivo', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --f-mono: 'Zilla Slab', 'Rockwell', Georgia, serif;
+  --w-label: 700;
+  --tt-label: uppercase;
+  --slant: 0deg;
+  --r-1: 6px;
+  --r-2: 6px;
+  --r-3: 8px;
+  --lift: 0 2px 0 #c9bb93, 0 24px 50px rgb(40 50 30 / 0.3);
+  color-scheme: light;
+  background-image:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='320' height='320' viewBox='0 0 320 320'%3E%3Cg fill='none' stroke='%23a08c5c' stroke-opacity='.28' stroke-width='1'%3E%3Cpath d='M160 120c40-8 70 10 70 40s-34 48-70 46-64-18-60-44 22-34 60-42z'/%3E%3Cpath d='M158 96c56-12 98 14 98 64s-48 76-98 74-100-28-94-72 34-52 94-66z'/%3E%3Cpath d='M156 70c72-16 128 18 128 90s-62 106-128 104-132-40-124-102 46-74 124-92z'/%3E%3Cpath d='M154 42c90-20 160 22 160 118s-78 138-160 136-166-52-154-134 58-98 154-120z'/%3E%3Cpath d='M30 30c14-10 36-8 44 2s-4 20-22 18-34-8-22-20z'/%3E%3Cpath d='M20 22c22-16 56-14 70 2s-6 34-36 32-58-14-34-34z'/%3E%3C/g%3E%3C/svg%3E"),
+    linear-gradient(rgb(160 140 92 / 0.12) 1px, transparent 1px),
+    linear-gradient(90deg, rgb(160 140 92 / 0.12) 1px, transparent 1px);
+  background-size: 320px 320px, 80px 80px, 80px 80px;
+}
+
+/* ── the map sheet ── */
+.i-shell[data-sect='sports'] .i-chhead {
+  --fg: #fff6dc;
+  --fg-2: #dfe9cf;
+  --fg-3: #b9cbb0;
+  color: var(--fg);
+  min-height: 250px;
+  padding: 18px;
+  clip-path: none;
+  border: 0;
+  border-radius: 8px;
+  background: radial-gradient(90% 90% at 75% 40%, #3a6a45, #24432c 75%);
+  box-shadow: inset 0 0 0 2px #1a3121, inset 0 0 0 6px #2d5537, inset 0 0 0 7px rgb(255 246 220 / 0.45), 0 14px 26px -10px rgb(30 40 20 / 0.5);
+}
+.i-shell[data-sect='sports'] .i-chhead::before,
+.i-shell[data-sect='sports'] .i-chhead__kanji {
+  display: none;
+}
+.sp-map {
+  overflow: hidden;
+  border-radius: inherit;
+}
+.sp-topo {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 78%;
+  height: 100%;
+}
+.sp-route {
+  animation: sp-walk 1.2s ease-out both;
+}
+@keyframes sp-walk {
+  from {
+    stroke-dashoffset: 90;
+    opacity: 0;
+  }
+}
+.sp-compass {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  width: 60px;
+  height: 68px;
+  filter: drop-shadow(0 2px 2px rgb(0 0 0 / 0.4));
+}
+.i-shell[data-sect='sports'] .i-home {
+  color: #fff6dc;
+  font-family: var(--f-label);
+  font-size: 15px;
+  letter-spacing: 0.08em;
+  margin-top: -6px;
+}
+.i-shell[data-sect='sports'] .i-chhead__k {
+  font-family: var(--f-label);
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  color: #ffb27a;
+}
+.i-shell[data-sect='sports'] .i-chhead h1 {
+  font-size: clamp(46px, 15vw, 66px);
+  line-height: 0.9;
+  letter-spacing: 0.01em;
+  text-shadow: 0 3px 0 #1a3121;
+}
+.i-shell[data-sect='sports'] .i-chhead__rank {
+  clip-path: none;
+  margin-top: 10px;
+  background: #ff8a3d;
+  color: #1d1208;
+  font-family: var(--f-label);
+  border-radius: 2px;
+  box-shadow: 2px 2px 0 #1a3121;
+}
+/* level: a summit marker */
+.i-shell[data-sect='sports'] .i-chhead__lv {
+  width: 88px;
+  height: 88px;
+  border-radius: 50%;
+  display: grid;
+  place-content: center;
+  text-align: center;
+  background: #fff6dc;
+  color: #3b503f;
+  font-family: var(--f-label);
+  font-size: 11px;
+  box-shadow: 0 0 0 3px #1a3121, 0 0 0 6px #fff6dc, 0 6px 14px rgb(0 0 0 / 0.4);
+  margin: 0 6px 6px 0;
+}
+.i-shell[data-sect='sports'] .i-chhead__lv::before {
+  content: '▲';
+  font-size: 12px;
+  color: #c4500e;
+  line-height: 1;
+}
+.i-shell[data-sect='sports'] .i-chhead__lv b {
+  font-size: 34px;
+  line-height: 0.95;
+  color: #1d3324;
+  text-shadow: none;
+}
+.i-shell[data-sect='sports'] .i-seg {
+  transform: none;
+  gap: 5px;
+}
+.i-shell[data-sect='sports'] .i-seg i {
+  height: 4px;
+  border-radius: 2px;
+}
+.i-shell[data-sect='sports'] .i-chhead .i-seg i {
+  background: rgb(255 246 220 / 0.25);
+}
+.i-shell[data-sect='sports'] .i-seg i.is-on {
+  background: #ff8a3d;
+}
+
+/* ── pinned map cards ── */
+.i-shell[data-sect='sports'] .i-pnl {
+  position: relative;
+  background-image: linear-gradient(90deg, transparent 49.6%, rgb(90 70 30 / 0.07) 50%, transparent 50.4%);
+  box-shadow: 0 1px 0 #d2c49c, 0 10px 18px -12px rgb(50 40 20 / 0.45);
+}
+.i-shell[data-sect='sports'] .i-pnl::before {
+  content: '';
+  position: absolute;
+  top: -7px;
+  left: 50%;
+  width: 14px;
+  height: 14px;
+  margin-left: -7px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, #ff9a7a, #c8261a 55%, #7a1009);
+  box-shadow: 1px 3px 3px rgb(0 0 0 / 0.35);
+}
+.i-shell[data-sect='sports'] .i-h2 {
+  margin-top: 30px;
+}
+.i-shell[data-sect='sports'] .i-h2 h2 {
+  font-size: 22px;
+  letter-spacing: 0.06em;
+}
+.i-shell[data-sect='sports'] .i-h2 h2::before {
+  width: 10px;
+  height: 18px;
+  transform: none;
+  background: #ff8a3d;
+  box-shadow: 0 0 0 1.5px #1d3324;
+  border-radius: 1px;
+}
+.i-shell[data-sect='sports'] :is(.i-link, .i-h2__aside) {
+  font-family: var(--f-label);
+  font-weight: 600;
+  font-size: 14px;
+  letter-spacing: 0.04em;
+}
+.i-shell[data-sect='sports'] :is(.i-meter__l, .i-chip, .i-chbar__btn b, .i-cmd__btn) {
+  font-family: var(--f-label);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+}
+.i-shell[data-sect='sports'] .i-meter {
+  background: #fffaf0;
+  box-shadow: 0 0 0 1px var(--rule), inset 0 -4px 0 var(--c, var(--sig));
+}
+.i-shell[data-sect='sports'] .i-meter__v {
+  font-size: 38px;
+  line-height: 1;
+}
+.i-shell[data-sect='sports'] .i-row__n {
+  font-weight: 700;
+  font-size: 17px;
+}
+.i-shell[data-sect='sports'] .i-btn {
+  font-size: 16px;
+  letter-spacing: 0.06em;
+}
+.i-shell[data-sect='sports'] .i-btn::before {
+  border-radius: 6px;
+  border: 1.5px solid #1d3324;
+  background: #fffaf0;
+}
+.i-shell[data-sect='sports'] .i-btn--sig::before {
+  border: 0;
+  background: var(--sig);
+  box-shadow: inset 0 0 0 3px var(--sig), inset 0 0 0 4px rgb(255 246 220 / 0.55), 0 3px 0 #1a3121;
+}
+.i-shell[data-sect='sports'] :is(.i-chip, .i-chbar__btn)::before {
+  border-radius: 6px;
+  background: #fffaf0;
+}
+.i-shell[data-sect='sports'] .i-chip[aria-pressed='true'],
+.i-shell[data-sect='sports'] .i-chip[aria-pressed='true'] .i-led,
+.i-shell[data-sect='sports'] .i-chbar__btn[aria-current='page'],
+.i-shell[data-sect='sports'] .i-chbar__btn[aria-current='page'] b {
+  color: #fff8e4;
+}
+.i-shell[data-sect='sports'] .i-chip[aria-pressed='true']::before,
+.i-shell[data-sect='sports'] .i-chbar__btn[aria-current='page']::before {
+  background: var(--sig);
+}
+.i-shell[data-sect='sports'] .i-chbar {
+  background: rgb(235 226 198 / 0.92);
+}
+.i-shell[data-sect='sports'] .i-sheet {
+  border-top: 0;
+  box-shadow: inset 0 4px 0 var(--sig), var(--lift);
+}
+/* the bottom bar: a wooden trail board */
+.i-shell[data-sect='sports'] .i-cmd {
+  background: repeating-linear-gradient(0deg, #5c3c22 0 6px, #654328 6px 9px, #573820 9px 14px);
+  border-top: 2px solid #3a2414;
+}
+.i-shell[data-sect='sports'] .i-cmd__btn {
+  color: #e8d6b4;
+}
+.i-shell[data-sect='sports'] .i-cmd__btn[aria-current='page'] {
+  color: #ffb27a;
+}
+.i-shell[data-sect='sports'] .i-cmd__btn[aria-current='page']::after {
+  transform: none;
+  background: #ffb27a;
+}
+.i-shell[data-sect='sports'] .i-cmd__prompt {
+  transform: none;
+  border-radius: 50%;
+  background: #ff8a3d;
+  color: #1d1208;
+  border: 3px solid #fff6dc;
+  box-shadow: 0 0 0 3px #3a2414;
+}
+.i-shell[data-sect='sports'] .i-cmd__prompt svg {
+  transform: none;
+}
+
+/* entering: the map unfolds onto the table */
+.i-shell[data-sect='sports'] .i-view,
+.i-shell[data-sect='sports'] .i-view[data-dir='back'] {
+  transform-origin: 50% 0;
+  animation: sp-enter 0.34s var(--ease);
+}
+@keyframes sp-enter {
+  from {
+    opacity: 0;
+    transform: perspective(900px) rotateX(10deg) scale(0.97);
+  }
+}

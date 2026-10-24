@@ -1,0 +1,444 @@
+/* ── Violin · an evening recital ─────────────────────────────────────────────
+   Burgundy velvet hall; the header is a lit stage whose curtains open as you come in, with a
+   violin and bow in the spotlight; panels are cream concert-programme cards with gold frames;
+   Pinyon Script titles, Cormorant Garamond and Spectral text, progress as piano keys. */
+
+.i-shell[data-sect='violin'] {
+  --bg: #1c090d;
+  --bg-dot: transparent;
+  --surf: #2b1116;
+  --surf-2: #3a1820;
+  --surf-3: #4b2029;
+  --fg: #f6e7c8;
+  --fg-2: #dfc69e;
+  --fg-3: #bea383;
+  --rule: #5a2a33;
+  --grid: #33141a;
+  --led-off: #4b2029;
+  --sig: #7d1424;
+  --sig-fg: #fbefd9;
+  --sig-soft: rgb(125 20 36 / 0.2);
+  --acc2: #e6bb66;
+  --acc2-fg: #1c090d;
+  --ok: #a9d494;
+  --warn: #f39a7c;
+  --c-violin: #e6b466;
+  --f-label: 'Cormorant Garamond', 'Iowan Old Style', Georgia, serif;
+  --f-body: 'Spectral', Georgia, 'Times New Roman', serif;
+  --f-mono: 'Spectral', Georgia, serif;
+  --w-label: 600;
+  --tt-label: none;
+  --slant: 0deg;
+  --r-1: 6px;
+  --r-2: 8px;
+  --r-3: 12px;
+  --lift: 0 0 0 1px rgb(0 0 0 / 0.3), 0 24px 60px rgb(0 0 0 / 0.6);
+  color-scheme: dark;
+  background-image:
+    radial-gradient(1px 1px at 20% 30%, rgb(255 215 140 / 0.35) 50%, transparent),
+    radial-gradient(1px 1px at 70% 60%, rgb(255 215 140 / 0.3) 50%, transparent),
+    radial-gradient(1px 1px at 45% 85%, rgb(255 215 140 / 0.3) 50%, transparent),
+    repeating-linear-gradient(90deg, rgb(0 0 0 / 0.22) 0 10px, rgb(255 230 230 / 0.03) 20px, rgb(0 0 0 / 0.22) 34px),
+    linear-gradient(#250c12, #160609);
+  background-size: 180px 180px, 220px 220px, 260px 260px, auto, auto;
+  background-attachment: fixed;
+}
+
+/* ── the stage ── */
+.i-shell[data-sect='violin'] .i-chhead {
+  grid-template-columns: minmax(0, 1fr);
+  min-height: 286px;
+  padding: 34px 44px 24px;
+  clip-path: none;
+  border: 0;
+  border-radius: 4px 4px 16px 16px;
+  background: linear-gradient(#0e0406, #1a0a08 80%);
+  box-shadow: 0 0 0 1px #3a1a12, 0 18px 40px -16px rgb(0 0 0 / 0.8);
+  align-content: end;
+}
+.i-shell[data-sect='violin'] .i-chhead::before,
+.i-shell[data-sect='violin'] .i-chhead__kanji {
+  display: none;
+}
+.vl-stage {
+  overflow: hidden;
+  border-radius: inherit;
+}
+.vl-spot {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(45% 75% at 72% -6%, rgb(255 228 170 / 0.38), transparent 72%),
+    radial-gradient(40% 14% at 72% 80%, rgb(255 210 140 / 0.25), transparent 70%);
+}
+.vl-floor {
+  position: absolute;
+  left: -30%;
+  right: -30%;
+  bottom: 0;
+  height: 26%;
+  background:
+    linear-gradient(rgb(0 0 0 / 0.55), transparent 60%),
+    radial-gradient(40% 90% at 64% 0%, rgb(255 205 130 / 0.3), transparent 70%),
+    repeating-linear-gradient(90deg, #5a2c14 0 26px, #2c1408 26px 27px, #4e2610 27px 52px, #2c1408 52px 53px);
+  transform: perspective(160px) rotateX(38deg);
+  transform-origin: 50% 100%;
+  box-shadow: inset 0 2px 0 rgb(255 210 150 / 0.18);
+}
+/* footlights along the lip of the stage */
+.vl-lamps {
+  position: absolute;
+  left: 30px;
+  right: 30px;
+  bottom: 0;
+  height: 9px;
+  background: radial-gradient(ellipse 7px 5px at 50% 100%, #fff1c4 0 30%, rgb(255 196 110 / 0.7) 55%, transparent) 0 100% / 32px 9px repeat-x;
+}
+.vl-lamps::before {
+  content: '';
+  position: absolute;
+  inset: auto -20px 0;
+  height: 70px;
+  background: linear-gradient(to top, rgb(255 196 110 / 0.16), transparent);
+}
+.vl-violin {
+  position: absolute;
+  right: 44px;
+  top: 24px;
+  height: 232px;
+  width: 92px;
+  transform: rotate(18deg);
+  filter: drop-shadow(0 10px 12px rgb(0 0 0 / 0.6));
+}
+.vl-bow {
+  position: absolute;
+  right: 92px;
+  top: 34px;
+  height: 222px;
+  width: 10px;
+  transform: rotate(-34deg);
+  filter: drop-shadow(0 6px 6px rgb(0 0 0 / 0.5));
+}
+.vl-notes {
+  position: absolute;
+  right: 150px;
+  top: 40px;
+  width: 44px;
+  animation: vl-float 5s ease-in-out infinite alternate;
+}
+@keyframes vl-float {
+  to {
+    transform: translate(-6px, -8px) rotate(-6deg);
+  }
+}
+.vl-valance {
+  position: absolute;
+  inset: 0 0 auto;
+  height: 26px;
+  z-index: 2;
+  background:
+    radial-gradient(circle at 50% 0, #8f1b2b 10px, #d9ab52 10.5px 12px, transparent 12.5px) 0 8px / 24px 20px repeat-x,
+    linear-gradient(#8f1b2b 0 10px, #d9ab52 10px 12px, transparent 12px);
+}
+.vl-curtain {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  z-index: 1;
+  width: 34px;
+  background:
+    linear-gradient(90deg, rgb(0 0 0 / 0.35), transparent 30%, rgb(255 220 220 / 0.06) 55%, rgb(0 0 0 / 0.4)),
+    repeating-linear-gradient(90deg, #4a0a12 0 3px, #921c2c 3px 8px, #c0344a 8px 10px, #6d1220 10px 15px);
+  box-shadow: 0 0 18px rgb(0 0 0 / 0.7);
+  animation: vl-open 0.7s cubic-bezier(0.6, 0, 0.3, 1) both;
+}
+.vl-curtain--l {
+  left: 0;
+  border-radius: 0 0 70% 0 / 0 0 22% 0;
+}
+.vl-curtain--r {
+  right: 0;
+  border-radius: 0 0 0 70% / 0 0 0 22%;
+}
+/* gold tie-back and tassel, shown once the curtains have opened */
+.vl-curtain::after {
+  content: '';
+  position: absolute;
+  top: 54%;
+  width: 26px;
+  height: 46px;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 26 46'%3E%3Cpath d='M0 6q13 6 26 0v5q-13 6-26 0z' fill='%23d9ab52'/%3E%3Cpath d='M0 7.5q13 6 26 0' fill='none' stroke='%237a5512' stroke-width='.8'/%3E%3Ccircle cx='13' cy='14' r='3.4' fill='%23e8c27a'/%3E%3Cpath d='M10 17h6l1 4h-8z' fill='%23c9963a'/%3E%3Cpath d='M9 21h8l3 22H6z' fill='%23d9ab52'/%3E%3Cpath d='M8.4 24l-1.2 18M11 24l-.6 18M13 24v18M15 24l.6 18M17.6 24l1.2 18' stroke='%237a5512' stroke-width='.7'/%3E%3C/svg%3E") center / contain no-repeat;
+  filter: drop-shadow(0 3px 3px rgb(0 0 0 / 0.6));
+  animation: vl-tassel 0.3s 0.65s both;
+}
+.vl-curtain--l::after {
+  right: -8px;
+}
+.vl-curtain--r::after {
+  left: -8px;
+}
+@keyframes vl-tassel {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+}
+@keyframes vl-open {
+  from {
+    width: 51%;
+    border-radius: 0;
+  }
+}
+.i-shell[data-sect='violin'] .i-home {
+  margin: 0 0 6px -8px;
+  font-family: var(--f-label);
+  font-weight: 600;
+  font-size: 18px;
+  letter-spacing: 0.01em;
+  text-transform: none;
+  color: var(--fg-2);
+}
+.i-shell[data-sect='violin'] .i-chhead__t {
+  max-width: calc(100% - 96px);
+}
+.i-shell[data-sect='violin'] .i-chhead__k {
+  font-family: var(--f-body);
+  font-weight: 500;
+  font-size: 13px;
+  letter-spacing: 0.12em;
+  font-variant: small-caps;
+  text-transform: lowercase;
+  color: var(--acc2);
+}
+.i-shell[data-sect='violin'] .i-chhead h1 {
+  font-family: 'Pinyon Script', 'Snell Roundhand', cursive;
+  font-weight: 400;
+  font-size: clamp(58px, 18vw, 80px);
+  line-height: 1;
+  letter-spacing: 0;
+  margin: 2px 0 -4px;
+  color: #f8e9c9;
+  text-shadow: 0 0 22px rgb(255 205 130 / 0.35);
+}
+.i-shell[data-sect='violin'] .i-chhead__rank {
+  clip-path: none;
+  background: none;
+  color: var(--fg-2);
+  padding: 0;
+  font-family: var(--f-label);
+  font-style: italic;
+  font-weight: 500;
+  font-size: 17px;
+  letter-spacing: 0.02em;
+  text-transform: none;
+}
+.i-shell[data-sect='violin'] .i-chhead__rank::before,
+.i-shell[data-sect='violin'] .i-chhead__rank::after {
+  content: ' ~ ';
+  color: var(--acc2);
+}
+.i-shell[data-sect='violin'] .i-chhead__lv {
+  justify-self: start;
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  margin-top: 10px;
+  padding: 3px 14px 4px;
+  border-radius: 3px;
+  text-align: left;
+  font-family: var(--f-label);
+  font-weight: 600;
+  font-size: 13px;
+  letter-spacing: 0.08em;
+  color: #2a1606;
+  background: linear-gradient(180deg, #f3d68e, #c79634 60%, #a87a22);
+  box-shadow: 0 0 0 1px #5c3d0e, 0 4px 10px rgb(0 0 0 / 0.5);
+}
+.i-shell[data-sect='violin'] .i-chhead__lv b {
+  display: inline;
+  font-family: var(--f-label);
+  font-weight: 700;
+  font-size: 24px;
+  color: #2a1606;
+  text-shadow: none;
+}
+/* progress: a keyboard along the front of the stage, two and three black keys to the octave */
+.i-shell[data-sect='violin'] .i-chhead .i-seg {
+  position: relative;
+  margin-top: 10px;
+  transform: none;
+  gap: 1px;
+  padding: 1px;
+  background: #120806;
+  border-radius: 2px;
+}
+.i-shell[data-sect='violin'] .i-chhead .i-seg i {
+  height: 18px;
+  background: #efe3c6;
+  border-radius: 0 0 2px 2px;
+}
+.i-shell[data-sect='violin'] .i-chhead .i-seg i.is-on {
+  background: linear-gradient(#f6d68a, #d39f3c);
+}
+.i-shell[data-sect='violin'] .i-chhead .i-seg::after {
+  content: '';
+  position: absolute;
+  inset: 1px 1px 42%;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 70 10' preserveAspectRatio='none'%3E%3Cg fill='%23120806'%3E%3Crect x='6.6' width='6.4' height='10' rx='.8'/%3E%3Crect x='16.8' width='6.4' height='10' rx='.8'/%3E%3Crect x='36.6' width='6.4' height='10' rx='.8'/%3E%3Crect x='46.8' width='6.4' height='10' rx='.8'/%3E%3Crect x='57' width='6.4' height='10' rx='.8'/%3E%3C/g%3E%3C/svg%3E") 0 0 / calc(700% / var(--n, 20)) 100% repeat-x;
+  pointer-events: none;
+}
+
+/* ── concert-programme cards ── */
+.i-shell[data-sect='violin'] :is(.i-pnl, .i-sheet, .i-reward__box) {
+  --surf: #f6ebd3;
+  --surf-2: #eee0c2;
+  --surf-3: #e0cda8;
+  --fg: #2b1810;
+  --fg-2: #56402e;
+  --fg-3: #6c5644;
+  --rule: #dcc8a3;
+  --grid: #eadcbc;
+  --led-off: #e0cda8;
+  --acc2: #8a5510;
+  --ok: #3f7a2c;
+  --warn: #a8321c;
+  --c-violin: #94530e;
+  --c: var(--c-violin);
+  color: var(--fg);
+}
+.i-shell[data-sect='violin'] .i-pnl {
+  position: relative;
+  box-shadow: inset 0 0 0 1px #c9a25a, inset 0 0 0 4px var(--surf), inset 0 0 0 5px rgb(201 162 90 / 0.55), 0 14px 30px -16px rgb(0 0 0 / 0.8);
+  padding: 18px 18px 16px;
+}
+.i-shell[data-sect='violin'] .i-pnl--flush {
+  padding: 8px 18px;
+}
+.i-shell[data-sect='violin'] .i-pnl::before {
+  content: '';
+  position: absolute;
+  top: -1px;
+  left: 50%;
+  width: 70px;
+  height: 12px;
+  transform: translate(-50%, -50%);
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 70 12'%3E%3Crect width='70' height='12' fill='%23f6ebd3'/%3E%3Cpath d='M4 6h20M46 6h20' stroke='%23b8893a'/%3E%3Cpath d='M35 1l5 5-5 5-5-5z' fill='%23b8893a'/%3E%3Ccircle cx='27' cy='6' r='1.5' fill='%23b8893a'/%3E%3Ccircle cx='43' cy='6' r='1.5' fill='%23b8893a'/%3E%3C/svg%3E") center / contain no-repeat;
+}
+.i-shell[data-sect='violin'] .i-h2 {
+  margin-top: 30px;
+}
+.i-shell[data-sect='violin'] .i-h2 h2 {
+  font-family: 'Pinyon Script', 'Snell Roundhand', cursive;
+  font-weight: 400;
+  font-size: 34px;
+  letter-spacing: 0;
+  color: #f2dbab;
+  line-height: 1;
+}
+.i-shell[data-sect='violin'] .i-h2 h2 {
+  flex: 1;
+  min-width: 0;
+}
+.i-shell[data-sect='violin'] .i-h2 h2::before {
+  display: none;
+}
+/* the heading written on a fading stave */
+.i-shell[data-sect='violin'] .i-h2 h2::after {
+  content: '';
+  flex: 1;
+  min-width: 24px;
+  height: 17px;
+  margin-top: 6px;
+  background: repeating-linear-gradient(transparent 0 3px, rgb(230 187 102 / 0.45) 3px 4px);
+  -webkit-mask-image: linear-gradient(90deg, #000, transparent);
+  mask-image: linear-gradient(90deg, #000, transparent);
+}
+.i-shell[data-sect='violin'] :is(.i-link, .i-h2__aside) {
+  font-family: var(--f-label);
+  font-style: italic;
+  font-weight: 600;
+  font-size: 16px;
+  letter-spacing: 0.01em;
+  text-transform: none;
+}
+.i-shell[data-sect='violin'] :is(.i-meter__l, .i-chip, .i-chbar__btn b, .i-cmd__btn) {
+  font-weight: 600;
+  letter-spacing: 0.08em;
+}
+.i-shell[data-sect='violin'] .i-meter {
+  background: transparent;
+  box-shadow: none;
+  border-bottom: 1px solid var(--rule);
+  border-radius: 0;
+  text-align: center;
+  justify-items: center;
+}
+.i-shell[data-sect='violin'] .i-meter__v {
+  font-size: 34px;
+  font-weight: 600;
+  font-style: italic;
+}
+.i-shell[data-sect='violin'] .i-seg {
+  transform: none;
+  gap: 1px;
+}
+.i-shell[data-sect='violin'] .i-seg i {
+  height: 12px;
+  border-radius: 0 0 2px 2px;
+}
+.i-shell[data-sect='violin'] .i-matrix i {
+  border-radius: 50%;
+}
+.i-shell[data-sect='violin'] :is(.i-btn, .i-chip, .i-chbar__btn)::before {
+  border-radius: 999px;
+}
+.i-shell[data-sect='violin'] .i-btn {
+  font-size: 19px;
+  letter-spacing: 0.01em;
+}
+.i-shell[data-sect='violin'] .i-btn--sig::before {
+  background: linear-gradient(#9a1d30, #6a0f1d);
+  box-shadow: inset 0 0 0 1.5px #d9ab52, 0 6px 14px -6px rgb(60 10 18 / 0.8);
+}
+.i-shell[data-sect='violin'] .i-chip[aria-pressed='true'],
+.i-shell[data-sect='violin'] .i-chbar__btn[aria-current='page'],
+.i-shell[data-sect='violin'] .i-chbar__btn[aria-current='page'] b {
+  color: #1c090d;
+}
+.i-shell[data-sect='violin'] .i-chbar {
+  background: rgb(28 9 13 / 0.9);
+  border-bottom-color: #5a2a33;
+}
+.i-shell[data-sect='violin'] .i-sheet {
+  border-top: 0;
+  box-shadow: inset 0 0 0 1px #c9a25a, inset 0 3px 0 #94530e, var(--lift);
+}
+.i-shell[data-sect='violin'] .i-cmd {
+  background: linear-gradient(#2a0d13, #160609);
+  border-top: 1px solid #d9ab52;
+}
+.i-shell[data-sect='violin'] .i-cmd__btn[aria-current='page']::after {
+  transform: none;
+  height: 2px;
+}
+.i-shell[data-sect='violin'] .i-cmd__prompt {
+  transform: none;
+  border-radius: 50%;
+  background: linear-gradient(#9a1d30, #6a0f1d);
+  border: 2px solid #d9ab52;
+}
+.i-shell[data-sect='violin'] .i-cmd__prompt svg {
+  transform: none;
+}
+
+/* entering: house lights down, curtains open (above), the room warms */
+.i-shell[data-sect='violin'] .i-view,
+.i-shell[data-sect='violin'] .i-view[data-dir='back'] {
+  animation: vl-enter 0.4s var(--ease);
+}
+@keyframes vl-enter {
+  from {
+    opacity: 0;
+    filter: brightness(0.5);
+  }
+}

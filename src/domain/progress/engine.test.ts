@@ -126,11 +126,12 @@ describe('levels', () => {
   it('gives ranks and forms by level', () => {
     expect(rankFor(1)).toBe('Rookie');
     expect(rankFor(12)).toBe('Apprentice');
-    expect(STAGES).toHaveLength(10);
+    expect(STAGES).toHaveLength(20);
+    expect(STAGES.every((s, i) => i === 0 || s.level > STAGES[i - 1].level)).toBe(true);
     expect(stageFor(1)).toBe(0);
     expect(stageFor(STAGES[4].level)).toBe(4);
     expect(stageFor(STAGES[4].level - 1)).toBe(3);
-    expect(stageFor(500)).toBe(9);
+    expect(stageFor(500)).toBe(19);
   });
 });
 

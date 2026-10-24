@@ -15,6 +15,8 @@ import { RelatedTasks } from '../../ui/i/RelatedTasks';
 import { Sheet } from '../../ui/i/Sheet';
 import { chess, loadChess, timeByDay, type Game, type TimeClass } from './api';
 import './chess.css';
+import { ChessArt } from './Art';
+import './theme.css';
 
 const DEFAULT_USER = 'GM_TaskTaskPro';
 const KINDS = ['Puzzles', 'Study', 'Openings', 'Endgames', 'Lesson', 'Over the board'] as const;
@@ -225,7 +227,7 @@ export function ChessChannel() {
   const sessions = useMemo(() => sectionEntries<ChessDetail>(st, 'chess'), [st]);
   return (
     <div style={accent('chess')}>
-      <ChannelHead id="chess" />
+      <ChannelHead id="chess" art={<ChessArt />} />
       <button type="button" className="i-btn i-btn--sig i-btn--block" onClick={() => openSheet({ type: 'chess' })}>
         <Icon name="plus" /> Log puzzles or study
       </button>

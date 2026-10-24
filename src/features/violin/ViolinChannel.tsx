@@ -14,6 +14,8 @@ import { RelatedTasks } from '../../ui/i/RelatedTasks';
 import { daysPractised, dayGrid, isViolinDetail, itemStats, pieceOf, SESSION_TYPES, typeInfo, weekTotals, type Session, type ViolinDetail } from './model';
 import './LogSheet';
 import './PieceSheet';
+import { ViolinArt } from './Art';
+import './theme.css';
 
 const PAGE = 15;
 
@@ -61,7 +63,7 @@ export function ViolinChannel() {
 
   return (
     <div style={accent('violin')}>
-      <ChannelHead id="violin" />
+      <ChannelHead id="violin" art={<ViolinArt />} />
       <div className="i-pnl i-stack">
         <div className="i-meters">
           <Meter value={<>{thisWeek.minutes}<small>/{target} min</small></>} label="This week · lessons count" />

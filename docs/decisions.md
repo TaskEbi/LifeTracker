@@ -19,3 +19,5 @@ Short entries, newest last. Each says what was decided and why.
 **2026-10-24 · Cabinet keeps its views, wears the instrument palette.** Curio Cabinet's CSS is scoped to `.cabinet` and given an `instrument` palette mapped onto LifeTracker's tokens, with the gallery layout. Curio Cabinet's own palette/design settings are left alone.
 
 **2026-10-24 · Chess.com is read live from its public API** (`api.chess.com/pub/player/gm_tasktaskpro`, CORS open). No key, no account access; Diamond membership isn't needed or assumed. Google Calendar and Strava need OAuth credentials and stay marked "not configured".
+
+**2026-10-24 · Each section is its own designed space.** The chosen Shōnen design and colour theme define Home and the shared pages; each section has its own palette, type, surfaces, header art and entrance in `src/features/<section>/theme.css`, scoped to `.i-shell[data-sect]`. Behaviour (way home, sheets, save/cancel/delete, data, XP) stays shared; only the look changes. The Cabinet shows Curio Cabinet's own appearance setting rather than a LifeTracker palette.

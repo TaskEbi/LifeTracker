@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { ChannelBar } from '../../app/Shell';
-import { applyTheme, setTheme, themeChoice, type ThemeChoice } from '../../app/theme';
+import { setTheme, THEMES, themeChoice, type ThemeChoice } from '../../app/theme';
 import { flushSync, syncNow } from '../../app/syncHandle';
 import { navigate } from '../../app/router';
 import { exportCollection, download, importCollection } from '../../data/backup';
@@ -10,7 +10,7 @@ import { TIMED_SECTIONS, type TimedSection } from '../../data/types';
 import { sectionInfo } from '../../domain/sections';
 import { supabase, syncOffReason } from '../../lib/supabase';
 import { useStore } from '../../lib/createStore';
-import { accent, H2, Picks, Source } from '../../ui/i/bits';
+import { accent, H2, Source } from '../../ui/i/bits';
 
 function Account() {
   const mode = useStore(data, (s) => s.mode);
@@ -168,16 +168,46 @@ function Backup() {
   );
 }
 
+/** Colour themes, each shown as a swatch: its background, both accents and its kanji. */
+function ThemePicker() {
+  const [choice, setChoice] = useState<ThemeChoice>(themeChoice);
+  const pick = (id: ThemeChoice) => {
+    setTheme(id);
+    setChoice(id);
+  };
+  const auto = { id: 'auto', name: 'Auto', kanji: '自', mode: 'paper by day, shōnen at night' };
+  return (
+    <div className="i-themes" role="group" aria-label="Theme · this device">
+      <button type="button" className="i-theme i-theme--auto" aria-pressed={choice === 'auto'} onClick={() => pick('auto')}>
+        <span className="i-theme__sw" aria-hidden="true">
+          <span className="i-theme__k">{auto.kanji}</span>
+        </span>
+        <b>{auto.name}</b>
+        <small>{auto.mode}</small>
+      </button>
+      {THEMES.map((t) => (
+        <button
+          key={t.id}
+          type="button"
+          className="i-theme"
+          aria-pressed={choice === t.id}
+          onClick={() => pick(t.id)}
+          style={{ '--tb': t.bg, '--ts': t.sig, '--ta': t.acc2, '--tf': t.fg, '--tsurf': t.surf } as React.CSSProperties}
+        >
+          <span className="i-theme__sw" aria-hidden="true">
+            <span className="i-theme__k">{t.kanji}</span>
+            <span className="i-theme__a" />
+          </span>
+          <b>{t.name}</b>
+          <small>{t.mode}</small>
+        </button>
+      ))}
+    </div>
+  );
+}
+
 export function SettingsView() {
-  const [theme, setThemeState] = useState<ThemeChoice>(themeChoice);
   const tz = useStore(data, (s) => s.settings.log_timezone);
-  useEffect(() => {
-    if (theme !== 'system') return;
-    const m = matchMedia('(prefers-color-scheme: dark)');
-    const on = () => applyTheme('system');
-    m.addEventListener('change', on);
-    return () => m.removeEventListener('change', on);
-  }, [theme]);
   return (
     <div>
       <ChannelBar current="settings" />
@@ -191,22 +221,11 @@ export function SettingsView() {
       <H2>Account and sync</H2>
       <Account />
 
-      <H2>Appearance</H2>
-      <div className="i-pnl">
-        <Picks
-          label="Theme · this device"
-          value={theme}
-          onChange={(v) => {
-            setTheme(v);
-            setThemeState(v);
-          }}
-          options={[
-            { id: 'system', label: 'System' },
-            { id: 'light', label: 'Light' },
-            { id: 'dark', label: 'Dark' },
-          ]}
-        />
-      </div>
+      <H2 aside={`${THEMES.length} themes · this device`}>Colour theme</H2>
+      <ThemePicker />
+      <p className="i-note" style={{ marginTop: 8 }}>
+        Home and the shared pages (calendar, tasks, progress, activity, settings) use this theme. Each section has its own look; the Cabinet follows the appearance chosen in Curio Cabinet.
+      </p>
 
       <H2>Sections and Daily Log topics</H2>
       <Mapping />

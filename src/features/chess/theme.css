@@ -1,0 +1,417 @@
+/* ── Chess · the Saturday chess column ──────────────────────────────────────
+   An old broadsheet: newsprint paper, black ink and one spot of red; a blackletter masthead with
+   ears, a dateline between rules, the day's problem printed as a hatched diagram; panels are
+   ruled columns, headings Playfair Display, body Old Standard TT; the page sets in like fresh ink. */
+
+.i-shell[data-sect='chess'] {
+  --bg: #ece6d6;
+  --bg-dot: transparent;
+  --surf: #f5f0e3;
+  --surf-2: #e4ddca;
+  --surf-3: #d3cab3;
+  --fg: #1b1a17;
+  --fg-2: #39362f;
+  --fg-3: #59544a;
+  --rule: #c4b99f;
+  --grid: #e0d8c4;
+  --led-off: #d3cab3;
+  --sig: #1b1a17;
+  --sig-fg: #f5f0e3;
+  --sig-soft: rgb(27 26 23 / 0.08);
+  --acc2: #b3261e;
+  --acc2-fg: #ffffff;
+  --ok: #2f6b3a;
+  --ok-soft: rgb(47 107 58 / 0.1);
+  --warn: #b3261e;
+  --warn-soft: rgb(179 38 30 / 0.08);
+  --c-chess: #1b1a17;
+  --ink: #1b1a17;
+  --red: #b3261e;
+  --f-label: 'Playfair Display', 'Didot', Georgia, serif;
+  --f-body: 'Old Standard TT', 'Times New Roman', Georgia, serif;
+  --f-mono: 'Old Standard TT', 'Times New Roman', Georgia, serif;
+  --w-label: 800;
+  --tt-label: none;
+  --slant: 0deg;
+  --r-1: 0;
+  --r-2: 0;
+  --r-3: 0;
+  --lift: 0 1px 0 rgb(27 26 23 / 0.2), 0 24px 50px rgb(40 34 20 / 0.28);
+  color-scheme: light;
+  background-image:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' seed='8'/%3E%3CfeColorMatrix values='0 0 0 0 .2 0 0 0 0 .17 0 0 0 0 .1 0 0 0 .09 0'/%3E%3C/filter%3E%3Crect width='220' height='220' filter='url(%23n)'/%3E%3C/svg%3E"),
+    radial-gradient(120% 80% at 50% 0%, #f2ede0, transparent 70%);
+}
+
+/* ── the front page ── */
+.i-shell[data-sect='chess'] .i-chhead {
+  grid-template-columns: minmax(0, 1fr);
+  align-content: start;
+  min-height: 352px;
+  padding: 16px 16px 18px;
+  clip-path: none;
+  border: 0;
+  background: #f5f0e3;
+  box-shadow: 0 1px 0 rgb(27 26 23 / 0.15), 0 14px 26px -18px rgb(40 34 20 / 0.6);
+}
+.i-shell[data-sect='chess'] .i-chhead::before,
+.i-shell[data-sect='chess'] .i-chhead__kanji {
+  display: none;
+}
+.cg-ear {
+  position: absolute;
+  top: 66px;
+  width: 64px;
+  padding: 5px 4px;
+  border: 1px solid var(--ink);
+  font-family: var(--f-body);
+  font-size: 9px;
+  line-height: 1.25;
+  text-align: center;
+  color: var(--fg-2);
+}
+.cg-ear--l {
+  left: 16px;
+}
+.cg-ear--r {
+  right: 16px;
+  font-style: italic;
+}
+@media (max-width: 374px) {
+  .cg-ear {
+    display: none;
+  }
+}
+.cg-problem {
+  position: absolute;
+  right: 16px;
+  bottom: 16px;
+  width: 128px;
+  display: grid;
+  gap: 4px;
+  text-align: center;
+  font-family: var(--f-body);
+  color: var(--fg);
+}
+.cg-problem svg {
+  width: 128px;
+  height: 128px;
+  display: block;
+}
+.cg-problem__no {
+  font-family: var(--f-label);
+  font-weight: 800;
+  font-size: 12px;
+  letter-spacing: 0.06em;
+}
+.cg-problem__cap {
+  font-style: italic;
+  font-size: 11px;
+  line-height: 1.2;
+  color: var(--fg-2);
+}
+.cg-arrow {
+  stroke-dasharray: 22;
+  animation: cg-draw 0.5s 0.45s ease-out both;
+}
+.cg-arrowhead {
+  animation: cg-head 0.15s 0.9s both;
+}
+@keyframes cg-draw {
+  from {
+    stroke-dashoffset: 22;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+@keyframes cg-head {
+  from {
+    opacity: 0;
+  }
+}
+
+.i-shell[data-sect='chess'] .i-home {
+  font-family: var(--f-label);
+  font-weight: 700;
+  font-size: 15px;
+  letter-spacing: 0.02em;
+  text-transform: none;
+  color: var(--fg);
+}
+.i-shell[data-sect='chess'] .i-chhead__t {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+/* masthead between rules */
+.i-shell[data-sect='chess'] .i-chhead h1 {
+  order: 1;
+  width: 100%;
+  padding: 10px 0 4px;
+  border-top: 4px double var(--ink);
+  text-align: center;
+  font-family: 'UnifrakturMaguntia', 'Old English Text MT', var(--f-label);
+  font-weight: 400;
+  font-size: clamp(50px, 16vw, 74px);
+  line-height: 1;
+  letter-spacing: 0;
+  color: var(--ink);
+}
+.i-shell[data-sect='chess'] .i-chhead__k {
+  order: 2;
+  align-self: stretch;
+  padding: 4px 0 5px;
+  border-top: 1px solid var(--ink);
+  border-bottom: 4px double var(--ink);
+  text-align: center;
+  font-family: var(--f-body);
+  font-weight: 400;
+  font-size: 11px;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--fg-2);
+}
+.i-shell[data-sect='chess'] .i-chhead__rank {
+  order: 3;
+  align-self: flex-start;
+  max-width: calc(100% - 144px);
+  margin-top: 16px;
+  clip-path: none;
+  background: none;
+  padding: 0;
+  font-family: var(--f-label);
+  font-style: italic;
+  font-weight: 900;
+  font-size: clamp(24px, 7.2vw, 32px);
+  line-height: 1.05;
+  letter-spacing: -0.01em;
+  text-transform: none;
+  color: var(--ink);
+}
+.i-shell[data-sect='chess'] .i-chhead__sub {
+  order: 4;
+  align-self: flex-start;
+  max-width: calc(100% - 144px);
+  font-family: var(--f-body);
+  font-style: italic;
+  font-weight: 400;
+  font-size: 14px;
+  color: var(--red);
+}
+/* the level as the paper's number */
+.i-shell[data-sect='chess'] .i-chhead__lv {
+  justify-self: start;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0 8px;
+  width: calc(100% - 144px);
+  margin-top: 6px;
+  padding-top: 8px;
+  border-top: 1px solid var(--ink);
+  text-align: left;
+  font-family: var(--f-body);
+  font-weight: 400;
+  font-size: 12px;
+  letter-spacing: 0.16em;
+  color: var(--fg-2);
+}
+.i-shell[data-sect='chess'] .i-chhead__lv b {
+  display: inline;
+  font-family: var(--f-label);
+  font-weight: 900;
+  font-size: 44px;
+  line-height: 0.9;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+  text-shadow: none;
+}
+.i-shell[data-sect='chess'] .i-chhead .i-seg {
+  max-width: calc(100% - 144px);
+  margin-top: 2px;
+}
+.i-shell[data-sect='chess'] .i-seg {
+  transform: none;
+  gap: 0;
+  box-shadow: 0 0 0 1px var(--ink);
+}
+.i-shell[data-sect='chess'] .i-seg i {
+  height: 10px;
+  background: #fbf7ec;
+}
+.i-shell[data-sect='chess'] .i-seg i:nth-child(even) {
+  background: repeating-linear-gradient(45deg, #fbf7ec 0 1.2px, #8a8475 1.2px 2px);
+}
+.i-shell[data-sect='chess'] .i-seg i.is-on,
+.i-shell[data-sect='chess'] .i-seg i.is-on:nth-child(even) {
+  background: var(--ink);
+}
+
+/* ── ruled columns ── */
+.i-shell[data-sect='chess'] .i-pnl {
+  background: transparent;
+  border-top: 4px double var(--ink);
+  border-bottom: 1px solid var(--ink);
+  box-shadow: none;
+  padding: 14px 2px;
+}
+.i-shell[data-sect='chess'] .i-pnl--flush {
+  padding: 2px;
+}
+.i-shell[data-sect='chess'] .i-h2 {
+  margin-top: 30px;
+  margin-bottom: 6px;
+}
+.i-shell[data-sect='chess'] .i-h2 h2 {
+  font-size: 25px;
+  font-weight: 900;
+  letter-spacing: -0.01em;
+  line-height: 1.05;
+}
+.i-shell[data-sect='chess'] .i-h2 h2::before {
+  width: 10px;
+  height: 10px;
+  transform: none;
+  background: var(--ink);
+}
+.i-shell[data-sect='chess'] :is(.i-link, .i-h2__aside) {
+  font-family: var(--f-body);
+  font-style: italic;
+  font-weight: 400;
+  font-size: 15px;
+  letter-spacing: 0;
+  text-transform: none;
+}
+.i-shell[data-sect='chess'] .i-link {
+  color: var(--red);
+}
+.i-shell[data-sect='chess'] :is(.i-meter__l, .i-chip, .i-chbar__btn b, .i-cmd__btn) {
+  font-family: var(--f-body);
+  font-weight: 700;
+  letter-spacing: 0.14em;
+}
+.i-shell[data-sect='chess'] .i-meter {
+  background: transparent;
+  box-shadow: none;
+  border-left: 1px solid var(--ink);
+  padding: 4px 4px 4px 12px;
+}
+.i-shell[data-sect='chess'] .i-meters > .i-meter:nth-child(odd) {
+  border-left: 0;
+  padding-left: 2px;
+}
+@media (min-width: 900px) {
+  .i-shell[data-sect='chess'] .i-meters--4 > .i-meter:not(:first-child) {
+    border-left: 1px solid var(--ink);
+    padding-left: 12px;
+  }
+}
+.i-shell[data-sect='chess'] .i-meter__v {
+  font-size: 34px;
+  font-weight: 900;
+}
+.i-shell[data-sect='chess'] .i-row__n {
+  font-family: var(--f-label);
+  font-weight: 700;
+  font-size: 17px;
+}
+.i-shell[data-sect='chess'] .i-row {
+  border-color: var(--rule);
+}
+.i-shell[data-sect='chess'] .c-res {
+  border-radius: 0;
+  font-family: var(--f-label);
+  font-weight: 900;
+  font-size: 13px;
+}
+.i-shell[data-sect='chess'] .c-res.is-win {
+  background: var(--ink);
+  color: #fbf7ec;
+}
+.i-shell[data-sect='chess'] .c-res.is-loss {
+  background: #fbf7ec;
+  color: var(--ink);
+  box-shadow: inset 0 0 0 1.5px var(--ink);
+}
+.i-shell[data-sect='chess'] .c-res:not(.is-win, .is-loss) {
+  background: repeating-linear-gradient(45deg, #fbf7ec 0 1.5px, #8a8475 1.5px 2.5px);
+  color: var(--ink);
+  box-shadow: inset 0 0 0 1.5px var(--ink);
+}
+.i-shell[data-sect='chess'] .i-btn {
+  font-family: var(--f-label);
+  font-weight: 800;
+  font-size: 16px;
+  letter-spacing: 0.02em;
+  text-transform: none;
+}
+.i-shell[data-sect='chess'] :is(.i-btn, .i-chip, .i-chbar__btn)::before {
+  border-radius: 0;
+  border: 1.5px solid var(--ink);
+  box-shadow: none;
+}
+.i-shell[data-sect='chess'] .i-btn::before {
+  background: transparent;
+}
+.i-shell[data-sect='chess'] .i-btn--sig::before {
+  background: var(--ink);
+  box-shadow: 3px 3px 0 var(--red);
+}
+.i-shell[data-sect='chess'] .i-chip[aria-pressed='true'],
+.i-shell[data-sect='chess'] .i-chbar__btn[aria-current='page'],
+.i-shell[data-sect='chess'] .i-chbar__btn[aria-current='page'] b {
+  color: #fbf7ec;
+}
+.i-shell[data-sect='chess'] .i-chbar {
+  background: rgb(236 230 214 / 0.94);
+  border-bottom: 1px solid var(--ink);
+}
+.i-shell[data-sect='chess'] .i-chbar__sep {
+  transform: none;
+  width: 1px;
+  background: var(--rule);
+}
+.i-shell[data-sect='chess'] .i-sheet {
+  border-top: 4px double var(--ink);
+  background: #f5f0e3;
+}
+.i-shell[data-sect='chess'] .i-cmd {
+  background: rgb(236 230 214 / 0.96);
+  border-top: 4px double var(--ink);
+}
+.i-shell[data-sect='chess'] .i-cmd__btn[aria-current='page']::after {
+  transform: none;
+  height: 2px;
+  background: var(--red);
+}
+.i-shell[data-sect='chess'] .i-cmd__prompt {
+  transform: none;
+  border-radius: 0;
+  background: var(--ink);
+  color: #fbf7ec;
+  border: 0;
+  box-shadow: 0 0 0 4px var(--bg), 4px 4px 0 4px var(--red);
+}
+.i-shell[data-sect='chess'] .i-cmd__prompt svg {
+  transform: none;
+}
+
+/* entering: the page sets like fresh ink */
+.i-shell[data-sect='chess'] .i-view,
+.i-shell[data-sect='chess'] .i-view[data-dir='back'] {
+  animation: cg-enter 0.38s ease-out;
+}
+@keyframes cg-enter {
+  from {
+    opacity: 0;
+    filter: blur(1.5px) contrast(0.6);
+  }
+}
+.i-shell[data-sect='chess'] .i-chart .bar {
+  fill: #8a8475;
+}
+.i-shell[data-sect='chess'] .i-chart .bar.hi,
+.i-shell[data-sect='chess'] .i-chart .bar.met {
+  fill: var(--ink);
+}

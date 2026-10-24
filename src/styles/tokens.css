@@ -1,152 +1,91 @@
-/* ── LifeTracker · Instrument design tokens ────────────────────────────────────
-   A bright lab instrument by day, a dark console by night. Signal orange is the one accent;
-   each section has a channel colour used only for small marks (LEDs, bars, stripes).
+/* ── LifeTracker · design tokens ───────────────────────────────────────────────
+   The Shōnen look: manga panels, speed lines and two accents (crimson and gold by default).
+   The colour theme (src/app/theme.ts) overwrites the surface, text and accent values at run time;
+   these defaults are the Shōnen theme, so the first paint already looks right.
+   Section colours follow the theme's light or dark mode and are used for marks, stripes and kanji.
    Names avoid Curio Cabinet's tokens (--ink, --panel, --paper…) so both sheets can coexist. */
 
 :root {
-  --bg: #eef0f4;
-  --bg-dot: #d5d9e1;
-  --surf: #fdfdfe;
-  --surf-2: #e6e9ef;
-  --surf-3: #d9dde5;
-  --fg: #111316;
-  --fg-2: #444b53;
-  --fg-3: #6f767d;
-  --rule: #d6dae2;
-  --grid: #e5e8ee;
-  --sig: #f2541b;
+  --bg: #0b0b0d;
+  --bg-dot: rgb(255 255 255 / 0.035);
+  --surf: #16161b;
+  --surf-2: #1f1f26;
+  --surf-3: #2a2a33;
+  --fg: #f4f1ea;
+  --fg-2: #bab6c3;
+  --fg-3: #8b8797;
+  --rule: #2c2c35;
+  --grid: #18181d;
+  --sig: #ff1f3d;
   --sig-fg: #ffffff;
-  --sig-soft: rgb(242 84 27 / 0.12);
-  --ok: #138a5c;
-  --ok-soft: rgb(19 138 92 / 0.12);
-  --warn: #d23f17;
-  --warn-soft: rgb(210 63 23 / 0.1);
-  --led-off: #c8cdd6;
+  --sig-soft: rgb(255 31 61 / 0.15);
+  --acc2: #ffc400;
+  --acc2-fg: #0b0b0d;
+  --ok: #3dd68c;
+  --ok-soft: rgb(61 214 140 / 0.14);
+  --warn: #ff6b52;
+  --warn-soft: rgb(255 107 82 / 0.14);
+  --led-off: #2a2a33;
   --night: #0c1030;
   --night-fg: #e6e9ff;
   --night-dim: #9aa3d8;
 
-  --c-violin: #d9701a;
-  --c-coding: #2753e6;
-  --c-sports: #0f9662;
-  --c-gym: #d9342a;
-  --c-study: #7144db;
-  --c-chess: #5a636d;
-  --c-sleep: #3442b0;
-  --c-screen: #cf367f;
-  --c-cabinet: #8a6a2c;
-  --c-general: #6f767d;
-  --c-quests: #0e9f9a;
-
-  --t-bronze: #c27238;
-  --t-silver: #8d99a8;
-  --t-gold: #d9a100;
-  --t-platinum: #7a63f0;
-
-  /* soft colour washes behind the page */
-  --glow-1: rgb(242 84 27 / 0.1);
-  --glow-2: rgb(39 83 230 / 0.08);
-  --glow-3: rgb(14 159 154 / 0.08);
-
-  --key-shadow: 0 1px 0 rgb(255 255 255 / 0.85) inset, 0 1px 2px rgb(0 0 0 / 0.07), 0 3px 0 rgb(0 0 0 / 0.06);
-  --lift: 0 0 0 1px var(--rule), 0 24px 60px rgb(0 0 0 / 0.22);
-
-  --f-label: 'Chakra Petch', 'Eurostile', 'Bank Gothic', ui-sans-serif, sans-serif;
-  --f-body: 'IBM Plex Sans', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
-  --f-mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
-
-  --r-1: 8px;
-  --r-2: 12px;
-  --r-3: 16px;
-  --gutter: max(16px, env(safe-area-inset-left, 0px));
-  --gutter-r: max(16px, env(safe-area-inset-right, 0px));
-  --cmd-h: 76px;
-  --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
-  color-scheme: light;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme='light']) {
-    --bg: #0b0d13;
-    --bg-dot: #1b1f29;
-    --surf: #141720;
-    --surf-2: #1c2029;
-    --surf-3: #262b36;
-    --fg: #eaedef;
-    --fg-2: #aab1b8;
-    --fg-3: #7a828a;
-    --rule: #2a2f3b;
-    --grid: #1a1e27;
-    --sig: #ff6a33;
-    --sig-fg: #170a04;
-    --sig-soft: rgb(255 106 51 / 0.14);
-    --ok: #3dd196;
-    --ok-soft: rgb(61 209 150 / 0.12);
-    --warn: #ff7a52;
-    --warn-soft: rgb(255 122 82 / 0.12);
-    --led-off: #353a40;
-    --c-violin: #ff9b45;
-    --c-coding: #7095ff;
-    --c-sports: #3dd196;
-    --c-gym: #ff6b60;
-    --c-study: #aa8dff;
-    --c-chess: #9ca5af;
-    --c-sleep: #8290ff;
-    --c-screen: #ff7ab8;
-    --c-cabinet: #d8b46a;
-    --c-general: #8b939b;
-    --c-quests: #2dd4c4;
-    --t-bronze: #e39a62;
-    --t-silver: #c3ccd6;
-    --t-gold: #ffcc33;
-    --t-platinum: #ab9cff;
-    --glow-1: rgb(255 106 51 / 0.1);
-    --glow-2: rgb(112 149 255 / 0.09);
-    --glow-3: rgb(45 212 196 / 0.07);
-    --key-shadow: 0 1px 0 rgb(255 255 255 / 0.04) inset, 0 2px 0 rgb(0 0 0 / 0.45);
-    --lift: 0 0 0 1px var(--rule), 0 24px 60px rgb(0 0 0 / 0.55);
-    color-scheme: dark;
-  }
-}
-
-:root[data-theme='dark'] {
-  --bg: #0b0d13;
-  --bg-dot: #1b1f29;
-  --surf: #141720;
-  --surf-2: #1c2029;
-  --surf-3: #262b36;
-  --fg: #eaedef;
-  --fg-2: #aab1b8;
-  --fg-3: #7a828a;
-  --rule: #2a2f3b;
-  --grid: #1a1e27;
-  --sig: #ff6a33;
-  --sig-fg: #170a04;
-  --sig-soft: rgb(255 106 51 / 0.14);
-  --ok: #3dd196;
-  --ok-soft: rgb(61 209 150 / 0.12);
-  --warn: #ff7a52;
-  --warn-soft: rgb(255 122 82 / 0.12);
-  --led-off: #353a40;
   --c-violin: #ff9b45;
   --c-coding: #7095ff;
   --c-sports: #3dd196;
   --c-gym: #ff6b60;
   --c-study: #aa8dff;
-  --c-chess: #9ca5af;
+  --c-chess: #b3bcc6;
   --c-sleep: #8290ff;
   --c-screen: #ff7ab8;
   --c-cabinet: #d8b46a;
-  --c-general: #8b939b;
+  --c-general: #9aa1aa;
   --c-quests: #2dd4c4;
+
   --t-bronze: #e39a62;
   --t-silver: #c3ccd6;
   --t-gold: #ffcc33;
   --t-platinum: #ab9cff;
-  --glow-1: rgb(255 106 51 / 0.1);
-  --glow-2: rgb(112 149 255 / 0.09);
-  --glow-3: rgb(45 212 196 / 0.07);
-  --key-shadow: 0 1px 0 rgb(255 255 255 / 0.04) inset, 0 2px 0 rgb(0 0 0 / 0.45);
+
+  --key-shadow: none;
   --lift: 0 0 0 1px var(--rule), 0 24px 60px rgb(0 0 0 / 0.55);
+
+  --f-label: 'Dela Gothic One', 'Zen Kaku Gothic New', ui-sans-serif, sans-serif;
+  --f-body: 'Zen Kaku Gothic New', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --f-mono: 'M PLUS 1 Code', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+  /* Dela Gothic One has one (heavy) weight and reads best in capitals; a section with its own
+     display face sets these (src/features/<section>/theme.css). */
+  --w-label: 400;
+  --tt-label: uppercase;
+
+  --r-1: 2px;
+  --r-2: 3px;
+  --r-3: 4px;
+  /* the slant of panels, chips and bars */
+  --slant: -12deg;
+  --gutter: max(16px, env(safe-area-inset-left, 0px));
+  --gutter-r: max(16px, env(safe-area-inset-right, 0px));
+  --cmd-h: 76px;
+  --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
   color-scheme: dark;
+}
+
+:root[data-theme='light'] {
+  --c-violin: #c25e0c;
+  --c-coding: #2753e6;
+  --c-sports: #0c8456;
+  --c-gym: #c8281e;
+  --c-study: #6a3cd6;
+  --c-chess: #4e5761;
+  --c-sleep: #3442b0;
+  --c-screen: #bf2a72;
+  --c-cabinet: #7d5f22;
+  --c-general: #66707a;
+  --c-quests: #0b8c87;
+  --t-bronze: #b0652e;
+  --t-silver: #7d8996;
+  --t-gold: #b98a00;
+  --t-platinum: #6a52e6;
+  --lift: 0 0 0 1px var(--rule), 0 24px 60px rgb(0 0 0 / 0.22);
+  color-scheme: light;
 }

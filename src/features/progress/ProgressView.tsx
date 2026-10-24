@@ -32,9 +32,9 @@ const RULE_LINES: [string, string][] = [
 ];
 
 const TABS = [
-  { id: '', label: 'Overview', icon: 'progress' },
-  { id: 'quests', label: 'Quests', icon: 'quest' },
-  { id: 'achievements', label: 'Achievements', icon: 'trophy' },
+  { id: '', label: 'Overview', kanji: '覚' },
+  { id: 'quests', label: 'Quests', kanji: '任' },
+  { id: 'achievements', label: 'Emblems', kanji: '紋' },
 ] as const;
 
 export function ProgressView() {
@@ -50,16 +50,24 @@ export function ProgressView() {
     <div className="pg">
       <ChannelBar current="progress" />
       <header className="pg-head">
+        <span className="pg-head__kanji" aria-hidden="true">
+          覚醒
+        </span>
         <div>
-          <span className="i-chhead__k">{rankFor(p.overall.level)} · LV {p.overall.level}</span>
+          <span className="i-chhead__k">
+            {rankFor(p.overall.level)} · LV {p.overall.level}
+          </span>
           <h1>Progress</h1>
+          <p className="pg-head__sub">Awakening · {STAGES.length} forms</p>
         </div>
-        <div className="pg-head__xp i-mono">{p.total.toLocaleString('en-GB')} XP</div>
+        <div className="pg-head__xp">{p.total.toLocaleString('en-GB')} XP</div>
       </header>
       <nav className="pg-tabs" aria-label="Progress sections">
         {TABS.map((t) => (
           <button key={t.id} type="button" className="pg-tab" aria-current={tab === t.id ? 'page' : undefined} onClick={() => navigate('progress', t.id ? [t.id] : [], { replace: true })}>
-            <Icon name={t.icon} size={18} />
+            <span className="pg-tab__k" aria-hidden="true">
+              {t.kanji}
+            </span>
             <span>{t.label}</span>
             {t.id === 'quests' && openQuests > 0 && <i className="pg-tab__n">{openQuests}</i>}
             {t.id === 'achievements' && <i className="pg-tab__n pg-tab__n--dim">{unlocked}</i>}
@@ -124,9 +132,9 @@ function Overview() {
 
       <div className="i-meters i-meters--4 pg-stats">
         <Meter value={<span className="pg-stat" style={{ '--c': 'var(--sig)' } as CSSProperties}><Icon name="flame" size={18} />{p.streak.n}<small>d</small></span>} label={`Streak${p.streak.today ? ' · today counted' : ' · log or rest today'}`} />
-        <Meter value={<span className="pg-stat" style={{ '--c': 'var(--c-quests)' } as CSSProperties}><Icon name="quest" size={18} />{dailyDone}<small>/3</small></span>} label="Daily quests" onClick={() => navigate('progress', ['quests'], { replace: true })} />
-        <Meter value={<span className="pg-stat" style={{ '--c': 'var(--t-gold)' } as CSSProperties}><Icon name="trophy" size={18} />{unlocked}<small>/{ach.length}</small></span>} label="Achievements" onClick={() => navigate('progress', ['achievements'], { replace: true })} />
-        <Meter value={<span className="pg-stat" style={{ '--c': 'var(--c-coding)' } as CSSProperties}><Icon name="bolt" size={18} />{p.total.toLocaleString('en-GB')}</span>} label="Total XP" />
+        <Meter value={<span className="pg-stat" style={{ '--c': 'var(--acc2)' } as CSSProperties}><Icon name="quest" size={18} />{dailyDone}<small>/3</small></span>} label="Daily quests" onClick={() => navigate('progress', ['quests'], { replace: true })} />
+        <Meter value={<span className="pg-stat" style={{ '--c': 'var(--t-gold)' } as CSSProperties}><Icon name="trophy" size={18} />{unlocked}<small>/{ach.length}</small></span>} label="Emblems" onClick={() => navigate('progress', ['achievements'], { replace: true })} />
+        <Meter value={<span className="pg-stat" style={{ '--c': 'var(--fg-2)' } as CSSProperties}><Icon name="bolt" size={18} />{p.total.toLocaleString('en-GB')}</span>} label="Total XP" />
       </div>
       <div className="pg-rest">
         {restToday ? (
@@ -146,29 +154,37 @@ function Overview() {
       <H2
         aside={
           <button type="button" className="i-link" onClick={() => navigate('progress', ['quests'], { replace: true })}>
-            All quests →
+            All missions ▶
           </button>
         }
       >
-        Today's quests
+        Today's training
       </H2>
       <div className="pg-quests">
         {quests.daily.quests.map((q) => (
-          <QuestCard key={q.key} q={q} />
+          <QuestCard key={q.key} q={q} now={q === quests.daily.quests.find((x) => !x.doneOn)} />
         ))}
       </div>
 
-      <H2 aside={`${STAGES.length} forms`}>Transformations</H2>
+      <H2 aside={`${p.overall.stage + 1} of ${STAGES.length} unsealed`}>Transformations</H2>
       <ol className="pg-forms" aria-label="Forms">
-        {STAGES.map((s, i) => {
+        {STAGES.map((f, i) => {
           const on = i <= p.overall.stage;
+          const now = i === p.overall.stage;
+          const next = i === p.overall.stage + 1;
           return (
-            <li key={s.name} className={on ? 'is-on' : ''} style={{ '--c': s.c, '--c2': s.c2 } as CSSProperties} aria-label={`${s.name}: ${on ? 'reached' : `from level ${s.level}`}`}>
+            <li
+              key={f.name}
+              className={now ? 'is-now' : on ? 'is-on' : next ? 'is-next' : ''}
+              style={{ '--c': f.c, '--c2': f.c2, '--i': i } as CSSProperties}
+              aria-label={`Form ${i + 1}, ${on || next ? f.name : 'sealed'}: ${now ? 'current form' : on ? 'unlocked' : `from level ${f.level}`}`}
+            >
+              <span className="pg-forms__n">{pad2(i + 1)}</span>
               <span className="pg-forms__d" aria-hidden="true">
                 <Drone stage={i} still label={false} />
               </span>
-              <b>{s.name}</b>
-              <small>{on ? (i === p.overall.stage ? 'Current' : 'Reached') : <><Icon name="lock" size={11} /> LV {s.level}</>}</small>
+              <b>{on || next ? f.name : '？？？'}</b>
+              <small>{now ? '▶ Now' : on ? 'Unlocked' : `LV ${f.level}`}</small>
             </li>
           );
         })}
@@ -180,11 +196,11 @@ function Overview() {
           const lv = p.sections[s.id];
           return (
             <button key={s.id} type="button" className="pg-sec" style={accent(s.id)} onClick={() => navigate(s.id as RouteName)} aria-label={`${s.full}: level ${lv.level}, ${lv.into} of ${lv.need} XP`}>
+              <span className="pg-sec__k" aria-hidden="true">
+                {s.kanji}
+              </span>
               <span className="pg-sec__top">
-                <span className="pg-sec__ic">
-                  <Icon name={s.id} size={18} />
-                </span>
-                <span className="pg-sec__lv i-mono">LV {pad2(lv.level)}</span>
+                <span className="pg-sec__lv">LV {pad2(lv.level)}</span>
               </span>
               <b>{s.name}</b>
               <small className="pg-sec__rank">{sectionRankFor(lv.level)}</small>
