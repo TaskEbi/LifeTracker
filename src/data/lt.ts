@@ -11,7 +11,7 @@ import { questBoard, questHistory, type QuestPeriod, type QuestSet } from '../do
 import { normaliseSectionTopics, normaliseSleep, normaliseTargets, normaliseTargetsLog, targetsAt, type SectionTopics, type SleepSchedule, type Targets } from '../domain/prefs';
 import { weekStart } from '../domain/log/dates';
 import { TOPIC_NAME_HINTS } from '../domain/sections';
-import { createTopic, pairId } from './logActions';
+import { createTopic, pairId, restoreTopic } from './logActions';
 import { commit, data, type DataState } from './store';
 import { TIMED_SECTIONS, type LogEntry, type LogTopic, type LtDayMark, type LtPref, type SectionId, type TimedSection } from './types';
 
@@ -123,8 +123,19 @@ const DEFAULT_TOPIC: Record<TimedSection, { name: string; color: LogTopic['color
   chess: { name: 'Chess', color: 'slate' },
 };
 
-/** The topic a section saves into, creating it (and remembering it) the first time it is needed. */
+/**
+ * The topic a section saves into, creating it (and remembering it) the first time it is needed.
+ * If that topic was archived (e.g. in Curio Cabinet) it is brought back: logging from the section
+ * means it is in use again. Throws if it can't be (an active topic already has its name).
+ */
 export function ensureSectionTopic(section: TimedSection): string {
+  const id = sectionTopic(section);
+  const err = restoreTopic(id);
+  if (err) throw new Error(err);
+  return id;
+}
+
+function sectionTopic(section: TimedSection): string {
   const mapped = getSectionTopics()[section];
   const st = data.get();
   if (mapped && st.log_topics.get(mapped) && !st.log_topics.get(mapped)!.deleted_at) return mapped;

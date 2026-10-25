@@ -30,9 +30,10 @@ export function saveSession(s: SessionSave, editId?: string | null): { error: st
   if (s.date > ltToday()) return { error: "That day hasn't happened yet." };
 
   // Editing keeps the entry under its own topic (it may come from Curio Cabinet).
-  const topicId = prev?.topic_id ?? ensureSectionTopic(s.section);
+  let topicId: string;
   let subId: string | null = null;
   try {
+    topicId = prev?.topic_id ?? ensureSectionTopic(s.section);
     subId = s.subcategory ? ensureSubcategory(topicId, s.subcategory) : prev?.subcategory_id ?? null;
   } catch (e) {
     return { error: (e as Error).message };
