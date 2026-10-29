@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react';
 import { rewardStore, useProgress } from '../../data/lt';
 import { dismissToast, ui } from '../../data/ui';
 import { STAGES } from '../../domain/progress/engine';
+import { momentLine } from '../../domain/progress/moments';
 import { sectionInfo } from '../../domain/sections';
 import { useStore } from '../../lib/createStore';
 import { Drone } from './Drone';
@@ -50,6 +51,8 @@ export function RewardOverlay() {
     return () => document.removeEventListener('keydown', onKey);
   }, [r, waiting]);
   if (!r || waiting) return null;
+  // The rest day and the day's chapter have their own lines (or none); every other moment is listed.
+  const lines = (r.moments ?? []).filter((m) => m.type !== 'rest' && m.type !== 'chapter').map(momentLine);
   return (
     <div className="i-reward" role="dialog" aria-modal="true" aria-label="What you earned">
       <div className="i-reward__box">
@@ -81,10 +84,12 @@ export function RewardOverlay() {
           </>
         ) : !r.preview ? (
           <>
-            <div className="i-reward__xp">
-              +{r.total}
-              <small> XP</small>
-            </div>
+            {(r.total > 0 || !lines.length) && (
+              <div className="i-reward__xp">
+                +{r.total}
+                <small> XP</small>
+              </div>
+            )}
             <ul>
               {r.lines
                 .filter((l) => l.section !== 'quests')
@@ -104,6 +109,11 @@ export function RewardOverlay() {
               ))}
           </>
         ) : null}
+        {lines.map((text, i) => (
+          <div key={`m${i}`} className="i-reward__up i-reward__up--moment">
+            {text}
+          </div>
+        ))}
         {r.sectionUps.map((u) => (
           <div key={u.section} className="i-reward__up">
             {sectionInfo(u.section).code} {sectionInfo(u.section).name} · <em>LV {pad2(u.from)} → {pad2(u.to)}</em>

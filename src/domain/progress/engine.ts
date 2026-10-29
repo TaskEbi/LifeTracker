@@ -7,6 +7,7 @@
 import { addDays, weekdayIndex, weekStart } from '../log/dates';
 import type { LogDayMetric, LogEntry, LtDetail, LtNight, SectionId, Todo } from '../../data/types';
 import type { SleepSchedule, Targets } from '../prefs';
+import type { PlansState } from '../plans/types';
 import { bossEvents } from './boss';
 import { questEvents } from './quests';
 
@@ -44,6 +45,8 @@ export interface ProgressInput {
   /** Targets in force in the week starting this Monday (past weeks keep theirs). */
   targetsAt?: (monday: string) => Targets;
   sleep: SleepSchedule;
+  /** The user's training plans (lt_prefs 'plans'); absent in old fixtures. */
+  plans?: PlansState;
 }
 
 const targetsFor = (input: ProgressInput, date: string) => (input.targetsAt ? input.targetsAt(weekStart(date)) : input.targets);

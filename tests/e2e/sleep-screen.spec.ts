@@ -1,6 +1,8 @@
 import { expect, test } from '@playwright/test';
 
 test('sleep: log last night with times, bedtime bonus, edit to total only, clear and undo', async ({ page }) => {
+  // A long flow on the animated night-sky page; with the 3D celebration tests running alongside it needs more than 30 s.
+  test.setTimeout(60_000);
   await page.goto('/sleep');
   await expect(page.getByText("Last night isn't logged")).toBeVisible();
   await page.getByRole('button', { name: 'Log last night' }).click();

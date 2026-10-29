@@ -16,6 +16,7 @@ import { RelatedTasks } from '../../ui/i/RelatedTasks';
 import { Sheet } from '../../ui/i/Sheet';
 import { bests, isSportDetail, paceOf, SPORTS, sportInfo, type SportDetail, type SportId, type SportSession } from './model';
 import { SportsArt } from './Art';
+import { MarathonPanel } from '../plans/MarathonPanel';
 import './theme.css';
 
 const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
@@ -28,7 +29,8 @@ function SportSheet({ spec }: { spec: SheetSpec }) {
   const [sport, setSport] = useState<SportId>(pd?.sport ?? (spec.sport as SportId) ?? 'running');
   const [date, setDate] = useState(prev?.entry.date ?? today);
   const [minutes, setMinutes] = useState(prev?.entry.minutes ?? (spec.minutes as number | undefined) ?? (sportInfo(sport)?.kind === 'court' ? 90 : 40));
-  const [km, setKm] = useState(pd?.km ?? (sport === 'swimming' ? 1.5 : sport === 'cycling' ? 20 : 7));
+  // A planned run (marathon plan) opens the sheet with its distance filled in.
+  const [km, setKm] = useState(pd?.km ?? (typeof spec.km === 'number' && spec.km > 0 ? spec.km : sport === 'swimming' ? 1.5 : sport === 'cycling' ? 20 : 7));
   const [type, setType] = useState<'training' | 'match'>(pd?.type ?? 'training');
   const [score, setScore] = useState(pd?.score ?? '');
   const [route, setRoute] = useState(pd?.route ?? '');
@@ -75,6 +77,7 @@ function SportSheet({ spec }: { spec: SheetSpec }) {
         </>
       }
     >
+      {typeof spec.planned === 'string' && !prev && <p className="i-note">Planned: {spec.planned}. Change anything that went differently.</p>}
       <Picks label="Sport" value={sport} onChange={changeSport} options={SPORTS.map((s) => ({ id: s.id, label: s.name }))} />
       <MinutesField value={minutes} onChange={setMinutes} presets={distance ? [20, 30, 45, 60, 90] : [60, 75, 90, 120]} />
       {distance ? (
@@ -129,6 +132,8 @@ export function SportsChannel() {
   return (
     <div style={accent('sports')}>
       <ChannelHead id="sports" art={<SportsArt />} />
+      <MarathonPanel />
+      <H2>Training log</H2>
       <Chips label="Sport" value={sport} onChange={setSport} options={[{ id: 'all' as const, label: 'All' }, ...SPORTS.map((s) => ({ id: s.id, label: s.name }))]} />
       <button type="button" className="i-btn i-btn--sig i-btn--block" onClick={() => openSheet({ type: 'sports', sport: sport === 'all' ? 'running' : sport })}>
         <Icon name="plus" /> Log {sport === 'all' ? 'a session' : sportInfo(sport)!.name.toLowerCase()}

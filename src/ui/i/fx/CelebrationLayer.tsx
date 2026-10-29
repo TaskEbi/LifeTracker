@@ -184,7 +184,9 @@ export function CelebrationLayer() {
     // `done` re-runs this for the same object queued twice in a row
   }, [current, phase, style, done, advance]);
 
-  useEffect(() => {
+  // A layout effect, so Escape works from the first frame (a passive effect can run late after a
+  // heavy first paint, and an early Escape would be lost).
+  useLayoutEffect(() => {
     if (phase === 'idle') return;
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
@@ -217,7 +219,8 @@ export function CelebrationLayer() {
     advance();
   };
 
-  const hit = current ? timing(current).hit : 0;
+  const tm = current ? timing(current) : null;
+  const hit = tm?.hit ?? 0;
   const remaining = queue.length;
   const total = done + remaining;
   const label = current ? `${current.preview ? 'Preview: ' : ''}${tell(current).kicker}` : 'Celebration';
@@ -248,7 +251,7 @@ export function CelebrationLayer() {
             <i className="fx-dim" aria-hidden="true" />
           )}
           {current && (
-            <div className="fx-shot" key={`s${done}`} style={{ '--hit': `${hit}ms` } as React.CSSProperties}>
+            <div className={`fx-shot${tm?.shake ? ` fx-shot--${tm.shake}` : ''}`} key={`s${done}`} style={{ '--hit': `${hit}ms` } as React.CSSProperties}>
               {style === 'full' ? <Scene c={current} /> : <CalmCard c={current} />}
             </div>
           )}

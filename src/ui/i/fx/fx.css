@@ -163,6 +163,27 @@
   inset: 0;
   animation: fx-shake 0.44s linear var(--hit) both;
 }
+.fx-shot--soft {
+  animation-name: fx-shake-soft;
+}
+.fx-shot--none {
+  animation: none;
+}
+@keyframes fx-shake-soft {
+  0%,
+  100% {
+    transform: none;
+  }
+  20% {
+    transform: translate3d(-3px, 2px, 0);
+  }
+  45% {
+    transform: translate3d(3px, -2px, 0);
+  }
+  70% {
+    transform: translate3d(-1px, 1px, 0);
+  }
+}
 @keyframes fx-shake {
   0%,
   100% {
@@ -353,19 +374,20 @@
   height: var(--h);
   margin: calc(var(--h) / -2) 0 0 calc(var(--w) / -2);
   background: var(--sc);
-  clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%);
+  /* a square turned 45°: a diamond without a clip-path (which would cost a mask layer per spark) */
+  --rot: 45deg;
   opacity: 0;
   animation: fx-shard 0.95s cubic-bezier(0.1, 0.75, 0.25, 1) calc(var(--burst-delay, var(--hit)) + var(--d, 0ms)) both;
 }
 .fx-shard--streak {
-  clip-path: none;
+  --rot: 0deg;
   border-radius: 2px;
   background: linear-gradient(90deg, transparent, var(--sc) 40%, #fff);
 }
 @keyframes fx-shard {
   0% {
     opacity: 0;
-    transform: rotate(var(--a)) translate3d(10px, 0, 0) rotateX(0deg);
+    transform: rotate(var(--a)) translate3d(10px, 0, 0) rotateX(0deg) rotate(var(--rot));
   }
   5% {
     opacity: 1;
@@ -375,7 +397,7 @@
   }
   100% {
     opacity: 0;
-    transform: rotate(var(--a)) translate3d(var(--dist), 0, var(--z)) rotateX(var(--r));
+    transform: rotate(var(--a)) translate3d(var(--dist), 0, var(--z)) rotateX(var(--r)) rotate(var(--rot));
   }
 }
 
@@ -781,10 +803,10 @@
   top: -100%;
 }
 .fx-flap__f1 {
-  animation: fx-flap1 0.3s ease-in 1.15s both;
+  animation: fx-flap1 0.3s ease-in var(--fd, 1150ms) both;
 }
 .fx-flap__f2 {
-  animation: fx-flap2 0.3s cubic-bezier(0.2, 0.9, 0.3, 1.25) 1.45s both;
+  animation: fx-flap2 0.3s cubic-bezier(0.2, 0.9, 0.3, 1.25) calc(var(--fd, 1150ms) + 300ms) both;
 }
 @keyframes fx-flap1 {
   from {
@@ -1172,7 +1194,7 @@
   height: var(--s);
   margin: calc(var(--s) / -2) 0 0 calc(var(--s) / -2);
   border-radius: 50% 46% 54% 50%;
-  background: #d7192f;
+  background: var(--ink, #d7192f);
   opacity: 0;
   animation: fx-ink 0.6s cubic-bezier(0.1, 0.8, 0.3, 1) calc(var(--hit) + var(--d)) both;
 }
@@ -1655,6 +1677,263 @@
   100% {
     opacity: 0;
     transform: translate3d(0, -170px, 0);
+  }
+}
+
+/* ── shared actors (kit.tsx): embers, ripples, confetti, twinkles, rolling digits, stamps ── */
+.fx-at--top {
+  top: -3%;
+}
+/* a full-screen stage with its own camera, for scenery bigger than the 0×0 anchors */
+.fx-stage {
+  position: absolute;
+  inset: 0;
+  perspective: 800px;
+  overflow: hidden;
+}
+/* a static backdrop that fades in over the ink panels */
+.fx-bg {
+  position: absolute;
+  inset: -16px; /* overscan: the camera shake must not show an edge */
+  animation: fx-bg 0.45s ease-out 0.12s both;
+}
+/* a dark backdrop tinted by the scene colour, so the page under it doesn't show through */
+.fx-dimbg {
+  background:
+    radial-gradient(60% 42% at 50% 41%, color-mix(in srgb, var(--tc) 24%, transparent), transparent 72%),
+    rgb(8 7 12 / 0.9);
+}
+@keyframes fx-bg {
+  from {
+    opacity: 0;
+  }
+}
+.fx-ember {
+  position: absolute;
+  width: var(--s);
+  height: var(--s);
+  margin-left: var(--x);
+  border-radius: 50%;
+  background: var(--ec);
+  opacity: 0;
+  animation: fx-ember 1.5s cubic-bezier(0.2, 0.6, 0.4, 1) var(--d) both;
+}
+@keyframes fx-ember {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, 120px, var(--z)) scale(1);
+  }
+  15% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translate3d(var(--dx), calc(120px - var(--rise)), var(--z)) scale(0.3);
+  }
+}
+.fx-ripple {
+  position: absolute;
+  width: 300px;
+  height: 300px;
+  margin: -150px 0 0 -150px;
+  border-radius: 50%;
+  border: 3px solid var(--rc, rgb(255 255 255 / 0.75));
+  opacity: 0;
+  animation: fx-ripple 1.7s cubic-bezier(0.2, 0.6, 0.3, 1) var(--d) both;
+}
+@keyframes fx-ripple {
+  0% {
+    opacity: 0;
+    transform: rotateX(var(--tilt)) scale(0.08);
+  }
+  8% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: rotateX(var(--tilt)) scale(1.35);
+  }
+}
+.fx-confetti {
+  position: absolute;
+  width: var(--w);
+  height: calc(var(--w) * 1.7);
+  margin-left: var(--x);
+  background: var(--cc);
+  opacity: 0;
+  animation: fx-confetti 2.1s cubic-bezier(0.3, 0.4, 0.6, 1) var(--d) both;
+}
+.fx-confetti:nth-child(3n) {
+  border-radius: 50%;
+  height: var(--w);
+}
+@keyframes fx-confetti {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, 0, var(--z)) rotate3d(1, 0.4, 0.2, 0deg);
+  }
+  8% {
+    opacity: 1;
+  }
+  85% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translate3d(var(--dx), 95vh, var(--z)) rotate3d(1, 0.4, 0.2, var(--r));
+  }
+}
+.fx-twk {
+  position: absolute;
+  width: var(--s);
+  height: var(--s);
+  margin: calc(var(--s) / -2) 0 0 calc(var(--s) / -2);
+  background: #fff;
+  clip-path: polygon(50% 0, 60% 40%, 100% 50%, 60% 60%, 50% 100%, 40% 60%, 0 50%, 40% 40%);
+  opacity: 0;
+  animation: fx-twk var(--p) ease-in-out var(--d) infinite alternate both;
+}
+@keyframes fx-twk {
+  from {
+    opacity: 0.15;
+    transform: scale(0.55);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+.fx-roll {
+  display: inline-flex;
+  line-height: 1;
+  white-space: nowrap;
+}
+.fx-roll__c {
+  display: inline-block;
+}
+.fx-roll__c--d {
+  position: relative;
+  height: 1.08em;
+  overflow: hidden;
+  -webkit-mask-image: linear-gradient(transparent, #000 12%, #000 88%, transparent);
+  mask-image: linear-gradient(transparent, #000 12%, #000 88%, transparent);
+}
+.fx-roll__ghost {
+  display: block;
+  line-height: 1.08em;
+  visibility: hidden;
+}
+.fx-roll__strip {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  display: flex;
+  flex-direction: column;
+  text-align: center;
+  transform: translateY(calc(var(--n) * -1.08em));
+  animation: fx-roll 1.05s cubic-bezier(0.25, 0.7, 0.2, 1) var(--d) both;
+}
+.fx-roll__strip > span {
+  display: block;
+  height: 1.08em;
+  line-height: 1.08em;
+}
+@keyframes fx-roll {
+  from {
+    transform: translateY(0);
+  }
+}
+.fx-stamp {
+  position: absolute;
+  animation: fx-stamp 0.45s cubic-bezier(0.3, 0.5, 0.3, 1.4) calc(var(--hit) + var(--sd, 0ms)) both;
+}
+@keyframes fx-stamp {
+  0% {
+    opacity: 0;
+    transform: scale(3) rotate(-16deg);
+  }
+  55% {
+    opacity: 1;
+    transform: scale(0.92) rotate(var(--sr, -6deg));
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) rotate(var(--sr, -6deg));
+  }
+}
+/* dark caption on a light scene (zen garden, newsprint, plan sheet) */
+.fx-cap--ink .fx-title {
+  color: #1d1a16;
+  text-shadow: 2px 2px 0 color-mix(in srgb, var(--tc) 45%, transparent);
+}
+.fx-cap--ink .fx-line {
+  color: rgb(29 26 22 / 0.78);
+}
+.fx-cap--ink .fx-chip {
+  color: #fff;
+  background: #1d1a16;
+}
+.fx:has(.fx-cap--ink) .fx-tap {
+  color: rgb(29 26 22 / 0.5);
+}
+/* a light-ink strike drawn across old text */
+.fx-strike {
+  position: relative;
+  display: inline-block;
+}
+.fx-strike::after {
+  content: '';
+  position: absolute;
+  left: -4%;
+  right: -4%;
+  top: 52%;
+  height: 3px;
+  margin-top: -1.5px;
+  background: #ff3b3b;
+  transform: rotate(-4deg) scaleX(0);
+  transform-origin: 0 50%;
+  animation: fx-strike 0.28s ease-out var(--strike, calc(var(--hit) + 0.4s)) both;
+}
+@keyframes fx-strike {
+  to {
+    transform: rotate(-4deg) scaleX(1);
+  }
+}
+/* pop-in helper: an element appearing at its own delay */
+.fx-in {
+  animation: fx-pop 0.45s cubic-bezier(0.2, 0.9, 0.3, 1.3) var(--in, calc(var(--hit) + 0.1s)) both;
+}
+
+/* shared keyframes for the scene stylesheets */
+@keyframes fx-show {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes fx-show-in {
+  to {
+    opacity: 1;
+  }
+}
+@keyframes fx-draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+@keyframes fx-ring-out {
+  0% {
+    opacity: 1;
+    transform: scale(0.3);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(3.2);
+  }
+}
+@keyframes fx-blink {
+  50% {
+    opacity: 0;
   }
 }
 

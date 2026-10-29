@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { openSheet } from '../../app/sheets';
-import { getSectionTopics, sectionEntries, sectionRecords, setTargets, topicSectionMap, useTargets, useToday } from '../../data/lt';
+import { getSectionTopics, sectionEntries, sectionRecords, setTargets, topicSectionMap, usePlans, useTargets, useToday } from '../../data/lt';
 import { saveRecord } from '../../data/records';
 import { data } from '../../data/store';
 import { occurrences } from '../../domain/calendar/occurrences';
@@ -17,6 +17,9 @@ import { isGymDetail, legsHeavy, progression, setsDone, setsTotal, STARTER_TEMPL
 import './sheets';
 import './gym.css';
 import { GymArt } from './Art';
+import { GymPlanPanel } from '../plans/GymPlanPanel';
+import { planTemplateForToday, planWorkoutOf } from '../plans/plans';
+import { DAY_NAMES } from '../../domain/plans/marathon';
 import './theme.css';
 
 const DAYS = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
@@ -138,6 +141,7 @@ function Session() {
 
 export function GymChannel() {
   const running = useStore(active, (s) => !!s.a);
+  const plans = usePlans();
   const today = useToday();
   const targets = useTargets();
   const st = useStore(data, (s) => s);
@@ -170,8 +174,10 @@ export function GymChannel() {
     </>
   );
 
-  const start = (t: Template) => startWorkout(t);
-  const live = templates.filter((t) => !t.archived);
+  // Plan templates carry the last session's weights forward (and follow the marathon taper).
+  const start = (t: Template) => startWorkout(planTemplateForToday(t));
+  const planOf = (t: Template) => planWorkoutOf(plans, t.id);
+  const live = templates.filter((t) => !t.archived).sort((a, b) => (planOf(a)?.day ?? 9) - (planOf(b)?.day ?? 9));
 
   return (
     <div style={accent('gym')}>
@@ -212,6 +218,8 @@ export function GymChannel() {
         )}
         <Source>Starter templates are placeholders to adjust, not a personalised training or medical plan.</Source>
       </div>
+
+      <GymPlanPanel />
 
       <H2 aside={<button type="button" className="i-link" onClick={() => openSheet({ type: 'gym-plan' })}>+ Plan</button>}>This week</H2>
       <div className="g-week">
@@ -259,7 +267,10 @@ export function GymChannel() {
               live.map((t) => (
                 <div key={t.id} className="i-row">
                   <button type="button" className="i-row__t" style={{ textAlign: 'left' }} onClick={() => openSheet({ type: 'gym-template', editId: t.id })}>
-                    <b>{t.name}</b>
+                    <b>
+                      {planOf(t) && <span className="pl-plantag">計画 PLAN · {DAY_NAMES[planOf(t)!.day]}</span>}
+                      {t.name}
+                    </b>
                     <small>{t.focus} · {t.exercises.length} exercises · ~{t.estimate} min</small>
                   </button>
                   <button type="button" className="i-btn i-btn--sm" onClick={() => start(t)}>Start</button>

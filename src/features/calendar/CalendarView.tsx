@@ -1,6 +1,9 @@
 import { useMemo, useState } from 'react';
 import { ChannelBar } from '../../app/Shell';
+import { navigate } from '../../app/router';
 import { openSheet } from '../../app/sheets';
+import { STATUS_LABEL } from '../plans/MarathonPanel';
+import { usePlanDay } from '../plans/plans';
 import { getSectionTopics, topicSectionMap, useToday } from '../../data/lt';
 import { data } from '../../data/store';
 import { SECTION_IDS, type SectionId } from '../../data/types';
@@ -24,6 +27,25 @@ interface Logged {
   section: SectionId | 'general';
   title: string;
   minutes: number;
+}
+
+/** The training plans' sessions on the selected day: shown, never stored as events. */
+function PlanRows({ items }: { items: ReturnType<typeof usePlanDay> }) {
+  return (
+    <>
+      {items.map(({ s, state }) => (
+        <button key={s.id} type="button" className="c-ev" style={accent(s.kind === 'run' ? 'sports' : 'gym')} onClick={() => navigate(s.kind === 'run' ? 'sports' : 'gym')}>
+          <span className="i-mono i-small">PLAN</span>
+          <span className={`c-stripe${state.status === 'done' ? '' : ' is-planned'}`} />
+          <span className={`c-ti${state.status === 'missed' ? ' is-off' : ''}`}>
+            {s.title}
+            <small>{s.kind === 'run' ? `marathon plan · ${s.km} km${s.optional ? ' · optional' : ''}` : `gym plan${s.adjust ? ` · ${s.adjust.note}` : ''}`}</small>
+          </span>
+          <span className={`i-tag${state.status === 'done' ? ' i-tag--ok' : ''}`}>{STATUS_LABEL[state.status].toUpperCase()}</span>
+        </button>
+      ))}
+    </>
+  );
 }
 
 export function CalendarView() {
@@ -61,6 +83,7 @@ export function CalendarView() {
   const dayOcc = visible.filter((o) => o.date === sel);
   const dayLogs = (logged.get(sel) ?? []).filter((l) => show(l.section));
   const dayTasks = tasks.filter((t) => t.due === sel && show(t.section ?? null));
+  const planDay = usePlanDay(sel).filter((x) => show(x.s.kind === 'run' ? 'sports' : 'gym'));
   const toggleFilter = (s: SectionId) => setFilter(filter.includes(s) ? filter.filter((x) => x !== s) : [...filter, s]);
   const go = (n: number) => {
     const m = addDays(monday, 7 * n);
@@ -165,7 +188,7 @@ export function CalendarView() {
 
       <H2 aside={sel === today ? 'today' : undefined}>{shortDay(sel)}</H2>
       <div className="i-pnl i-pnl--flush">
-        {dayOcc.length + dayLogs.length + dayTasks.length === 0 && <p className="i-note" style={{ padding: '12px 0' }}>Nothing on this day.</p>}
+        {dayOcc.length + dayLogs.length + dayTasks.length + planDay.length === 0 && <p className="i-note" style={{ padding: '12px 0' }}>Nothing on this day.</p>}
         {dayOcc.map((o) => {
           const [label, cls] = tag(o);
           return (
@@ -197,6 +220,7 @@ export function CalendarView() {
             <span className="i-tag i-tag--ok">DONE</span>
           </div>
         ))}
+        <PlanRows items={planDay} />
         {dayTasks.map((t) => (
           <button key={t.id} type="button" className="c-ev" style={accent(t.section ?? null)} onClick={() => openSheet({ type: 'task', editId: t.id })}>
             <span className="i-mono i-small">DUE</span>

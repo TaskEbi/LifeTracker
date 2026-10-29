@@ -33,7 +33,7 @@ test('celebrations: a first session plays its celebrations, then the reward box'
 
 test('celebrations: previews from Settings are labelled and earn nothing', async ({ page }) => {
   await page.goto('/settings');
-  const group = page.getByRole('group', { name: 'Preview celebrations' });
+  const group = page.getByRole('group', { name: 'Preview celebrations · Core', exact: true });
   await group.getByRole('button', { name: /^Level up/ }).click();
   const fx = page.locator('.fx[role="dialog"]');
   await expect(fx).toContainText('Preview — nothing earned');
@@ -58,5 +58,47 @@ test('celebrations: previews from Settings are labelled and earn nothing', async
   await page.getByRole('button', { name: /^Physics:/ }).click();
   await page.getByRole('dialog', { name: 'CH05 · log study' }).getByRole('button', { name: 'Save' }).click();
   await expect(page.getByRole('dialog', { name: 'What you earned' })).toBeVisible();
+  await expect(fx).toHaveCount(0);
+});
+
+test('celebrations: new scenes preview, announce themselves and put the page back', async ({ page }) => {
+  await page.goto('/settings');
+  const fx = page.locator('.fx[role="dialog"]');
+  const shellLeft = () => page.evaluate(() => [...document.querySelectorAll('.i-main, .i-cmd')].map((e) => [getComputedStyle(e).transform, e.getAnimations().length, (e as HTMLElement).style.clipPath].join('|')));
+
+  // a section's own level-up (violin's curtain call)
+  const sections = page.getByRole('group', { name: 'Preview celebrations · Section level-ups', exact: true });
+  await sections.getByRole('button', { name: /^Violin · LV/ }).click();
+  await expect(fx).toContainText('Preview — nothing earned');
+  await expect(fx.locator('.fx-vl')).toHaveCount(1);
+  await expect(page.locator('.fx-sr')).toContainText('Preview, nothing earned. Violin level up');
+  // plays to the end by itself, then everything is back in place
+  await expect(fx).toHaveCount(0, { timeout: 6000 });
+  await expect(page.locator('.i-shell')).not.toHaveClass(/is-fx/);
+  expect(await shellLeft()).toEqual(['none|0|', 'none|0|']);
+
+  // a moment (combo), labelled as using sample numbers when it does
+  const days = page.getByRole('group', { name: 'Preview celebrations · Days', exact: true });
+  await days.getByRole('button', { name: /^Combo/ }).click();
+  await expect(fx.locator('.fx-cb2')).toHaveCount(1);
+  await expect(page.locator('.fx-sr')).toContainText(/Preview, nothing earned\. \d hit combo/);
+  await fx.getByRole('button', { name: 'Skip' }).click();
+  await expect(fx).toHaveCount(0);
+
+  // a whole group queues one after another
+  const special = page.getByRole('group', { name: 'Preview celebrations · Special', exact: true });
+  await special.getByRole('button', { name: 'Play all' }).click();
+  await expect(fx.getByRole('button', { name: 'Skip all' })).toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(fx).toHaveCount(0);
+  await expect(page.locator('.i-shell')).not.toHaveClass(/is-fx/);
+  expect(await shellLeft()).toEqual(['none|0|', 'none|0|']);
+  await expect(page.getByRole('dialog', { name: 'What you earned' })).toHaveCount(0);
+
+  // calm: the same moment as a card
+  await page.getByRole('group', { name: 'Celebrations · this device' }).getByRole('button', { name: 'Calm' }).click();
+  await page.getByRole('group', { name: 'Preview celebrations · Records', exact: true }).getByRole('button', { name: /^Distance/ }).click();
+  await expect(fx.locator('.fx-calm')).toContainText('500 km');
+  await fx.getByRole('button', { name: 'Skip' }).click();
   await expect(fx).toHaveCount(0);
 });

@@ -17,6 +17,7 @@ import { useFocus } from '../focus/focus';
 import { BossCard } from '../progress/BossPanel';
 import { Recap } from '../progress/LookBack';
 import { QuestCard } from '../progress/QuestsPanel';
+import { PlanToday } from '../plans/PlanToday';
 import './home.css';
 
 const pad2 = (n: number) => String(n).padStart(2, '0');
@@ -202,6 +203,8 @@ export function Home() {
               ▶
             </span>
           </button>
+
+          <PlanToday />
 
           <section className="h-sec" aria-label="Techniques: your sections">
             <h2 className="h-h2">

@@ -9,9 +9,12 @@ import { achievements, type Achievement } from '../domain/progress/achievements'
 import { computeProgress, rewardBetween, sectionStreaks, type Progress, type ProgressInput, type Reward, type SectionStreak } from '../domain/progress/engine';
 import { bossHistory, currentBoss, type BossFight } from '../domain/progress/boss';
 import { dayFacts, questBoard, questHistory, type QuestPeriod, type QuestSet } from '../domain/progress/quests';
+import { moments, type Moment } from '../domain/progress/moments';
+import { focusStore } from '../features/focus/focus';
 import { heatmap, lastWeekRecap, type HeatDay, type WeekRecap } from '../domain/progress/recap';
 import { normaliseSectionTopics, normaliseSleep, normaliseTargets, normaliseTargetsLog, targetsAt, type SectionTopics, type SleepSchedule, type Targets } from '../domain/prefs';
 import { weekStart } from '../domain/log/dates';
+import { normalisePlans, type PlansState } from '../domain/plans/types';
 import { TOPIC_NAME_HINTS } from '../domain/sections';
 import { createTopic, pairId, restoreTopic } from './logActions';
 import { commit, data, type DataState } from './store';
@@ -41,6 +44,8 @@ function memo1<A, R>(fn: (a: A) => R): (a: A) => R {
 const targetsOf = memo1((m: DataState['lt_prefs']) => normaliseTargets(m.get('targets')?.deleted_at ? undefined : m.get('targets')?.value));
 const sleepOf = memo1((m: DataState['lt_prefs']) => normaliseSleep(m.get('sleep')?.deleted_at ? undefined : m.get('sleep')?.value));
 const targetsLogOf = memo1((m: DataState['lt_prefs']) => normaliseTargetsLog(m.get('targets_log')?.deleted_at ? undefined : m.get('targets_log')?.value));
+const plansOf = memo1((m: DataState['lt_prefs']) => normalisePlans(m.get('plans')?.deleted_at ? undefined : m.get('plans')?.value));
+export const usePlans = (): PlansState => useStore(data, (s) => plansOf(s.lt_prefs));
 const topicsOf = memo1((m: DataState['lt_prefs']) => normaliseSectionTopics(m.get('section_topics')?.deleted_at ? undefined : m.get('section_topics')?.value));
 
 export const useTargets = (): Targets => useStore(data, (s) => targetsOf(s.lt_prefs));
@@ -189,6 +194,7 @@ export function progressInput(st: DataState, today: string): ProgressInput {
     targets: targetsOf(st.lt_prefs),
     targetsAt: (monday) => targetsAt(targetsLogOf(st.lt_prefs), targetsOf(st.lt_prefs), monday),
     sleep: sleepOf(st.lt_prefs),
+    plans: plansOf(st.lt_prefs),
   };
   lastState = st;
   lastToday = today;
@@ -270,6 +276,8 @@ export interface RewardView extends Reward {
   rest?: boolean;
   pain?: boolean;
   unlocked: Achievement[];
+  /** Records, streak milestones, combos… that this save made happen (domain/progress/moments). */
+  moments: Moment[];
 }
 export const rewardStore = createStore<{ reward: RewardView | null }>({ reward: null });
 
@@ -279,15 +287,23 @@ export const rewardStore = createStore<{ reward: RewardView | null }>({ reward: 
  */
 export function withReward(save: () => boolean | void, extra: Partial<RewardView> = {}): boolean {
   const today = ltToday();
-  const before = progressOf(data.get(), today);
-  const beforeAch = achievementsOf(data.get(), today);
+  const st0 = data.get();
+  // Kept here: progressInput only remembers the latest state.
+  const beforeInput = progressInput(st0, today);
+  const before = progressOf(st0, today);
+  const beforeAch = achievementsOf(st0, today);
+  // A finished focus session waiting to be logged (the focus pill clears it after this save).
+  const f = focusStore.get().focus;
+  const focus = f?.finishedAt ? { section: f.section, since: new Date(f.finishedAt).toISOString() } : null;
   const ok = save();
   if (ok === false) return false;
-  const after = progressOf(data.get(), today);
-  const afterAch = achievementsOf(data.get(), today);
+  const st1 = data.get();
+  const after = progressOf(st1, today);
+  const afterAch = achievementsOf(st1, today);
   const unlocked = afterAch.filter((a) => a.unlockedOn && !beforeAch.find((b) => b.id === a.id)?.unlockedOn);
+  const found = st1 === st0 ? [] : moments(beforeInput, progressInput(st1, today), { levels: [before.overall.level, after.overall.level], focus });
   const r = rewardBetween(before, after);
-  if (r.total > 0 || r.sectionUps.length || r.overallUp || unlocked.length || extra.rest) rewardStore.set({ reward: { ...r, unlocked, ...extra } });
+  if (r.total > 0 || r.sectionUps.length || r.overallUp || unlocked.length || found.length || extra.rest) rewardStore.set({ reward: { ...r, unlocked, moments: found, ...extra } });
   return true;
 }
 

@@ -45,7 +45,7 @@ export function ChannelHead({ id, sub, art }: { id: SectionId; sub?: string; art
           <span className="i-chhead__rank">{sectionRankFor(lv.level)}</span>
           {streak && streak.n > 0 && (
             <p className="i-chhead__sub">
-              {streak.n} {streak.label}
+              {streak.n} {streak.n === 1 ? streak.label.replace(/^(week|day|night)s\b/, '$1') : streak.label}
             </p>
           )}
         </div>
