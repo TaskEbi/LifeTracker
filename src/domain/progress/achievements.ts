@@ -5,6 +5,7 @@
 import { addDays, weekdayIndex, weekStart } from '../log/dates';
 import { SECTION_IDS, TIMED_SECTIONS, type SectionId } from '../../data/types';
 import { activeDays, allXpEvents, bedDelta, RULES, sectionOf, STAGES, xpForLevel, xpForSectionLevel, type ProgressInput, type XpEvent } from './engine';
+import { BOSSES, bossHistory, type BossFight } from './boss';
 import { questHistory, type QuestSet } from './quests';
 
 export type Tier = 'bronze' | 'silver' | 'gold' | 'platinum';
@@ -70,6 +71,7 @@ function levelOf(xp: number): number {
 export interface AchievementExtras {
   events?: XpEvent[];
   quests?: QuestSet[];
+  bosses?: BossFight[];
 }
 
 export function achievements(input: ProgressInput, extras: AchievementExtras = {}): Achievement[] {
@@ -282,6 +284,22 @@ export function achievements(input: ProgressInput, extras: AchievementExtras = {
   add('quest50', 'Questmaster', 'Complete 50 quests', 50, questsDone.length, nth(questsDone, 50));
   as('platinum');
   add('month', 'Month Conquered', 'All three monthly quests in one month', 1, monthSweeps.length ? 1 : 0, nth(monthSweeps, 1));
+
+  // ── bosses ──
+  const fights = extras.bosses ?? bossHistory(input);
+  const downs = fights.filter((f) => f.defeatedOn).map((f) => f.defeatedOn!);
+  for (const [id, goal, title, desc, t] of [
+    ['boss1', 1, 'First Hunt', 'Defeat a weekly boss', 'bronze'],
+    ['boss5', 5, 'Oni Hunter', 'Defeat 5 weekly bosses', 'silver'],
+    ['boss20', 20, 'Yōkai Bane', 'Defeat 20 weekly bosses', 'gold'],
+  ] as const) {
+    as(t);
+    add(id, title, desc, goal, downs.length, nth(downs, goal));
+  }
+  const firstDown = new Map<string, string>();
+  for (const f of fights) if (f.defeatedOn && !firstDown.has(f.boss.id)) firstDown.set(f.boss.id, f.defeatedOn);
+  as('platinum');
+  add('bestiary', 'Full Bestiary', `Defeat all ${BOSSES.length} bosses at least once`, BOSSES.length, firstDown.size, firstDown.size === BOSSES.length ? [...firstDown.values()].sort().at(-1)! : null);
 
   return list;
 }

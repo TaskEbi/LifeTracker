@@ -27,7 +27,7 @@ function SportSheet({ spec }: { spec: SheetSpec }) {
   const pd = prev && isSportDetail(prev.detail) ? prev.detail : null;
   const [sport, setSport] = useState<SportId>(pd?.sport ?? (spec.sport as SportId) ?? 'running');
   const [date, setDate] = useState(prev?.entry.date ?? today);
-  const [minutes, setMinutes] = useState(prev?.entry.minutes ?? (sportInfo(sport)?.kind === 'court' ? 90 : 40));
+  const [minutes, setMinutes] = useState(prev?.entry.minutes ?? (spec.minutes as number | undefined) ?? (sportInfo(sport)?.kind === 'court' ? 90 : 40));
   const [km, setKm] = useState(pd?.km ?? (sport === 'swimming' ? 1.5 : sport === 'cycling' ? 20 : 7));
   const [type, setType] = useState<'training' | 'match'>(pd?.type ?? 'training');
   const [score, setScore] = useState(pd?.score ?? '');
@@ -42,7 +42,8 @@ function SportSheet({ spec }: { spec: SheetSpec }) {
     setSport(s);
     if (!prev) {
       setKm(s === 'swimming' ? 1.5 : s === 'cycling' ? 20 : 7);
-      setMinutes(sportInfo(s)!.kind === 'court' ? 90 : 40);
+      // Minutes timed in focus mode stay; otherwise each sport has its usual length.
+      if (typeof spec.minutes !== 'number') setMinutes(sportInfo(s)!.kind === 'court' ? 90 : 40);
     }
   };
   const save = () => {

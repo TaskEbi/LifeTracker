@@ -1,0 +1,168 @@
+/* ── 前回 recap and the training heatmap ─────────────────────────────────────── */
+
+.lb-recap {
+  position: relative;
+  margin-top: 16px;
+  padding: 12px 14px;
+  background: var(--surf);
+  box-shadow: 0 0 0 1px var(--rule), inset 0 3px 0 var(--sig);
+}
+.lb-recap__kick {
+  display: block;
+  font-size: 10.5px;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--fg-3);
+}
+.lb-recap__kick span {
+  font-family: var(--f-label);
+  font-size: 15px;
+  letter-spacing: 0;
+  color: var(--sig);
+  margin-right: 4px;
+}
+.lb-recap__lead {
+  margin: 6px 0 0;
+  font-size: 14px;
+  font-weight: 700;
+}
+.lb-recap__lead b {
+  font-family: var(--f-label);
+  font-weight: 400;
+  font-size: 22px;
+}
+.lb-recap__lead .is-up,
+.lb-recap__facts .is-up {
+  color: var(--ok);
+}
+.lb-recap__lead .is-down {
+  color: var(--fg-3);
+}
+.lb-recap__secs {
+  list-style: none;
+  margin: 8px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 4px;
+}
+.lb-recap__secs li {
+  display: grid;
+  grid-template-columns: 18px 64px minmax(0, 1fr) auto;
+  gap: 6px;
+  align-items: center;
+  font-size: 12.5px;
+  font-weight: 700;
+}
+.lb-recap__secs li span:first-child {
+  font-family: var(--f-label);
+  color: var(--c);
+}
+.lb-recap__secs li i {
+  height: 8px;
+  background: var(--c);
+  transform: skewX(-20deg);
+}
+.lb-recap__secs li b {
+  font-family: var(--f-mono);
+  font-size: 11.5px;
+  color: var(--fg-2);
+}
+.lb-recap__facts {
+  list-style: none;
+  margin: 10px 0 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.lb-recap__facts li {
+  padding: 3px 8px;
+  font-size: 11.5px;
+  font-weight: 700;
+  background: var(--surf-2);
+  box-shadow: 0 0 0 1px var(--rule);
+}
+
+.lb-heat {
+  margin-top: 10px;
+  padding: 10px 12px;
+  background: var(--surf);
+  box-shadow: 0 0 0 1px var(--rule);
+}
+.lb-heat__months {
+  display: grid;
+  gap: 3px;
+  font-size: 9.5px;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--fg-3);
+  white-space: nowrap;
+  margin-bottom: 3px;
+}
+.lb-heat__grid {
+  display: grid;
+  gap: 3px;
+  cursor: pointer;
+}
+.lb-heat__col {
+  display: grid;
+  grid-template-rows: repeat(7, auto);
+  gap: 3px;
+  align-content: start;
+}
+.lb-heat__d {
+  display: block;
+  aspect-ratio: 1;
+  background: color-mix(in srgb, var(--fg) 8%, transparent);
+}
+.lb-heat__d.l1 {
+  background: color-mix(in srgb, var(--sig) 22%, var(--surf-2));
+}
+.lb-heat__d.l2 {
+  background: color-mix(in srgb, var(--sig) 38%, var(--surf-2));
+}
+.lb-heat__d.l3 {
+  background: color-mix(in srgb, var(--sig) 58%, var(--surf-2));
+}
+.lb-heat__d.l4 {
+  background: color-mix(in srgb, var(--sig) 80%, var(--surf-2));
+}
+.lb-heat__d.l5 {
+  background: var(--sig);
+  box-shadow: 0 0 5px color-mix(in srgb, var(--sig) 70%, transparent);
+}
+.lb-heat__d.is-rest {
+  background: radial-gradient(circle, var(--acc2) 0 22%, color-mix(in srgb, var(--fg) 8%, transparent) 24%);
+}
+.lb-heat__d.is-today {
+  outline: 2px solid var(--acc2);
+  outline-offset: -1px;
+}
+.lb-heat__d.is-pick {
+  outline: 2px solid var(--fg);
+  outline-offset: 1px;
+}
+.lb-heat__foot {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  margin-top: 8px;
+  min-height: 20px;
+}
+.lb-heat__key {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 10px;
+  color: var(--fg-3);
+}
+.lb-heat__key i {
+  width: 10px;
+}
+.lb-heat__bands {
+  margin-top: 4px;
+}

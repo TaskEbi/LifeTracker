@@ -31,7 +31,7 @@ function StudySheet({ spec }: { spec: SheetSpec }) {
   const [subject, setSubject] = useState(pd?.subject ?? (spec.subject as string) ?? subjects[0]);
   const [kind, setKind] = useState<string>(pd?.kind ?? 'Homework');
   const [topic, setTopic] = useState(pd?.topic ?? '');
-  const [minutes, setMinutes] = useState(prev?.entry.minutes ?? 45);
+  const [minutes, setMinutes] = useState(prev?.entry.minutes ?? (spec.minutes as number | undefined) ?? 45);
   const [date, setDate] = useState(prev?.entry.date ?? today);
   const [note, setNote] = useState(prev?.entry.note ?? '');
   const [error, setError] = useState<string | null>(null);

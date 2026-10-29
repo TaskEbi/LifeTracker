@@ -49,7 +49,7 @@
 /* tabs */
 .pg-tabs {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 6px;
   margin-bottom: 16px;
 }
@@ -674,4 +674,19 @@
 }
 .pg-badge.is-on .pg-badge__when {
   color: var(--t);
+}
+
+/* four tabs on a phone: drop the kanji so the words fit */
+@media (max-width: 520px) {
+  .pg-tabs {
+    gap: 4px;
+  }
+  .pg-tab {
+    gap: 4px;
+    font-size: 11px;
+    letter-spacing: 0.02em;
+  }
+  .pg-tab__k {
+    display: none;
+  }
 }

@@ -39,7 +39,7 @@ function CodingSheet({ spec }: { spec: SheetSpec }) {
   const [kind, setKind] = useState<string>(prev?.detail?.kind ?? (spec.kind as string) ?? 'Problems');
   const [platform, setPlatform] = useState(prev?.detail?.platform ?? '');
   const [solved, setSolved] = useState(prev?.detail?.solved ?? 0);
-  const [minutes, setMinutes] = useState(prev?.entry.minutes ?? (spec.low ? 10 : 60));
+  const [minutes, setMinutes] = useState(prev?.entry.minutes ?? (spec.minutes as number | undefined) ?? (spec.low ? 10 : 60));
   const [date, setDate] = useState(prev?.entry.date ?? today);
   const [note, setNote] = useState(prev?.entry.note ?? '');
   const [error, setError] = useState<string | null>(null);

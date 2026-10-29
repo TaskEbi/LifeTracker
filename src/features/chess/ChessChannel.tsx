@@ -33,7 +33,7 @@ function ChessSheet({ spec }: { spec: SheetSpec }) {
   const editId = (spec.editId as string | undefined) ?? null;
   const prev = editId ? sectionEntries<ChessDetail>(data.get(), 'chess').find((s) => s.entry.id === editId) : undefined;
   const [kind, setKind] = useState<string>(prev?.detail?.kind ?? 'Puzzles');
-  const [minutes, setMinutes] = useState(prev?.entry.minutes ?? 30);
+  const [minutes, setMinutes] = useState(prev?.entry.minutes ?? (spec.minutes as number | undefined) ?? 30);
   const [date, setDate] = useState(prev?.entry.date ?? today);
   const [note, setNote] = useState(prev?.entry.note ?? '');
   const [error, setError] = useState<string | null>(null);

@@ -1,0 +1,345 @@
+/* ── 討 Weekly boss ─────────────────────────────────────────────────────────── */
+
+.b-card {
+  position: relative;
+  padding: 12px 14px 10px;
+  background:
+    radial-gradient(circle at 18% 30%, color-mix(in srgb, var(--b) 34%, transparent) 0, transparent 58%),
+    repeating-linear-gradient(-20deg, transparent 0 14px, color-mix(in srgb, var(--fg) 4%, transparent) 14px 15px),
+    var(--surf);
+  box-shadow: 0 0 0 1px var(--rule), inset 4px 0 0 var(--b);
+  clip-path: polygon(0 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0 100%);
+}
+.b-card__top {
+  display: grid;
+  grid-template-columns: 108px minmax(0, 1fr);
+  gap: 12px;
+  align-items: center;
+}
+.b-card__art {
+  position: relative;
+  width: 108px;
+  height: 108px;
+  display: block;
+  animation: b-hit 0.4s ease;
+}
+.b-art {
+  width: 100%;
+  height: 100%;
+  display: block;
+  overflow: visible;
+}
+.b-art__body {
+  transform-origin: 60px 70px;
+  animation: b-idle 3.2s ease-in-out infinite;
+}
+.b-art__aura {
+  animation: b-aura 2.4s ease-in-out infinite;
+  transform-origin: 60px 64px;
+}
+.b-art.is-down {
+  filter: grayscale(0.85) brightness(0.8);
+}
+.b-art.is-down .b-art__body {
+  animation: none;
+  transform: rotate(-8deg) translateY(6px);
+}
+.b-art.is-unknown {
+  opacity: 0.5;
+}
+.b-art.is-unknown .b-art__body {
+  animation: none;
+}
+.b-card__stamp {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  padding: 2px 6px;
+  font-family: var(--f-label);
+  font-size: 26px;
+  line-height: 1.1;
+  color: var(--warn);
+  border: 3px solid var(--warn);
+  transform: translate(-50%, -50%) rotate(-14deg);
+  background: color-mix(in srgb, var(--bg) 70%, transparent);
+  animation: b-stamp 0.35s cubic-bezier(0.2, 1.6, 0.4, 1);
+}
+.b-card__info {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+.b-card__kick {
+  font-size: 10.5px;
+  font-weight: 900;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--acc2);
+}
+.b-card.is-down .b-card__kick {
+  color: var(--ok);
+}
+.b-card__name {
+  font-family: var(--f-label);
+  font-weight: 400;
+  font-size: 21px;
+  line-height: 1.05;
+  text-transform: uppercase;
+  overflow-wrap: anywhere;
+}
+.b-card__title {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--fg-3);
+}
+.b-card__weak {
+  justify-self: start;
+  margin-top: 4px;
+  padding: 3px 8px;
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  color: var(--bg);
+  background: var(--c);
+  clip-path: polygon(5px 0, 100% 0, calc(100% - 5px) 100%, 0 100%);
+}
+.b-card__weak span {
+  font-family: var(--f-label);
+  margin-right: 2px;
+}
+.b-card__taunt {
+  margin: 10px 0 0;
+  padding: 7px 12px;
+  font-size: 13px;
+  font-weight: 700;
+  font-style: italic;
+  color: #111;
+  background: #fff;
+  border: 2px solid #111;
+  border-radius: 40% / 50%;
+  text-align: center;
+  animation: i-fade 0.18s ease;
+}
+.b-card__hp {
+  display: grid;
+  gap: 4px;
+  margin-top: 10px;
+}
+.b-card__hpl {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 10.5px;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.b-card__hpl span:last-child {
+  font-family: var(--f-mono);
+  letter-spacing: 0;
+  color: var(--fg-2);
+  text-align: right;
+}
+.b-card__bar {
+  position: relative;
+  height: 14px;
+  background: color-mix(in srgb, var(--fg) 12%, transparent);
+  transform: skewX(-20deg);
+  overflow: hidden;
+}
+.b-card__bar i {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, var(--warn), color-mix(in srgb, var(--warn) 60%, #ffd000));
+  box-shadow: 0 0 8px var(--warn);
+  transition: width 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.b-card__bar::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(90deg, transparent 0 calc(10% - 2px), var(--surf) calc(10% - 2px) 10%);
+}
+.b-hits {
+  list-style: none;
+  margin: 8px 0 0;
+  padding: 0;
+}
+.b-hit {
+  display: grid;
+  grid-template-columns: 30px 18px minmax(0, 1fr) auto;
+  gap: 6px;
+  align-items: center;
+  min-height: 30px;
+  border-top: 1px solid var(--rule);
+  font-size: 12.5px;
+  font-weight: 700;
+}
+.b-hit__d {
+  font-family: var(--f-mono);
+  font-size: 11px;
+  color: var(--fg-3);
+}
+.b-hit__k {
+  font-family: var(--f-label);
+  color: var(--c);
+}
+.b-hit__x {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.b-hit__n {
+  font-family: var(--f-mono);
+  color: var(--warn);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.b-hit__n em {
+  font-style: normal;
+  font-size: 9.5px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  padding: 1px 4px;
+  color: var(--bg);
+  background: var(--c);
+}
+.b-card__more {
+  display: block;
+  margin: 4px 0 0 auto;
+}
+
+.b-rules,
+.b-past {
+  list-style: none;
+  margin: 0;
+  padding: 2px 12px;
+  background: var(--surf);
+  box-shadow: 0 0 0 1px var(--rule);
+}
+.b-rules li,
+.b-past li {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  align-items: center;
+  min-height: 36px;
+  border-top: 1px solid var(--rule);
+  font-size: 13px;
+}
+.b-rules li:first-child,
+.b-past li:first-child {
+  border-top: 0;
+}
+.b-rules b {
+  text-align: right;
+  font-size: 12px;
+  color: var(--fg-2);
+}
+.b-past li span:nth-child(2) {
+  flex: 1;
+  font-weight: 700;
+}
+.b-past li b {
+  font-size: 12px;
+  color: var(--fg-3);
+}
+.b-past li.is-down b {
+  color: var(--ok);
+}
+
+.b-beasts {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 6px;
+}
+.b-beast {
+  display: grid;
+  justify-items: center;
+  gap: 2px;
+  padding: 8px 4px;
+  text-align: center;
+  background: var(--surf);
+  box-shadow: 0 0 0 1px var(--rule);
+}
+.b-beast .b-art {
+  width: 56px;
+  height: 56px;
+}
+.b-beast b {
+  font-size: 10.5px;
+  font-weight: 900;
+  line-height: 1.15;
+  overflow-wrap: anywhere;
+}
+.b-beast small {
+  font-size: 10px;
+  color: var(--fg-3);
+}
+.b-beast.is-down {
+  box-shadow: 0 0 0 1px var(--rule), inset 0 -3px 0 var(--b);
+}
+.b-beast.is-down small {
+  color: var(--ok);
+}
+
+@keyframes b-idle {
+  0%,
+  100% {
+    transform: translateY(0) rotate(0);
+  }
+  50% {
+    transform: translateY(-3px) rotate(1.5deg);
+  }
+}
+@keyframes b-aura {
+  0%,
+  100% {
+    transform: scale(0.94);
+    opacity: 0.18;
+  }
+  50% {
+    transform: scale(1.04);
+    opacity: 0.32;
+  }
+}
+@keyframes b-hit {
+  0% {
+    transform: translateX(0);
+    filter: brightness(2.2);
+  }
+  25% {
+    transform: translateX(-5px);
+  }
+  50% {
+    transform: translateX(4px);
+  }
+  75% {
+    transform: translateX(-2px);
+  }
+  100% {
+    transform: translateX(0);
+    filter: none;
+  }
+}
+@keyframes b-stamp {
+  from {
+    transform: translate(-50%, -50%) rotate(-14deg) scale(2.2);
+    opacity: 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .b-card__art,
+  .b-art__body,
+  .b-art__aura,
+  .b-card__stamp {
+    animation: none;
+  }
+}
+@media (min-width: 700px) {
+  .b-beasts {
+    grid-template-columns: repeat(8, minmax(0, 1fr));
+  }
+}

@@ -2,6 +2,7 @@
 import type { ComponentType } from 'react';
 import type { RouteName } from './router';
 import '../features/home/QuickSheet';
+import '../features/focus/FocusSheet';
 import { ViolinChannel } from '../features/violin/ViolinChannel';
 import { CalendarView } from '../features/calendar/CalendarView';
 import { TasksView } from '../features/tasks/TasksView';

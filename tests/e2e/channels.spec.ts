@@ -36,6 +36,8 @@ test('study: a session per subject, a mark with a bad score refused', async ({ p
 });
 
 test('coding: Road to IOI counts down to the next stage and a session raises a gate', async ({ page }) => {
+  // Before the JOI first round (25 Oct 2026), so the countdown has that stage to show.
+  await page.clock.install({ time: new Date('2026-10-20T09:00:00+09:00') });
   await page.goto('/coding');
   await expect(page.getByRole('heading', { name: /to JOI First Round/i })).toBeVisible();
   await expect(page.getByText(/0\s*gates raised/)).toBeVisible();

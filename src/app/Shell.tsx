@@ -11,6 +11,7 @@ import { navigate, useRoute, useRouteDir, type RouteName } from './router';
 import { openSheet } from './sheets';
 import { SheetHost } from './SheetHost';
 import { Home } from '../features/home/Home';
+import { FocusPill } from '../features/focus/FocusSheet';
 import { sectionViews } from './views';
 import { loadSectionFonts } from './sectionLook';
 import { resolveTheme } from './theme';
@@ -220,6 +221,7 @@ export function Shell() {
         </main>
       )}
       <CommandBar current={route.name} />
+      <FocusPill />
       <SheetHost />
       <Toasts />
       <RewardOverlay />

@@ -76,6 +76,8 @@ interface Draft {
 
 function ViolinLogSheet({ spec }: { spec: SheetSpec }) {
   const editId = (spec.editId as string | null | undefined) ?? null;
+  /** Minutes handed over by focus mode. */
+  const preset = typeof spec.minutes === 'number' ? spec.minutes : null;
   const today = ltToday();
   const st = data.get();
   const editing = editId ? sectionEntries<ViolinDetail>(st, 'violin').find((s) => s.entry.id === editId) : undefined;
@@ -95,7 +97,7 @@ function ViolinLogSheet({ spec }: { spec: SheetSpec }) {
         note: editing.entry.note ?? '',
       };
     }
-    return { type: null, date: today, minutes: 30, pieces: [], scales: [], splitOn: false, split: {}, note: '' };
+    return { type: null, date: today, minutes: preset ?? 30, pieces: [], scales: [], splitOn: false, split: {}, note: '' };
   });
   const [useTimer, setUseTimer] = useState(() => !editing && (timer.get().startedAt != null || timer.get().banked > 0));
   const [error, setError] = useState<string | null>(null);
@@ -113,7 +115,7 @@ function ViolinLogSheet({ spec }: { spec: SheetSpec }) {
     const defaults: Record<SessionType, number> = { solo: 30, lesson: 45, orchestra: 90, trio: 60 };
     set({
       type,
-      minutes: editing ? d.minutes : last?.entry.minutes ?? defaults[type],
+      minutes: editing ? d.minutes : preset ?? last?.entry.minutes ?? defaults[type],
       pieces: editing ? d.pieces : type === 'solo' ? [] : last && isViolinDetail(last.detail) ? last.detail.pieces : [],
       scales: editing ? d.scales : type === 'solo' ? [] : last && isViolinDetail(last.detail) ? last.detail.scales : [],
     });

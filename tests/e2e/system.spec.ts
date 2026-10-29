@@ -74,7 +74,7 @@ test('game: Progress is one tap away on a phone, with quests and achievements', 
   await expect(page.getByText('Nothing unlocked yet.')).toBeVisible();
 });
 
-const ROUTES = ['/', '/violin', '/coding', '/sports', '/gym', '/study', '/chess', '/sleep', '/screen', '/calendar', '/tasks', '/progress', '/progress/quests', '/progress/achievements', '/settings', '/log'];
+const ROUTES = ['/', '/violin', '/coding', '/sports', '/gym', '/study', '/chess', '/sleep', '/screen', '/calendar', '/tasks', '/progress', '/progress/quests', '/progress/boss', '/progress/achievements', '/settings', '/log'];
 
 test('every screen: one h1, every control named, no sideways scroll', async ({ page }) => {
   await page.route('https://api.chess.com/**', (r) => r.fulfill({ status: 404, body: '{}' }));

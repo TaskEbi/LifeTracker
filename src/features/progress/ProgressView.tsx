@@ -5,6 +5,7 @@ import { takeRestDay, useAchievements, useProgress, useQuests, useToday } from '
 import { data } from '../../data/store';
 import { shortDay } from '../../domain/log/dates';
 import { rankFor, RANKS, RULES, sectionRankFor, STAGES, type XpSection } from '../../domain/progress/engine';
+import { BOSS_XP } from '../../domain/progress/boss';
 import { QUEST_XP, QUESTS_FROM, SWEEP_XP } from '../../domain/progress/quests';
 import { SECTIONS, sectionInfo } from '../../domain/sections';
 import { useStore } from '../../lib/createStore';
@@ -12,6 +13,8 @@ import { accent, Chips, H2, Meter, Seg } from '../../ui/i/bits';
 import { Drone } from '../../ui/i/Drone';
 import { Icon } from '../../ui/i/Icon';
 import { AchievementsPanel } from './AchievementsPanel';
+import { BossPanel } from './BossPanel';
+import { LookBack } from './LookBack';
 import { QuestCard, QuestsPanel } from './QuestsPanel';
 import './progress.css';
 
@@ -28,12 +31,14 @@ const RULE_LINES: [string, string][] = [
   ['Tasks', `${RULES.taskDone} XP per task completed`],
   ['Cabinet', `${RULES.cabinetItem} XP per item saved, up to ${RULES.cabinetPerDay} a day`],
   ['Quests', `daily ${QUEST_XP.daily}, weekly ${QUEST_XP.weekly}, monthly ${QUEST_XP.monthly} XP each; clearing all three adds ${SWEEP_XP.daily} / ${SWEEP_XP.weekly} / ${SWEEP_XP.monthly}`],
+  ['Weekly boss', `${BOSS_XP} XP for defeating the week's boss (Progress → Raid)`],
   ['Rest day', 'No XP; keeps the streak going'],
 ];
 
 const TABS = [
   { id: '', label: 'Overview', kanji: '覚' },
   { id: 'quests', label: 'Quests', kanji: '任' },
+  { id: 'boss', label: 'Raid', kanji: '討' },
   { id: 'achievements', label: 'Emblems', kanji: '紋' },
 ] as const;
 
@@ -74,7 +79,7 @@ export function ProgressView() {
           </button>
         ))}
       </nav>
-      {tab === 'quests' ? <QuestsPanel /> : tab === 'achievements' ? <AchievementsPanel /> : <Overview />}
+      {tab === 'quests' ? <QuestsPanel /> : tab === 'boss' ? <BossPanel /> : tab === 'achievements' ? <AchievementsPanel /> : <Overview />}
     </div>
   );
 }
@@ -165,6 +170,8 @@ function Overview() {
           <QuestCard key={q.key} q={q} now={q === quests.daily.quests.find((x) => !x.doneOn)} />
         ))}
       </div>
+
+      <LookBack />
 
       <H2 aside={`${p.overall.stage + 1} of ${STAGES.length} unsealed`}>Transformations</H2>
       <ol className="pg-forms" aria-label="Forms">

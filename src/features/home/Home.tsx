@@ -3,7 +3,7 @@ import { navigate } from '../../app/router';
 import { StatusBar } from '../../app/Shell';
 import { openSheet } from '../../app/sheets';
 import { toggleTask } from '../../data/ltActions';
-import { getSleepSchedule, progressInput, useAchievements, useProgress, useQuests, useSectionStreaks, useToday } from '../../data/lt';
+import { getSleepSchedule, progressInput, useAchievements, useBoss, useLookBack, useProgress, useQuests, useSectionStreaks, useToday } from '../../data/lt';
 import { data, liveItems } from '../../data/store';
 import type { SectionId } from '../../data/types';
 import { conflicts, occurrences } from '../../domain/calendar/occurrences';
@@ -13,6 +13,9 @@ import { SECTIONS, sectionInfo, SYSTEM_KANJI } from '../../domain/sections';
 import { useStore } from '../../lib/createStore';
 import { accent } from '../../ui/i/bits';
 import { Drone } from '../../ui/i/Drone';
+import { useFocus } from '../focus/focus';
+import { BossCard } from '../progress/BossPanel';
+import { Recap } from '../progress/LookBack';
 import { QuestCard } from '../progress/QuestsPanel';
 import './home.css';
 
@@ -98,6 +101,11 @@ export function Home() {
   const rows = useTodayRows(today);
   const quests = useQuests();
   const ach = useAchievements();
+  const boss = useBoss();
+  const focus = useFocus();
+  const { recap } = useLookBack(1);
+  // The recap leads the first two days of a week, like the "previously on…" before an episode.
+  const showRecap = weekdayIndex(today) <= 1 && (recap.minutes > 0 || recap.activeDays > 0);
   const [bubble, setBubble] = useState<string | null>(null);
   const [n, setN] = useState(0);
   const input = progressInput(st, today);
@@ -116,6 +124,7 @@ export function Home() {
       open ? `Next training: ${open.title.toLowerCase()} (${open.progress}/${open.goal}).` : 'All three of today’s training done!',
       `Violin this week: ${violinWeek} of ${input.targets.violinWeek} min.`,
       rows[0] ? `Coming up: ${rows[0].title} at ${rows[0].when}.` : 'Nothing planned. Clear skies.',
+      boss.defeatedOn ? `${boss.boss.name} is down. Rest easy… until Monday.` : `${boss.boss.name} has ${Math.max(0, boss.hp - boss.damage)} HP left. It hates ${sectionInfo(boss.boss.weak).name.toLowerCase()}.`,
     ];
     setBubble(lines[n % lines.length]);
     setN(n + 1);
@@ -181,6 +190,19 @@ export function Home() {
             </div>
           </section>
 
+          <button type="button" className="h-focus" onClick={() => openSheet({ type: 'focus' })}>
+            <span className="h-focus__k" aria-hidden="true">
+              集中
+            </span>
+            <span className="h-focus__t">
+              <b>{focus ? (focus.finishedAt ? 'Focus finished' : 'Focus running') : 'Focus mode'}</b>
+              <small>{focus ? (focus.finishedAt ? `${focus.minutes} min waiting to be logged` : `${sectionInfo(focus.section).name} · tap to see the timer`) : 'Start a timer, then log it in one tap'}</small>
+            </span>
+            <span className="h-focus__go" aria-hidden="true">
+              ▶
+            </span>
+          </button>
+
           <section className="h-sec" aria-label="Techniques: your sections">
             <h2 className="h-h2">
               <span aria-hidden="true">技</span> Techniques
@@ -194,6 +216,17 @@ export function Home() {
         </div>
 
         <div>
+          {showRecap && <Recap recap={recap} />}
+
+          <section className="h-sec" aria-label="Weekly boss">
+            <div className="h-h2row">
+              <h2 className="h-h2">
+                <span aria-hidden="true">討伐</span> Boss raid
+              </h2>
+            </div>
+            <BossCard fight={boss} compact />
+          </section>
+
           <section className="h-sec" aria-label="Today's training">
             <div className="h-h2row">
               <h2 className="h-h2">

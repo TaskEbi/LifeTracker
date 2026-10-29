@@ -7,7 +7,9 @@ import { createStore, useStore } from '../lib/createStore';
 import { todayIn } from '../domain/log/dates';
 import { achievements, type Achievement } from '../domain/progress/achievements';
 import { computeProgress, rewardBetween, sectionStreaks, type Progress, type ProgressInput, type Reward, type SectionStreak } from '../domain/progress/engine';
-import { questBoard, questHistory, type QuestPeriod, type QuestSet } from '../domain/progress/quests';
+import { bossHistory, currentBoss, type BossFight } from '../domain/progress/boss';
+import { dayFacts, questBoard, questHistory, type QuestPeriod, type QuestSet } from '../domain/progress/quests';
+import { heatmap, lastWeekRecap, type HeatDay, type WeekRecap } from '../domain/progress/recap';
 import { normaliseSectionTopics, normaliseSleep, normaliseTargets, normaliseTargetsLog, targetsAt, type SectionTopics, type SleepSchedule, type Targets } from '../domain/prefs';
 import { weekStart } from '../domain/log/dates';
 import { TOPIC_NAME_HINTS } from '../domain/sections';
@@ -220,7 +222,7 @@ export function useSectionStreaks(): Partial<Record<SectionId, SectionStreak>> {
 /** Achievements for a state, reusing the XP events already worked out for it. */
 function achievementsOf(st: DataState, today: string): Achievement[] {
   const input = progressInput(st, today);
-  return achievements(input, { events: progressOf(st, today).events, quests: questHistory(input) });
+  return achievements(input, { events: progressOf(st, today).events, quests: questHistory(input), bosses: bossHistory(input) });
 }
 
 export function useAchievements(): Achievement[] {
@@ -234,6 +236,31 @@ export function useQuests(): Record<QuestPeriod, QuestSet> {
   const today = useToday();
   const st = useStore(data, (s) => s);
   return useMemo(() => questBoard(progressInput(st, today)), [st, today]);
+}
+
+/** This week's boss fight. */
+export function useBoss(): BossFight {
+  const today = useToday();
+  const st = useStore(data, (s) => s);
+  return useMemo(() => currentBoss(progressInput(st, today)), [st, today]);
+}
+
+/** Every boss fight so far, oldest first. */
+export function useBossHistory(): BossFight[] {
+  const today = useToday();
+  const st = useStore(data, (s) => s);
+  return useMemo(() => bossHistory(progressInput(st, today)), [st, today]);
+}
+
+/** Last week in numbers, and the training heatmap. */
+export function useLookBack(weeks: number): { recap: WeekRecap; heat: HeatDay[][] } {
+  const today = useToday();
+  const st = useStore(data, (s) => s);
+  return useMemo(() => {
+    const input = progressInput(st, today);
+    const days = dayFacts(input);
+    return { recap: lastWeekRecap(input, questHistory(input, days), days), heat: heatmap(input, weeks, days) };
+  }, [st, today, weeks]);
 }
 
 // ─── rewards ────────────────────────────────────────────────────────────────

@@ -18,6 +18,7 @@ interface Cmd {
 }
 
 const CMDS: Cmd[] = [
+  { id: 'focus', label: 'start focus timer', hint: 'timer · then log it', sheet: 'focus', route: 'home' },
   { id: 'violin', label: 'log violin', hint: 'type · minutes · pieces', section: 'violin', sheet: 'violin', route: 'violin' },
   { id: 'gym', label: 'start gym', hint: 'follow a template', section: 'gym', route: 'gym' },
   { id: 'sleep', label: 'log sleep', hint: 'bed · wake', section: 'sleep', sheet: 'sleep', route: 'sleep' },

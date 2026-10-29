@@ -7,6 +7,7 @@
 import { addDays, weekdayIndex, weekStart } from '../log/dates';
 import type { LogDayMetric, LogEntry, LtDetail, LtNight, SectionId, Todo } from '../../data/types';
 import type { SleepSchedule, Targets } from '../prefs';
+import { bossEvents } from './boss';
 import { questEvents } from './quests';
 
 /** Where XP comes from: a section, Daily Log topics no section uses, or quests. */
@@ -308,8 +309,8 @@ export function xpForSectionLevel(level: number): number {
   return xp;
 }
 
-/** Every XP event: records first, then quests. */
-export const allXpEvents = (input: ProgressInput): XpEvent[] => [...xpEvents(input), ...questEvents(input)];
+/** Every XP event: records first, then quests and bosses. */
+export const allXpEvents = (input: ProgressInput): XpEvent[] => [...xpEvents(input), ...questEvents(input), ...bossEvents(input)];
 
 export function computeProgress(input: ProgressInput): Progress {
   const events = allXpEvents(input);
