@@ -1,0 +1,1784 @@
+/* ── Celebrations ──────────────────────────────────────────────────────────
+   Full-screen sequences (CelebrationLayer.tsx, scenes.tsx). Performance rules for iPhone Safari:
+   only transform and opacity animate; clip-paths and gradients are static; 3D comes from
+   perspective on small .fx-at anchors; the whole layer is contained and unmounted afterwards.
+   z-index 95: above sheets, toasts (70), the reward box (80) and the Emblems inspector (60). */
+
+.fx-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* while a sequence plays, nothing under it needs a live backdrop blur */
+.i-shell.is-fx .i-cmd,
+.i-shell.is-fx .fo-pill {
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+.i-shell.is-fx > .i-main,
+.i-shell.is-fx > .i-cabinet-host {
+  pointer-events: none;
+}
+/* the tilted page must not widen the page (fixed children are not clipped by this) */
+.i-shell.is-fx {
+  overflow: hidden;
+  overflow: clip;
+}
+
+.fx {
+  --fx-f: 'Dela Gothic One', 'Zen Kaku Gothic New', ui-sans-serif, sans-serif;
+  --fx-ink: #07060a;
+  position: fixed;
+  inset: 0;
+  z-index: 95;
+  contain: strict;
+  overflow: hidden;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  cursor: pointer;
+  color: #fff;
+  font-family: var(--fx-f);
+  font-weight: 400;
+  text-transform: none;
+  letter-spacing: 0;
+}
+.fx * {
+  box-sizing: border-box;
+}
+
+/* ── the two ink panels that close over the page and split apart at the end ── */
+.fx-panels {
+  position: absolute;
+  inset: 0;
+}
+.fx-half {
+  position: absolute;
+  inset: -6%;
+  background-color: color-mix(in srgb, var(--fxc) 16%, var(--fx-ink));
+  background-image: radial-gradient(color-mix(in srgb, var(--fxc) 26%, transparent) 1.1px, transparent 1.6px);
+  background-size: 7px 7px;
+  opacity: 0.86;
+  will-change: transform;
+}
+.fx-half--a {
+  clip-path: polygon(0 0, 100% 0, 100% 45%, 0 59%);
+  animation: fx-half-a 0.42s cubic-bezier(0.25, 0.8, 0.25, 1) both;
+}
+.fx-half--b {
+  clip-path: polygon(0 57%, 100% 43%, 100% 100%, 0 100%);
+  animation: fx-half-b 0.42s cubic-bezier(0.25, 0.8, 0.25, 1) 0.05s both;
+}
+@keyframes fx-half-a {
+  from {
+    transform: translate3d(-40%, -105%, 0);
+  }
+}
+@keyframes fx-half-b {
+  from {
+    transform: translate3d(40%, 105%, 0);
+  }
+}
+.fx[data-phase='out'] .fx-half--a {
+  animation: fx-half-a-out 0.5s cubic-bezier(0.6, 0, 0.8, 0.4) forwards;
+}
+.fx[data-phase='out'] .fx-half--b {
+  animation: fx-half-b-out 0.5s cubic-bezier(0.6, 0, 0.8, 0.4) forwards;
+}
+@keyframes fx-half-a-out {
+  to {
+    transform: translate3d(-30%, -110%, 0) rotate(-4deg);
+  }
+}
+@keyframes fx-half-b-out {
+  to {
+    transform: translate3d(30%, 110%, 0) rotate(-4deg);
+  }
+}
+/* the cut along the diagonal */
+.fx-slash {
+  position: absolute;
+  left: 50%;
+  top: 51%;
+  width: 160vmax;
+  height: 4px;
+  margin: -2px 0 0 -80vmax;
+  background: linear-gradient(90deg, transparent, #fff 30%, #fff 70%, transparent);
+  transform: rotate(-9deg) scaleX(0);
+  opacity: 0;
+  animation: fx-slash 0.5s ease-out 0.28s both;
+}
+@media (max-aspect-ratio: 3/4) {
+  .fx-slash {
+    transform: rotate(-17deg) scaleX(0);
+    animation-name: fx-slash-tall;
+  }
+}
+@keyframes fx-slash {
+  0% {
+    opacity: 1;
+    transform: rotate(-9deg) scaleX(0);
+  }
+  45% {
+    opacity: 1;
+    transform: rotate(-9deg) scaleX(1);
+  }
+  100% {
+    opacity: 0;
+    transform: rotate(-9deg) scaleX(1) scaleY(0.2);
+  }
+}
+@keyframes fx-slash-tall {
+  0% {
+    opacity: 1;
+    transform: rotate(-17deg) scaleX(0);
+  }
+  45% {
+    opacity: 1;
+    transform: rotate(-17deg) scaleX(1);
+  }
+  100% {
+    opacity: 0;
+    transform: rotate(-17deg) scaleX(1) scaleY(0.2);
+  }
+}
+.fx[data-phase='out'] .fx-shot {
+  animation: fx-shot-out 0.3s ease-in forwards;
+}
+@keyframes fx-shot-out {
+  to {
+    opacity: 0;
+    transform: scale(1.06);
+  }
+}
+
+/* ── one sequence: shakes on its impact (--hit, set per kind) ── */
+.fx-shot {
+  position: absolute;
+  inset: 0;
+  animation: fx-shake 0.44s linear var(--hit) both;
+}
+@keyframes fx-shake {
+  0%,
+  100% {
+    transform: none;
+  }
+  12% {
+    transform: translate3d(-10px, 7px, 0) rotate(-0.7deg);
+  }
+  26% {
+    transform: translate3d(9px, -8px, 0) rotate(0.6deg);
+  }
+  42% {
+    transform: translate3d(-7px, 5px, 0) rotate(-0.4deg);
+  }
+  58% {
+    transform: translate3d(5px, -4px, 0) rotate(0.3deg);
+  }
+  76% {
+    transform: translate3d(-2px, 2px, 0);
+  }
+}
+.fx-scene {
+  position: absolute;
+  inset: 0;
+}
+/* a 0×0 point in the middle of the stage; 3D actors hang off it */
+.fx-at {
+  position: absolute;
+  left: 50%;
+  top: 41%;
+  width: 0;
+  height: 0;
+  perspective: 900px;
+}
+.fx-glow {
+  position: absolute;
+  left: 50%;
+  top: 41%;
+  width: 640px;
+  height: 640px;
+  margin: -320px 0 0 -320px;
+  background: radial-gradient(closest-side, color-mix(in srgb, var(--tc) 55%, transparent), color-mix(in srgb, var(--tc) 14%, transparent) 55%, transparent);
+  animation: fx-glow 2.4s ease-out both;
+}
+@keyframes fx-glow {
+  0% {
+    opacity: 0;
+    transform: scale(0.4);
+  }
+  35% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 0.75;
+    transform: scale(1.1);
+  }
+}
+.fx-flash {
+  position: absolute;
+  inset: 0;
+  background: #fff;
+  opacity: 0;
+  pointer-events: none;
+  animation: fx-flash 0.42s ease-out var(--hit) both;
+}
+@keyframes fx-flash {
+  0% {
+    opacity: 0;
+  }
+  12% {
+    opacity: 0.85;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+/* caption at the bottom */
+.fx-cap {
+  position: absolute;
+  left: 16px;
+  right: 16px;
+  bottom: calc(13% + env(safe-area-inset-bottom, 0px));
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  text-align: center;
+  animation: fx-cap 0.55s cubic-bezier(0.2, 0.8, 0.25, 1.15) calc(var(--hit) + 0.12s) both;
+}
+@keyframes fx-cap {
+  from {
+    opacity: 0;
+    transform: perspective(600px) translate3d(0, 50px, 0) rotateX(-70deg);
+  }
+}
+.fx-chip {
+  display: inline-block;
+  padding: 4px 14px 3px;
+  font-family: var(--fx-f);
+  font-size: 12px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #111;
+  background: var(--tc);
+  clip-path: polygon(6% 0, 100% 0, 94% 100%, 0 100%);
+}
+.fx-title {
+  margin: 0;
+  max-width: 560px;
+  font-family: var(--fx-f);
+  font-weight: 400;
+  font-size: clamp(24px, 7.6vw, 40px);
+  line-height: 1.12;
+  letter-spacing: 0.01em;
+  color: #fff;
+  text-shadow:
+    3px 3px 0 color-mix(in srgb, var(--tc) 70%, #000),
+    6px 6px 0 rgb(0 0 0 / 0.5);
+  overflow-wrap: anywhere;
+}
+.fx-line {
+  margin: 0;
+  max-width: 420px;
+  font-family: 'Zen Kaku Gothic New', ui-sans-serif, system-ui, sans-serif;
+  font-weight: 700;
+  font-size: 14.5px;
+  line-height: 1.45;
+  color: rgb(255 255 255 / 0.82);
+}
+.fx-line b {
+  color: var(--tc);
+}
+
+/* hanko-style seal (獲得 / 討伐 / 達成): two kanji in a red square */
+.fx-seal {
+  display: inline-grid;
+  grid-auto-flow: row;
+  place-items: center;
+  width: 84px;
+  height: 84px;
+  padding: 4px;
+  font-family: var(--fx-f);
+  font-size: 30px;
+  line-height: 1;
+  color: #fff;
+  background: #d7192f;
+  border-radius: 8px;
+  box-shadow:
+    inset 0 0 0 3px #d7192f,
+    inset 0 0 0 5px #fff;
+}
+.fx-seal--ach,
+.fx-seal--boss {
+  position: absolute;
+  left: 50%;
+  top: 41%;
+  margin: -150px 0 0 62px;
+  transform: rotate(12deg);
+  animation: fx-seal-slam 0.42s cubic-bezier(0.3, 0.5, 0.3, 1.4) calc(var(--hit) + 0.35s) both;
+}
+.fx-seal--boss {
+  margin: 70px 0 0 40px;
+  width: 104px;
+  height: 104px;
+  font-size: 38px;
+  animation-delay: calc(var(--hit) + 0.3s);
+}
+@keyframes fx-seal-slam {
+  0% {
+    opacity: 0;
+    transform: scale(3) rotate(-16deg);
+  }
+  60% {
+    opacity: 1;
+    transform: scale(0.9) rotate(14deg);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) rotate(12deg);
+  }
+}
+
+/* sparks and streaks (Burst) */
+.fx-shard {
+  position: absolute;
+  width: var(--w);
+  height: var(--h);
+  margin: calc(var(--h) / -2) 0 0 calc(var(--w) / -2);
+  background: var(--sc);
+  clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%);
+  opacity: 0;
+  animation: fx-shard 0.95s cubic-bezier(0.1, 0.75, 0.25, 1) calc(var(--burst-delay, var(--hit)) + var(--d, 0ms)) both;
+}
+.fx-shard--streak {
+  clip-path: none;
+  border-radius: 2px;
+  background: linear-gradient(90deg, transparent, var(--sc) 40%, #fff);
+}
+@keyframes fx-shard {
+  0% {
+    opacity: 0;
+    transform: rotate(var(--a)) translate3d(10px, 0, 0) rotateX(0deg);
+  }
+  5% {
+    opacity: 1;
+  }
+  70% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: rotate(var(--a)) translate3d(var(--dist), 0, var(--z)) rotateX(var(--r));
+  }
+}
+
+/* shockwave rings */
+.fx-shock {
+  position: absolute;
+  width: 160px;
+  height: 160px;
+  margin: -80px 0 0 -80px;
+  border-radius: 50%;
+  border: 5px solid var(--tc);
+  opacity: 0;
+  animation: fx-shock 0.7s cubic-bezier(0.15, 0.7, 0.3, 1) var(--hit) both;
+}
+.fx-shock--floor {
+  border-width: 7px;
+  animation-name: fx-shock-floor;
+}
+.fx-shock--late {
+  border-color: #fff;
+  animation-delay: calc(var(--hit) + 0.18s);
+}
+@keyframes fx-shock {
+  0% {
+    opacity: 1;
+    transform: scale(0.4);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(3.6);
+  }
+}
+@keyframes fx-shock-floor {
+  0% {
+    opacity: 1;
+    transform: translate3d(0, 70px, 0) rotateX(76deg) scale(0.5);
+  }
+  100% {
+    opacity: 0;
+    transform: translate3d(0, 70px, 0) rotateX(76deg) scale(4.2);
+  }
+}
+
+/* ── achievement ── */
+.fx-ring {
+  position: absolute;
+  width: 300px;
+  height: 300px;
+  margin: -150px 0 0 -150px;
+  color: var(--tc);
+  opacity: 0;
+  animation: fx-ring 1.15s cubic-bezier(0.5, 0, 0.9, 0.6) var(--d) 2 both;
+}
+.fx-ring svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+.fx-ring polygon {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.4;
+}
+@keyframes fx-ring {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, 0, -1500px) rotate(0deg);
+  }
+  25% {
+    opacity: 0.9;
+  }
+  100% {
+    opacity: 0;
+    transform: translate3d(0, 0, 620px) rotate(50deg);
+  }
+}
+.fx-coin-fly {
+  position: absolute;
+  width: var(--cs);
+  height: var(--cs);
+  margin: calc(var(--cs) / -2) 0 0 calc(var(--cs) / -2);
+  transform-style: preserve-3d;
+  animation: fx-coin-in 0.95s cubic-bezier(0.25, 0.6, 0.3, 1) both;
+}
+@keyframes fx-coin-in {
+  0% {
+    transform: translate3d(0, -60px, -2600px) rotateY(0deg) rotateX(30deg);
+  }
+  80% {
+    transform: translate3d(0, 0, 110px) rotateY(1040deg) rotateX(0deg);
+  }
+  100% {
+    transform: translate3d(0, 0, 0) rotateY(1080deg) rotateX(0deg);
+  }
+}
+.fx-coin {
+  position: absolute;
+  inset: 0;
+  transform-style: preserve-3d;
+  animation: fx-coin-sway 1.7s ease-in-out var(--hit) both;
+}
+@keyframes fx-coin-sway {
+  0% {
+    transform: none;
+  }
+  30% {
+    transform: rotateY(-30deg) rotateX(10deg);
+  }
+  68% {
+    transform: rotateY(22deg) rotateX(-6deg);
+  }
+  100% {
+    transform: rotateY(-10deg) rotateX(4deg);
+  }
+}
+.fx-coin__l {
+  position: absolute;
+  inset: 0;
+}
+.fx-coin__l > svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.fx-coin__back {
+  transform: translateZ(-9px) rotateY(180deg);
+}
+.fx-coin__gloss {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  clip-path: circle(40% at 50% 50%);
+}
+.fx-coin__shine {
+  position: absolute;
+  top: -20%;
+  bottom: -20%;
+  left: 0;
+  width: 40%;
+  background: linear-gradient(100deg, transparent, rgb(255 255 255 / 0.75) 50%, transparent);
+  transform: translateX(-160%) skewX(-18deg);
+  animation: fx-shine 0.7s ease-in-out calc(var(--hit) + 0.25s) both;
+}
+@keyframes fx-shine {
+  to {
+    transform: translateX(330%) skewX(-18deg);
+  }
+}
+.fx-rays {
+  position: absolute;
+  width: 760px;
+  height: 760px;
+  margin: -380px 0 0 -380px;
+  border-radius: 50%;
+  background: repeating-conic-gradient(from 0deg, rgb(255 255 255 / 0.2) 0deg 5deg, transparent 5deg 15deg);
+  -webkit-mask-image: radial-gradient(closest-side, #000 20%, transparent);
+  mask-image: radial-gradient(closest-side, #000 20%, transparent);
+  opacity: 0;
+  animation:
+    fx-rays-in 0.5s ease-out var(--hit) both,
+    fx-rays-spin 2.6s linear both;
+}
+@keyframes fx-rays-in {
+  to {
+    opacity: 1;
+  }
+}
+@keyframes fx-rays-spin {
+  from {
+    transform: rotate(0deg) scale(0.85);
+  }
+  to {
+    transform: rotate(48deg) scale(1.05);
+  }
+}
+
+/* ── level up ── */
+.fx-at--up {
+  top: 27%;
+}
+.fx-speed {
+  position: absolute;
+  width: 820px;
+  height: 820px;
+  margin: -410px 0 0 -410px;
+  border-radius: 50%;
+  background: repeating-conic-gradient(from 3deg, color-mix(in srgb, var(--acc2) 40%, transparent) 0deg 1.6deg, transparent 1.6deg 9deg);
+  -webkit-mask-image: radial-gradient(closest-side, transparent 18%, #000 40%, transparent);
+  mask-image: radial-gradient(closest-side, transparent 18%, #000 40%, transparent);
+  animation: fx-speed 2.4s ease-out both;
+}
+@keyframes fx-speed {
+  0% {
+    opacity: 0;
+    transform: scale(0.5) rotate(0deg);
+  }
+  25% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0.7;
+    transform: scale(1.25) rotate(10deg);
+  }
+}
+.fx-streak {
+  position: absolute;
+  width: var(--w);
+  height: 3px;
+  margin: -1.5px 0 0 0;
+  transform-origin: 0 50%;
+  background: linear-gradient(90deg, transparent, #fff);
+  opacity: 0;
+  animation: fx-streak 0.7s ease-in var(--d) 3 both;
+}
+@keyframes fx-streak {
+  0% {
+    opacity: 0;
+    transform: rotate(var(--a)) translate3d(40px, 0, 0) scaleX(0.3);
+  }
+  30% {
+    opacity: 0.9;
+  }
+  100% {
+    opacity: 0;
+    transform: rotate(var(--a)) translate3d(440px, 0, 0) scaleX(1.4);
+  }
+}
+.fx-xt {
+  position: relative;
+  display: inline-block;
+  transform-style: preserve-3d;
+  white-space: nowrap;
+}
+.fx-xt__l {
+  display: block;
+}
+.fx-xt__l + .fx-xt__l,
+.fx-xt__l ~ .fx-xt__l {
+  position: absolute;
+  inset: 0;
+}
+.fx-xt__l:first-child {
+  position: relative;
+  transform: translateZ(1px);
+  color: #fff;
+  background: linear-gradient(180deg, #fff 30%, var(--acc2) 75%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.fx-xt-fly {
+  position: absolute;
+  transform-style: preserve-3d;
+  animation: fx-xt-in 0.8s cubic-bezier(0.2, 0.8, 0.3, 1.2) both;
+}
+.fx-xt-sway {
+  transform-style: preserve-3d;
+  transform: translate(-50%, -50%);
+  animation: fx-xt-sway 1.7s ease-in-out var(--hit) both;
+}
+@keyframes fx-xt-in {
+  0% {
+    transform: translate3d(0, 0, -1700px) rotateX(-85deg);
+  }
+  100% {
+    transform: none;
+  }
+}
+@keyframes fx-xt-sway {
+  0% {
+    transform: translate(-50%, -50%) rotateY(0deg);
+  }
+  35% {
+    transform: translate(-50%, -50%) rotateY(-26deg) rotateX(8deg);
+  }
+  100% {
+    transform: translate(-50%, -50%) rotateY(18deg) rotateX(-4deg);
+  }
+}
+.fx-lvl__kanji {
+  font-size: 168px;
+  line-height: 1;
+}
+.fx-lvl__word {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 46%;
+  text-align: center;
+  font-size: clamp(40px, 13vw, 64px);
+  line-height: 1;
+  letter-spacing: 0.02em;
+  perspective: 700px;
+  animation: fx-word 0.5s cubic-bezier(0.2, 0.9, 0.3, 1.2) calc(var(--hit) - 0.15s) both;
+}
+.fx-lvl__word .fx-xt {
+  transform: rotateY(-16deg) rotateX(12deg);
+}
+@keyframes fx-word {
+  from {
+    opacity: 0;
+    transform: translate3d(-110%, 0, 0) skewX(-25deg);
+  }
+}
+.fx-lvl__flapline {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 59%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 14px;
+  animation:
+    fx-pop 0.45s cubic-bezier(0.2, 0.9, 0.3, 1.3) calc(var(--hit) + 0.05s) both,
+    fx-bump 0.35s ease-out 1.65s;
+}
+@keyframes fx-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.6) translateY(30px);
+  }
+}
+@keyframes fx-bump {
+  40% {
+    transform: scale(1.12);
+  }
+}
+.fx-lvl__lv {
+  font-size: 30px;
+  color: var(--acc2);
+  transform: skewX(-10deg);
+}
+.fx-lvl__sub {
+  position: absolute;
+  left: 16px;
+  right: 16px;
+  bottom: calc(13% + env(safe-area-inset-bottom, 0px));
+  margin: 0;
+  text-align: center;
+  font-family: 'Zen Kaku Gothic New', ui-sans-serif, sans-serif;
+  font-weight: 900;
+  font-size: 14px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgb(255 255 255 / 0.8);
+  animation: fx-pop 0.4s ease-out 1.8s both;
+}
+
+/* split-flap number */
+.fx-flap {
+  position: relative;
+  display: inline-block;
+  width: var(--fw);
+  height: 1.2em;
+  font-size: 84px;
+  line-height: 1.2em;
+  perspective: 420px;
+}
+.fx-flap::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: 3px;
+  margin-top: -1.5px;
+  background: var(--fx-ink);
+}
+.fx-flap__h {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 50%;
+  overflow: hidden;
+  background: linear-gradient(#25252d, #17171d);
+  color: #fff;
+  text-align: center;
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+  box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--acc2) 55%, transparent);
+}
+.fx-flap__h > span {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 200%;
+}
+.fx-flap__h--top {
+  top: 0;
+  border-radius: 12px 12px 0 0;
+  transform-origin: 50% 100%;
+}
+.fx-flap__h--bot {
+  bottom: 0;
+  border-radius: 0 0 12px 12px;
+  transform-origin: 50% 0;
+  background: linear-gradient(#141419, #1d1d24);
+}
+.fx-flap__h--bot > span {
+  top: -100%;
+}
+.fx-flap__f1 {
+  animation: fx-flap1 0.3s ease-in 1.15s both;
+}
+.fx-flap__f2 {
+  animation: fx-flap2 0.3s cubic-bezier(0.2, 0.9, 0.3, 1.25) 1.45s both;
+}
+@keyframes fx-flap1 {
+  from {
+    transform: rotateX(0deg);
+  }
+  to {
+    transform: rotateX(-90deg);
+  }
+}
+@keyframes fx-flap2 {
+  from {
+    transform: rotateX(90deg);
+  }
+  to {
+    transform: rotateX(0deg);
+  }
+}
+
+/* ── section level: the cube ── */
+.fx-sec__wm {
+  position: absolute;
+  left: 50%;
+  top: 41%;
+  width: 600px;
+  height: 600px;
+  margin: -300px 0 0 -300px;
+  display: grid;
+  place-items: center;
+  font-style: normal;
+  font-family: var(--fx-f);
+  font-size: 440px;
+  line-height: 1;
+  color: color-mix(in srgb, var(--sc) 22%, transparent);
+  animation: fx-wm 2.5s ease-out both;
+}
+@keyframes fx-wm {
+  0% {
+    opacity: 0;
+    transform: scale(1.6) rotate(-8deg);
+  }
+  30% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0.8;
+    transform: scale(1) rotate(0deg);
+  }
+}
+.fx-sec__shadow {
+  position: absolute;
+  width: 180px;
+  height: 40px;
+  margin: 95px 0 0 -90px;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, rgb(0 0 0 / 0.6), transparent);
+  animation: fx-pop 0.5s ease-out 0.6s both;
+}
+.fx-cube-fly {
+  position: absolute;
+  width: 150px;
+  height: 150px;
+  margin: -75px 0 0 -75px;
+  transform-style: preserve-3d;
+  animation: fx-cube-in 0.8s cubic-bezier(0.25, 0.7, 0.3, 1.12) both;
+}
+@keyframes fx-cube-in {
+  0% {
+    transform: translate3d(0, -80px, -2200px);
+  }
+  100% {
+    transform: none;
+  }
+}
+.fx-cube {
+  position: absolute;
+  inset: 0;
+  transform-style: preserve-3d;
+  animation: fx-cube 2.3s cubic-bezier(0.3, 0.6, 0.3, 1) both;
+}
+@keyframes fx-cube {
+  0% {
+    transform: rotateX(-380deg) rotateY(520deg);
+  }
+  34% {
+    transform: rotateX(-14deg) rotateY(-26deg);
+  }
+  50% {
+    transform: rotateX(-14deg) rotateY(-26deg);
+  }
+  66% {
+    transform: rotateX(-12deg) rotateY(-118deg);
+  }
+  100% {
+    transform: rotateX(-10deg) rotateY(-104deg);
+  }
+}
+.fx-cube__f {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  background-color: color-mix(in srgb, var(--sc) 78%, #000);
+  background-image: radial-gradient(rgb(255 255 255 / 0.18) 1px, transparent 1.6px);
+  background-size: 6px 6px;
+  box-shadow:
+    inset 0 0 0 3px #111,
+    inset 0 0 0 6px color-mix(in srgb, var(--sc) 45%, #fff);
+  color: #fff;
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+}
+.fx-cube__f--front {
+  transform: translateZ(75px);
+  background-color: var(--sc);
+}
+.fx-cube__f--right {
+  transform: rotateY(90deg) translateZ(75px);
+  background-color: #111;
+}
+.fx-cube__f--back {
+  transform: rotateY(180deg) translateZ(75px);
+}
+.fx-cube__f--left {
+  transform: rotateY(-90deg) translateZ(75px);
+  background-color: color-mix(in srgb, var(--sc) 40%, #000);
+}
+.fx-cube__f--top {
+  transform: rotateX(90deg) translateZ(75px);
+  background-color: color-mix(in srgb, var(--sc) 60%, #fff);
+}
+.fx-cube__f--bottom {
+  transform: rotateX(-90deg) translateZ(75px);
+}
+.fx-cube__k {
+  font-weight: 400;
+  font-size: 96px;
+  line-height: 1;
+  color: #fff;
+  text-shadow:
+    3px 3px 0 #111,
+    5px 5px 0 rgb(0 0 0 / 0.35);
+}
+.fx-cube__f small {
+  font-size: 18px;
+  letter-spacing: 0.1em;
+  color: var(--sc);
+}
+.fx-cube__f--left small {
+  color: rgb(255 255 255 / 0.7);
+}
+.fx-cube__f b {
+  font-weight: 400;
+  font-size: 64px;
+  line-height: 1;
+}
+.fx-cube__f--right b {
+  color: #fff;
+  text-shadow: 3px 3px 0 var(--sc);
+}
+
+/* ── quest: card, hanko, ink ── */
+.fx-qcard-in {
+  position: absolute;
+  transform-style: preserve-3d;
+  animation: fx-card-in 0.55s cubic-bezier(0.2, 0.8, 0.3, 1.1) both;
+}
+@keyframes fx-card-in {
+  from {
+    transform: translate3d(0, 260px, -200px) rotateX(70deg);
+  }
+  to {
+    transform: rotateX(14deg);
+  }
+}
+.fx-qcard {
+  position: relative;
+  width: 290px;
+  min-height: 170px;
+  margin: -85px 0 0 -145px;
+  padding: 18px 20px 16px;
+  display: grid;
+  align-content: start;
+  gap: 8px;
+  text-align: left;
+  background: #f6f1e6;
+  color: #111;
+  clip-path: polygon(0 0, 100% 3%, 97% 100%, 2% 97%);
+  background-image: repeating-linear-gradient(0deg, transparent 0 25px, rgb(0 0 0 / 0.06) 25px 26px);
+}
+.fx-qcard small {
+  font-size: 12px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--c-quests) 60%, #000);
+}
+.fx-qcard b {
+  font-weight: 400;
+  font-size: 22px;
+  line-height: 1.2;
+  padding-right: 70px;
+  overflow-wrap: anywhere;
+}
+.fx-qcard__xp {
+  font-size: 16px;
+  color: #d7192f;
+}
+.fx-splat {
+  position: absolute;
+  right: 4px;
+  bottom: 2px;
+  width: 120px;
+  height: 110px;
+  background: radial-gradient(closest-side, rgb(215 25 47 / 0.28), rgb(215 25 47 / 0.12) 60%, transparent 72%);
+  opacity: 0;
+  animation: fx-imprint 0.3s ease-out var(--hit) both;
+}
+.fx-imprint {
+  position: absolute;
+  right: 14px;
+  bottom: 14px;
+  transform: rotate(-10deg);
+  opacity: 0;
+  animation: fx-imprint 0.28s cubic-bezier(0.2, 0.9, 0.3, 1.3) var(--hit) both;
+}
+.fx-imprint .fx-seal {
+  background: transparent;
+  color: #d7192f;
+  box-shadow:
+    inset 0 0 0 4px #d7192f,
+    inset 0 0 0 7px transparent,
+    inset 0 0 0 9px #d7192f;
+  width: 78px;
+  height: 78px;
+  font-size: 27px;
+}
+@keyframes fx-imprint {
+  from {
+    opacity: 0;
+    transform: rotate(-10deg) scale(1.3);
+  }
+  to {
+    opacity: 1;
+    transform: rotate(-10deg) scale(1);
+  }
+}
+.fx-hanko-fly {
+  position: absolute;
+  width: 104px;
+  height: 104px;
+  margin: -12px 0 0 38px;
+  transform-style: preserve-3d;
+  animation: fx-hanko 1.45s linear both;
+}
+.fx-quest--sweep .fx-hanko-fly {
+  width: 130px;
+  height: 130px;
+  margin: -65px 0 0 -65px;
+  animation-duration: 2.1s;
+  animation-name: fx-hanko-sweep;
+}
+/* comes down at the viewer's eye line, slams (the hit at 43%), lifts and leaves */
+@keyframes fx-hanko {
+  0% {
+    transform: translate3d(90px, -260px, 700px) rotateZ(-40deg) rotateX(30deg);
+    animation-timing-function: cubic-bezier(0.55, 0, 1, 0.6);
+  }
+  43% {
+    transform: translate3d(0, 0, 0) rotateZ(-10deg) rotateX(18deg);
+    animation-timing-function: ease-out;
+  }
+  50% {
+    transform: translate3d(0, 0, 18px) rotateZ(-10deg) rotateX(18deg);
+    animation-timing-function: ease-in;
+  }
+  56% {
+    transform: translate3d(0, 0, 0) rotateZ(-10deg) rotateX(18deg);
+    animation-timing-function: cubic-bezier(0.4, 0, 0.9, 0.5);
+  }
+  70% {
+    transform: translate3d(0, 0, 60px) rotateZ(-10deg) rotateX(18deg);
+  }
+  100% {
+    transform: translate3d(240px, -560px, 520px) rotateZ(20deg) rotateX(40deg);
+  }
+}
+@keyframes fx-hanko-sweep {
+  0%,
+  30% {
+    transform: translate3d(70px, -300px, 700px) rotateZ(-40deg) rotateX(30deg);
+    animation-timing-function: cubic-bezier(0.55, 0, 1, 0.6);
+  }
+  59.5% {
+    transform: translate3d(0, 0, 40px) rotateZ(-8deg) rotateX(16deg);
+    animation-timing-function: ease-out;
+  }
+  64% {
+    transform: translate3d(0, 0, 60px) rotateZ(-8deg) rotateX(16deg);
+  }
+  68% {
+    transform: translate3d(0, 0, 40px) rotateZ(-8deg) rotateX(16deg);
+    animation-timing-function: cubic-bezier(0.4, 0, 0.9, 0.5);
+  }
+  78% {
+    transform: translate3d(0, 0, 110px) rotateZ(-8deg) rotateX(16deg);
+  }
+  100% {
+    transform: translate3d(260px, -620px, 520px) rotateZ(20deg) rotateX(40deg);
+  }
+}
+.fx-hanko {
+  position: absolute;
+  inset: 0;
+  transform-style: preserve-3d;
+  transform: translateZ(26px);
+}
+.fx-hanko__f {
+  position: absolute;
+  display: grid;
+  place-items: center;
+}
+.fx-hanko__top {
+  inset: 0;
+  transform: translateZ(26px);
+  background: linear-gradient(135deg, #8b2d1c, #5a1a10);
+  border-radius: 10px;
+  box-shadow: inset 0 0 0 3px #e7b04a;
+}
+.fx-seal--top {
+  background: transparent;
+  color: #f2c65e;
+  box-shadow: none;
+  width: 80%;
+  height: 80%;
+  font-size: 28px;
+}
+.fx-quest--sweep .fx-seal--top {
+  font-size: 36px;
+}
+.fx-hanko__s1,
+.fx-hanko__s2 {
+  left: 0;
+  right: 0;
+  height: 52px;
+  top: 50%;
+  margin-top: -26px;
+  background: linear-gradient(#6d2214, #3d0f08);
+}
+.fx-hanko__s1 {
+  transform: rotateX(-90deg) translateZ(52px);
+}
+.fx-hanko__s2 {
+  transform: rotateX(90deg) translateZ(52px);
+}
+.fx-hanko__s3,
+.fx-hanko__s4 {
+  top: 0;
+  bottom: 0;
+  width: 52px;
+  left: 50%;
+  margin-left: -26px;
+  background: linear-gradient(90deg, #4a130b, #7a2717);
+}
+.fx-hanko__s3 {
+  transform: rotateY(90deg) translateZ(52px);
+}
+.fx-hanko__s4 {
+  transform: rotateY(-90deg) translateZ(52px);
+}
+.fx-quest--sweep .fx-hanko__s1 {
+  transform: rotateX(-90deg) translateZ(65px);
+}
+.fx-quest--sweep .fx-hanko__s2 {
+  transform: rotateX(90deg) translateZ(65px);
+}
+.fx-quest--sweep .fx-hanko__s3 {
+  transform: rotateY(90deg) translateZ(65px);
+}
+.fx-quest--sweep .fx-hanko__s4 {
+  transform: rotateY(-90deg) translateZ(65px);
+}
+.fx-ink {
+  position: absolute;
+  width: var(--s);
+  height: var(--s);
+  margin: calc(var(--s) / -2) 0 0 calc(var(--s) / -2);
+  border-radius: 50% 46% 54% 50%;
+  background: #d7192f;
+  opacity: 0;
+  animation: fx-ink 0.6s cubic-bezier(0.1, 0.8, 0.3, 1) calc(var(--hit) + var(--d)) both;
+}
+@keyframes fx-ink {
+  0% {
+    opacity: 0;
+    transform: rotate(var(--a)) translate3d(30px, 0, 0) scale(0.4);
+  }
+  2% {
+    opacity: 1;
+  }
+  60% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: rotate(var(--a)) translate3d(var(--dist), 0, 0) scale(1);
+  }
+}
+/* sweep: three cards fan out in 3D, then one big stamp */
+.fx-fan {
+  position: absolute;
+  transform-style: preserve-3d;
+  animation: fx-fan 0.6s cubic-bezier(0.2, 0.8, 0.3, 1.15) var(--d) both;
+}
+@keyframes fx-fan {
+  from {
+    transform: translate3d(0, 380px, -300px) rotateX(70deg) rotateZ(0deg);
+  }
+  to {
+    transform: translate3d(var(--x), var(--y), var(--z)) rotateZ(var(--rz)) rotateY(var(--ry));
+  }
+}
+.fx-qcard--sm {
+  width: 150px;
+  min-height: 200px;
+  margin: -100px 0 0 -75px;
+  padding: 14px 12px;
+}
+.fx-qcard--sm b {
+  font-size: 16px;
+  padding-right: 0;
+}
+.fx-qcard__ok {
+  position: absolute;
+  right: 10px;
+  bottom: 8px;
+  font-style: normal;
+  font-size: 30px;
+  color: color-mix(in srgb, var(--c-quests) 70%, #000);
+}
+.fx-imprint--sweep {
+  position: absolute;
+  right: auto;
+  bottom: auto;
+  left: 0;
+  top: 0;
+  margin: -62px 0 0 -62px;
+  transform: translateZ(40px) rotate(-8deg);
+  animation-name: fx-imprint-sweep;
+}
+.fx-imprint--sweep .fx-seal {
+  width: 124px;
+  height: 124px;
+  font-size: 44px;
+  background: rgb(246 241 230 / 0.6);
+}
+@keyframes fx-imprint-sweep {
+  from {
+    opacity: 0;
+    transform: translateZ(40px) rotate(-8deg) scale(1.3);
+  }
+  to {
+    opacity: 1;
+    transform: translateZ(40px) rotate(-8deg) scale(1);
+  }
+}
+
+/* ── boss: the panel and its shards ── */
+.fx-panel {
+  position: absolute;
+  transform-style: preserve-3d;
+  animation:
+    fx-panel-in 0.4s cubic-bezier(0.2, 0.8, 0.3, 1.1) both,
+    fx-rattle 0.5s linear 0.38s both;
+}
+@keyframes fx-panel-in {
+  from {
+    transform: translate3d(0, 0, -900px) rotateX(-30deg);
+  }
+}
+@keyframes fx-rattle {
+  0%,
+  100% {
+    transform: none;
+  }
+  20% {
+    transform: translate3d(-6px, 2px, 0) rotate(-1deg);
+  }
+  40% {
+    transform: translate3d(6px, -3px, 0) rotate(1.2deg);
+  }
+  60% {
+    transform: translate3d(-5px, 3px, 0) rotate(-0.8deg);
+  }
+  80% {
+    transform: translate3d(4px, -2px, 0) rotate(0.6deg);
+  }
+}
+.fx-tri {
+  position: absolute;
+  overflow: hidden;
+  will-change: transform, opacity;
+  animation: fx-tri 1.2s cubic-bezier(0.15, 0.6, 0.35, 1) calc(var(--hit) + var(--d)) both;
+}
+.fx-tri__in {
+  position: absolute;
+}
+@keyframes fx-tri {
+  0% {
+    opacity: 1;
+    transform: none;
+  }
+  55% {
+    opacity: 1;
+    transform: translate3d(calc(var(--x) * 0.62), calc(var(--y) * 0.62 - 30px), calc(var(--z) * 0.62)) rotate3d(var(--ax), var(--ay), 0.3, calc(var(--r) * 0.6));
+  }
+  100% {
+    opacity: 0;
+    transform: translate3d(var(--x), calc(var(--y) + 140px), var(--z)) rotate3d(var(--ax), var(--ay), 0.3, var(--r));
+  }
+}
+.fx-bp {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 50% 42%, color-mix(in srgb, var(--bc2) 55%, transparent), transparent 60%),
+    linear-gradient(160deg, var(--bc), color-mix(in srgb, var(--bc) 40%, #000));
+  box-shadow:
+    inset 0 0 0 4px #111,
+    inset 0 0 0 7px var(--bc2);
+}
+.fx-bp__k {
+  position: absolute;
+  inset: -10px -20px auto auto;
+  font-family: var(--fx-f);
+  font-size: 190px;
+  line-height: 1;
+  color: rgb(0 0 0 / 0.25);
+}
+.fx-bp__art {
+  position: absolute;
+  left: 30px;
+  right: 30px;
+  top: 26px;
+}
+.fx-bp__art svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+.fx-bp__name {
+  position: absolute;
+  left: 14px;
+  right: 14px;
+  bottom: 18px;
+  padding: 6px 0 5px;
+  text-align: center;
+  font-family: var(--fx-f);
+  font-size: 20px;
+  color: #fff;
+  background: #111;
+  clip-path: polygon(3% 0, 100% 0, 97% 100%, 0 100%);
+}
+.fx-cracks {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  opacity: 0;
+  animation: fx-cracks 1.05s linear both;
+}
+.fx-cracks path {
+  fill: none;
+  stroke: #fff;
+  stroke-width: 2.2;
+  stroke-linejoin: bevel;
+}
+@keyframes fx-cracks {
+  0%,
+  70% {
+    opacity: 0;
+  }
+  80% {
+    opacity: 1;
+  }
+  94% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+.fx-cut {
+  position: absolute;
+  left: -30%;
+  width: 160%;
+  height: 7px;
+  margin-top: -3.5px;
+  background: linear-gradient(90deg, transparent, #fff 20%, #fff 80%, transparent);
+  transform-origin: 0 50%;
+  opacity: 0;
+}
+.fx-cut--1 {
+  top: 38%;
+  transform: rotate(24deg) scaleX(0);
+  animation: fx-cut1 0.3s ease-out 0.62s both;
+}
+.fx-cut--2 {
+  top: 62%;
+  transform: rotate(-20deg) scaleX(0);
+  animation: fx-cut2 0.3s ease-out 0.8s both;
+}
+@keyframes fx-cut1 {
+  0% {
+    opacity: 1;
+    transform: rotate(24deg) scaleX(0);
+  }
+  50% {
+    opacity: 1;
+    transform: rotate(24deg) scaleX(1);
+  }
+  100% {
+    opacity: 0;
+    transform: rotate(24deg) scaleX(1) scaleY(0.3);
+  }
+}
+@keyframes fx-cut2 {
+  0% {
+    opacity: 1;
+    transform: rotate(-20deg) scaleX(0);
+  }
+  50% {
+    opacity: 1;
+    transform: rotate(-20deg) scaleX(1);
+  }
+  100% {
+    opacity: 0;
+    transform: rotate(-20deg) scaleX(1) scaleY(0.3);
+  }
+}
+
+/* the mask's own idle motion would repaint every shard each frame */
+.fx .b-art__body,
+.fx .b-art__aura,
+.fx .b-art__eyes {
+  animation: none !important;
+}
+/* what's left of it: the mask, eyes crossed out, dropping back */
+.fx-boss__down {
+  position: absolute;
+  width: 150px;
+  height: 150px;
+  margin: -95px 0 0 -75px;
+  opacity: 0;
+  animation: fx-boss-down 1.3s cubic-bezier(0.2, 0.8, 0.3, 1) calc(var(--hit) + 0.2s) both;
+}
+.fx-boss__down svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+@keyframes fx-boss-down {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, 0, 300px) rotate(-20deg);
+  }
+  25% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0.9;
+    transform: translate3d(0, 24px, -120px) rotate(14deg);
+  }
+}
+
+/* ── evolve: orbit, pillar, the new form ── */
+.fx-evo__pillar {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  bottom: 0;
+  width: 150px;
+  margin-left: -75px;
+  background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--ec2) 60%, transparent) 30%, #fff 50%, color-mix(in srgb, var(--ec2) 60%, transparent) 70%, transparent);
+  transform-origin: 50% 100%;
+  opacity: 0;
+  animation: fx-pillar 1.3s cubic-bezier(0.3, 0.6, 0.3, 1) 0.55s both;
+}
+@keyframes fx-pillar {
+  0% {
+    opacity: 0.9;
+    transform: scaleY(0) scaleX(0.4);
+  }
+  40% {
+    opacity: 1;
+    transform: scaleY(1) scaleX(0.6);
+  }
+  52% {
+    opacity: 1;
+    transform: scaleY(1) scaleX(2.6);
+  }
+  100% {
+    opacity: 0;
+    transform: scaleY(1) scaleX(0.2);
+  }
+}
+.fx-evo__kanji {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 13%;
+  text-align: center;
+  font-family: var(--fx-f);
+  font-size: clamp(64px, 22vw, 120px);
+  line-height: 1;
+  color: color-mix(in srgb, var(--ec2) 32%, transparent);
+  animation: fx-evo-k 0.6s cubic-bezier(0.2, 0.9, 0.3, 1.2) calc(var(--hit) + 0.05s) both;
+}
+@keyframes fx-evo-k {
+  from {
+    opacity: 0;
+    transform: scale(2.2);
+  }
+}
+.fx-orbit {
+  position: absolute;
+  transform-style: preserve-3d;
+  animation: fx-orbit 2.8s cubic-bezier(0.3, 0.5, 0.4, 1) both;
+}
+@keyframes fx-orbit {
+  0% {
+    transform: scale(0.2) rotateY(0deg);
+  }
+  20% {
+    transform: scale(1) rotateY(50deg);
+  }
+  100% {
+    transform: scale(1) rotateY(220deg);
+  }
+}
+.fx-orbit__tilt {
+  position: absolute;
+  transform-style: preserve-3d;
+}
+.fx-orbit__ring {
+  position: absolute;
+  width: var(--s);
+  height: var(--s);
+  margin: calc(var(--s) / -2) 0 0 calc(var(--s) / -2);
+  border-radius: 50%;
+  border: 3px solid var(--ec2);
+  border-top-color: transparent;
+  border-left-color: color-mix(in srgb, var(--ec2) 40%, transparent);
+  animation: fx-spin var(--dur) linear infinite;
+}
+.fx-orbit__ring b {
+  position: absolute;
+  left: 50%;
+  bottom: -8px;
+  width: 13px;
+  height: 13px;
+  margin-left: -6.5px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 0 0 3px var(--ec);
+}
+@keyframes fx-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+/* the drones always face the viewer as the orbit turns */
+.fx-orbit__bb {
+  position: absolute;
+  width: 250px;
+  height: 250px;
+  margin: -125px 0 0 -125px;
+  animation: fx-orbit-bb 2.8s cubic-bezier(0.3, 0.5, 0.4, 1) both;
+}
+@keyframes fx-orbit-bb {
+  0% {
+    transform: rotateY(0deg);
+  }
+  20% {
+    transform: rotateY(-50deg);
+  }
+  100% {
+    transform: rotateY(-220deg);
+  }
+}
+.fx-orbit__bb svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+.fx-evo__old,
+.fx-evo__new {
+  position: absolute;
+  inset: 0;
+}
+.fx-evo__old {
+  animation:
+    fx-quiver 0.6s linear 0.45s both,
+    fx-out 0.12s linear var(--hit) forwards;
+}
+@keyframes fx-quiver {
+  0%,
+  100% {
+    transform: none;
+  }
+  20% {
+    transform: translate3d(-3px, 1px, 0);
+  }
+  40% {
+    transform: translate3d(3px, -2px, 0);
+  }
+  60% {
+    transform: translate3d(-3px, 2px, 0) scale(1.03);
+  }
+  80% {
+    transform: translate3d(2px, -1px, 0) scale(1.05);
+  }
+}
+@keyframes fx-out {
+  to {
+    opacity: 0;
+  }
+}
+.fx-evo__new {
+  opacity: 0;
+  animation: fx-evo-new 0.6s cubic-bezier(0.2, 0.9, 0.3, 1.3) var(--hit) both;
+}
+@keyframes fx-evo-new {
+  0% {
+    opacity: 0;
+    transform: scale(0.35);
+  }
+  30% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1.12);
+  }
+}
+.fx-mote {
+  position: absolute;
+  width: var(--s);
+  height: var(--s);
+  margin-left: var(--x);
+  border-radius: 50%;
+  background: var(--ec2);
+  opacity: 0;
+  animation: fx-mote 1.2s ease-out var(--d) 2 both;
+}
+@keyframes fx-mote {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, 150px, 0);
+  }
+  30% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translate3d(0, -170px, 0);
+  }
+}
+
+/* ── HUD ── */
+.fx-hud {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: calc(env(safe-area-inset-top, 0px) + 10px) 12px 0 16px;
+  font-family: 'Zen Kaku Gothic New', ui-sans-serif, system-ui, sans-serif;
+  cursor: default;
+}
+.fx-hud__l {
+  flex: 1;
+  min-width: 0;
+}
+.fx-preview,
+.fx-count {
+  display: inline-block;
+  padding: 5px 10px;
+  font-weight: 900;
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #111;
+  background: #fff;
+  clip-path: polygon(5% 0, 100% 0, 95% 100%, 0 100%);
+}
+.fx-count {
+  background: rgb(255 255 255 / 0.16);
+  color: #fff;
+  font-family: 'M PLUS 1 Code', ui-monospace, monospace;
+}
+.fx-btn {
+  min-height: 44px;
+  min-width: 64px;
+  padding: 0 16px;
+  border: 0;
+  font-family: 'Zen Kaku Gothic New', ui-sans-serif, system-ui, sans-serif;
+  font-weight: 900;
+  font-size: 13px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #111;
+  background: #fff;
+  clip-path: polygon(8% 0, 100% 0, 92% 100%, 0 100%);
+  cursor: pointer;
+}
+.fx-btn--ghost {
+  color: #fff;
+  background: rgb(255 255 255 / 0.16);
+}
+.fx-btn:focus-visible {
+  outline: 3px solid var(--fxc);
+  outline-offset: -6px;
+}
+.fx-tap {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 18px);
+  margin: 0;
+  text-align: center;
+  font-family: 'Zen Kaku Gothic New', ui-sans-serif, sans-serif;
+  font-weight: 700;
+  font-size: 12px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgb(255 255 255 / 0.55);
+  animation: fx-pop 0.4s ease-out 1.4s both;
+}
+
+/* ── calm: same information, a cross-faded card, no 3D ── */
+.fx-dim {
+  position: absolute;
+  inset: 0;
+  background: rgb(7 6 10 / 0.9);
+}
+.fx--calm .fx-shot {
+  animation: none;
+  display: grid;
+  place-items: center;
+  padding: 0 16px;
+}
+.fx-calm {
+  width: min(360px, 100%);
+  display: grid;
+  justify-items: center;
+  gap: 10px;
+  padding: 24px 18px 22px;
+  text-align: center;
+  background: #121217;
+  border-top: 4px solid var(--tc);
+  box-shadow: 0 0 0 1px rgb(255 255 255 / 0.1);
+}
+.fx-calm__art {
+  min-height: 96px;
+  display: grid;
+  place-items: center;
+}
+.fx-calm__art svg {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+.fx-calm__k {
+  font-family: var(--fx-f);
+  font-size: 80px;
+  line-height: 1;
+  color: var(--tc);
+}
+.fx-calm .fx-title {
+  font-size: 28px;
+}
+.fx-seal--calm {
+  width: 84px;
+  height: 84px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .fx * {
+    animation: none !important;
+  }
+}

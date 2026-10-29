@@ -165,6 +165,8 @@ const fromNoon = (t: string) => (toMin(t) + 12 * 60) % (24 * 60);
 export const scheduleFor = (date: string, s: SleepSchedule) => (weekdayIndex(date) >= 5 ? s.weekend : s.weekday);
 /** Minutes between the bedtime and the plan's bedtime for that night (positive = later). */
 export const bedDelta = (night: { date: string; bed: string }, s: SleepSchedule) => fromNoon(night.bed) - fromNoon(scheduleFor(night.date, s).bed);
+/** Minutes between the wake time and the plan's wake that morning (positive = later). */
+export const wakeDelta = (night: { date: string; wake: string }, s: SleepSchedule) => toMin(night.wake) - toMin(scheduleFor(night.date, s).wake);
 
 export function sectionOf(e: LogEntry, input: Pick<ProgressInput, 'topicSection' | 'details'>): XpSection {
   const d = input.details.get(e.id);

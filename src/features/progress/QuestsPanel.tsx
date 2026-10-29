@@ -4,7 +4,7 @@ import { addDays, monthEnd, shortDay, weekdayIndex } from '../../domain/log/date
 import { SWEEP_XP, type Quest, type QuestPeriod, type QuestSet } from '../../domain/progress/quests';
 import { sectionInfo } from '../../domain/sections';
 
-const fmt = (q: Quest, n: number) => (q.unit === 'min' && q.goal >= 120 ? `${Math.floor(n / 60)}h${n % 60 ? ` ${n % 60}m` : ''}` : `${n}${q.unit === 'min' ? ' min' : ''}`);
+const fmt = (q: Quest, n: number) => (q.unit === 'min' && q.goal >= 120 ? `${Math.floor(n / 60)}h${n % 60 ? ` ${n % 60}m` : ''}` : `${q.unit === 'km' ? Math.round(n * 10) / 10 : n}${q.unit === 'min' ? ' min' : q.unit === 'km' ? ' km' : ''}`);
 
 /** One quest as a slanted training bar: state, what to do, how far along, what it pays. */
 export function QuestCard({ q, now }: { q: Quest; now?: boolean }) {

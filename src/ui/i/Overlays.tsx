@@ -5,6 +5,7 @@ import { STAGES } from '../../domain/progress/engine';
 import { sectionInfo } from '../../domain/sections';
 import { useStore } from '../../lib/createStore';
 import { Drone } from './Drone';
+import { useCelebrating } from './fx/celebrate';
 
 /** Toasts from anywhere (saves, undo). Announced politely to screen readers. */
 export function Toasts() {
@@ -38,15 +39,17 @@ export function RewardOverlay() {
   const r = useStore(rewardStore, (s) => s.reward);
   const stage = useProgress().overall.stage;
   const ok = useRef<HTMLButtonElement>(null);
+  // Celebrations (a quest, an achievement, a level…) play first; the box follows them.
+  const waiting = useCelebrating();
   const close = () => rewardStore.set({ reward: null });
   useEffect(() => {
-    if (!r) return;
+    if (!r || waiting) return;
     ok.current?.focus();
     const onKey = (e: KeyboardEvent) => e.key === 'Escape' && close();
     document.addEventListener('keydown', onKey);
     return () => document.removeEventListener('keydown', onKey);
-  }, [r]);
-  if (!r) return null;
+  }, [r, waiting]);
+  if (!r || waiting) return null;
   return (
     <div className="i-reward" role="dialog" aria-modal="true" aria-label="What you earned">
       <div className="i-reward__box">

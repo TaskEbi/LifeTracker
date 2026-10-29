@@ -180,10 +180,17 @@ export function bossFight(input: ProgressInput, monday: string, days = dayFacts(
   return { start: monday, end: addDays(monday, 6), boss, hp, damage, hits: hits.reverse(), defeatedOn, key: `boss:${monday}` };
 }
 
-/** Every week's fight from BOSS_FROM to this week, oldest first. */
-export function bossHistory(input: ProgressInput, days = dayFacts(input)): BossFight[] {
-  const out: BossFight[] = [];
-  for (let w = BOSS_FROM; w <= input.today; w = addDays(w, 7)) out.push(bossFight(input, w, days));
+const historyMemo = new WeakMap<ProgressInput, BossFight[]>();
+
+/** Every week's fight from BOSS_FROM to this week, oldest first. Worked out once per input. */
+export function bossHistory(input: ProgressInput, days?: Map<string, Facts>): BossFight[] {
+  let out = historyMemo.get(input);
+  if (!out) {
+    const facts = days ?? dayFacts(input);
+    out = [];
+    for (let w = BOSS_FROM; w <= input.today; w = addDays(w, 7)) out.push(bossFight(input, w, facts));
+    historyMemo.set(input, out);
+  }
   return out;
 }
 

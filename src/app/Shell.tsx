@@ -7,6 +7,7 @@ import { useStore } from '../lib/createStore';
 import { accent } from '../ui/i/bits';
 import { Icon } from '../ui/i/Icon';
 import { RewardOverlay, Toasts } from '../ui/i/Overlays';
+import { CelebrationLayer } from '../ui/i/fx/CelebrationLayer';
 import { navigate, useRoute, useRouteDir, type RouteName } from './router';
 import { openSheet } from './sheets';
 import { SheetHost } from './SheetHost';
@@ -225,6 +226,7 @@ export function Shell() {
       <SheetHost />
       <Toasts />
       <RewardOverlay />
+      <CelebrationLayer />
     </div>
   );
 }

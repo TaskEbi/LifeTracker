@@ -11,6 +11,7 @@ import { sectionInfo } from '../../domain/sections';
 import { supabase, syncOffReason } from '../../lib/supabase';
 import { useStore } from '../../lib/createStore';
 import { accent, H2, Source } from '../../ui/i/bits';
+import { Celebrations } from './Celebrations';
 
 function Account() {
   const mode = useStore(data, (s) => s.mode);
@@ -226,6 +227,9 @@ export function SettingsView() {
       <p className="i-note" style={{ marginTop: 8 }}>
         Home and the shared pages (calendar, tasks, progress, activity, settings) use this theme. Each section has its own look; the Cabinet follows the appearance chosen in Curio Cabinet.
       </p>
+
+      <H2 aside="this device">Celebrations</H2>
+      <Celebrations />
 
       <H2>Sections and Daily Log topics</H2>
       <Mapping />
