@@ -1,6 +1,6 @@
 # LifeTracker overview
 
-A phone-first tracker for violin, competitive coding, sports, gym, school studies, chess, sleep and screen time, plus the Cabinet (Curio Cabinet's collection), a shared calendar and shared tasks. Progress is shown as one character (a drone, ten forms) with an overall level and rank, section levels, streaks, daily/weekly/monthly quests and achievements. Visual design: Home and the shared pages use the "Shōnen battle" look with a choice of colour themes; each section is its own designed space (`src/features/<section>/theme.css`), and the Cabinet keeps Curio Cabinet's own look.
+A phone-first tracker for violin, competitive coding, sports, gym, school studies, chess, sleep and screen time, plus the Cabinet (Curio Cabinet's collection), a shared calendar, shared tasks and a bucket list. Progress is shown as one character (a drone, ten forms) with an overall level and rank, section levels, streaks, daily/weekly/monthly quests and achievements. Visual design: Home and the shared pages use the "Shōnen battle" look with a choice of colour themes; each section is its own designed space (`src/features/<section>/theme.css`), and the Cabinet keeps Curio Cabinet's own look.
 
 ## How it fits with the other apps
 

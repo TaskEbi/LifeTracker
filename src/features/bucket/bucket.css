@@ -1,0 +1,361 @@
+/* ── Bucket list (BucketView.tsx): quick add, the list, crossing off ── */
+
+.bk {
+  --bk: var(--acc2);
+}
+
+/* progress: a slanted bar and the count */
+.bk-meter {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 4px 2px 12px;
+}
+.bk-meter__bar {
+  position: relative;
+  flex: 1;
+  height: 12px;
+  overflow: hidden;
+  background: var(--surf-3);
+  transform: skewX(var(--slant));
+}
+.bk-meter__bar i {
+  position: absolute;
+  inset: 0;
+  width: var(--p);
+  background: linear-gradient(90deg, var(--sig), var(--bk));
+  transition: width 0.6s cubic-bezier(0.2, 0.8, 0.3, 1);
+}
+.bk-meter__n {
+  font-family: var(--f-mono);
+  font-size: 12px;
+  color: var(--fg-3);
+  white-space: nowrap;
+}
+.bk-meter__n b {
+  font-family: var(--f-label);
+  font-weight: var(--w-label);
+  font-size: 18px;
+  color: var(--bk);
+}
+
+/* quick add: one line, Enter adds and keeps the keyboard up */
+.bk-add {
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 6px 6px 10px;
+  background: var(--surf);
+  box-shadow:
+    0 0 0 2px var(--bk),
+    4px 4px 0 var(--rule);
+  border-radius: var(--r-3);
+}
+.bk-add:focus-within {
+  box-shadow:
+    0 0 0 3px var(--bk),
+    4px 4px 0 var(--sig);
+}
+.bk-add__k {
+  font-family: var(--f-label);
+  font-weight: var(--w-label);
+  font-size: 22px;
+  line-height: 1;
+  color: var(--bk);
+  text-align: center;
+}
+.bk-add__in {
+  min-width: 0;
+  min-height: 44px;
+  padding: 0 4px;
+  font: inherit;
+  font-size: 16px; /* 16px stops iOS zooming in on focus */
+  color: var(--fg);
+  background: transparent;
+  border: 0;
+  outline: 0;
+}
+.bk-add__in::placeholder {
+  color: var(--fg-3);
+}
+.bk-add__btn {
+  min-width: 46px;
+  min-height: 44px;
+  padding: 0 10px;
+}
+
+.bk-pick {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  margin: 12px 2px 0;
+  padding: 0 14px;
+  font-family: var(--f-body);
+  font-weight: 900;
+  font-size: 13px;
+  letter-spacing: 0.06em;
+  color: var(--fg-2);
+  background: var(--surf);
+  box-shadow: 0 0 0 1px var(--rule);
+  border-radius: var(--r-3);
+}
+.bk-pick span {
+  font-family: var(--f-label);
+  font-weight: var(--w-label);
+  font-size: 17px;
+  color: var(--bk);
+}
+.bk-pick:disabled {
+  opacity: 0.7;
+}
+
+/* ─── the list ─── */
+.bk-list {
+  display: grid;
+  gap: 6px;
+  margin: 12px 0 0;
+  padding: 0;
+  list-style: none;
+}
+.bk-row {
+  position: relative;
+  display: grid;
+  grid-template-columns: 52px minmax(0, 1fr);
+  align-items: center;
+  min-height: 56px;
+  overflow: hidden;
+  background: var(--surf);
+  box-shadow: 0 0 0 1px var(--rule);
+  border-radius: var(--r-3);
+  transition:
+    box-shadow 0.15s,
+    transform 0.15s;
+}
+.bk-row__t {
+  display: grid;
+  gap: 2px;
+  min-height: 56px;
+  padding: 9px 14px 9px 2px;
+  text-align: left;
+  align-content: center;
+}
+.bk-row__t b {
+  font-weight: 700;
+  font-size: 15.5px;
+  line-height: 1.3;
+  color: var(--fg);
+  overflow-wrap: anywhere;
+}
+.bk-row__t small {
+  font-size: 12.5px;
+  line-height: 1.35;
+  color: var(--fg-3);
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+}
+
+/* the check: a diamond that fills and ticks */
+.bk-ck {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 56px;
+}
+.bk-ck::before {
+  content: '';
+  position: absolute;
+  width: 22px;
+  height: 22px;
+  transform: rotate(45deg);
+  box-shadow: inset 0 0 0 2.5px var(--bk);
+  transition:
+    transform 0.15s,
+    background 0.15s;
+}
+.bk-ck svg {
+  position: relative;
+  width: 20px;
+  height: 20px;
+  fill: none;
+  stroke: var(--acc2-fg);
+  stroke-width: 3.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 22;
+  stroke-dashoffset: 22;
+}
+.bk-ck:active::before {
+  transform: rotate(45deg) scale(0.85);
+}
+.bk-ck.is-done::before {
+  background: var(--bk);
+}
+.bk-ck.is-done svg {
+  stroke-dashoffset: 0;
+}
+
+/* crossing off: the diamond fills, the tick draws, a brush stroke strikes the line, 叶 lands */
+.bk-row.is-crossing .bk-ck::before {
+  animation: bk-fill 0.2s ease-out both;
+}
+.bk-row.is-crossing .bk-ck svg {
+  animation: bk-tick 0.2s ease-out 0.1s both;
+}
+.bk-row::after {
+  content: '';
+  position: absolute;
+  left: 50px;
+  right: 12px;
+  top: 50%;
+  height: 4px;
+  margin-top: -2px;
+  border-radius: 2px;
+  background: var(--sig);
+  transform: scaleX(0);
+  transform-origin: 0 50%;
+  pointer-events: none;
+}
+.bk-row.is-crossing::after {
+  animation: bk-strike 0.24s cubic-bezier(0.3, 0.7, 0.3, 1) 0.14s both;
+}
+.bk-row.is-crossing .bk-row__t {
+  animation: bk-fade 0.3s ease-out 0.2s both;
+}
+.bk-row__stamp {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  margin-top: -20px;
+  font-family: var(--f-label);
+  font-weight: var(--w-label);
+  font-size: 22px;
+  color: var(--sig);
+  box-shadow: inset 0 0 0 3px var(--sig);
+  border-radius: 6px;
+  opacity: 0;
+  pointer-events: none;
+}
+.bk-row.is-crossing .bk-row__stamp {
+  animation: bk-stamp 0.26s cubic-bezier(0.2, 0.9, 0.3, 1.4) 0.22s both;
+}
+@keyframes bk-fill {
+  50% {
+    transform: rotate(45deg) scale(1.25);
+  }
+  to {
+    background: var(--bk);
+    transform: rotate(45deg) scale(1);
+  }
+}
+@keyframes bk-tick {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+@keyframes bk-strike {
+  to {
+    transform: scaleX(1);
+  }
+}
+@keyframes bk-fade {
+  to {
+    opacity: 0.45;
+  }
+}
+@keyframes bk-stamp {
+  from {
+    opacity: 0;
+    transform: scale(2.4) rotate(-20deg);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) rotate(-8deg);
+  }
+}
+
+/* "pick one for me": the roulette light, then the one it lands on */
+.bk-row.is-rolling {
+  box-shadow: 0 0 0 2px var(--bk);
+}
+.bk-row.is-picked {
+  box-shadow:
+    0 0 0 3px var(--bk),
+    5px 5px 0 var(--sig);
+  animation: bk-picked 0.5s cubic-bezier(0.2, 0.9, 0.3, 1.3);
+}
+@keyframes bk-picked {
+  40% {
+    transform: scale(1.03) rotate(-0.6deg);
+  }
+}
+
+/* done */
+.bk-done {
+  margin-top: 18px;
+}
+.bk-done__h {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 2px;
+  font-family: var(--f-label);
+  font-weight: var(--w-label);
+  text-transform: var(--tt-label);
+  font-size: 14px;
+  letter-spacing: 0.04em;
+  color: var(--fg-2);
+}
+.bk-done__h span {
+  color: var(--bk);
+  font-size: 18px;
+}
+.bk-done__h svg {
+  transition: transform 0.15s;
+}
+.bk-done__h[aria-expanded='true'] svg {
+  transform: rotate(90deg);
+}
+.bk-list--done {
+  margin-top: 4px;
+}
+.bk-row.is-done .bk-row__t b {
+  color: var(--fg-2);
+  text-decoration: line-through;
+  text-decoration-color: color-mix(in srgb, var(--sig) 70%, transparent);
+  text-decoration-thickness: 2px;
+}
+
+.bk-empty {
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+  margin-top: 12px;
+  text-align: center;
+}
+.bk-empty__k {
+  font-family: var(--f-label);
+  font-weight: var(--w-label);
+  font-size: 40px;
+  line-height: 1;
+  color: var(--bk);
+  opacity: 0.6;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bk-row,
+  .bk-row.is-picked,
+  .bk-meter__bar i {
+    animation: none;
+    transition: none;
+  }
+}

@@ -5,7 +5,7 @@
  * record changes its XP instead of adding more. The values are illustrative and easy to retune here.
  */
 import { addDays, weekdayIndex, weekStart } from '../log/dates';
-import type { LogDayMetric, LogEntry, LtDetail, LtNight, SectionId, Todo } from '../../data/types';
+import type { LogDayMetric, LogEntry, LtBucket, LtDetail, LtNight, SectionId, Todo } from '../../data/types';
 import type { SleepSchedule, Targets } from '../prefs';
 import type { PlansState } from '../plans/types';
 import { bossEvents } from './boss';
@@ -47,6 +47,8 @@ export interface ProgressInput {
   sleep: SleepSchedule;
   /** The user's training plans (lt_prefs 'plans'); absent in old fixtures. */
   plans?: PlansState;
+  /** Live bucket-list items; absent in old fixtures. */
+  bucket?: LtBucket[];
 }
 
 const targetsFor = (input: ProgressInput, date: string) => (input.targetsAt ? input.targetsAt(weekStart(date)) : input.targets);
@@ -75,6 +77,9 @@ export const RULES = {
   taskDone: 5,
   cabinetItem: 2,
   cabinetPerDay: 10,
+  bucketDone: 50,
+  /** Missed days in a row the day streak absorbs: one missed day never breaks it, two do. */
+  streakBuffer: 1,
 } as const;
 
 /** XP to go from level n to n + 1. Small steps early, so the first levels come quickly. */
@@ -250,6 +255,10 @@ export function xpEvents(input: ProgressInput): XpEvent[] {
     perDay.set(d, n);
     if (n * RULES.cabinetItem <= RULES.cabinetPerDay) out.push({ key: `cabinet:${d}:${n}`, date: d, section: 'cabinet', xp: RULES.cabinetItem, reason: 'Added to the cabinet' });
   }
+
+  for (const b of input.bucket ?? []) {
+    if (b.done_at) out.push({ key: `bucket:${b.id}`, date: input.dayOf(b.done_at), section: 'general', xp: RULES.bucketDone, reason: `Bucket list: ${b.title}` });
+  }
   // One award per key, whatever reaches us: a record that arrives twice still counts once.
   return [...new Map(out.map((e) => [e.key, e])).values()];
 }
@@ -263,6 +272,7 @@ export function activeDays(input: ProgressInput): Set<string> {
   for (const m of input.metrics) days.add(m.date);
   for (const t of input.todos) if (t.done_at) days.add(input.dayOf(t.done_at));
   for (const d of input.cabinetDays) days.add(d);
+  for (const b of input.bucket ?? []) if (b.done_at) days.add(input.dayOf(b.done_at));
   return days;
 }
 
@@ -281,6 +291,37 @@ export function dayStreak(days: Set<string>, today: string): { n: number; today:
   return { n, today: hasToday };
 }
 
+export interface BufferedStreak {
+  n: number;
+  today: boolean;
+  /** Yesterday was missed and the buffer is holding the streak: today has to count, or it ends. */
+  held: boolean;
+  /** Missed days the buffer covered in this run. */
+  saved: number;
+}
+
+/**
+ * The overall day streak, with a buffer: up to `buffer` missed days in a row don't break it (they
+ * don't add to it either). Today not logged yet doesn't count as missed until the day is over.
+ */
+export function bufferedStreak(days: Set<string>, today: string, buffer: number = RULES.streakBuffer): BufferedStreak {
+  const hasToday = days.has(today);
+  let d = hasToday ? today : addDays(today, -1);
+  let n = 0;
+  let saved = 0;
+  let gap = 0;
+  for (;;) {
+    if (days.has(d)) {
+      n++;
+      saved += gap;
+      gap = 0;
+    } else if (++gap > buffer) break;
+    d = addDays(d, -1);
+  }
+  const held = n > 0 && !hasToday && !days.has(addDays(today, -1));
+  return { n, today: hasToday, held, saved };
+}
+
 /** Consecutive weeks meeting a weekly test, counting the current week only once it passes. */
 export function weekStreak(passes: (monday: string) => boolean, today: string): number {
   const current = weekStart(today);
@@ -297,7 +338,7 @@ export interface Progress {
   bySection: Record<XpSection, number>;
   overall: LevelInfo & { stage: number };
   sections: Record<SectionId, LevelInfo>;
-  streak: { n: number; today: boolean; rest: boolean };
+  streak: BufferedStreak & { rest: boolean };
 }
 
 const ALL: XpSection[] = ['violin', 'coding', 'sports', 'gym', 'study', 'chess', 'sleep', 'screen', 'cabinet', 'general', 'quests'];
@@ -324,7 +365,7 @@ export function computeProgress(input: ProgressInput): Progress {
   const total = events.reduce((n, e) => n + e.xp, 0);
   const o = overallLevel(total);
   const sections = Object.fromEntries(ALL.filter((s) => s !== 'general' && s !== 'quests').map((s) => [s, sectionLevel(bySection[s])])) as Record<SectionId, LevelInfo>;
-  const st = dayStreak(activeDays(input), input.today);
+  const st = bufferedStreak(activeDays(input), input.today);
   return { events, total, bySection, overall: { ...o, stage: stageFor(o.level) }, sections, streak: { ...st, rest: input.restDays.includes(input.today) } };
 }
 

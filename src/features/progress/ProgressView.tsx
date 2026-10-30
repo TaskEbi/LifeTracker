@@ -136,7 +136,7 @@ function Overview() {
       </section>
 
       <div className="i-meters i-meters--4 pg-stats">
-        <Meter value={<span className="pg-stat" style={{ '--c': 'var(--sig)' } as CSSProperties}><Icon name="flame" size={18} />{p.streak.n}<small>d</small></span>} label={`Streak${p.streak.today ? ' · today counted' : ' · log or rest today'}`} />
+        <Meter value={<span className="pg-stat" style={{ '--c': 'var(--sig)' } as CSSProperties}><Icon name="flame" size={18} />{p.streak.n}<small>d</small></span>} label={`Streak${p.streak.today ? ' · today counted' : p.streak.held ? ' · buffer used, log today' : ' · log or rest today'}`} />
         <Meter value={<span className="pg-stat" style={{ '--c': 'var(--acc2)' } as CSSProperties}><Icon name="quest" size={18} />{dailyDone}<small>/3</small></span>} label="Daily quests" onClick={() => navigate('progress', ['quests'], { replace: true })} />
         <Meter value={<span className="pg-stat" style={{ '--c': 'var(--t-gold)' } as CSSProperties}><Icon name="trophy" size={18} />{unlocked}<small>/{ach.length}</small></span>} label="Emblems" onClick={() => navigate('progress', ['achievements'], { replace: true })} />
         <Meter value={<span className="pg-stat" style={{ '--c': 'var(--fg-2)' } as CSSProperties}><Icon name="bolt" size={18} />{p.total.toLocaleString('en-GB')}</span>} label="Total XP" />

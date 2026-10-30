@@ -26,7 +26,7 @@ export const SECTIONS: SectionInfo[] = [
 ];
 
 /** Kanji for the shared screens. */
-export const SYSTEM_KANJI = { home: '家', calendar: '暦', tasks: '務', progress: '覚', log: '録', settings: '設' } as const;
+export const SYSTEM_KANJI = { home: '家', calendar: '暦', tasks: '務', progress: '覚', bucket: '夢', log: '録', settings: '設' } as const;
 
 export const sectionInfo = (id: SectionId): SectionInfo => SECTIONS.find((s) => s.id === id)!;
 

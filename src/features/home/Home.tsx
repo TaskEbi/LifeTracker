@@ -13,6 +13,7 @@ import { SECTIONS, sectionInfo, SYSTEM_KANJI } from '../../domain/sections';
 import { useStore } from '../../lib/createStore';
 import { accent } from '../../ui/i/bits';
 import { Drone } from '../../ui/i/Drone';
+import { bucketItems } from '../bucket/actions';
 import { useFocus } from '../focus/focus';
 import { BossCard } from '../progress/BossPanel';
 import { Recap } from '../progress/LookBack';
@@ -111,6 +112,10 @@ export function Home() {
   const [n, setN] = useState(0);
   const input = progressInput(st, today);
   const chapter = useMemo(() => [...activeDays(input)].filter((d) => d <= today).length || 1, [input, today]);
+  const bucket = useMemo(() => {
+    const { open, done } = bucketItems(st);
+    return { total: open.length + done.length, done: done.length, next: open[0]?.title };
+  }, [st]);
   const stage = STAGES[p.overall.stage];
   const next = STAGES[p.overall.stage + 1];
   const daily = quests.daily.quests;
@@ -121,7 +126,11 @@ export function Home() {
     const open = daily.find((q) => !q.doneOn);
     const lines = [
       next ? `${p.overall.toNext} XP to the next level. ${next.name} form at LV ${next.level}!` : 'Final form. Nothing left to unlock, only to keep.',
-      p.streak.n ? `${p.streak.n} days in a row. Rest days count too.` : 'Log anything today to start a streak.',
+      p.streak.held
+        ? `Missed yesterday, but the buffer held your ${p.streak.n}-day streak. Log today to keep it!`
+        : p.streak.n
+          ? `${p.streak.n} days in a row. Rest days count, and one missed day won't break it.`
+          : 'Log anything today to start a streak.',
       open ? `Next training: ${open.title.toLowerCase()} (${open.progress}/${open.goal}).` : 'All three of today’s training done!',
       `Violin this week: ${violinWeek} of ${input.targets.violinWeek} min.`,
       rows[0] ? `Coming up: ${rows[0].title} at ${rows[0].when}.` : 'Nothing planned. Clear skies.',
@@ -144,9 +153,13 @@ export function Home() {
             Chapter {chapter} · the {stage.name} arc · {shortDay(today)}
           </p>
         </div>
-        <div className="h-head__streak" title="Days in a row with anything logged; planned rest days count">
+        <div
+          className={`h-head__streak${p.streak.held ? ' is-held' : ''}`}
+          title={p.streak.held ? 'Yesterday was missed: the buffer is holding the streak. Log something today or it ends.' : 'Days in a row with anything logged. Planned rest days count, and one missed day won’t break it.'}
+        >
           <b>{p.streak.n}日</b>
           <span>Streak</span>
+          <small className="h-head__shield">{p.streak.held ? '盾 used · log today' : '盾 ready'}</small>
         </div>
       </header>
 
@@ -286,6 +299,11 @@ export function Home() {
           </section>
 
           <nav className="h-sys" aria-label="More">
+            <button type="button" className="h-sys__btn h-sys__btn--wide" onClick={() => navigate('bucket')}>
+              <span aria-hidden="true">{SYSTEM_KANJI.bucket}</span>
+              <b>Bucket list</b>
+              <small>{bucket.total ? `${bucket.done} of ${bucket.total} crossed off${bucket.next ? ` · next: ${bucket.next}` : ''}` : 'Everything you want to do someday'}</small>
+            </button>
             <button type="button" className="h-sys__btn" onClick={() => navigate('progress')}>
               <span aria-hidden="true">{SYSTEM_KANJI.progress}</span>
               <b>Awakening</b>

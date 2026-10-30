@@ -9,6 +9,7 @@ import { SECTIONS } from '../../domain/sections';
 import { useStore } from '../../lib/createStore';
 import { Toggle } from '../../ui/i/bits';
 import { celebrate, setFxMode, setFxPrefs, useFxMode, useFxPrefs, type Celebration, type FxMode } from '../../ui/i/fx/celebrate';
+import { bucketItems } from '../bucket/actions';
 import { STARTER_TEMPLATES, templateOf } from '../gym/model';
 
 const MODES: { id: FxMode; label: string; hint: string }[] = [
@@ -67,6 +68,11 @@ export function Celebrations() {
     const screenTarget = targets.screenDay ?? 180;
     const streak = Math.max(1, p.streak.n);
     const combo = (ranked.length >= 3 ? ranked : SECTIONS).slice(0, 4).map((s) => s.id);
+    // a real thing from your bucket list: the next one to do, else the last one crossed off
+    const bucket = bucketItems(st);
+    const bucketPick = bucket.open[0] ?? bucket.done[0];
+    const bucketDone = bucket.done.length;
+    const bucketTotal = bucket.open.length + bucket.done.length;
 
     const out: { name: string; items: Preview[] }[] = [
       {
@@ -127,6 +133,14 @@ export function Celebrations() {
           { label: 'Monthly quest', c: monthly[0] ? pv({ kind: 'quest', period: 'monthly', title: monthly[0].title, xp: monthly[0].xp }) : null },
           { label: `Critical hit · ${boss.name}`, sample: true, c: moment({ type: 'boss-crit', damage: 120, boss: boss.name }) },
           { label: `Rank · ${nextRank}`, c: moment({ type: 'rank', from: rank, to: nextRank }) },
+        ],
+      },
+      {
+        name: 'Bucket list',
+        items: [
+          bucketPick
+            ? { label: `Crossed off · ${bucketPick.title}`, c: moment({ type: 'bucket', title: bucketPick.title, done: bucketDone + (bucketPick.done_at ? 0 : 1), total: bucketTotal }) }
+            : { label: 'Crossed off', sample: true, c: moment({ type: 'bucket', title: 'See the northern lights', done: 1, total: 12 }) },
         ],
       },
     ];

@@ -8,7 +8,7 @@ import { addDays, dayCount, weekStart } from '../log/dates';
 import { SECTION_IDS, type SectionId } from '../../data/types';
 import { planMoments } from '../plans/progress';
 import { bossHistory } from './boss';
-import { activeDays, bedDelta, computeProgress, dayStreak, rankFor, RULES, sectionOf, type ProgressInput } from './engine';
+import { activeDays, bedDelta, bufferedStreak, computeProgress, rankFor, RULES, sectionOf, type ProgressInput } from './engine';
 import { dayFacts } from './quests';
 
 export type RunDistance = '5k' | '10k' | 'half' | 'marathon';
@@ -47,7 +47,9 @@ export type Moment =
   /** One save hit this week's boss hard (damage ≥ BOSS_CRIT) without defeating it. */
   | { type: 'boss-crit'; damage: number; boss: string }
   /** Overall rank went up. */
-  | { type: 'rank'; from: string; to: string };
+  | { type: 'rank'; from: string; to: string }
+  /** Something on the bucket list crossed off; `done` of `total` on the list are now done. */
+  | { type: 'bucket'; title: string; done: number; total: number };
 
 export type MomentType = Moment['type'];
 
@@ -194,13 +196,19 @@ export function moments(before: ProgressInput, after: ProgressInput, ctx: Moment
     const gap = last ? dayCount(last, today) - 2 : 0;
     if (gap >= COMEBACK_GAP) out.push({ type: 'comeback', gap });
   }
-  const streakA = dayStreak(a.active, today).n;
-  const streakB = dayStreak(b.active, today).n;
+  const streakA = bufferedStreak(a.active, today).n;
+  const streakB = bufferedStreak(b.active, today).n;
   if (after.restDays.includes(today) && !before.restDays.includes(today)) out.push({ type: 'rest', streak: streakA });
   if (streakA > streakB) {
     const hit = [...Array(streakA - streakB).keys()].map((i) => streakB + 1 + i).filter(isStreakMilestone).pop();
     if (hit) out.push({ type: 'streak', days: hit });
   }
+
+  // Bucket list: each thing crossed off in this save
+  const wasDone = new Set((before.bucket ?? []).filter((x) => x.done_at).map((x) => x.id));
+  const list = after.bucket ?? [];
+  const doneCount = list.filter((x) => x.done_at).length;
+  for (const x of list) if (x.done_at && !wasDone.has(x.id)) out.push({ type: 'bucket', title: x.title, done: doneCount, total: list.length });
 
   // Combo: sections touched today
   const secA = dayFacts(after).get(today)?.sections;
@@ -329,6 +337,8 @@ export function momentLine(m: Moment): string {
       return `Critical hit · ${m.damage} damage to ${m.boss}`;
     case 'rank':
       return `Rank up · ${m.from} → ${m.to}`;
+    case 'bucket':
+      return `Bucket list · ${m.title} (${m.done} of ${m.total})`;
   }
 }
 

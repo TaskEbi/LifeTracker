@@ -349,6 +349,19 @@ export interface LtRecord {
   deleted_at: string | null;
 }
 
+/** One thing on the bucket list. Done when `done_at` is set; `data` keeps extras (e.g. a rarity later). */
+export interface LtBucket {
+  id: string;
+  title: string;
+  note: string | null;
+  done_at: string | null;
+  sort_order: number;
+  data: Record<string, unknown>;
+  created_at: string;
+  updated_at: string;
+  deleted_at: string | null;
+}
+
 /** Synced preferences, one row per key (section ↔ topic mapping, targets, sleep schedule…). */
 export interface LtPref {
   id: string;
@@ -373,13 +386,14 @@ interface Records {
   lt_nights: LtNight;
   lt_day_marks: LtDayMark;
   lt_prefs: LtPref;
+  lt_bucket: LtBucket;
 }
 export type TableName = keyof Records;
 export type RecordOf<T extends TableName> = Records[T];
 /** Push order matters: rooms before the items that use them, items before strings, topics before entries. */
 export const TABLES: TableName[] = [
   'rooms', 'items', 'connections', 'log_topics', 'log_entries', 'log_goals', 'log_metrics', 'todos',
-  'lt_records', 'lt_details', 'lt_events', 'lt_nights', 'lt_day_marks', 'lt_prefs',
+  'lt_records', 'lt_details', 'lt_events', 'lt_nights', 'lt_day_marks', 'lt_prefs', 'lt_bucket',
 ];
 /** The tables that existed in Curio Cabinet; the rest are LifeTracker's own. */
 export const ANYSTOP_TABLES: TableName[] = ['rooms', 'items', 'connections', 'log_topics', 'log_entries', 'log_goals', 'log_metrics', 'todos'];

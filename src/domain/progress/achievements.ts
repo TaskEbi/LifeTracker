@@ -62,6 +62,18 @@ function streaks(keys: Iterable<string>, step: (k: string) => string): Streaks {
   }
   return { best: firstAt.length, at: (goal) => firstAt[goal - 1] ?? null };
 }
+/** The same for days, where up to `slack` missed days between two don't break the run (the streak buffer). */
+function bufferedRuns(days: Iterable<string>, slack: number): Streaks {
+  const firstAt: string[] = [];
+  let len = 0;
+  let prev: string | null = null;
+  for (const d of [...new Set(days)].sort()) {
+    len = prev !== null && d <= addDays(prev, slack + 1) ? len + 1 : 1;
+    if (len > firstAt.length) firstAt.push(d);
+    prev = d;
+  }
+  return { best: firstAt.length, at: (goal) => firstAt[goal - 1] ?? null };
+}
 /** Longest run of consecutive keys, and the key where it first reached `goal`. */
 function runs(keys: string[], step: (k: string) => string, goal: number): { best: number; reachedOn: string | null } {
   const s = streaks(keys, step);
@@ -286,7 +298,7 @@ function compute(input: ProgressInput, extras: AchievementExtras): Achievement[]
 
   // ── streaks ──
   inGroup('streaks');
-  const dayRuns = streaks(days, prevDay);
+  const dayRuns = bufferedRuns(days, RULES.streakBuffer);
   const streakRungs: Rung[] = [
     ['streak3', 3, 'bronze', 'spark', 'Kindling'],
     ['streak7', 7, 'bronze', 'flame', 'On a Roll'],
@@ -859,6 +871,38 @@ function compute(input: ProgressInput, extras: AchievementExtras): Achievement[]
   }
   add('haul10', 'silver', 'chest', 'The Haul', '10 things added to the cabinet in one day', 10, haulBest, haulOn);
   counts([['cabdays30', 30, 'bronze', 'key', "Collector's Habit"]], [...new Set(cabinet)], (g) => `Things added to the cabinet on ${g} different days`);
+
+  // ── bucket list ──
+  inGroup('bucket');
+  const bucket = input.bucket ?? [];
+  const crossed = bucket.filter((b) => b.done_at).map((b) => input.dayOf(b.done_at!)).sort();
+  counts(
+    [
+      ['bucket1', 1, 'bronze', 'star', 'Wish Granted'],
+      ['bucket5', 5, 'silver', 'wing', 'Dream Chaser'],
+      ['bucket10', 10, 'gold', 'mountain', 'Summit of Dreams'],
+      ['bucket25', 25, 'gold', 'torii', 'Pilgrim'],
+      ['bucket50', 50, 'platinum', 'crown', 'A Life Well Lived'],
+    ],
+    crossed,
+    (g) => (g === 1 ? 'Cross the first thing off your bucket list' : `${g} things crossed off your bucket list`),
+  );
+  counts(
+    [
+      ['bucketlist10', 10, 'bronze', 'scroll', 'Dreamer'],
+      ['bucketlist50', 50, 'silver', 'scroll', 'Big Dreamer'],
+    ],
+    bucket.map((b) => input.dayOf(b.created_at)).sort(),
+    (g) => `${g} things on your bucket list`,
+  );
+  const perMonth = new Map<string, number>();
+  let busyOn: string | null = null;
+  for (const d of crossed) {
+    const n = (perMonth.get(d.slice(0, 7)) ?? 0) + 1;
+    perMonth.set(d.slice(0, 7), n);
+    if (n === 3 && !busyOn) busyOn = d;
+  }
+  add('bucketmonth', 'silver', 'sun', 'Busy Living', '3 bucket-list things crossed off in one month', 3, Math.max(0, ...perMonth.values()), busyOn);
 
   // ── levels and forms ──
   const events = extras.events ?? allXpEvents(input);

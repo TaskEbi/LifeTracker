@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import type { LogDayMetric, LogEntry, LtDetail, LtNight, SectionId, Todo } from '../../data/types';
+import type { LogDayMetric, LogEntry, LtBucket, LtDetail, LtNight, SectionId, Todo } from '../../data/types';
 import { DEFAULT_SLEEP, DEFAULT_TARGETS, targetsAt } from '../prefs';
-import { bedDelta, computeProgress, dayStreak, overallLevel, rankFor, RULES, rewardBetween, sectionLevel, STAGES, stageFor, weekStreak, xpEvents, xpForLevel, type ProgressInput } from './engine';
+import { bedDelta, bufferedStreak, computeProgress, dayStreak, overallLevel, rankFor, RULES, rewardBetween, sectionLevel, STAGES, stageFor, weekStreak, xpEvents, xpForLevel, type ProgressInput } from './engine';
 
 const T = '2026-10-24'; // a Saturday
 const VIOLIN = 'topic-violin';
@@ -145,7 +145,34 @@ describe('streaks', () => {
 
   it('counts planned rest days as active', () => {
     const p = computeProgress(input({ entries: [entry('2026-10-23', 30)], restDays: [T] }));
-    expect(p.streak).toEqual({ n: 2, today: true, rest: true });
+    expect(p.streak).toEqual({ n: 2, today: true, rest: true, held: false, saved: 0 });
+  });
+
+  it('lets one missed day pass without breaking the streak, but not two', () => {
+    // logged 19, 20, (21 missed), 22, 23
+    const days = new Set(['2026-10-19', '2026-10-20', '2026-10-22', '2026-10-23']);
+    expect(bufferedStreak(days, T)).toEqual({ n: 4, today: false, held: false, saved: 1 });
+    expect(dayStreak(days, T).n).toBe(2);
+    days.add(T);
+    expect(bufferedStreak(days, T)).toEqual({ n: 5, today: true, held: false, saved: 1 });
+    // two missed in a row (17, 18) end the earlier run
+    const gap2 = new Set(['2026-10-15', '2026-10-16', '2026-10-19', '2026-10-20']);
+    expect(bufferedStreak(gap2, '2026-10-20').n).toBe(2);
+  });
+
+  it('holds the streak through a missed yesterday until today is over', () => {
+    const days = new Set(['2026-10-20', '2026-10-21', '2026-10-22']); // nothing on the 23rd
+    expect(bufferedStreak(days, T)).toEqual({ n: 3, today: false, held: true, saved: 1 });
+    // the next day without a log: two missed, gone
+    expect(bufferedStreak(days, '2026-10-25').n).toBe(0);
+    days.add(T);
+    expect(bufferedStreak(days, T)).toEqual({ n: 4, today: true, held: false, saved: 1 });
+    expect(bufferedStreak(new Set(), T)).toEqual({ n: 0, today: false, held: false, saved: 0 });
+  });
+
+  it('uses the buffer for the overall streak', () => {
+    const p = computeProgress(input({ entries: [entry('2026-10-21', 30), entry('2026-10-23', 30), entry(T, 30)] }));
+    expect(p.streak).toMatchObject({ n: 3, today: true, saved: 1 });
   });
 
   it('counts consecutive weeks, the current one only once it passes', () => {
@@ -153,6 +180,22 @@ describe('streaks', () => {
     expect(weekStreak((w) => ok.has(w), T)).toBe(2);
     ok.add('2026-10-19');
     expect(weekStreak((w) => ok.has(w), T)).toBe(3);
+  });
+});
+
+const wish = (id: string, done: string | null): LtBucket => ({
+  id, title: `Wish ${id}`, note: null, done_at: done ? `${done}T12:00:00Z` : null, sort_order: 1, data: {}, created_at: '2026-10-01T09:00:00Z', updated_at: '2026-10-01T09:00:00Z', deleted_at: null,
+});
+
+describe('bucket list', () => {
+  it('gives XP once per thing crossed off, on the day it was', () => {
+    const ev = xpEvents(input({ bucket: [wish('a', T), wish('b', null)] })).filter((e) => e.key.startsWith('bucket:'));
+    expect(ev).toEqual([{ key: 'bucket:a', date: T, section: 'general', xp: RULES.bucketDone, reason: 'Bucket list: Wish a' }]);
+  });
+
+  it('counts the day something is crossed off for the streak', () => {
+    const p = computeProgress(input({ entries: [entry('2026-10-23', 30)], bucket: [wish('a', T)] }));
+    expect(p.streak).toMatchObject({ n: 2, today: true });
   });
 });
 

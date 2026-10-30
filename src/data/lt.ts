@@ -195,6 +195,7 @@ export function progressInput(st: DataState, today: string): ProgressInput {
     targetsAt: (monday) => targetsAt(targetsLogOf(st.lt_prefs), targetsOf(st.lt_prefs), monday),
     sleep: sleepOf(st.lt_prefs),
     plans: plansOf(st.lt_prefs),
+    bucket: live(st.lt_bucket),
   };
   lastState = st;
   lastToday = today;

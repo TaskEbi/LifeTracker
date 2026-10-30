@@ -3,7 +3,7 @@ import { TABLES, type TableName } from './types';
 
 const STORES = [...TABLES, 'meta', 'blobs'] as const;
 /** LifeTracker's own database (lifetracker-*). Upgrades only ever add missing stores, so nothing is lost. */
-const VERSION = 1;
+const VERSION = 2;
 
 type RecordStore = TableName;
 

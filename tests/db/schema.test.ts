@@ -12,7 +12,7 @@ const MIGRATIONS = join(ROOT, 'supabase', 'migrations');
 const SHARED = '00000000-0000-0000-0000-000000000000';
 const MEMBER = '11111111-1111-4111-8111-111111111111';
 const STRANGER = '22222222-2222-4222-8222-222222222222';
-const LT_TABLES = ['lt_records', 'lt_details', 'lt_events', 'lt_nights', 'lt_day_marks', 'lt_prefs'];
+const LT_TABLES = ['lt_records', 'lt_details', 'lt_events', 'lt_nights', 'lt_day_marks', 'lt_prefs', 'lt_bucket'];
 const ANYSTOP_TABLES = ['rooms', 'items', 'connections', 'settings', 'log_topics', 'log_entries', 'log_goals', 'log_metrics', 'todos'];
 
 let pg: PGlite;
@@ -120,6 +120,16 @@ describe('access', () => {
     await as(member, `update public.lt_records set data = '{"title": "Bach"}' where id = $1`, [id]);
     await as(member, `delete from public.lt_records where id = $1`, [id]);
     expect(await as(member, `select 1 from public.lt_records where id = $1`, [id])).toEqual([]);
+  });
+
+  it('lets the member keep a bucket list', async () => {
+    const id = crypto.randomUUID();
+    await as(member, `insert into public.lt_bucket (id, title) values ($1, 'See the northern lights')`, [id]);
+    await as(member, `update public.lt_bucket set done_at = now(), data = '{"rarity": "legendary"}' where id = $1`, [id]);
+    const [b] = await as<{ owner_id: string; done: boolean }>(member, `select owner_id, done_at is not null as done from public.lt_bucket where id = $1`, [id]);
+    expect(b).toEqual({ owner_id: SHARED, done: true });
+    expect(await as(stranger, `select 1 from public.lt_bucket`)).toEqual([]);
+    await expect(as(member, `insert into public.lt_bucket (id, title) values (gen_random_uuid(), '   ')`)).rejects.toThrow(/check/);
   });
 
   it("refuses rows the member tries to file under another owner", async () => {

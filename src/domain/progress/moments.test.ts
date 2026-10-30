@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { LogDayMetric, LogEntry, LtDetail, LtNight, SectionId, Todo, TimedSection } from '../../data/types';
+import type { LogDayMetric, LogEntry, LtBucket, LtDetail, LtNight, SectionId, Todo, TimedSection } from '../../data/types';
 import { addDays } from '../log/dates';
 import { DEFAULT_SLEEP, DEFAULT_TARGETS } from '../prefs';
 import { bossHistory } from './boss';
@@ -48,6 +48,30 @@ const types = (list: Moment[]) => list.map((m) => m.type);
 const only = <K extends Moment['type']>(list: Moment[], type: K) => list.filter((m): m is Extract<Moment, { type: K }> => m.type === type);
 /** Moments of a save, with today already active so the day's chapter doesn't get in the way. */
 const ACTIVE_TODAY = { cabinetDays: [T] };
+
+// ─── bucket list ────────────────────────────────────────────────────────────
+
+const wish = (id: string, done: string | null): LtBucket => ({
+  id, title: `Wish ${id}`, note: null, done_at: done ? `${done}T12:00:00Z` : null, sort_order: 1, data: {}, created_at: '2026-10-01T09:00:00Z', updated_at: '2026-10-01T09:00:00Z', deleted_at: null,
+});
+
+describe('bucket list', () => {
+  it('fires for each thing crossed off in this save, not for old ones', () => {
+    const before = input({ ...ACTIVE_TODAY, bucket: [wish('a', '2026-10-02'), wish('b', null), wish('c', null)] });
+    const after = { ...before, bucket: [wish('a', '2026-10-02'), wish('b', T), wish('c', null)] };
+    expect(only(moments(before, after), 'bucket')).toEqual([{ type: 'bucket', title: 'Wish b', done: 2, total: 3 }]);
+    expect(momentLine({ type: 'bucket', title: 'Wish b', done: 2, total: 3 })).toBe('Bucket list · Wish b (2 of 3)');
+    // adding to the list or editing it fires nothing
+    expect(only(moments(after, { ...after, bucket: [...after.bucket!, wish('d', null)] }), 'bucket')).toEqual([]);
+  });
+});
+
+describe('streak milestones with the buffer', () => {
+  it('reaches 3 days across one missed day', () => {
+    const b = input({ entries: [entry('2026-10-26', 20), entry('2026-10-28', 20)] }); // the 27th missed
+    expect(types(moments(b, save(b, { entries: [entry(T, 20)] })))).toContain('streak');
+  });
+});
 
 // ─── gym ────────────────────────────────────────────────────────────────────
 

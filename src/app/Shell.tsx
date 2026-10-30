@@ -82,6 +82,7 @@ function Rail({ current, rest }: { current: RouteName; rest: string[] }) {
       {item('progress', 'Progress', SYSTEM_KANJI.progress)}
       {item('progress', 'Quests', '任', open ? <span className="i-cmd__badge i-cmd__badge--inline">{open}</span> : undefined, ['quests'])}
       {item('progress', 'Achievements', '紋', undefined, ['achievements'])}
+      {item('bucket', 'Bucket list', SYSTEM_KANJI.bucket)}
       <div className="i-rail__sep" />
       {item('calendar', 'Calendar', SYSTEM_KANJI.calendar)}
       {item('tasks', 'Tasks', SYSTEM_KANJI.tasks)}
@@ -133,6 +134,7 @@ function CommandBar({ current }: { current: RouteName }) {
 
 const SYSTEM: { id: keyof typeof SYSTEM_KANJI; label: string }[] = [
   { id: 'progress', label: 'Progress' },
+  { id: 'bucket', label: 'Bucket' },
   { id: 'log', label: 'Activity' },
   { id: 'settings', label: 'Settings' },
 ];

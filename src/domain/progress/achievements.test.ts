@@ -259,3 +259,22 @@ describe('performance', () => {
     expect(fromScratch).toBeLessThan(300);
   });
 });
+
+describe('bucket list and the streak buffer', () => {
+  const wish = (id: string, done: string | null) => ({
+    id, title: id, note: null, done_at: done ? `${done}T12:00:00Z` : null, sort_order: 1, data: {}, created_at: '2026-10-01T09:00:00Z', updated_at: '2026-10-01T09:00:00Z', deleted_at: null,
+  });
+
+  it('unlocks the bucket-list ladder from things crossed off', () => {
+    const list = achievements(input({ bucket: [wish('a', '2026-10-05'), wish('b', '2026-10-09'), wish('c', '2026-10-20'), wish('d', null)] }));
+    expect(get(list, 'bucket1').unlockedOn).toBe('2026-10-05');
+    expect(get(list, 'bucket5').progress).toBe(3);
+    expect(get(list, 'bucketmonth').unlockedOn).toBe('2026-10-20');
+    expect(get(list, 'bucketlist10').progress).toBe(4);
+  });
+
+  it('lets a streak achievement run across one missed day', () => {
+    const days = ['2026-10-20', '2026-10-21', '2026-10-23', '2026-10-24']; // the 22nd missed
+    expect(get(achievements(input({ entries: days.map((d) => entry(d, 20)) })), 'streak3').unlockedOn).toBe('2026-10-23');
+  });
+});

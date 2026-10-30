@@ -14,6 +14,7 @@ import {
   type LtDetail,
   type LtEvent,
   type LtNight,
+  type LtBucket,
   type LtPref,
   type LtRecord,
   type RecordOf,
@@ -42,6 +43,7 @@ export interface DataState {
   lt_nights: Map<string, LtNight>;
   lt_day_marks: Map<string, LtDayMark>;
   lt_prefs: Map<string, LtPref>;
+  lt_bucket: Map<string, LtBucket>;
   settings: Settings;
   sync: { status: SyncStatus; pending: number; error: string | null };
 }
@@ -63,6 +65,7 @@ export const data = createStore<DataState>({
   lt_nights: new Map(),
   lt_day_marks: new Map(),
   lt_prefs: new Map(),
+  lt_bucket: new Map(),
   settings: DEFAULT_SETTINGS,
   sync: { status: 'local', pending: 0, error: null },
 });

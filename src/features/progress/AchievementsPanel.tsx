@@ -29,6 +29,7 @@ const GROUP: Record<AchievementGroup, { name: string; kanji: string; c: string }
   screen: { ...sect('screen'), c: 'var(--c-screen)' },
   tasks: { name: 'Tasks', kanji: '務', c: 'var(--c-quests)' },
   cabinet: { ...sect('cabinet'), c: 'var(--c-cabinet)' },
+  bucket: { name: 'Bucket list', kanji: '夢', c: 'var(--acc2)' },
   levels: { name: 'Levels', kanji: '段', c: 'var(--acc2)' },
   quests: { name: 'Quests', kanji: '任', c: 'var(--c-quests)' },
   bosses: { name: 'Bosses', kanji: '討', c: 'var(--sig)' },

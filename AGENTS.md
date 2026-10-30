@@ -12,7 +12,7 @@ LifeTracker is a personal tracker (React 19 + Vite + TypeScript PWA) that shares
 ## One record per activity
 - Time spent → `log_entries` (the Daily Log row). Section detail goes in `lt_details` with the **same id**.
 - Sleep / screen time → `log_metrics` (one row per metric per day, id from `metricId`). Bed/wake → `lt_nights`.
-- Tasks → `todos` (+ `section`). Cabinet → `items` / `rooms` / `connections`.
+- Tasks → `todos` (+ `section`). Cabinet → `items` / `rooms` / `connections`. Bucket list → `lt_bucket` (done when `done_at` is set).
 - XP, levels, streaks and achievements are **derived** (`src/domain/progress`). Never store XP.
 
 ## Code

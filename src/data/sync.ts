@@ -7,6 +7,7 @@ import {
   data,
   setSyncState,
 } from './store';
+import { createStore, useStore } from '../lib/createStore';
 import { uploadPendingPhotos } from '../lib/photos';
 import { DEFAULT_SETTINGS, normaliseRoad, TABLES, type RecordOf, type Settings, type TableName } from './types';
 const PAGE = 1000;
@@ -30,6 +31,24 @@ function fromServer<T extends TableName>(row: Record<string, unknown>): RecordOf
 
 function isNetworkError(err: { code?: string; message?: string } | null): boolean {
   return !!err && !err.code && /fetch|network|load failed/i.test(err.message ?? '');
+}
+
+/**
+ * PostgREST's "table not in the schema cache" (or Postgres's "relation does not exist"): a table
+ * whose migration isn't on the server yet. Its rows stay on the device and in the outbox, and are
+ * sent once the table exists, so the app can ship before the migration.
+ */
+function isMissingTable(err: { code?: string } | null): boolean {
+  return !!err && (err.code === 'PGRST205' || err.code === '42P01');
+}
+
+/** Tables the server doesn't have yet (their rows are kept on this device until it does). */
+export const missingTables = createStore<{ tables: TableName[] }>({ tables: [] });
+export const useTableMissing = (t: TableName) => useStore(missingTables, (s) => s.tables.includes(t));
+function markMissing(table: TableName, missing: boolean) {
+  const cur = missingTables.get().tables;
+  if (missing === cur.includes(table)) return;
+  missingTables.set({ tables: missing ? [...cur, table] : cur.filter((x) => x !== table) });
 }
 
 export interface SyncHandle {
@@ -65,6 +84,10 @@ export function startSync(sb: SupabaseClient): SyncHandle {
         const { data: saved, error } = await sb.from(table).upsert(rows).select();
         if (error) {
           if (isNetworkError(error)) throw error;
+          if (isMissingTable(error)) {
+            markMissing(table, true);
+            break;
+          }
           // One bad row shouldn't block the rest: retry one by one, drop rows the server rejects.
           for (const row of rows) {
             const one = await sb.from(table).upsert(row).select();
@@ -109,7 +132,9 @@ export function startSync(sb: SupabaseClient): SyncHandle {
       let q = sb.from(table).select('*');
       if (since) q = q.gt('updated_at', since);
       const { data: rows, error } = await q.order('updated_at').order('id').range(from, from + PAGE - 1);
+      if (error && isMissingTable(error)) return markMissing(table, true);
       if (error) throw error;
+      markMissing(table, false);
       applyRemote(table, rows.map((r) => fromServer<T>(r)));
       for (const r of rows) if ((r.updated_at as string) > newest) newest = r.updated_at as string;
       if (rows.length < PAGE) break;

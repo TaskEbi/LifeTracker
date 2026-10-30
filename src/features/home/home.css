@@ -69,6 +69,36 @@
   text-transform: uppercase;
   color: var(--fg-3);
 }
+/* the streak buffer: ready, or holding the streak after a missed day */
+.h-head__shield {
+  margin-top: 4px;
+  padding: 2px 6px 1px;
+  font-size: 9.5px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  white-space: nowrap;
+  color: var(--fg-3);
+  box-shadow: inset 0 0 0 1px var(--rule);
+  transform: skewX(var(--slant));
+}
+.h-head__streak.is-held b {
+  color: var(--warn);
+}
+.h-head__streak.is-held .h-head__shield {
+  color: var(--warn);
+  box-shadow: inset 0 0 0 1.5px var(--warn);
+  animation: h-shield 1.6s ease-in-out infinite;
+}
+@keyframes h-shield {
+  50% {
+    opacity: 0.55;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .h-head__streak.is-held .h-head__shield {
+    animation: none;
+  }
+}
 
 /* the hero panel: speed lines, the drone in its aura, the level */
 .h-hero {
@@ -385,6 +415,9 @@
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 6px;
   margin-top: 16px;
+}
+.h-sys__btn--wide {
+  grid-column: 1 / -1;
 }
 .h-sys__btn {
   display: grid;

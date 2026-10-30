@@ -5,7 +5,7 @@
 import { createStore, useStore } from '../lib/createStore';
 import { SECTION_IDS, type SectionId } from '../data/types';
 
-export const UTILITY_ROUTES = ['calendar', 'tasks', 'progress', 'settings', 'log'] as const;
+export const UTILITY_ROUTES = ['calendar', 'tasks', 'progress', 'bucket', 'settings', 'log'] as const;
 export type RouteName = 'home' | SectionId | (typeof UTILITY_ROUTES)[number];
 
 export interface Route {

@@ -30,6 +30,7 @@ const CMDS: Cmd[] = [
   { id: 'cabinet', label: 'save to cabinet', hint: 'link · note · photo', section: 'cabinet', route: 'cabinet' },
   { id: 'task', label: 'new task', hint: 'shared task list', sheet: 'task', route: 'tasks' },
   { id: 'event', label: 'new event', hint: 'shared calendar', sheet: 'event', route: 'calendar' },
+  { id: 'bucket', label: 'bucket list', hint: 'add · cross off', route: 'bucket' },
 ];
 
 function QuickSheet() {

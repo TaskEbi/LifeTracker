@@ -6,6 +6,7 @@ Nothing here has been run. Each step is a separate release decision for the user
 
 Only additive SQL: `supabase/migrations/20261025120000_lifetracker_core.sql` (and later `lt_` migrations).
 - Six new tables (`lt_records`, `lt_details`, `lt_events`, `lt_nights`, `lt_day_marks`, `lt_prefs`) with members-only RLS.
+- `20261030120000_lifetracker_bucket.sql`: one more table, `lt_bucket` (the bucket list), same RLS. Until it is applied the app keeps bucket-list items on the device and in the outbox (sync skips a table the server doesn't have) and sends them once it exists.
 - One nullable column, `todos.section`.
 - No existing row, column, policy or function is changed. Curio Cabinet keeps working.
 
@@ -52,7 +53,7 @@ select relname, relrowsecurity from pg_class where relname like 'lt\_%' and relk
 
 - [ ] New Vercel project from `TaskEbi/LifeTracker` (Hobby).
 - [ ] Environment variables for **Production only**: `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY` (publishable key), `VITE_LT_ALLOW_SYNC=true`. Leave Preview and Development empty so previews run local-only.
-- [ ] DragonCode: add the LifeTracker origin to `ROAD_LINK_ORIGINS` so the Road to IOI summary can be read from it.
+- [x] DragonCode: add the LifeTracker origin to `ROAD_LINK_ORIGINS` so the Road to IOI summary can be read from it. (Done 25 Oct 2026: `https://lifetracker-five-inky.vercel.app`, Production; redeployed, and the CORS preflight now allows that origin.)
 - [ ] Supabase Auth → URL configuration: add the LifeTracker domain if redirects are ever used (password sign-in doesn't need it).
 
 ## Rollback
@@ -60,9 +61,9 @@ select relname, relrowsecurity from pg_class where relname like 'lt\_%' and relk
 The change is additive, so rolling back the app is enough: stop using LifeTracker; Curio Cabinet is unaffected. To remove the schema as well (loses LifeTracker-only data such as gym templates and calendar events; export first):
 
 ```sql
-drop table if exists public.lt_records, public.lt_details, public.lt_events, public.lt_nights, public.lt_day_marks, public.lt_prefs;
+drop table if exists public.lt_records, public.lt_details, public.lt_events, public.lt_nights, public.lt_day_marks, public.lt_prefs, public.lt_bucket;
 alter table public.todos drop column if exists section;
-delete from supabase_migrations.schema_migrations where version = '20261025120000';
+delete from supabase_migrations.schema_migrations where version in ('20261025120000', '20261030120000');
 ```
 
 Restore from the step 1 dump only if AnyStop data was somehow damaged.
