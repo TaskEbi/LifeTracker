@@ -1,16 +1,18 @@
 import { useMemo, useState } from 'react';
 import { registerSheet } from '../../app/sheetRegistry';
-import { closeSheet, type SheetSpec } from '../../app/sheets';
+import { closeSheet, openSheet, type SheetSpec } from '../../app/sheets';
 import { ltToday, sectionRecords } from '../../data/lt';
 import { data } from '../../data/store';
-import { SECTION_IDS, type EventKind, type SectionId } from '../../data/types';
+import { SECTION_IDS, type EventKind, type LtEvent, type Repeat, type SectionId } from '../../data/types';
 import { conflicts, occurrences } from '../../domain/calendar/occurrences';
-import { addDays, shortDay, weekdayIndex } from '../../domain/log/dates';
+import { repeatLabel } from '../../domain/calendar/repeat';
+import { addDays, shortDay } from '../../domain/log/dates';
 import { sectionInfo } from '../../domain/sections';
 import { Picks, Stepper, Toggle } from '../../ui/i/bits';
 import { Sheet } from '../../ui/i/Sheet';
 import { pieceOf } from '../violin/model';
-import { cancel, createEvent, deleteEvent, reschedule, restore, updateEventInfo } from './actions';
+import { cancel, copyWeek, createEvent, deleteEvent, reschedule, restore, setRepeat, updateEventInfo, weekOneOffs } from './actions';
+import { RepeatPicker, repeatState, toRepeat, type RepeatState } from './RepeatPicker';
 
 const KINDS: { id: EventKind; label: string }[] = [
   { id: 'session', label: 'Session' },
@@ -20,7 +22,8 @@ const KINDS: { id: EventKind; label: string }[] = [
   { id: 'school', label: 'School' },
   { id: 'other', label: 'Other' },
 ];
-const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+const DURATIONS = [30, 45, 60, 90, 120, 180];
+const durLabel = (m: number) => (m < 60 ? `${m}m` : `${m / 60}h`.replace('.5h', '½h'));
 const shift = (t: string, m: number) => {
   const v = (((+t.slice(0, 2) * 60 + +t.slice(3)) + m) % 1440 + 1440) % 1440;
   return `${String(Math.floor(v / 60)).padStart(2, '0')}:${String(v % 60).padStart(2, '0')}`;
@@ -76,10 +79,20 @@ function InfoFields(p: {
   );
 }
 
+function TimeInput({ value, label, onChange }: { value: string; label: string; onChange: (v: string) => void }) {
+  return <input className="c-time" type="time" step={300} value={value} aria-label={label} onChange={(e) => /^\d\d:\d\d$/.test(e.target.value) && onChange(e.target.value)} />;
+}
+
 function TimeFields({ date, setDate, allDay, setAllDay, start, setStart, end, setEnd }: {
   date: string; setDate: (v: string) => void; allDay: boolean; setAllDay: (v: boolean) => void;
   start: string; setStart: (v: string) => void; end: string; setEnd: (v: string) => void;
 }) {
+  // Moving the start keeps the length.
+  const moveStart = (next: string) => {
+    const len = minutesBetween(start, end);
+    setStart(next);
+    setEnd(shift(next, len > 0 ? len : 60));
+  };
   return (
     <div className="i-pnl i-pnl--flush">
       <div className="i-kv">
@@ -91,16 +104,18 @@ function TimeFields({ date, setDate, allDay, setAllDay, start, setStart, end, se
         <>
           <div className="i-kv">
             <span>Starts</span>
-            <Stepper value={start} label="start time" onStep={(s) => {
-              const len = minutesBetween(start, end);
-              const next = shift(start, 15 * s);
-              setStart(next);
-              setEnd(shift(next, len > 0 ? len : 60));
-            }} />
+            <Stepper value={<TimeInput value={start} label="Start time" onChange={moveStart} />} label="start time" onStep={(s) => moveStart(shift(start, 15 * s))} />
           </div>
           <div className="i-kv">
             <span>Ends</span>
-            <Stepper value={end} label="end time" onStep={(s) => setEnd(shift(end, 15 * s))} />
+            <Stepper value={<TimeInput value={end} label="End time" onChange={setEnd} />} label="end time" onStep={(s) => setEnd(shift(end, 15 * s))} />
+          </div>
+          <div className="i-picks" role="group" aria-label="Length" style={{ padding: '8px 0 10px' }}>
+            {DURATIONS.map((m) => (
+              <button key={m} type="button" className="i-pick" aria-pressed={minutesBetween(start, end) === m} onClick={() => setEnd(shift(start, m))}>
+                {durLabel(m)}
+              </button>
+            ))}
           </div>
         </>
       )}
@@ -108,27 +123,48 @@ function TimeFields({ date, setDate, allDay, setAllDay, start, setStart, end, se
   );
 }
 
+/** Recent distinct events, newest first, to fill a new one in a tap. */
+function recentEvents(): LtEvent[] {
+  const seen = new Set<string>();
+  return [...data.get().lt_events.values()]
+    .filter((e) => !e.deleted_at)
+    .sort((a, b) => b.created_at.localeCompare(a.created_at))
+    .filter((e) => !seen.has(e.title.toLowerCase()) && !!seen.add(e.title.toLowerCase()))
+    .slice(0, 6);
+}
+
 function NewEvent({ preset }: { preset: Record<string, unknown> }) {
   const today = ltToday();
+  const p0 = (preset.start as string | null | undefined) ?? '16:00';
   const [title, setTitle] = useState((preset.title as string) ?? '');
   const [section, setSection] = useState<SectionId | 'none'>((preset.section as SectionId) ?? 'none');
   const [kind, setKind] = useState<EventKind>((preset.kind as EventKind) ?? 'session');
-  const [note, setNote] = useState('');
-  const [pieces, setPieces] = useState<string[]>([]);
+  const [note, setNote] = useState((preset.note as string) ?? '');
+  const [pieces, setPieces] = useState<string[]>((preset.pieces as string[]) ?? []);
   const [date, setDate] = useState((preset.date as string) ?? addDays(today, 1));
-  const [allDay, setAllDay] = useState(false);
-  const [start, setStart] = useState((preset.start as string) ?? '16:00');
-  const [end, setEnd] = useState(shift((preset.start as string) ?? '16:00', 60));
-  const [repeats, setRepeats] = useState(false);
-  const [days, setDays] = useState<number[]>([weekdayIndex(date)]);
-  const [until, setUntil] = useState('');
+  const [allDay, setAllDay] = useState(preset.start === null);
+  const [start, setStart] = useState(p0);
+  const [end, setEnd] = useState((preset.end as string | null | undefined) ?? shift(p0, 60));
+  const [rep, setRep] = useState<RepeatState>(() => repeatState(preset.repeat as Repeat | undefined, date));
   const [error, setError] = useState<string | null>(null);
+  const recent = useMemo(recentEvents, []);
+
+  const fill = (e: LtEvent) => {
+    setTitle(e.title);
+    setSection(e.section ?? 'none');
+    setKind(e.kind);
+    setNote(e.note ?? '');
+    setAllDay(!e.start);
+    if (e.start) setStart(e.start);
+    if (e.end) setEnd(e.end);
+  };
 
   const save = () => {
+    const { repeat, count } = toRepeat(rep);
     const made = createEvent({
       title, section: section === 'none' ? null : section, kind, date, note,
       start: allDay ? null : start, end: allDay ? null : end,
-      repeat: repeats ? { days: [...days].sort(), until: until || null } : null,
+      repeat, count,
       data: kind === 'performance' && pieces.length ? { pieces } : {},
     });
     if ('error' in made) return setError(made.error);
@@ -136,25 +172,23 @@ function NewEvent({ preset }: { preset: Record<string, unknown> }) {
   };
 
   return (
-    <Sheet title="New event" onClose={closeSheet} accent={section === 'none' ? undefined : section} footer={<button type="button" className="i-btn i-btn--sig i-btn--block" onClick={save} disabled={!title.trim()}>Add to calendar</button>}>
-      <InfoFields {...{ title, setTitle, section, setSection, kind, setKind, note, setNote, pieces, setPieces }} />
-      <TimeFields {...{ date, setDate, allDay, setAllDay, start, setStart, end, setEnd }} />
-      <Toggle on={repeats} label="Repeats weekly" hint="change one date or all later ones afterwards" onChange={setRepeats} />
-      {repeats && (
-        <>
-          <div className="i-picks" role="group" aria-label="Repeat on">
-            {DAYS.map((d, i) => (
-              <button key={d} type="button" className="i-pick" aria-pressed={days.includes(i)} onClick={() => setDays(days.includes(i) ? days.filter((x) => x !== i) : [...days, i])}>
-                {d}
+    <Sheet title={preset.copy ? 'Copy of event' : 'New event'} onClose={closeSheet} accent={section === 'none' ? undefined : section} footer={<button type="button" className="i-btn i-btn--sig i-btn--block" onClick={save} disabled={!title.trim()}>Add to calendar</button>}>
+      {!title && recent.length > 0 && (
+        <div className="i-field">
+          <span className="i-lab">Again?</span>
+          <div className="i-picks" role="group" aria-label="Recent events">
+            {recent.map((e) => (
+              <button key={e.id} type="button" className="i-pick" onClick={() => fill(e)}>
+                {e.title}
+                {e.start ? ` · ${e.start}` : ''}
               </button>
             ))}
           </div>
-          <label className="i-kv">
-            <span>Until · optional</span>
-            <input className="i-input" type="date" value={until} min={date} onChange={(e) => setUntil(e.target.value)} style={{ width: 'auto', minHeight: 42 }} />
-          </label>
-        </>
+        </div>
       )}
+      <InfoFields {...{ title, setTitle, section, setSection, kind, setKind, note, setNote, pieces, setPieces }} />
+      <TimeFields {...{ date, setDate, allDay, setAllDay, start, setStart, end, setEnd }} />
+      <RepeatPicker value={rep} anchor={date} onChange={setRep} />
       {error && <p className="i-error" role="alert">{error}</p>}
     </Sheet>
   );
@@ -174,6 +208,8 @@ function ExistingEvent({ occKey }: { occKey: string }) {
   const [start, setStart] = useState(occ?.start ?? '16:00');
   const [end, setEnd] = useState(occ?.end ?? shift(occ?.start ?? '16:00', 60));
   const [scope, setScope] = useState<'one' | 'future'>('one');
+  const [rep, setRep] = useState<RepeatState>(() => repeatState(ev?.repeat, occ?.date ?? orig));
+  const [repDirty, setRepDirty] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   if (!ev || !occ) {
@@ -187,15 +223,22 @@ function ExistingEvent({ occKey }: { occKey: string }) {
   const clash = conflicts(sameDay).get(occ.key);
   const timeChanged = date !== occ.date || (allDay ? !!occ.start : start !== occ.start || end !== occ.end);
 
+  // The rule belongs to the series: for a series it changes from this date on.
+  const canRepeat = !ev.repeat || scope === 'future';
   const save = () => {
+    if (!allDay && (timeChanged || repDirty) && end <= start) return setError('It has to end after it starts.');
     const err = updateEventInfo(ev.id, { title, section: section === 'none' ? null : section, kind, note, data: { ...ev.data, ...(kind === 'performance' ? { pieces } : {}) } });
     if (err) return setError(err);
-    if (timeChanged) {
-      if (!allDay && end <= start) return setError('It has to end after it starts.');
-      reschedule(ev.id, occ.origDate, { date, start: allDay ? null : start, end: allDay ? null : end }, scope);
-    }
+    const change = { date, start: allDay ? null : start, end: allDay ? null : end };
+    if (canRepeat && repDirty) {
+      const { repeat, count } = toRepeat(rep);
+      const rerr = setRepeat(ev.id, occ.origDate, change, repeat, count);
+      if (rerr) return setError(rerr);
+    } else if (timeChanged) reschedule(ev.id, occ.origDate, change, scope);
     closeSheet();
   };
+  const duplicate = () =>
+    openSheet({ type: 'event', preset: { copy: true, title: ev.title, section: ev.section, kind: ev.kind, note: ev.note ?? '', pieces, date: addDays(occ.date, 7), start: occ.start, end: occ.end } });
 
   return (
     <Sheet
@@ -218,7 +261,7 @@ function ExistingEvent({ occKey }: { occKey: string }) {
       <p className="i-mono i-small i-mid">
         {shortDay(occ.date).toUpperCase()}
         {occ.start ? ` · ${occ.start}–${occ.end}` : ' · ALL DAY'}
-        {ev.repeat ? ` · WEEKLY ${ev.repeat.days.map((d) => DAYS[d].toUpperCase()).join('+')}${ev.repeat.until ? ` UNTIL ${shortDay(ev.repeat.until).toUpperCase()}` : ''}` : ''}
+        {ev.repeat ? ` · ${repeatLabel(ev.repeat, ev.date).toUpperCase()}${ev.repeat.until ? ` UNTIL ${shortDay(ev.repeat.until).toUpperCase()}` : ''}` : ''}
         {occ.cancelled ? ' · CANCELLED' : ''}
       </p>
       {clash && !occ.cancelled && (
@@ -237,17 +280,23 @@ function ExistingEvent({ occKey }: { occKey: string }) {
                 </button>
                 <button type="button" className="i-opt" aria-pressed={scope === 'future'} onClick={() => setScope('future')}>
                   <b>This + later</b>
-                  <small>splits the series</small>
+                  <small>splits the series · can change the repeat</small>
                 </button>
               </div>
             </div>
           )}
+          {canRepeat && <RepeatPicker value={rep} anchor={date} onChange={(r) => (setRep(r), setRepDirty(true))} />}
         </>
       )}
       <InfoFields {...{ title, setTitle, section, setSection, kind, setKind, note, setNote, pieces, setPieces }} />
-      <button type="button" className="i-link" onClick={() => (deleteEvent(ev.id), closeSheet())}>
-        Delete {ev.repeat ? 'the whole series' : 'event'}
-      </button>
+      <div className="i-btns">
+        <button type="button" className="i-link" onClick={duplicate}>
+          Duplicate
+        </button>
+        <button type="button" className="i-link" onClick={() => (deleteEvent(ev.id), closeSheet())}>
+          Delete {ev.repeat ? 'the whole series' : 'event'}
+        </button>
+      </div>
       {error && <p className="i-error" role="alert">{error}</p>}
     </Sheet>
   );
@@ -258,4 +307,47 @@ function EventSheet({ spec }: { spec: SheetSpec }) {
   return <NewEvent preset={(spec.preset as Record<string, unknown>) ?? { date: spec.date }} />;
 }
 
+/** Copy the week's one-off events forward: "repeat this week". */
+function CopyWeekSheet({ spec }: { spec: SheetSpec }) {
+  const monday = spec.monday as string;
+  const evs = useMemo(() => weekOneOffs(monday), [monday]);
+  const [weeks, setWeeks] = useState(1);
+  return (
+    <Sheet
+      title="Copy this week"
+      onClose={closeSheet}
+      footer={
+        <button type="button" className="i-btn i-btn--sig i-btn--block" disabled={!evs.length} onClick={() => (copyWeek(monday, weeks), closeSheet())}>
+          Copy to {weeks === 1 ? 'next week' : `the next ${weeks} weeks`}
+        </button>
+      }
+    >
+      <p className="i-note">
+        One-off events from {shortDay(monday)} – {shortDay(addDays(monday, 6))} are copied to the same weekday and time. Repeating events already repeat, and a copy is skipped when that day already has the same event.
+      </p>
+      <div className="i-field">
+        <span className="i-lab">How many weeks</span>
+        <Picks label="Weeks" value={String(weeks)} onChange={(v) => setWeeks(+v)} options={[1, 2, 3, 4, 8, 12].map((n) => ({ id: String(n), label: n === 1 ? 'Next week' : `${n} weeks` }))} />
+      </div>
+      <div className="i-pnl i-pnl--flush">
+        {evs.length ? (
+          evs.map((e) => (
+            <div key={e.id} className="i-kv">
+              <span>{e.title}</span>
+              <span className="i-mono i-small i-mid">
+                {shortDay(e.date)}
+                {e.start ? ` · ${e.start}` : ''}
+              </span>
+            </div>
+          ))
+        ) : (
+          <p className="i-note" style={{ padding: '12px 0' }}>No one-off events this week to copy.</p>
+        )}
+      </div>
+    </Sheet>
+  );
+}
+
 registerSheet('event', EventSheet);
+registerSheet('copyweek', CopyWeekSheet);
+

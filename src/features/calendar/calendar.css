@@ -119,3 +119,14 @@
   text-decoration: line-through;
   color: var(--fg-3);
 }
+
+/* a typed time inside a stepper */
+.c-time {
+  width: 84px;
+  min-height: 40px;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: center;
+}

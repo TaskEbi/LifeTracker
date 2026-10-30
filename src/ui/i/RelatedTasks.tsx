@@ -1,6 +1,7 @@
 import { navigate } from '../../app/router';
 import { openSheet } from '../../app/sheets';
-import { toggleTask } from '../../data/ltActions';
+import { taskRepeat, toggleTask } from '../../data/ltActions';
+import { repeatLabel } from '../../domain/calendar/repeat';
 import { data } from '../../data/store';
 import type { SectionId, Todo } from '../../data/types';
 import { useToday } from '../../data/lt';
@@ -10,6 +11,7 @@ import { H2 } from './bits';
 
 export function TaskRow({ t, today }: { t: Todo; today: string }) {
   const late = !t.done_at && t.due && t.due < today;
+  const rule = useStore(data, (s) => taskRepeat(s, t.id));
   return (
     <div className="i-task">
       <button type="button" className={`i-task__ck${t.done_at ? ' is-on' : ''}`} onClick={() => toggleTask(t.id)} aria-label={`${t.done_at ? 'Mark not done' : 'Complete'}: ${t.title}`} />
@@ -17,6 +19,7 @@ export function TaskRow({ t, today }: { t: Todo; today: string }) {
         <span className={t.done_at ? 'is-done' : ''}>{t.title}</span>
         <small>
           {t.due ? <span className={late ? 'i-warn-text' : undefined}>{late ? 'late · ' : ''}{relativeDay(t.due, today)}</span> : 'no date'}
+          {rule ? ` · ↻ ${repeatLabel(rule, t.due ?? today).toLowerCase()}` : ''}
         </small>
       </button>
       <span className={`i-task__p is-${t.priority}`}>{t.priority === 'high' ? 'P1' : t.priority === 'normal' ? 'P2' : 'P3'}</span>

@@ -8,12 +8,14 @@ import { getSectionTopics, topicSectionMap, useToday } from '../../data/lt';
 import { data } from '../../data/store';
 import { SECTION_IDS, type SectionId } from '../../data/types';
 import { conflicts, matchDone, occurrences, type Occurrence } from '../../domain/calendar/occurrences';
+import { repeatLabel } from '../../domain/calendar/repeat';
 import { addDays, shortDay, weekdayIndex, weekStart } from '../../domain/log/dates';
 import { sectionInfo } from '../../domain/sections';
 import { useStore } from '../../lib/createStore';
 import { accent, H2, Source } from '../../ui/i/bits';
 import { Icon } from '../../ui/i/Icon';
 import './EventSheet';
+import { ScheduleImportPanel } from './ScheduleImportPanel';
 import '../tasks/TaskSheet';
 import './calendar.css';
 
@@ -108,9 +110,14 @@ export function CalendarView() {
           <span className="i-chhead__k">SYS · shared calendar</span>
           <h1>Calendar</h1>
         </div>
-        <button type="button" className="i-btn i-btn--sig" onClick={() => openSheet({ type: 'event', date: sel >= today ? sel : today })}>
-          <Icon name="plus" /> Event
-        </button>
+        <span className="i-btns">
+          <button type="button" className="i-btn" onClick={() => openSheet({ type: 'task', due: sel >= today ? sel : today })}>
+            <Icon name="plus" /> Task
+          </button>
+          <button type="button" className="i-btn i-btn--sig" onClick={() => openSheet({ type: 'event', date: sel >= today ? sel : today })}>
+            <Icon name="plus" /> Event
+          </button>
+        </span>
       </header>
       <div className="i-chips" role="group" aria-label="Show sections">
         <button type="button" className="i-chip" aria-pressed={!filter.length} onClick={() => setFilter([])}>
@@ -136,6 +143,9 @@ export function CalendarView() {
         <span className="i-mono i-small i-mid">
           {shortDay(monday)} – {shortDay(sunday)}
         </span>
+        <button type="button" className="i-btn i-btn--sm" style={{ marginLeft: 'auto' }} onClick={() => openSheet({ type: 'copyweek', monday })}>
+          Copy week
+        </button>
       </div>
       {clashes.length > 0 && (
         <div className="i-warnbox" style={{ marginBottom: 10 }}>
@@ -200,7 +210,7 @@ export function CalendarView() {
                 <small>
                   {o.event.section ? sectionInfo(o.event.section).code : 'GEN'}
                   {o.end ? ` · until ${o.end}` : ''}
-                  {o.recurring ? ' · weekly' : ''}
+                  {o.event.repeat ? ` · ${repeatLabel(o.event.repeat, o.event.date).toLowerCase()}` : ''}
                   {o.changed ? ' · moved' : ''}
                   {o.event.note ? ` · ${o.event.note}` : ''}
                 </small>
@@ -241,6 +251,9 @@ export function CalendarView() {
           Tanglin school calendar is a reference only: <a href="https://calendar.tts.edu.sg/" target="_blank" rel="noopener noreferrer">calendar.tts.edu.sg</a>. Add the events that matter to you yourself.
         </Source>
       </div>
+
+      <H2>Import</H2>
+      <ScheduleImportPanel />
     </div>
   );
 }

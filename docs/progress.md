@@ -132,8 +132,22 @@ Milestones, newest last. Each says what works, what was verified and what remain
 - Data: new table `lt_bucket` (migration `20261030120000_lifetracker_bucket.sql`, additive, members-only RLS; `data` jsonb for extras like a rarity). Applied to production on 30 Oct 2026 and verified. Sync skips a table the server doesn't have yet (rows stay on the device and in the outbox, and the page says so), so a future table can ship before its migration. IndexedDB version 2 adds the store.
 - Verified: 256 unit/DB tests (buffer, bucket XP, moments, emblems, the table's RLS and checks), 23 WebKit e2e tests (new: bucket list; /bucket in the accessibility sweep), typecheck; Chromium phone screenshots of the page, the crossing and the scene.
 
+## Import from the Schedule app (done, waiting to ship with the repeat work)
+- Calendar → Import: choose a Schedule backup (`schedule-backup-….json` from Schedule → Settings → Export backup). It shows what will come across, then adds it. No new table: events go to `lt_events` (`data.import_source = 'schedule'`, `data.import_id`), tasks to `todos` (optional).
+- Converter (`src/domain/calendar/scheduleImport.ts`, tested): daily, weekday and weekly repeats stay one repeating event, with cancelled and moved days as exceptions (a renamed day is cancelled and added on its own). Every-n-weeks and monthly repeats are written out as separate events (up to 400 days ahead when open-ended). A multi-day all-day event repeats daily through its last day. Events that run past midnight keep their start and note the end. Times move into the Daily Log time zone.
+- Skipped on import: anything imported before, events added by hand with the same title and start on the same day or weekdays, and tasks with the same title and due date. Sections are guessed from clear titles (violin, volleyball, JOI, chess…); the rest stay unsectioned.
+- Verified: 277 unit/DB tests, the calendar and accessibility e2e tests (new: import once, then everything is skipped the second time), typecheck, build. A dry run on the real backup from 31 Oct 2026 turned it into 12 events and 7 tasks, with the same days and times as in Schedule.
+
 ## Next (needs your review or your input)
 - Review the working app locally (`npm run dev`, local-only by default).
 - Production migration (docs/migration.md): back up, apply `20261025120000_lifetracker_core.sql`, verify — a separate step after review.
 - Deployment: a new Vercel project with Production-only env vars; add the LifeTracker origin to DragonCode's `ROAD_LINK_ORIGINS`.
 - Later: LifeTracker tables in the backup export; Strava import (needs an app registration); maths/physics app link once it exists.
+
+## M17 · More flexible events and tasks (done)
+- Repeats (`src/domain/calendar/repeat.ts`, shared by events and tasks): daily, weekly on chosen days, monthly (same date, or the same weekday such as the 2nd Tue / last Fri) and yearly, each "every n" (every 2 weeks, every 3 days…). Events end never, on a day, or after n times (saved as a last day). The rule lives in `lt_events.repeat` (jsonb, new optional `freq`/`every`/`by` keys); older rules with only `days` read as weekly. No migration.
+- Changing a series: "This + later" can also change how it repeats (the series splits there); a one-off event can be made to repeat.
+- New event sheet: typed start/end times beside the ±15 min steppers, length chips (30m–3h), "Again?" chips that fill in a recent event, Duplicate on any event (opens a copy a week later).
+- Calendar: "Copy week" copies the week's one-off events to the next 1–12 weeks (same weekday and time; skips ones already there; Undo). "+ Task" next to "+ Event". Day list shows the repeat in words.
+- Repeating tasks: rule kept in `lt_prefs` as `task_repeat.<todo id>` (Curio's `todos` has no column for it). Ticking one adds the next copy (after both its due day and today, so a late one doesn't pile up) and moves the rule there; unticking removes that copy again. Rows show "↻ weekly on Fri" etc. Task sheet also gets Weekend / Next Mon due shortcuts and "Block time for it in the calendar".
+- Verified: domain tests for every repeat kind, labels, splits and task due days; WebKit e2e for every-2-weeks + ends-after, length chips, copy week, and a weekly task coming back; accessibility sweep.

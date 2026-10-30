@@ -291,7 +291,23 @@ export interface EventException {
   start?: string;
   end?: string;
 }
-/** A calendar event. With `repeat` it recurs weekly on the given weekdays from `date` until `until`. */
+export type RepeatFreq = 'daily' | 'weekly' | 'monthly' | 'yearly';
+/**
+ * How an event (or a repeating task) recurs, counted from its first day. Older events only have
+ * `days` and `until`: they are weekly, every week.
+ */
+export interface Repeat {
+  freq?: RepeatFreq;
+  /** Every n days / weeks / months / years (default 1). */
+  every?: number;
+  /** Weekly: 0 = Monday … 6 = Sunday (same as the Daily Log's weekdayIndex). Empty otherwise. */
+  days: number[];
+  /** Monthly: on the same date (default) or the same weekday, e.g. the 2nd Tuesday or the last Friday. */
+  by?: 'date' | 'weekday';
+  /** Last day it may land on, or null for no end. */
+  until: string | null;
+}
+/** A calendar event. With `repeat` it recurs from `date` (see Repeat) until `until`. */
 export interface LtEvent {
   id: string;
   title: string;
@@ -302,8 +318,7 @@ export interface LtEvent {
   /** HH:MM, or null for all-day. */
   start: string | null;
   end: string | null;
-  /** 0 = Monday … 6 = Sunday (same as the Daily Log's weekdayIndex). */
-  repeat: { days: number[]; until: string | null } | null;
+  repeat: Repeat | null;
   /** Per-occurrence changes, keyed by the occurrence's original date. */
   exceptions: Record<string, EventException>;
   note: string | null;

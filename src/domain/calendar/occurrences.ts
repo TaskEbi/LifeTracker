@@ -1,10 +1,11 @@
 /**
- * Calendar events → the occurrences shown on given days. Weekly repeats, per-occurrence changes
+ * Calendar events → the occurrences shown on given days. Repeats (see ./repeat), per-occurrence changes
  * (cancel, move, retime) and "this and later" splits. Pure: callers commit the events returned.
  * Dates are calendar days; times are HH:MM in the Daily Log time zone.
  */
 import { addDays, dayCount, weekdayIndex } from '../log/dates';
 import type { EventException, LtEvent } from '../../data/types';
+import { repeatsOn } from './repeat';
 
 export interface Occurrence {
   /** `${eventId}@${origDate}`: stable for an occurrence even after it moves. */
@@ -58,7 +59,7 @@ export function occurrences(events: Iterable<LtEvent>, from: string, to: string)
     if (start > end) continue;
     for (let i = 0, n = dayCount(start, end); i < n; i++) {
       const d = addDays(start, i);
-      if (ev.repeat.days.includes(weekdayIndex(d))) add(d);
+      if (repeatsOn(ev.repeat, ev.date, d)) add(d);
     }
   }
   return out.sort((a, b) => a.date.localeCompare(b.date) || (a.start ?? '').localeCompare(b.start ?? '') || a.event.title.localeCompare(b.event.title));
@@ -105,18 +106,20 @@ export function changeOne(ev: LtEvent, origDate: string, change: Change): LtEven
 
 /**
  * Change this occurrence and every later one: the series ends the day before, and a new series
- * starts here with the new day of the week and times. Exceptions after the split move to the new
- * series only if they were cancellations (a moved day no longer lines up).
+ * starts here with the new day (and, for weekly ones, the weekdays shifted along) and times.
+ * Cancellations after the split carry over shifted by the same number of days when the rule
+ * counts in days or weeks; other exceptions are dropped (a moved day no longer lines up).
  */
 export function changeFuture(ev: LtEvent, origDate: string, change: Change, newId: string): [LtEvent, LtEvent] {
   if (!ev.repeat) return [changeOne(ev, origDate, change), ev];
   const shift = weekdayIndex(change.date) - weekdayIndex(origDate);
+  const byDays = (ev.repeat.freq ?? 'weekly') === 'weekly' || ev.repeat.freq === 'daily';
   const t = now();
   const before: Record<string, EventException> = {};
   const after: Record<string, EventException> = {};
   for (const [d, ex] of Object.entries(ev.exceptions ?? {})) {
     if (d < origDate) before[d] = ex;
-    else if (d > origDate && ex.cancelled) after[addDays(d, dayCount(origDate, change.date) - 1)] = { cancelled: true };
+    else if (d > origDate && ex.cancelled && byDays) after[addDays(d, dayCount(origDate, change.date) - 1)] = { cancelled: true };
   }
   const ended: LtEvent = { ...ev, exceptions: before, repeat: { ...ev.repeat, until: addDays(origDate, -1) }, updated_at: t };
   const next: LtEvent = {
@@ -125,7 +128,7 @@ export function changeFuture(ev: LtEvent, origDate: string, change: Change, newI
     date: change.date,
     start: change.start,
     end: change.end,
-    repeat: { days: [...new Set(ev.repeat.days.map((d) => (d + shift + 7) % 7))].sort(), until: ev.repeat.until },
+    repeat: { ...ev.repeat, days: [...new Set(ev.repeat.days.map((d) => (d + shift + 7) % 7))].sort() },
     exceptions: after,
     created_at: t,
     updated_at: t,
