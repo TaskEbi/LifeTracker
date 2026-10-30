@@ -6,7 +6,7 @@ Nothing here has been run. Each step is a separate release decision for the user
 
 Only additive SQL: `supabase/migrations/20261025120000_lifetracker_core.sql` (and later `lt_` migrations).
 - Six new tables (`lt_records`, `lt_details`, `lt_events`, `lt_nights`, `lt_day_marks`, `lt_prefs`) with members-only RLS.
-- `20261030120000_lifetracker_bucket.sql`: one more table, `lt_bucket` (the bucket list), same RLS. Until it is applied the app keeps bucket-list items on the device and in the outbox (sync skips a table the server doesn't have) and sends them once it exists.
+- `20261030120000_lifetracker_bucket.sql`: one more table, `lt_bucket` (the bucket list), same RLS. Applied 30 Oct 2026 (`supabase db push`); verified: the other tables' row counts unchanged, RLS on, 4 member policies, in realtime, no anon grants. (No dump beforehand: no Docker or pg_dump on that machine; the change only creates a table.) While a table is missing the app keeps its rows on the device and in the outbox and sends them once it exists.
 - One nullable column, `todos.section`.
 - No existing row, column, policy or function is changed. Curio Cabinet keeps working.
 
