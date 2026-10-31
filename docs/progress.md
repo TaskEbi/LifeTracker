@@ -153,9 +153,9 @@ Milestones, newest last. Each says what works, what was verified and what remain
 - Verified: domain tests for every repeat kind, labels, splits and task due days; WebKit e2e for every-2-weeks + ends-after, length chips, copy week, and a weekly task coming back; accessibility sweep.
 
 ## M18 · Bucket list in sections, with its own space (done)
-- Sections (`src/domain/bucket/sections.ts`, tested): 旅 Places to go, 冒 Adventures, 体 Body & sport, 芸 Music & art, 学 Mind & skills, 創 Make & build, 味 Food & taste, 瞬 Once-in-a-lifetime, 縁 People & giving, 道 Life milestones, 夢 Wild cards. Each wish is sorted by its words (title counts double, note once); moving it in its sheet keeps the choice in `lt_bucket.data.cat`. No migration: everything new lives in `data` (`cat`, `by`, `step`, `task`).
+- Sections (`src/domain/bucket/sections.ts`, tested), shaped around the real list: 体 Body & sport, 冒 Adventures, 旅 Places to go, 芸 Music & art, 学 Mind & skills, 創 Make & build, 縁 Love & people, 心 Inner growth, 道 Life milestones, 富 Wealth & things, 味 Food & taste, 瞬 Once-in-a-lifetime, 夢 Wild cards. Each wish is sorted by its words (title counts double, note once); moving it in its sheet keeps the choice in `lt_bucket.data.cat`. No migration: everything new lives in `data` (`cat`, `by`, `step`, `task`).
 - Its own space (like a section, `data-sect='bucket'`): a shrine at dusk, Shippori Mincho; the header's ema rack holds one plaque per wish and ticks the crossed-off ones.
-- Dream compass (radar of the 11 sections: on the list in gold, crossed off in red) with strongest pull, unexplored sections, crossed off and planned this year.
+- Dream compass (radar of the 13 sections: on the list in gold, crossed off in red) with strongest pull, unexplored sections, crossed off and planned this year.
 - When: Someday / this year / a year. This year's wishes hang as wooden ema on a rope at the top; rows show the year (overdue in red).
 - Smallest next step per wish, shown on the row; "Make the step a task" adds it to Tasks and links it.
 - Quick add shows where it will go as you type (tap to choose another); filter chips per section; Pick one works inside a filter; sections fold (remembered on the device).

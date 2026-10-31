@@ -1,20 +1,22 @@
 /**
  * Bucket-list sections. Each item is sorted into one by reading its words (title counts double,
  * the note once); the user can move it, and that choice is kept in `lt_bucket.data.cat`.
- * The order is the order sections appear on the page: out into the world first, home last.
+ * The order is the order sections appear on the page: body and the outdoors first, things last.
  */
 
 export const BUCKET_SECTIONS = [
-  { id: 'travel', kanji: '旅', name: 'Places to go', short: 'Travel', color: '#5fd4c4' },
-  { id: 'adventure', kanji: '冒', name: 'Adventures', short: 'Adventure', color: '#ff8a4c' },
   { id: 'body', kanji: '体', name: 'Body & sport', short: 'Sport', color: '#ff5a6e' },
-  { id: 'art', kanji: '芸', name: 'Music & art', short: 'Art', color: '#c9a0ff' },
+  { id: 'adventure', kanji: '冒', name: 'Adventures', short: 'Adventure', color: '#ff8a4c' },
+  { id: 'travel', kanji: '旅', name: 'Places to go', short: 'Travel', color: '#5fd4c4' },
+  { id: 'art', kanji: '芸', name: 'Music & art', short: 'Art', color: '#d98cff' },
   { id: 'mind', kanji: '学', name: 'Mind & skills', short: 'Mind', color: '#7fb2ff' },
   { id: 'make', kanji: '創', name: 'Make & build', short: 'Make', color: '#b8e05c' },
-  { id: 'taste', kanji: '味', name: 'Food & taste', short: 'Taste', color: '#ffb35c' },
-  { id: 'moments', kanji: '瞬', name: 'Once-in-a-lifetime', short: 'Moments', color: '#ff9ec7' },
-  { id: 'people', kanji: '縁', name: 'People & giving', short: 'People', color: '#7fe0a0' },
+  { id: 'people', kanji: '縁', name: 'Love & people', short: 'People', color: '#ff9ec7' },
+  { id: 'self', kanji: '心', name: 'Inner growth', short: 'Inner', color: '#7fe0a0' },
   { id: 'life', kanji: '道', name: 'Life milestones', short: 'Life', color: '#e8d6a8' },
+  { id: 'wealth', kanji: '富', name: 'Wealth & things', short: 'Wealth', color: '#ffd24a' },
+  { id: 'taste', kanji: '味', name: 'Food & taste', short: 'Taste', color: '#e0a370' },
+  { id: 'moments', kanji: '瞬', name: 'Once-in-a-lifetime', short: 'Moments', color: '#a9b4ff' },
   { id: 'other', kanji: '夢', name: 'Wild cards', short: 'Wild', color: '#c8c8e0' },
 ] as const;
 
@@ -45,8 +47,8 @@ const WORDS: Record<Exclude<BucketSectionId, 'other'>, [number, string[]][]> = {
     [2, ['run', 'race', 'swim', 'cycle', 'cycling', 'bike', 'gym', 'fit', 'fitness', 'abs', 'strong', 'muscle', 'match', 'tournament', 'league', 'compete', 'competition', 'serve', 'yoga', 'martial', 'sprint', 'stretch']],
   ],
   art: [
-    [3, ['violin', 'piano', 'guitar', 'cello', 'viola', 'flute', 'drum', 'orchestra', 'concerto', 'sonata', 'symphony', 'recital', 'opera', 'carnegie', 'philharmonic', 'bach', 'paganini', 'sibelius', 'tchaikovsky', 'mozart', 'beethoven', 'brahms', 'mendelssohn', 'vivaldi', 'chaconne', 'caprice', 'stradivari', 'compose', 'album', 'band', 'paint', 'sketch', 'calligraph*', 'pottery', 'sculpt', 'ballet']],
-    [2, ['music', 'song', 'sing', 'concert', 'perform', 'stage', 'draw', 'photograph', 'film', 'movie', 'dance', 'dancing', 'theatre', 'theater', 'art', 'museum', 'gallery', 'louvre', 'play in', 'play the', 'busk']],
+    [3, ['violin', 'piano', 'guitar', 'cello', 'viola', 'flute', 'drum', 'orchestra', 'concerto', 'sonata', 'symphony', 'recital', 'opera', 'carnegie', 'philharmonic', 'bach', 'paganini', 'sibelius', 'tchaikovsky', 'mozart', 'beethoven', 'brahms', 'mendelssohn', 'vivaldi', 'chaconne', 'caprice', 'stradivari', 'compose', 'album', 'band', 'music', 'paint', 'sketch', 'calligraph*', 'pottery', 'sculpt', 'ballet']],
+    [2, ['song', 'sing', 'concert', 'perform', 'stage', 'draw', 'photograph', 'film', 'movie', 'dance', 'dancing', 'theatre', 'theater', 'art', 'museum', 'gallery', 'louvre', 'play in', 'play the', 'busk']],
   ],
   mind: [
     [3, ['ioi', 'imo', 'joi', 'olympiad', 'codeforces', 'atcoder', 'leetcode', 'competitive programming', 'grandmaster', 'elo', 'chess', 'fide', 'rubik', 'speedcub*', 'fluent', 'japanese', 'chinese', 'mandarin', 'french', 'spanish', 'german', 'korean', 'italian', 'latin', 'phd', 'degree', 'university', 'harvard', 'mit', 'oxford', 'cambridge', 'stanford', 'nobel']],
@@ -66,13 +68,22 @@ const WORDS: Record<Exclude<BucketSectionId, 'other'>, [number, string[]][]> = {
     [2, ['watch', 'see a', 'live', 'attend', 'stars', 'night', 'party', 'celebrate', 'once in a lifetime', 'nba', 'premier league', 'all night', 'meet a', 'meet my hero', 'sleep under']],
   ],
   people: [
-    [3, ['family', 'parents', 'mom', 'mum', 'dad', 'grandma', 'grandpa', 'grandparent', 'friend', 'sister', 'brother', 'volunteer', 'donate', 'charity', 'mentor', 'teach', 'thank', 'letter to', 'pen pal', 'reunion', 'blood']],
-    [2, ['help', 'give', 'gift', 'together', 'with my', 'surprise', 'kind', 'stranger', 'someone', 'people', 'team']],
+    [4, ['family', 'parents', 'mom', 'mum', 'dad', 'grandma', 'grandpa', 'grandparent']],
+    [3, ['friend', 'best friend', 'sister', 'brother', 'volunteer', 'donate', 'charity', 'mentor', 'teach', 'thank', 'letter to', 'pen pal', 'reunion', 'blood', 'marry', 'wedding', 'date', 'dating', 'girlfriend', 'boyfriend', 'partner', 'someone i love', 'professor', 'genius']],
+    [2, ['help', 'give', 'gift', 'together', 'surprise', 'kind', 'stranger', 'someone', 'people', 'team', 'trust', 'love', 'talk', 'meet', 'connection']],
+  ],
+  self: [
+    [3, ['flow state', 'flowstate', 'my limit', 'limits', 'meditat*', 'purpose', 'meaning', 'passion', 'love to do', 'curious', 'curiosity', 'discipline', 'scares me', 'comfort zone', 'alone', 'gratitude', 'journal', 'nothing to improve', 'upset', 'hurt']],
+    [2, ['find', 'genuinely', 'truly', 'feel', 'fear', 'habit', 'calm', 'improve', 'train']],
   ],
   life: [
     [4, ['live in', 'move to', 'live abroad']],
-    [3, ['house', 'apartment', 'retire', 'invest', 'million', 'marry', 'wedding', 'kids', 'children', 'driving licen*', "driver's licen*", 'driver licen*', 'graduate', 'own a', 'buy a', 'career', 'job', 'salary', 'tattoo', 'pet', 'dog', 'cat']],
-    [2, ['save', 'money', 'home', 'car', 'work at', 'work in', 'become', 'debt', 'plant a tree']],
+    [3, ['retire', 'kids', 'children', 'driving licen*', "driver's licen*", 'driver licen*', 'graduate', 'career', 'job', 'tattoo', 'pet', 'dog', 'cat', 'design my own house', 'my own house']],
+    [2, ['home', 'work at', 'work in', 'become', 'plant a tree', 'university']],
+  ],
+  wealth: [
+    [3, ['million', 'billion', 'billionaire', 'millionaire', 'rich', 'invest', 'stocks', 'dollars', 'sports car', 'supercar', 'garage', 'yacht', 'collection', 'houses', 'mansion', 'watch collection', 'salary', 'net worth', 'passive income', 'debt']],
+    [2, ['buy', 'own', 'money', 'save', 'house', 'apartment', 'car', 'cars', 'earn', 'make $*', '$*', 'pc', 'shoes', 'bike']],
   ],
 };
 

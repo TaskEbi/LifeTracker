@@ -25,8 +25,18 @@ describe('bucket sections', () => {
     ['Watch the World Cup final live', 'moments'],
     ['See a total solar eclipse', 'moments'],
     ['Take my parents on holiday', 'people'],
+    ['Find someone I love', 'people'],
+    ['Buy my parents a car', 'people'],
     ['Live in another country', 'life'],
     ['Get my driving licence', 'life'],
+    ['Get a good job', 'life'],
+    ['Make 1 million dollars', 'wealth'],
+    ['Buy a road bike', 'wealth'],
+    ['Get a garage full of sports cars', 'wealth'],
+    ['Experience a true flow state', 'self'],
+    ['Find something that I love to do', 'self'],
+    ['Make my own app', 'make'],
+    ['Genuinely move someone with my music', 'art'],
     ['Something nobody could guess', 'other'],
     ['Learn to juggle fire', 'other'],
   ])('%s → %s', (title, want) => {
@@ -61,9 +71,9 @@ describe('bucket sections', () => {
   it('groups in page order, years first inside a section', () => {
     const open = [item('Visit Kyoto'), item('Run a marathon'), item('Visit Paris', { by: 2028 }), item('Visit Rome', { by: 2027 })];
     const g = groupBySection(open, [item('Do a backflip')]);
-    expect(g.map((s) => s.section.id)).toEqual(['travel', 'body']);
-    expect(g[0].open.map((b) => b.title)).toEqual(['Visit Rome', 'Visit Paris', 'Visit Kyoto']);
-    expect(g[1].done.map((b) => b.title)).toEqual(['Do a backflip']);
+    expect(g.map((s) => s.section.id)).toEqual(['body', 'travel']);
+    expect(g[1].open.map((b) => b.title)).toEqual(['Visit Rome', 'Visit Paris', 'Visit Kyoto']);
+    expect(g[0].done.map((b) => b.title)).toEqual(['Do a backflip']);
   });
 });
 

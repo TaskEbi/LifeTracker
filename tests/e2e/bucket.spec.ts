@@ -45,12 +45,12 @@ test('bucket list: move a wish, give it this year and a next step that becomes a
   await expect(page.getByRole('list', { name: 'Body & sport' }).getByRole('listitem')).toHaveCount(1);
   await expect(page.getByRole('list', { name: 'Wild cards' }).getByRole('listitem')).toHaveCount(1);
 
-  // move the wild card to People & giving
+  // move the wild card to Love & people
   await page.getByRole('button', { name: 'Something only I understand', exact: true }).click();
   let sheet = page.getByRole('dialog', { name: 'On the list' });
   await sheet.getByRole('button', { name: /People/ }).click();
   await sheet.getByRole('button', { name: 'Save' }).click();
-  await expect(page.getByRole('list', { name: 'People & giving' }).getByRole('listitem')).toHaveCount(1);
+  await expect(page.getByRole('list', { name: 'Love & people' }).getByRole('listitem')).toHaveCount(1);
   await expect(page.getByRole('list', { name: 'Wild cards' })).toHaveCount(0);
 
   // this year + a next step, made into a task
