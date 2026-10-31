@@ -273,6 +273,25 @@ describe('bucket list and the streak buffer', () => {
     expect(get(list, 'bucketlist10').progress).toBe(4);
   });
 
+  it('counts the bucket-list sections things are crossed off in', () => {
+    const titled = (title: string, done: string | null) => ({ ...wish(title, done), title });
+    const list = achievements(
+      input({
+        bucket: [
+          titled('Visit Kyoto', '2026-10-02'),
+          titled('Run a marathon', '2026-10-03'),
+          titled('Play the Bach Chaconne', '2026-10-04'),
+          titled('Go to IOI', '2026-10-05'),
+          titled('Visit Rome', '2026-10-06'),
+          titled('Eat ramen in Sapporo', '2026-10-07'),
+          titled('Go skydiving', null),
+        ],
+      }),
+    );
+    expect(get(list, 'bucketpaths').unlockedOn).toBe('2026-10-07');
+    expect(get(list, 'bucketwide').progress).toBe(6);
+  });
+
   it('lets a streak achievement run across one missed day', () => {
     const days = ['2026-10-20', '2026-10-21', '2026-10-23', '2026-10-24']; // the 22nd missed
     expect(get(achievements(input({ entries: days.map((d) => entry(d, 20)) })), 'streak3').unlockedOn).toBe('2026-10-23');

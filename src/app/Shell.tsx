@@ -14,7 +14,7 @@ import { SheetHost } from './SheetHost';
 import { Home } from '../features/home/Home';
 import { FocusPill } from '../features/focus/FocusSheet';
 import { sectionViews } from './views';
-import { loadSectionFonts } from './sectionLook';
+import { loadSectionFonts, type LookId } from './sectionLook';
 import { resolveTheme } from './theme';
 
 const Cabinet = lazy(() => import('../features/cabinet/CabinetChannel'));
@@ -183,7 +183,7 @@ export function StatusBar() {
  * Inside a section the shell carries data-sect, which switches on that section's own look
  * (features/<section>/theme.css). The browser chrome and page background follow it.
  */
-function useSectionLook(sect: SectionId | null) {
+function useSectionLook(sect: LookId | null) {
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (!sect || !ref.current) return;
@@ -206,9 +206,11 @@ export function Shell() {
   const View: ComponentType | undefined = route.name === 'home' ? Home : sectionViews[route.name];
   const isCabinet = route.name === 'cabinet';
   const sect = (SECTION_IDS as readonly string[]).includes(route.name) ? (route.name as SectionId) : null;
-  const ref = useSectionLook(sect);
+  // the bucket list isn't a section but has its own space too
+  const look: LookId | null = sect ?? (route.name === 'bucket' ? 'bucket' : null);
+  const ref = useSectionLook(look);
   return (
-    <div className="i-shell" ref={ref} data-sect={sect ?? undefined}>
+    <div className="i-shell" ref={ref} data-sect={look ?? undefined}>
       <Rail current={route.name} rest={route.rest} />
       {isCabinet ? (
         <div className="i-cabinet-host">

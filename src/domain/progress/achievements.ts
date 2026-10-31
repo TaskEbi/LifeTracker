@@ -10,6 +10,7 @@ import { addDays, dayCount, monthEnd, monthStart, weekdayIndex, weekStart } from
 import { SECTION_IDS, TIMED_SECTIONS, type LogEntry, type SectionId } from '../../data/types';
 import { activeDays, allXpEvents, bedDelta, RULES, sectionLevel, sectionOf, STAGES, xpForLevel, xpForSectionLevel, type ProgressInput, type XpEvent, type XpSection } from './engine';
 import { BOSSES, bossHistory, type BossFight } from './boss';
+import { sectionOf as bucketSectionOf } from '../bucket/sections';
 import { dayFacts, doneSets, questHistory, WAKE_WINDOW, type Facts, type QuestSet } from './quests';
 import type { AchievementGroup, Glyph } from './glyphs';
 
@@ -903,6 +904,20 @@ function compute(input: ProgressInput, extras: AchievementExtras): Achievement[]
     if (n === 3 && !busyOn) busyOn = d;
   }
   add('bucketmonth', 'silver', 'sun', 'Busy Living', '3 bucket-list things crossed off in one month', 3, Math.max(0, ...perMonth.values()), busyOn);
+  // spread: crossed off in 5 different bucket-list sections; a list that spans 8 of them
+  const spread = (list: typeof bucket, at: (b: (typeof bucket)[number]) => string, goal: number) => {
+    const seen = new Set<string>();
+    let on: string | null = null;
+    for (const b of [...list].sort((x, y) => at(x).localeCompare(at(y)))) {
+      seen.add(bucketSectionOf(b));
+      if (!on && seen.size >= goal) on = input.dayOf(at(b));
+    }
+    return [seen.size, on] as const;
+  };
+  const [paths, pathsOn] = spread(bucket.filter((b) => b.done_at), (b) => b.done_at!, 5);
+  add('bucketpaths', 'gold', 'compass', 'Many Paths', 'Bucket-list things crossed off in 5 different sections', 5, paths, pathsOn);
+  const [wide, wideOn] = spread(bucket, (b) => b.created_at, 8);
+  add('bucketwide', 'bronze', 'sakura', 'Wide Dreamer', 'Something on your bucket list in 8 different sections', 8, wide, wideOn);
 
   // ── levels and forms ──
   const events = extras.events ?? allXpEvents(input);

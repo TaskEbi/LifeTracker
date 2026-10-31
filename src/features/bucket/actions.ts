@@ -1,6 +1,7 @@
 /** Bucket-list changes. Every write goes through `commit` (local-first, synced); crossing off shows its reward. */
 import { withReward } from '../../data/lt';
 import { commit, data, type DataState } from '../../data/store';
+import { addTodo } from '../../data/todoActions';
 import type { LtBucket } from '../../data/types';
 import { toast } from '../../data/ui';
 import { uuid } from '../../lib/random';
@@ -25,8 +26,8 @@ export const splitLines = (text: string) =>
     .map((l) => clean(l.replace(/^\s*(?:[-*•·–]|\d+[.)]|\[[ xX]?\])\s*/, '')))
     .filter(Boolean);
 
-/** Add each title (skipping ones already on the list). Returns what was added and how many were already there. */
-export function addBucket(titles: string[]): { added: LtBucket[]; dupes: number } {
+/** Add each title (skipping ones already on the list), with `extra` in its data (a section, say). Returns what was added and how many were already there. */
+export function addBucket(titles: string[], extra: Record<string, unknown> = {}): { added: LtBucket[]; dupes: number } {
   const st = data.get();
   const live = [...st.lt_bucket.values()].filter((b) => !b.deleted_at);
   const seen = new Set(live.map((b) => b.title.toLowerCase()));
@@ -42,19 +43,56 @@ export function addBucket(titles: string[]): { added: LtBucket[]; dupes: number 
       continue;
     }
     seen.add(title.toLowerCase());
-    added.push({ id: uuid(), title, note: null, done_at: null, sort_order: ++order, data: {}, created_at: t, updated_at: t, deleted_at: null });
+    added.push({ id: uuid(), title, note: null, done_at: null, sort_order: ++order, data: { ...extra }, created_at: t, updated_at: t, deleted_at: null });
   }
   commit('lt_bucket', added);
   return { added, dupes };
 }
 
-export function updateBucket(id: string, patch: { title: string; note: string }): string | null {
+export interface BucketPatch {
+  title: string;
+  note: string;
+  /** A section id, or null to let the words decide again. */
+  cat?: string | null;
+  /** The year it is meant for, or null for someday. */
+  by?: number | null;
+  /** The smallest next step. */
+  step?: string;
+}
+
+/** Set or clear keys of `data`; null removes a key, undefined leaves it. */
+const merge = (d: Record<string, unknown>, patch: Record<string, unknown>) => {
+  const out = { ...d };
+  for (const [k, v] of Object.entries(patch)) {
+    if (v === undefined) continue;
+    if (v === null || v === '') delete out[k];
+    else out[k] = v;
+  }
+  return out;
+};
+
+export function updateBucket(id: string, patch: BucketPatch): string | null {
   const prev = data.get().lt_bucket.get(id);
   if (!prev || prev.deleted_at) return 'That one has gone.';
   const title = clean(patch.title);
   if (!title) return 'Write what it is.';
   const note = patch.note.trim().slice(0, 2000) || null;
-  commit('lt_bucket', [{ ...prev, title, note, updated_at: now() }]);
+  const step = patch.step === undefined ? undefined : clean(patch.step);
+  const d = merge(prev.data, { cat: patch.cat, by: patch.by, step });
+  commit('lt_bucket', [{ ...prev, title, note, data: d, updated_at: now() }]);
+  return null;
+}
+
+/** Turn the next step into a task on the to-do list, linked from the item. */
+export function stepToTask(id: string): string | null {
+  const prev = data.get().lt_bucket.get(id);
+  const step = typeof prev?.data.step === 'string' ? prev.data.step.trim() : '';
+  if (!prev || prev.deleted_at) return 'That one has gone.';
+  if (!step) return 'Write the next step first.';
+  const todo = addTodo({ title: step, priority: 'normal', due: null, section: null });
+  if ('error' in todo) return todo.error;
+  commit('lt_bucket', [{ ...prev, data: { ...prev.data, task: todo.id }, updated_at: now() }]);
+  toast('Added to your tasks');
   return null;
 }
 
