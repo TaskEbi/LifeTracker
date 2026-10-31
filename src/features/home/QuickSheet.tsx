@@ -27,6 +27,7 @@ const CMDS: Cmd[] = [
   { id: 'study', label: 'log study', hint: 'subject · minutes', section: 'study', sheet: 'study', route: 'study' },
   { id: 'coding', label: 'log coding', hint: 'session · what clicked', section: 'coding', sheet: 'coding', route: 'coding' },
   { id: 'chess', label: 'log chess', hint: 'puzzles · study', section: 'chess', sheet: 'chess', route: 'chess' },
+  { id: 'future', label: 'log uni prep', hint: 'SAT · essays · applications', section: 'future', sheet: 'future', route: 'future' },
   { id: 'cabinet', label: 'save to cabinet', hint: 'link · note · photo', section: 'cabinet', route: 'cabinet' },
   { id: 'task', label: 'new task', hint: 'shared task list', sheet: 'task', route: 'tasks' },
   { id: 'event', label: 'new event', hint: 'shared calendar', sheet: 'event', route: 'calendar' },

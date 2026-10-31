@@ -25,6 +25,7 @@ const GROUP: Record<AchievementGroup, { name: string; kanji: string; c: string }
   gym: { ...sect('gym'), c: 'var(--c-gym)' },
   study: { ...sect('study'), c: 'var(--c-study)' },
   chess: { ...sect('chess'), c: 'var(--c-chess)' },
+  future: { ...sect('future'), c: 'var(--c-future)' },
   sleep: { ...sect('sleep'), c: 'var(--c-sleep)' },
   screen: { ...sect('screen'), c: 'var(--c-screen)' },
   tasks: { name: 'Tasks', kanji: '務', c: 'var(--c-quests)' },

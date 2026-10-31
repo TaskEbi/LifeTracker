@@ -23,6 +23,7 @@ export const SECTIONS: SectionInfo[] = [
   { id: 'sleep', name: 'Sleep', full: 'Sleep', code: 'CH07', sub: 'night monitor', kanji: '眠' },
   { id: 'screen', name: 'Screen', full: 'Screen time', code: 'CH08', sub: 'daily totals', kanji: '画' },
   { id: 'cabinet', name: 'Cabinet', full: 'Cabinet', code: 'CH09', sub: 'collection', kanji: '蔵' },
+  { id: 'future', name: 'Future', full: 'Future', code: 'CH10', sub: 'uni prep · plans', kanji: '志' },
 ];
 
 /** Kanji for the shared screens. */
@@ -38,4 +39,5 @@ export const TOPIC_NAME_HINTS: Record<string, string[]> = {
   gym: ['gym', 'strength'],
   study: ['schoolwork', 'school', 'study', 'studies', 'homework'],
   chess: ['chess'],
+  future: ['uni prep', 'university prep', 'university applications', 'applications', 'future'],
 };

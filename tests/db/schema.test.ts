@@ -172,6 +172,15 @@ describe('shapes', () => {
     await expect(as(member, `insert into public.lt_prefs (id, value) values ('Has Spaces', '1')`)).rejects.toThrow(/check/);
   });
 
+  it('takes the Future section in every table that has a section, and still refuses unknown ones', async () => {
+    await as(member, `insert into public.lt_records (id, section, kind, data) values (gen_random_uuid(), 'future', 'uni', '{"name": "MIT"}')`);
+    await as(member, `insert into public.lt_details (id, section) values (gen_random_uuid(), 'future')`);
+    await as(member, `insert into public.lt_events (id, title, date, section, kind) values (gen_random_uuid(), 'MIT early action', '2027-11-01', 'future', 'other')`);
+    await as(member, `insert into public.todos (id, title, section) values (gen_random_uuid(), 'Book the SAT', 'future')`);
+    await expect(as(member, `insert into public.lt_records (id, section, kind) values (gen_random_uuid(), 'past', 'uni')`)).rejects.toThrow(/check/);
+    await expect(as(member, `insert into public.lt_details (id, section) values (gen_random_uuid(), 'screen')`)).rejects.toThrow(/check/);
+  });
+
   it('keeps one night and one rest mark per day', async () => {
     await as(member, `insert into public.lt_nights (id, date, bed, wake) values (gen_random_uuid(), '2026-10-24', '23:15', '08:00')`);
     await expect(as(member, `insert into public.lt_nights (id, date) values (gen_random_uuid(), '2026-10-24')`)).rejects.toThrow(/duplicate key/);

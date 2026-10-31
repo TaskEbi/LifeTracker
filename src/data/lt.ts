@@ -128,6 +128,7 @@ const DEFAULT_TOPIC: Record<TimedSection, { name: string; color: LogTopic['color
   gym: { name: 'Gym', color: 'cherry' },
   study: { name: 'Schoolwork', color: 'plum' },
   chess: { name: 'Chess', color: 'slate' },
+  future: { name: 'Uni prep', color: 'apricot' },
 };
 
 /**
@@ -196,6 +197,7 @@ export function progressInput(st: DataState, today: string): ProgressInput {
     sleep: sleepOf(st.lt_prefs),
     plans: plansOf(st.lt_prefs),
     bucket: live(st.lt_bucket),
+    future: live(st.lt_records).filter((r) => r.section === 'future'),
   };
   lastState = st;
   lastToday = today;

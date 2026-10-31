@@ -7,7 +7,7 @@ import { createStore, useStore } from '../../lib/createStore';
 import type { TimedSection } from '../../data/types';
 
 /** Gym has its own session flow; the others log through their sheet. */
-export const FOCUS_SECTIONS = ['violin', 'coding', 'study', 'chess', 'sports'] as const satisfies readonly TimedSection[];
+export const FOCUS_SECTIONS = ['violin', 'coding', 'study', 'chess', 'sports', 'future'] as const satisfies readonly TimedSection[];
 export type FocusSection = (typeof FOCUS_SECTIONS)[number];
 export const FOCUS_GOALS = [15, 25, 45, 60, 90] as const;
 

@@ -20,6 +20,7 @@ const FONTS: Record<LookId, string> = {
   chess: 'family=UnifrakturMaguntia&family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Old+Standard+TT:ital,wght@0,400;0,700;1,400',
   sleep: 'family=Instrument+Serif:ital@0;1&family=Lexend:wght@100..900',
   screen: 'family=Zen+Maru+Gothic:wght@400;500;700&family=Manrope:wght@200..800',
+  future: 'family=Bebas+Neue&family=Red+Hat+Mono:wght@400..700&family=Public+Sans:wght@300..800',
   bucket: 'family=Shippori+Mincho:wght@500;700;800&family=Yuji+Syuku',
   cabinet: 'family=Kalam:wght@400;700&family=Literata:ital,opsz,wght@0,7..72,200..900;1,7..72,200..900&family=Courier+Prime:wght@400;700',
 };

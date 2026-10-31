@@ -5,9 +5,10 @@
  * record changes its XP instead of adding more. The values are illustrative and easy to retune here.
  */
 import { addDays, weekdayIndex, weekStart } from '../log/dates';
-import type { LogDayMetric, LogEntry, LtBucket, LtDetail, LtNight, SectionId, Todo } from '../../data/types';
+import type { LogDayMetric, LogEntry, LtBucket, LtDetail, LtNight, LtRecord, SectionId, Todo } from '../../data/types';
 import type { SleepSchedule, Targets } from '../prefs';
 import type { PlansState } from '../plans/types';
+import { futureXp } from '../future/plan';
 import { bossEvents } from './boss';
 import { questEvents } from './quests';
 
@@ -49,6 +50,8 @@ export interface ProgressInput {
   plans?: PlansState;
   /** Live bucket-list items; absent in old fixtures. */
   bucket?: LtBucket[];
+  /** Live Future records (shortlist, tests, essays, plans); absent in old fixtures. */
+  future?: LtRecord[];
 }
 
 const targetsFor = (input: ProgressInput, date: string) => (input.targetsAt ? input.targetsAt(weekStart(date)) : input.targets);
@@ -78,6 +81,8 @@ export const RULES = {
   cabinetItem: 2,
   cabinetPerDay: 10,
   bucketDone: 50,
+  /** Weekly uni-prep target (Future) reached. */
+  futureWeekTarget: 25,
   /** Missed days in a row the day streak absorbs: one missed day never breaks it, two do. */
   streakBuffer: 1,
 } as const;
@@ -225,6 +230,7 @@ export function xpEvents(input: ProgressInput): XpEvent[] {
   weekly('violin', (e) => e.minutes, (t) => t.violinWeek, RULES.violinWeekTarget, () => 'Weekly violin target reached');
   weekly('gym', () => 1, (t) => t.gymWeek, RULES.gymWeekTarget, (n) => `Weekly target: ${n} gym sessions`);
   weekly('sports', () => 1, (t) => t.sportsWeek, RULES.sportsWeekTarget, (n) => `Weekly target: ${n} sports sessions`);
+  weekly('future', (e) => e.minutes, (t) => t.futureWeek, RULES.futureWeekTarget, () => 'Weekly uni prep target reached');
 
   // Sleep: logging the night counts; so does keeping near the planned bedtime. Never less sleep.
   for (const m of input.metrics) {
@@ -259,6 +265,7 @@ export function xpEvents(input: ProgressInput): XpEvent[] {
   for (const b of input.bucket ?? []) {
     if (b.done_at) out.push({ key: `bucket:${b.id}`, date: input.dayOf(b.done_at), section: 'general', xp: RULES.bucketDone, reason: `Bucket list: ${b.title}` });
   }
+  for (const x of futureXp(input.future ?? [])) if (x.date <= input.today) out.push({ ...x, section: 'future' });
   // One award per key, whatever reaches us: a record that arrives twice still counts once.
   return [...new Map(out.map((e) => [e.key, e])).values()];
 }
@@ -341,7 +348,7 @@ export interface Progress {
   streak: BufferedStreak & { rest: boolean };
 }
 
-const ALL: XpSection[] = ['violin', 'coding', 'sports', 'gym', 'study', 'chess', 'sleep', 'screen', 'cabinet', 'general', 'quests'];
+const ALL: XpSection[] = ['violin', 'coding', 'sports', 'gym', 'study', 'chess', 'sleep', 'screen', 'cabinet', 'future', 'general', 'quests'];
 
 /** Total XP needed to reach an overall level. */
 export function xpForLevel(level: number): number {
@@ -423,6 +430,7 @@ export function sectionStreaks(input: ProgressInput): Partial<Record<SectionId, 
   const violin = weekTotals(of('violin'), (e) => e.minutes);
   const gym = weekTotals(of('gym'), () => 1);
   const sports = weekTotals(of('sports'), () => 1);
+  const future = weekTotals(of('future'), (e) => e.minutes);
   const t = input.targets;
   const at = (w: string) => targetsFor(input, w);
   const sleepDays = input.metrics.filter((m) => m.metric === 'sleep');
@@ -434,6 +442,7 @@ export function sectionStreaks(input: ProgressInput): Partial<Record<SectionId, 
     violin: { n: weekStreak((w) => (violin.get(w) ?? 0) >= at(w).violinWeek, input.today), unit: 'w', label: 'weeks at target' },
     gym: { n: weekStreak((w) => (gym.get(w) ?? 0) >= at(w).gymWeek, input.today), unit: 'w', label: `weeks with ${t.gymWeek} sessions` },
     sports: { n: weekStreak((w) => (sports.get(w) ?? 0) >= at(w).sportsWeek, input.today), unit: 'w', label: `weeks with ${t.sportsWeek}+ sessions` },
+    future: { n: weekStreak((w) => (future.get(w) ?? 0) >= at(w).futureWeek, input.today), unit: 'w', label: 'weeks at target' },
     coding: { n: days(of('coding')), unit: 'd', label: 'day streak' },
     study: { n: days(of('study')), unit: 'd', label: 'day streak' },
     chess: { n: days(of('chess')), unit: 'd', label: 'day streak' },

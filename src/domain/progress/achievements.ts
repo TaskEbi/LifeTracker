@@ -137,7 +137,7 @@ export interface AchievementExtras {
 }
 
 const SECTION_NAME: Record<SectionId, string> = {
-  violin: 'Violin', coding: 'Coding', sports: 'Sports', gym: 'Gym', study: 'Study', chess: 'Chess', sleep: 'Sleep', screen: 'Screen time', cabinet: 'Cabinet',
+  violin: 'Violin', coding: 'Coding', sports: 'Sports', gym: 'Gym', study: 'Study', chess: 'Chess', sleep: 'Sleep', screen: 'Screen time', cabinet: 'Cabinet', future: 'Future',
 };
 /** Section level emblems: titles and glyphs for levels 5, 10, 20 and 30. */
 const SECTION_LEVELS: Record<SectionId, [string, Glyph][]> = {
@@ -150,7 +150,11 @@ const SECTION_LEVELS: Record<SectionId, [string, Glyph][]> = {
   sleep: [['Dreamer', 'zzz'], ['Moon Child', 'moon'], ['Dream Walker', 'bed'], ['Sleep Sage', 'crown']],
   screen: [['Mindful', 'phone'], ['Unplugged', 'lotus'], ['Zen Mind', 'lotus'], ['Enlightened', 'crown']],
   cabinet: [['Finder', 'key'], ['Archivist', 'chest'], ['Keeper of Curios', 'cabinet'], ['Grand Curator', 'crown']],
+  future: [['Ticket Holder', 'scroll'], ['Navigator', 'compass'], ['Pathmaker', 'flag'], ['Visionary', 'crown']],
 };
+/** The sections there were before Future, for emblems that count every section: a new section never takes one back. */
+const RENAISSANCE: SectionId[] = ['violin', 'coding', 'sports', 'gym', 'study', 'chess'];
+const CLASSIC_SECTIONS = SECTION_IDS.filter((s) => s !== 'future');
 const LEVEL_TIERS: [number, Tier][] = [[5, 'bronze'], [10, 'bronze'], [20, 'silver'], [30, 'gold']];
 
 /** A rung of a ladder: id, goal, tier, glyph, title. */
@@ -250,8 +254,8 @@ function compute(input: ProgressInput, extras: AchievementExtras): Achievement[]
   inGroup('start');
   add('first', 'bronze', 'spark', 'First Entry', 'Logged your first activity', 1, days.length ? 1 : 0, nthSorted(days, 1));
 
-  const timed = TIMED_SECTIONS.filter((s) => by(s).length > 0);
-  const firstIn = TIMED_SECTIONS.map((s) => by(s)[0]?.date).filter(Boolean) as string[];
+  const timed = RENAISSANCE.filter((s) => by(s).length > 0);
+  const firstIn = RENAISSANCE.map((s) => by(s)[0]?.date).filter(Boolean) as string[];
   add('explorer', 'silver', 'compass', 'Explorer', 'A session in all 6 timed sections', 6, timed.length, timed.length === 6 ? firstIn.sort().at(-1)! : null);
 
   const weekSections = new Map<string, Set<string>>();
@@ -281,7 +285,7 @@ function compute(input: ProgressInput, extras: AchievementExtras): Achievement[]
     const w = weekStart(d);
     let set = weekTimed.get(w);
     if (!set) weekTimed.set(w, (set = new Set()));
-    for (const s of TIMED_SECTIONS) if (facts.get(d)!.sections.has(s)) set.add(s);
+    for (const s of RENAISSANCE) if (facts.get(d)!.sections.has(s)) set.add(s);
     allRoundBest = Math.max(allRoundBest, set.size);
     if (!allRoundOn && set.size === 6) allRoundOn = d;
   }
@@ -963,7 +967,8 @@ function compute(input: ProgressInput, extras: AchievementExtras): Achievement[]
   const ten = SECTION_IDS.map((s) => sectionReach(s, 10));
   const tenOn = ten.filter(Boolean) as string[];
   add('specialist', 'silver', 'gem', 'Specialist', 'Any section at level 10', 1, tenOn.length ? 1 : 0, [...tenOn].sort()[0] ?? null);
-  const five = TIMED_SECTIONS.map((s) => sectionReach(s, 5));
+  // the six timed sections there were when this emblem was made, so a new section never takes it back
+  const five = RENAISSANCE.map((s) => sectionReach(s, 5));
   add('renaissance', 'gold', 'sakura', 'Renaissance', 'All 6 timed sections at level 5', 6, five.filter(Boolean).length, five.every(Boolean) ? (five as string[]).sort().at(-1)! : null);
   add('mastery', 'platinum', 'gem', 'Master of All', `All ${SECTION_IDS.length} sections at level 10`, SECTION_IDS.length, tenOn.length, ten.every(Boolean) ? [...tenOn].sort().at(-1)! : null);
 
@@ -1082,8 +1087,8 @@ function compute(input: ProgressInput, extras: AchievementExtras): Achievement[]
   once('friday13', 'silver', 'oni', 'Unlucky for Some', 'A session on a Friday the 13th', sessionsOn((d) => d.slice(8) === '13' && weekdayIndex(d) === 4), true);
   once('leap', 'gold', 'wing', 'Leap Day', 'A session on 29 February', sessionsOn((d) => d.slice(5) === '02-29'), true);
   add('over9000', 'gold', 'bolt', "It's Over 9000!", 'More than 9,000 XP in total', 9001, overall.total, overall.reach(9001), true);
-  const sectionsOnDay = (f: Facts) => SECTION_IDS.reduce((n, s) => n + ((s === 'cabinet' ? f.cabinet > 0 : f.sections.has(s)) ? 1 : 0), 0);
-  add('everything', 'platinum', 'gem', 'Everything, Everywhere', `All ${SECTION_IDS.length} sections on one day`, SECTION_IDS.length, maxOver(sectionsOnDay), daysWhere((f) => sectionsOnDay(f) === SECTION_IDS.length)[0] ?? null, true);
+  const sectionsOnDay = (f: Facts) => CLASSIC_SECTIONS.reduce((n, s) => n + ((s === 'cabinet' ? f.cabinet > 0 : f.sections.has(s)) ? 1 : 0), 0);
+  add('everything', 'platinum', 'gem', 'Everything, Everywhere', `All ${CLASSIC_SECTIONS.length} original sections on one day`, CLASSIC_SECTIONS.length, maxOver(sectionsOnDay), daysWhere((f) => sectionsOnDay(f) === CLASSIC_SECTIONS.length)[0] ?? null, true);
   // A full week (something every day) touching 7 different sections: reached on its Sunday.
   const sevenWeeks = new Map<string, { n: number; s: Set<string> }>();
   for (const d of factDays) {

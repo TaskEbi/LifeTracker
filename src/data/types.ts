@@ -263,10 +263,10 @@ export interface Settings {
 // ─── LifeTracker additions (lt_ tables; AnyStop never reads them) ──────────
 
 /** The channels of LifeTracker. Calendar, tasks and progress are shared utilities, not sections. */
-export const SECTION_IDS = ['violin', 'coding', 'sports', 'gym', 'study', 'chess', 'sleep', 'screen', 'cabinet'] as const;
+export const SECTION_IDS = ['violin', 'coding', 'sports', 'gym', 'study', 'chess', 'sleep', 'screen', 'cabinet', 'future'] as const;
 export type SectionId = (typeof SECTION_IDS)[number];
 /** Sections whose activity is time logged as Daily Log entries. */
-export const TIMED_SECTIONS = ['violin', 'coding', 'sports', 'gym', 'study', 'chess'] as const;
+export const TIMED_SECTIONS = ['violin', 'coding', 'sports', 'gym', 'study', 'chess', 'future'] as const;
 export type TimedSection = (typeof TIMED_SECTIONS)[number];
 
 /**

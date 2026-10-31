@@ -13,6 +13,8 @@ export interface Targets {
   sportsWeek: number;
   /** Screen time per day, minutes. Optional: null turns it off. */
   screenDay: number | null;
+  /** Uni prep minutes per week (Future). */
+  futureWeek: number;
 }
 
 export interface SleepSchedule {
@@ -28,14 +30,14 @@ export interface SleepSchedule {
 /** Which Daily Log topic each timed section reads and writes. Null until chosen or created. */
 export type SectionTopics = Record<TimedSection, string | null>;
 
-export const DEFAULT_TARGETS: Targets = { violinWeek: 240, gymWeek: 2, sportsWeek: 3, screenDay: 210 };
+export const DEFAULT_TARGETS: Targets = { violinWeek: 240, gymWeek: 2, sportsWeek: 3, screenDay: 210, futureWeek: 300 };
 export const DEFAULT_SLEEP: SleepSchedule = {
   weekday: { bed: '22:45', wake: '06:30' },
   weekend: { bed: '23:30', wake: '08:00' },
   windDown: 30,
   reminders: false,
 };
-export const DEFAULT_SECTION_TOPICS: SectionTopics = { violin: null, coding: null, sports: null, gym: null, study: null, chess: null };
+export const DEFAULT_SECTION_TOPICS: SectionTopics = { violin: null, coding: null, sports: null, gym: null, study: null, chess: null, future: null };
 
 const TIME = /^([01]\d|2[0-3]):[0-5]\d$/;
 const num = (v: unknown, lo: number, hi: number, fallback: number) => (Number.isFinite(v) && (v as number) >= lo && (v as number) <= hi ? Math.round(v as number) : fallback);
@@ -48,6 +50,7 @@ export function normaliseTargets(raw: unknown): Targets {
     gymWeek: num(r.gymWeek, 1, 7, DEFAULT_TARGETS.gymWeek),
     sportsWeek: num(r.sportsWeek, 1, 14, DEFAULT_TARGETS.sportsWeek),
     screenDay: r.screenDay === null ? null : num(r.screenDay, 15, 1440, DEFAULT_TARGETS.screenDay as number),
+    futureWeek: num(r.futureWeek, 15, 3000, DEFAULT_TARGETS.futureWeek),
   };
 }
 
