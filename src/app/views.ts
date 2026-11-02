@@ -18,6 +18,7 @@ import { SettingsView } from '../features/settings/SettingsView';
 import { ActivityView } from '../features/log/ActivityView';
 import { BucketView } from '../features/bucket/BucketView';
 import { FutureChannel } from '../features/future/FutureChannel';
+import { ReadingChannel } from '../features/reading/ReadingChannel';
 
 export const sectionViews: Partial<Record<RouteName, ComponentType>> = {
   violin: ViolinChannel,
@@ -35,4 +36,5 @@ export const sectionViews: Partial<Record<RouteName, ComponentType>> = {
   log: ActivityView,
   bucket: BucketView,
   future: FutureChannel,
+  reading: ReadingChannel,
 };

@@ -12,7 +12,7 @@ import { dayFacts, questBoard, questHistory, type QuestPeriod, type QuestSet } f
 import { moments, type Moment } from '../domain/progress/moments';
 import { focusStore } from '../features/focus/focus';
 import { heatmap, lastWeekRecap, type HeatDay, type WeekRecap } from '../domain/progress/recap';
-import { normaliseSectionTopics, normaliseSleep, normaliseTargets, normaliseTargetsLog, targetsAt, type SectionTopics, type SleepSchedule, type Targets } from '../domain/prefs';
+import { normaliseSectionTopics, normaliseSleep, normaliseTargets, normaliseTargetsLog, normaliseYearGoal, targetsAt, type SectionTopics, type SleepSchedule, type Targets } from '../domain/prefs';
 import { weekStart } from '../domain/log/dates';
 import { normalisePlans, type PlansState } from '../domain/plans/types';
 import { TOPIC_NAME_HINTS } from '../domain/sections';
@@ -46,6 +46,9 @@ const sleepOf = memo1((m: DataState['lt_prefs']) => normaliseSleep(m.get('sleep'
 const targetsLogOf = memo1((m: DataState['lt_prefs']) => normaliseTargetsLog(m.get('targets_log')?.deleted_at ? undefined : m.get('targets_log')?.value));
 const plansOf = memo1((m: DataState['lt_prefs']) => normalisePlans(m.get('plans')?.deleted_at ? undefined : m.get('plans')?.value));
 export const usePlans = (): PlansState => useStore(data, (s) => plansOf(s.lt_prefs));
+/** Books a year (Reading's goal). */
+const yearGoalOf = memo1((m: DataState['lt_prefs']) => normaliseYearGoal(m.get('reading_goal')?.deleted_at ? undefined : m.get('reading_goal')?.value));
+export const useYearGoal = (): number => useStore(data, (s) => yearGoalOf(s.lt_prefs));
 const topicsOf = memo1((m: DataState['lt_prefs']) => normaliseSectionTopics(m.get('section_topics')?.deleted_at ? undefined : m.get('section_topics')?.value));
 
 export const useTargets = (): Targets => useStore(data, (s) => targetsOf(s.lt_prefs));
@@ -129,6 +132,7 @@ const DEFAULT_TOPIC: Record<TimedSection, { name: string; color: LogTopic['color
   study: { name: 'Schoolwork', color: 'plum' },
   chess: { name: 'Chess', color: 'slate' },
   future: { name: 'Uni prep', color: 'apricot' },
+  reading: { name: 'Reading', color: 'slate' },
 };
 
 /**
@@ -198,6 +202,8 @@ export function progressInput(st: DataState, today: string): ProgressInput {
     plans: plansOf(st.lt_prefs),
     bucket: live(st.lt_bucket),
     future: live(st.lt_records).filter((r) => r.section === 'future'),
+    reading: live(st.lt_records).filter((r) => r.section === 'reading'),
+    readingGoal: yearGoalOf(st.lt_prefs),
   };
   lastState = st;
   lastToday = today;

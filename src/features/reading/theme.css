@@ -1,0 +1,290 @@
+/* ── Reading · a window seat on a rainy night ────────────────────────────────
+   A dark, rain-blue room lit by one lamp; the panels are e-ink paper with near-black ink, the way a
+   Kindle's page looks. Fraunces for titles, Literata for reading, Spline Sans Mono for numbers.
+   Entering, the page refreshes like an e-ink screen: one quick dark flash, then paper. */
+
+.i-shell[data-sect='reading'] {
+  --bg: #0d1a20;
+  --bg-dot: transparent;
+  --surf: #142730;
+  --surf-2: #1b323c;
+  --surf-3: #254350;
+  --fg: #f1ead9;
+  --fg-2: #cfc7b3;
+  --fg-3: #9fa59f;
+  --rule: #2a4552;
+  --grid: #16303b;
+  --led-off: #2a4552;
+  --sig: #ffcf87;
+  --sig-fg: #2a1a06;
+  --sig-soft: rgb(255 207 135 / 0.14);
+  --acc2: #56c2e6;
+  --acc2-fg: #06222e;
+  --ok: #8fd6a8;
+  --warn: #ff9b7a;
+  --c-reading: #56c2e6;
+  --f-label: 'Fraunces', Georgia, 'Times New Roman', serif;
+  --f-body: 'Literata', Georgia, 'Times New Roman', serif;
+  --f-mono: 'Spline Sans Mono', ui-monospace, monospace;
+  --w-label: 600;
+  --tt-label: none;
+  --slant: 0deg;
+  --r-1: 3px;
+  --r-2: 6px;
+  --r-3: 10px;
+  --lift: 0 0 0 1px rgb(255 207 135 / 0.14), 0 30px 70px rgb(0 0 0 / 0.65);
+  color-scheme: dark;
+  background: transparent;
+}
+/* the room: the lamp from above, rain-dark walls and a little warmth off the floor */
+.i-shell[data-sect='reading']::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(60% 34% at 50% 0%, rgb(255 207 135 / 0.14), transparent 72%),
+    radial-gradient(100% 30% at 50% 100%, rgb(255 170 90 / 0.07), transparent 70%),
+    linear-gradient(180deg, #0c1a21 0%, #0f222b 55%, #15191a 100%);
+}
+
+/* e-ink pages: paper with its own ink */
+.i-shell[data-sect='reading'] :is(.i-pnl, .i-sheet, .i-reward__box, .rd-now, .rd-welcome) {
+  --surf: #ece7da;
+  --surf-2: #e2dccc;
+  --surf-3: #d3ccb9;
+  --fg: #1f1d19;
+  --fg-2: #3f3b33;
+  --fg-3: #6a6558;
+  --rule: #c8c2b0;
+  --grid: #d9d3c2;
+  --led-off: #cfc8b6;
+  --sig: #1f1d19;
+  --sig-fg: #f4efe2;
+  --sig-soft: rgb(31 29 25 / 0.08);
+  --c-reading: #0b6283;
+  --c: var(--c-reading);
+  --acc2: #0b6283;
+  --ok: #24724a;
+  --warn: #a8401f;
+  color: var(--fg);
+}
+.i-shell[data-sect='reading'] .i-pnl {
+  background:
+    linear-gradient(90deg, rgb(70 60 40 / 0.1), transparent 14px),
+    var(--surf);
+  border: 0;
+  box-shadow: 0 16px 28px -18px rgb(0 0 0 / 0.85);
+  clip-path: none;
+}
+.i-shell[data-sect='reading'] .i-sheet {
+  background: var(--surf);
+}
+
+/* meters: small e-ink cards, three to a row */
+.i-shell[data-sect='reading'] .i-meters {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+.i-shell[data-sect='reading'] .i-meter {
+  --fg: #1f1d19;
+  --fg-3: #6a6558;
+  background: #ece7da;
+  color: #1f1d19;
+  border-radius: var(--r-2);
+  box-shadow: none;
+  clip-path: none;
+  padding: 10px 10px 8px;
+}
+.i-shell[data-sect='reading'] .i-meter__v {
+  font-size: 18px;
+  line-height: 1.15;
+}
+.i-shell[data-sect='reading'] .i-meter__l {
+  font-size: 11px;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+/* header: the window seat */
+.i-shell[data-sect='reading'] .i-chhead {
+  min-height: 276px;
+  padding: 16px 16px 118px;
+  clip-path: none;
+  border: 0;
+  border-radius: 12px;
+  background: linear-gradient(180deg, #16303a 0%, #1a3640 52%, #33291f 100%);
+  box-shadow:
+    0 0 0 1px #2a4552,
+    0 22px 42px -26px rgb(0 0 0 / 0.95);
+}
+.i-shell[data-sect='reading'] .i-chhead::before {
+  display: none;
+}
+.i-shell[data-sect='reading'] .i-chhead__kanji {
+  display: none;
+}
+.i-shell[data-sect='reading'] .i-chhead h1 {
+  font-family: var(--f-label);
+  font-weight: 700;
+  font-style: italic;
+  font-size: clamp(38px, 12vw, 54px);
+  letter-spacing: -0.01em;
+  font-variation-settings: 'SOFT' 100, 'WONK' 1;
+  text-shadow: 0 2px 16px rgb(0 0 0 / 0.5);
+}
+.i-shell[data-sect='reading'] .i-chhead__k {
+  font-family: var(--f-mono);
+  font-size: 11px;
+  letter-spacing: 0.03em;
+  color: #ffcf87;
+}
+.i-shell[data-sect='reading'] .i-chhead__lv b {
+  font-family: var(--f-label);
+  font-style: italic;
+}
+.rd-art {
+  overflow: hidden;
+  border-radius: inherit;
+}
+.rd-art svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+.rd-art__rain {
+  animation: rd-rain 1.5s linear infinite;
+}
+@keyframes rd-rain {
+  to {
+    transform: translateY(130px);
+  }
+}
+.rd-art__run {
+  animation: rd-run 5.5s cubic-bezier(0.5, 0, 0.9, 0.5) infinite;
+}
+.rd-art__run--b {
+  animation-duration: 7.5s;
+  animation-delay: 2.4s;
+}
+@keyframes rd-run {
+  from {
+    transform: translateY(0);
+    opacity: 0.9;
+  }
+  to {
+    transform: translateY(136px);
+    opacity: 0.4;
+  }
+}
+.rd-art__bokeh {
+  animation: rd-bokeh 5s ease-in-out infinite alternate;
+}
+@keyframes rd-bokeh {
+  from {
+    opacity: 0.28;
+  }
+  to {
+    opacity: 0.6;
+  }
+}
+.rd-art__glow {
+  transform-origin: 196px 160px;
+  animation: rd-glow 6s ease-in-out infinite alternate;
+}
+@keyframes rd-glow {
+  from {
+    opacity: 0.82;
+  }
+  to {
+    opacity: 1;
+  }
+}
+.rd-art__tail {
+  transform-origin: 296px 139px; /* in the cat's own coordinates */
+  animation: rd-tail 5s ease-in-out infinite;
+}
+@keyframes rd-tail {
+  0%,
+  78%,
+  100% {
+    transform: rotate(0deg);
+  }
+  84% {
+    transform: rotate(9deg);
+  }
+  90% {
+    transform: rotate(-3deg);
+  }
+}
+.rd-art__steam {
+  animation: rd-steam 3.2s ease-in-out infinite;
+}
+.rd-art__steam--b {
+  animation-delay: 1.3s;
+}
+@keyframes rd-steam {
+  0% {
+    transform: translateY(4px);
+    opacity: 0;
+  }
+  40% {
+    opacity: 0.7;
+  }
+  100% {
+    transform: translateY(-8px);
+    opacity: 0;
+  }
+}
+.rd-art__spine {
+  animation: rd-spine 0.5s cubic-bezier(0.3, 1.3, 0.5, 1) both;
+}
+@keyframes rd-spine {
+  from {
+    transform: translateY(-30px);
+    opacity: 0;
+  }
+}
+
+/* the e-ink refresh on entering: a short dark flash that clears to the page */
+.rd::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  pointer-events: none;
+  background: #1a1916;
+  opacity: 0;
+  animation: rd-eink 0.34s steps(4, jump-none) both;
+}
+@keyframes rd-eink {
+  0% {
+    opacity: 0.55;
+    background: #1a1916;
+  }
+  40% {
+    opacity: 0.4;
+    background: #ece7da;
+  }
+  100% {
+    opacity: 0;
+    background: #ece7da;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rd::before,
+  .rd-art__rain,
+  .rd-art__run,
+  .rd-art__bokeh,
+  .rd-art__glow,
+  .rd-art__tail,
+  .rd-art__steam,
+  .rd-art__spine {
+    animation: none;
+  }
+  .rd-art__steam {
+    opacity: 0.5;
+  }
+}

@@ -260,7 +260,7 @@ export function SettingsView() {
 
       <H2>Not connected</H2>
       <Source kind="off">
-        Garmin sleep, iPhone Screen Time, Google Calendar and Strava are not connected: sleep and screen time are entered by hand, and the calendar is LifeTracker's own. Chess.com (public data) and DragonCode (read-only key) are the only live links.
+        Garmin sleep, iPhone Screen Time, Google Calendar and Strava are not connected: sleep and screen time are entered by hand, and the calendar is LifeTracker's own. Chess.com (public data), DragonCode (read-only key) and Open Library (book suggestions, sending only the title you type) are the only live links.
       </Source>
     </div>
   );

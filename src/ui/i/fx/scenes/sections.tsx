@@ -4,6 +4,7 @@
  * warehouse, the chalkboard, the chess column, the night sky, the zen garden and the cabinet.
  * 'general' and anything unknown keep the generic kanji cube (scenes.tsx).
  */
+import { READING_LEVEL } from './reading';
 import { useMemo } from 'react';
 import type { SectionId } from '../../../../data/types';
 import { Burst, Caption, Embers, glyphPath, GLYPHS, pad2, range, rng, Ripples, safeSection, Stamp, Twinkles, type Css } from '../kit';
@@ -488,4 +489,5 @@ export const SECTION_FX: Partial<Record<SectionId, SectionFx>> = {
   sleep: { Scene: SleepScene, time: { dur: 2750, hit: 1700, shake: 'soft' }, calm: k('眠') },
   screen: { Scene: ScreenScene, time: { dur: 2700, hit: 760, shake: 'soft' }, calm: k('画') },
   cabinet: { Scene: CabinetScene, time: { dur: 2650, hit: 1200 }, calm: k('蔵') },
+  reading: READING_LEVEL,
 };

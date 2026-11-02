@@ -11,6 +11,7 @@ import { SECTION_IDS, TIMED_SECTIONS, type LogEntry, type SectionId } from '../.
 import { activeDays, allXpEvents, bedDelta, RULES, sectionLevel, sectionOf, STAGES, xpForLevel, xpForSectionLevel, type ProgressInput, type XpEvent, type XpSection } from './engine';
 import { BOSSES, bossHistory, type BossFight } from './boss';
 import { sectionOf as bucketSectionOf } from '../bucket/sections';
+import { booksOf, dayGap, DEFAULT_YEAR_GOAL, highlightsOf, isFinished, yearGoalsReached } from '../reading/model';
 import { dayFacts, doneSets, questHistory, WAKE_WINDOW, type Facts, type QuestSet } from './quests';
 import type { AchievementGroup, Glyph } from './glyphs';
 
@@ -137,7 +138,7 @@ export interface AchievementExtras {
 }
 
 const SECTION_NAME: Record<SectionId, string> = {
-  violin: 'Violin', coding: 'Coding', sports: 'Sports', gym: 'Gym', study: 'Study', chess: 'Chess', sleep: 'Sleep', screen: 'Screen time', cabinet: 'Cabinet', future: 'Future',
+  violin: 'Violin', coding: 'Coding', sports: 'Sports', gym: 'Gym', study: 'Study', chess: 'Chess', sleep: 'Sleep', screen: 'Screen time', cabinet: 'Cabinet', future: 'Future', reading: 'Reading',
 };
 /** Section level emblems: titles and glyphs for levels 5, 10, 20 and 30. */
 const SECTION_LEVELS: Record<SectionId, [string, Glyph][]> = {
@@ -151,10 +152,11 @@ const SECTION_LEVELS: Record<SectionId, [string, Glyph][]> = {
   screen: [['Mindful', 'phone'], ['Unplugged', 'lotus'], ['Zen Mind', 'lotus'], ['Enlightened', 'crown']],
   cabinet: [['Finder', 'key'], ['Archivist', 'chest'], ['Keeper of Curios', 'cabinet'], ['Grand Curator', 'crown']],
   future: [['Ticket Holder', 'scroll'], ['Navigator', 'compass'], ['Pathmaker', 'flag'], ['Visionary', 'crown']],
+  reading: [['Avid Reader', 'book'], ['Bibliophile', 'stack'], ['Librarian', 'lamp'], ['Keeper of Stories', 'crown']],
 };
-/** The sections there were before Future, for emblems that count every section: a new section never takes one back. */
+/** The sections there were before Future and Reading, for emblems that count every section: a new section never takes one back. */
 const RENAISSANCE: SectionId[] = ['violin', 'coding', 'sports', 'gym', 'study', 'chess'];
-const CLASSIC_SECTIONS = SECTION_IDS.filter((s) => s !== 'future');
+const CLASSIC_SECTIONS = SECTION_IDS.filter((s) => s !== 'future' && s !== 'reading');
 const LEVEL_TIERS: [number, Tier][] = [[5, 'bronze'], [10, 'bronze'], [20, 'silver'], [30, 'gold']];
 
 /** A rung of a ladder: id, goal, tier, glyph, title. */
@@ -719,6 +721,113 @@ function compute(input: ProgressInput, extras: AchievementExtras): Achievement[]
   totals([['games100', 100, 'silver', 'king', 'Hundred Games']], tally(by('chess').map((e) => [e.date, num(dataOf(e)?.games)] as const)), 1, (g) => `${g} chess games played`);
   counts([['otb5', 5, 'bronze', 'pawn', 'Over the Board']], datesOf(where('chess', (d) => d.kind === 'Over the board')), (g) => `${g} over-the-board sessions`);
 
+  // ── reading ──
+  inGroup('reading', 'reading');
+  sessionsAndHours(
+    'reading',
+    [
+      ['read1', 1, 'bronze', 'book', 'First Page'],
+      ['read10', 10, 'bronze', 'bookmark', 'Regular Reader'],
+      ['read50', 50, 'silver', 'book', 'Page Turner'],
+      ['read100', 100, 'gold', 'lamp', 'Book Lover'],
+      ['read365', 365, 'platinum', 'lamp', 'A Book a Day'],
+    ],
+    [
+      ['read5h', 5, 'bronze', 'clock', 'Curled Up'],
+      ['read25h', 25, 'bronze', 'hourglass', 'Lost in a Book'],
+      ['read50h', 50, 'silver', 'book', 'Well Read'],
+      ['read100h', 100, 'gold', 'lamp', 'Library Card'],
+      ['read250h', 250, 'gold', 'stack', 'Scholar of the Stacks'],
+      ['read500h', 500, 'platinum', 'stack', 'Sage of the Stacks'],
+      ['read1000h', 1000, 'platinum', 'crown', 'Living Library'],
+    ],
+  );
+  streakLadder(
+    [
+      ['readrun3', 3, 'bronze', 'flame', 'Three Nights Running'],
+      ['readrun7', 7, 'bronze', 'flame', 'A Week of Reading'],
+      ['readrun14', 14, 'silver', 'flame', 'Fortnight of Pages'],
+      ['readrun30', 30, 'silver', 'flame', 'A Month of Pages'],
+      ['readrun60', 60, 'gold', 'flame', 'Daily Ritual'],
+      ['readrun100', 100, 'gold', 'flame', 'Hundred Days of Pages'],
+      ['readrun365', 365, 'platinum', 'infinity', 'A Year of Pages'],
+    ],
+    streaks(datesOf(by('reading')), prevDay),
+    (g) => `Read ${g} days in a row`,
+  );
+  const readWeeks = new Map<string, number>();
+  for (const e of by('reading')) readWeeks.set(weekStart(e.date), (readWeeks.get(weekStart(e.date)) ?? 0) + e.minutes);
+  const readTargetWeeks = [...readWeeks].filter(([w, m]) => m >= targetsFor(w).readingWeek).map(([w]) => w);
+  streakLadder(
+    [
+      ['readweeks4', 4, 'bronze', 'target', 'Month of Targets'],
+      ['readweeks12', 12, 'silver', 'target', 'Season of Targets'],
+      ['readweeks26', 26, 'gold', 'target', 'Half a Year on Target'],
+      ['readweeks52', 52, 'platinum', 'target', 'Year on Target'],
+    ],
+    streaks(readTargetWeeks, prevWeek),
+    (g) => `Reading target ${g} weeks running`,
+    (w) => weekDone(w, today),
+  );
+  once('sit60', 'bronze', 'hourglass', 'One More Chapter', 'A reading session of an hour or more', datesOf(by('reading').filter((e) => e.minutes >= 60)));
+  once('sit120', 'silver', 'hourglass', "Couldn't Put It Down", 'A reading session of 2 hours or more', datesOf(by('reading').filter((e) => e.minutes >= 120)));
+  once('sit240', 'gold', 'sun', 'Lost the Afternoon', 'A reading session of 4 hours or more', datesOf(by('reading').filter((e) => e.minutes >= 240)));
+
+  const shelf = booksOf(input.reading ?? []);
+  const finished = shelf.filter(isFinished).filter((b) => b.finishedOn <= today).sort((a, b) => a.finishedOn.localeCompare(b.finishedOn));
+  counts(
+    [
+      ['book1', 1, 'bronze', 'bookmark', 'The End'],
+      ['book3', 3, 'bronze', 'book', 'Hat-Trick of Books'],
+      ['book5', 5, 'silver', 'book', 'Small Shelf'],
+      ['book10', 10, 'silver', 'stack', 'Full Shelf'],
+      ['book25', 25, 'gold', 'stack', 'Home Library'],
+      ['book50', 50, 'gold', 'stack', 'Fifty Books'],
+      ['book100', 100, 'platinum', 'crown', 'Hundred Books'],
+    ],
+    finished.map((b) => b.finishedOn),
+    (g) => `${g} ${g === 1 ? 'book' : 'books'} finished`,
+  );
+  const genresOn = (goal: number) => {
+    const seen = new Set<string>();
+    for (const b of finished) {
+      if (b.genre) seen.add(b.genre);
+      if (seen.size >= goal) return b.finishedOn;
+    }
+    return null;
+  };
+  const genresRead = new Set(finished.map((b) => b.genre).filter(Boolean)).size;
+  add('genres3', 'bronze', 'compass', 'Branching Out', 'Finished books in 3 genres', 3, genresRead, genresOn(3));
+  add('genres6', 'silver', 'compass', 'Omnivore', 'Finished books in 6 genres', 6, genresRead, genresOn(6));
+  add('genres10', 'gold', 'compass', 'Every Shelf', 'Finished books in 10 genres', 10, genresRead, genresOn(10));
+  const byAuthor = new Map<string, string[]>();
+  for (const b of finished) if (b.author) byAuthor.set(b.author.toLowerCase(), [...(byAuthor.get(b.author.toLowerCase()) ?? []), b.finishedOn]);
+  const completist = [...byAuthor.values()].filter((d) => d.length >= 3).map((d) => d[2]).sort();
+  add('completist', 'silver', 'quote', 'Completist', '3 books by one author', 3, Math.max(0, ...[...byAuthor.values()].map((d) => d.length)), completist[0] ?? null);
+  once('fastbook', 'silver', 'bolt', 'Speed Reader', 'Started and finished a book within a week', finished.filter((b) => b.startedOn && dayGap(b.startedOn, b.finishedOn) <= 6).map((b) => b.finishedOn));
+  once('slowburn', 'bronze', 'leaf', 'Slow Burn', 'Finished a book 3 months or more after starting it', finished.filter((b) => b.startedOn && dayGap(b.startedOn, b.finishedOn) >= 90).map((b) => b.finishedOn));
+  once('fivestar', 'bronze', 'star', 'Changed My Life', 'Gave a book five stars', finished.filter((b) => b.rating === 5).map((b) => b.finishedOn));
+  counts(
+    [
+      ['critic1', 1, 'bronze', 'pencil', 'First Review'],
+      ['critic10', 10, 'silver', 'pencil', 'Critic'],
+    ],
+    finished.filter((b) => b.review).map((b) => b.finishedOn),
+    (g) => `${g} ${g === 1 ? 'book' : 'books'} reviewed`,
+  );
+  const goalOn = yearGoalsReached(shelf, input.readingGoal ?? DEFAULT_YEAR_GOAL).filter((g) => g.date <= today);
+  once('yeargoal', 'gold', 'flag', 'Reading Challenge', "Reached the year's reading goal", goalOn.map((g) => g.date));
+  counts(
+    [
+      ['line1', 1, 'bronze', 'quote', 'Underlined'],
+      ['line25', 25, 'bronze', 'quote', 'Commonplace Book'],
+      ['line100', 100, 'silver', 'quote', 'Collector of Lines'],
+      ['line500', 500, 'gold', 'scroll', 'Quotable'],
+    ],
+    highlightsOf(input.reading ?? []).filter((h) => h.text).map((h) => (h.addedOn && h.addedOn <= today ? h.addedOn : today)).sort(),
+    (g) => `${g} ${g === 1 ? 'highlight' : 'highlights'} saved`,
+  );
+
   // ── sleep ──
   inGroup('sleep', 'sleep');
   const nights = input.metrics.filter((m) => m.metric === 'sleep' && m.date <= today).map((m) => m.date).sort();
@@ -1086,6 +1195,12 @@ function compute(input: ProgressInput, extras: AchievementExtras): Achievement[]
   once('mirror', 'bronze', 'eye', 'Mirror Date', 'A session on a day whose number matches its month (1 Jan, 2 Feb … 12 Dec)', sessionsOn((d) => d.slice(5, 7) === d.slice(8, 10)), true);
   once('friday13', 'silver', 'oni', 'Unlucky for Some', 'A session on a Friday the 13th', sessionsOn((d) => d.slice(8) === '13' && weekdayIndex(d) === 4), true);
   once('leap', 'gold', 'wing', 'Leap Day', 'A session on 29 February', sessionsOn((d) => d.slice(5) === '02-29'), true);
+  const finishDays = new Map<string, number>();
+  for (const b of finished) finishDays.set(b.finishedOn, (finishDays.get(b.finishedOn) ?? 0) + 1);
+  once('bookends', 'silver', 'stack', 'Bookends', 'Finished two books on one day', [...finishDays].filter(([, n]) => n >= 2).map(([d]) => d).sort(), true);
+  once('onesitting', 'silver', 'lamp', 'In One Sitting', 'Started and finished a book on the same day', finished.filter((b) => b.startedOn === b.finishedOn).map((b) => b.finishedOn), true);
+  once('tsundoku', 'bronze', 'stack', 'Tsundoku', '積ん読: 10 books waiting in the pile', shelf.filter((b) => b.status === 'want').length >= 10 ? [today] : [], true);
+  once('fahrenheit', 'silver', 'flame', 'Fahrenheit 451', '451 minutes of reading in one week', [...readWeeks].filter(([, m]) => m >= 451).map(([w]) => weekDone(w, today)!).sort(), true);
   add('over9000', 'gold', 'bolt', "It's Over 9000!", 'More than 9,000 XP in total', 9001, overall.total, overall.reach(9001), true);
   const sectionsOnDay = (f: Facts) => CLASSIC_SECTIONS.reduce((n, s) => n + ((s === 'cabinet' ? f.cabinet > 0 : f.sections.has(s)) ? 1 : 0), 0);
   add('everything', 'platinum', 'gem', 'Everything, Everywhere', `All ${CLASSIC_SECTIONS.length} original sections on one day`, CLASSIC_SECTIONS.length, maxOver(sectionsOnDay), daysWhere((f) => sectionsOnDay(f) === CLASSIC_SECTIONS.length)[0] ?? null, true);

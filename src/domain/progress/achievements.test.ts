@@ -260,6 +260,51 @@ describe('performance', () => {
   });
 });
 
+describe('reading', () => {
+  const rec = (id: string, kind: string, data: Record<string, unknown>) => ({ id, section: 'reading' as const, kind, data, sort_order: 1, archived_at: null, created_at: '2026-01-01T00:00:00Z', updated_at: '2026-01-01T00:00:00Z', deleted_at: null });
+  const done = (id: string, on: string, more: Record<string, unknown> = {}) => rec(id, 'book', { title: id, status: 'finished', finishedOn: on, ...more });
+
+  it('counts books, genres, authors and how they were read', () => {
+    const list = achievements(
+      input({
+        reading: [
+          done('a', '2026-03-05', { startedOn: '2026-03-01', genre: 'Sci-fi', author: 'X', rating: 5, review: 'Great' }),
+          done('b', '2026-04-05', { startedOn: '2026-04-05', genre: 'History', author: 'X' }),
+          done('c', '2026-04-05', { genre: 'Maths', author: 'X' }),
+          done('d', '2026-09-30', { startedOn: '2026-05-01' }),
+          rec('e', 'book', { title: 'e', status: 'reading' }),
+        ],
+      }),
+    );
+    expect(get(list, 'book1').unlockedOn).toBe('2026-03-05');
+    expect(get(list, 'book3').unlockedOn).toBe('2026-04-05');
+    expect(get(list, 'book5').progress).toBe(4);
+    expect(get(list, 'genres3').unlockedOn).toBe('2026-04-05');
+    expect(get(list, 'completist').unlockedOn).toBe('2026-04-05');
+    expect(get(list, 'fastbook').unlockedOn).toBe('2026-03-05');
+    expect(get(list, 'slowburn').unlockedOn).toBe('2026-09-30');
+    expect(get(list, 'fivestar').unlockedOn).toBe('2026-03-05');
+    expect(get(list, 'critic1').unlockedOn).toBe('2026-03-05');
+    expect(get(list, 'bookends').unlockedOn).toBe('2026-04-05');
+    expect(get(list, 'onesitting').unlockedOn).toBe('2026-04-05');
+  });
+
+  it('counts highlights by the day they were made, and the pile', () => {
+    const lines = Array.from({ length: 25 }, (_, i) => rec(`h${i}`, 'highlight', { text: `line ${i}`, addedOn: `2026-01-${String(i + 1).padStart(2, '0')}` }));
+    const pile = Array.from({ length: 10 }, (_, i) => rec(`p${i}`, 'book', { title: `p${i}`, status: 'want' }));
+    const list = achievements(input({ reading: [...lines, ...pile] }));
+    expect(get(list, 'line1').unlockedOn).toBe('2026-01-01');
+    expect(get(list, 'line25').unlockedOn).toBe('2026-01-25');
+    expect(get(list, 'tsundoku').unlockedOn).not.toBeNull();
+  });
+
+  it('leaves every earlier emblem alone: the all-section ones still count the original sections', () => {
+    const list = achievements(input());
+    expect(get(list, 'everything').goal).toBe(9);
+    expect(get(list, 'renaissance').goal).toBe(6);
+  });
+});
+
 describe('bucket list and the streak buffer', () => {
   const wish = (id: string, done: string | null) => ({
     id, title: id, note: null, done_at: done ? `${done}T12:00:00Z` : null, sort_order: 1, data: {}, created_at: '2026-10-01T09:00:00Z', updated_at: '2026-10-01T09:00:00Z', deleted_at: null,

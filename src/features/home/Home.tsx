@@ -14,6 +14,8 @@ import { useStore } from '../../lib/createStore';
 import { accent } from '../../ui/i/bits';
 import { Drone } from '../../ui/i/Drone';
 import { bucketItems } from '../bucket/actions';
+import { booksIn, sessionsIn } from '../reading/actions';
+import { bookProgress, likelyBook } from '../../domain/reading/model';
 import { useFocus } from '../focus/focus';
 import { BossCard } from '../progress/BossPanel';
 import { Recap } from '../progress/LookBack';
@@ -112,6 +114,11 @@ export function Home() {
   const [n, setN] = useState(0);
   const input = progressInput(st, today);
   const chapter = useMemo(() => [...activeDays(input)].filter((d) => d <= today).length || 1, [input, today]);
+  const nowReading = useMemo(() => {
+    const sessions = sessionsIn(st);
+    const book = likelyBook(booksIn(st), sessions);
+    return book ? { title: book.title, pct: bookProgress(book, sessions).pct } : null;
+  }, [st]);
   const bucket = useMemo(() => {
     const { open, done } = bucketItems(st);
     return { total: open.length + done.length, done: done.length, next: open[0]?.title };
@@ -299,6 +306,13 @@ export function Home() {
           </section>
 
           <nav className="h-sys" aria-label="More">
+            {nowReading && (
+              <button type="button" className="h-sys__btn h-sys__btn--wide" onClick={() => navigate('reading')}>
+                <span aria-hidden="true">{sectionInfo('reading').kanji}</span>
+                <b>Now reading</b>
+                <small>{nowReading.title} · {nowReading.pct}%</small>
+              </button>
+            )}
             <button type="button" className="h-sys__btn h-sys__btn--wide" onClick={() => navigate('bucket')}>
               <span aria-hidden="true">{SYSTEM_KANJI.bucket}</span>
               <b>Bucket list</b>

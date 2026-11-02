@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { LogDayMetric, LogEntry, LtBucket, LtDetail, LtNight, SectionId, Todo, TimedSection } from '../../data/types';
+import type { LogDayMetric, LogEntry, LtBucket, LtDetail, LtNight, LtRecord, SectionId, Todo, TimedSection } from '../../data/types';
 import { addDays } from '../log/dates';
 import { DEFAULT_SLEEP, DEFAULT_TARGETS } from '../prefs';
 import { bossHistory } from './boss';
@@ -48,6 +48,52 @@ const types = (list: Moment[]) => list.map((m) => m.type);
 const only = <K extends Moment['type']>(list: Moment[], type: K) => list.filter((m): m is Extract<Moment, { type: K }> => m.type === type);
 /** Moments of a save, with today already active so the day's chapter doesn't get in the way. */
 const ACTIVE_TODAY = { cabinetDays: [T] };
+
+// ─── reading ────────────────────────────────────────────────────────────────
+
+const book = (id: string, data: Record<string, unknown>): LtRecord => ({
+  id, section: 'reading', kind: 'book', data: { title: `Book ${id}`, ...data }, sort_order: 1, archived_at: null, created_at: '2026-10-01T09:00:00Z', updated_at: '2026-10-01T09:00:00Z', deleted_at: null,
+});
+const READ_TOPICS = new Map<string, SectionId>([...TOPICS, ['topic-reading', 'reading']]);
+
+describe('reading', () => {
+  it('fires when a book is finished in this save, once, and not for an old one added later', () => {
+    const before = input({ ...ACTIVE_TODAY, reading: [book('a', { status: 'reading' })] });
+    const after = { ...before, reading: [book('a', { status: 'finished', finishedOn: T })] };
+    expect(only(moments(before, after), 'book')).toEqual([{ type: 'book', title: 'Book a', author: '', minutes: 0, n: 1, goal: 12 }]);
+    expect(only(moments(after, { ...after, reading: [...after.reading!] }), 'book')).toEqual([]);
+    const old = { ...before, reading: [...before.reading!, book('b', { status: 'finished', finishedOn: '2023-05-01' })] };
+    expect(only(moments(before, old), 'book')).toEqual([]);
+  });
+
+  it('fires when a session goes past halfway, not again after that', () => {
+    const a = book('a', { status: 'reading' });
+    const e1 = entry(T, 30, 'reading');
+    const e2 = entry(T, 30, 'reading');
+    const e3 = entry(T, 30, 'reading');
+    const b0 = input({ ...ACTIVE_TODAY, topicSection: READ_TOPICS, reading: [a], entries: [e1], details: new Map([detail(e1, 'reading', { bookId: 'a', percent: 40 })]) });
+    const b1 = save(b0, { entries: [e2], details: [detail(e2, 'reading', { bookId: 'a', percent: 55 })] });
+    const b2 = save(b1, { entries: [e3], details: [detail(e3, 'reading', { bookId: 'a', percent: 70 })] });
+    expect(only(moments(b0, b1), 'book-half')).toEqual([{ type: 'book-half', title: 'Book a', pct: 55 }]);
+    expect(only(moments(b1, b2), 'book-half')).toEqual([]);
+  });
+
+  it("fires when the year's goal is reached", () => {
+    const before = input({ ...ACTIVE_TODAY, readingGoal: 2, reading: [book('a', { status: 'finished', finishedOn: '2026-10-20' }), book('b', { status: 'reading' })] });
+    const after = { ...before, reading: [before.reading![0], book('b', { status: 'finished', finishedOn: T })] };
+    expect(only(moments(before, after), 'read-goal')).toEqual([{ type: 'read-goal', year: 2026, n: 2 }]);
+    expect(momentLine({ type: 'read-goal', year: 2026, n: 2 })).toBe('2026 reading goal reached · 2 books');
+    expect(only(moments(after, { ...after }), 'read-goal')).toEqual([]);
+  });
+
+  it('counts a reading session toward the boss and the weekly target', () => {
+    const e = entry(T, 200, 'reading');
+    const i = input({ topicSection: READ_TOPICS, entries: [e] });
+    expect(bossHistory(i).at(-1)!.damage).toBeGreaterThanOrEqual(200);
+    expect(computeProgress(i).events.some((x) => x.key.startsWith('week:reading:') && x.section === 'reading')).toBe(true);
+    expect(computeProgress(i).bySection.reading).toBeGreaterThan(0);
+  });
+});
 
 // ─── bucket list ────────────────────────────────────────────────────────────
 

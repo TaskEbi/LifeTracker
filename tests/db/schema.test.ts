@@ -181,6 +181,14 @@ describe('shapes', () => {
     await expect(as(member, `insert into public.lt_details (id, section) values (gen_random_uuid(), 'screen')`)).rejects.toThrow(/check/);
   });
 
+  it('takes the Reading section in every table that has a section', async () => {
+    await as(member, `insert into public.lt_records (id, section, kind, data) values (gen_random_uuid(), 'reading', 'book', '{"title": "Dune"}')`);
+    await as(member, `insert into public.lt_details (id, section) values (gen_random_uuid(), 'reading')`);
+    await as(member, `insert into public.lt_events (id, title, date, section, kind) values (gen_random_uuid(), 'Book club', '2026-12-01', 'reading', 'other')`);
+    await as(member, `insert into public.todos (id, title, section) values (gen_random_uuid(), 'Return the book', 'reading')`);
+    await expect(as(member, `insert into public.lt_records (id, section, kind) values (gen_random_uuid(), 'novels', 'book')`)).rejects.toThrow(/check/);
+  });
+
   it('keeps one night and one rest mark per day', async () => {
     await as(member, `insert into public.lt_nights (id, date, bed, wake) values (gen_random_uuid(), '2026-10-24', '23:15', '08:00')`);
     await expect(as(member, `insert into public.lt_nights (id, date) values (gen_random_uuid(), '2026-10-24')`)).rejects.toThrow(/duplicate key/);

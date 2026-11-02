@@ -555,6 +555,40 @@ const GLYPH: Record<Glyph | 'secret', (t: T) => ReactNode> = {
       <path d="M33 58C34 52 38 48 43 46" fill="none" stroke={t.a} strokeWidth={2.6} />
     </>
   ),
+  bookmark: (t) => (
+    <>
+      <path d="M30 20H70V82L50 67L30 82Z" fill={t.a} />
+      <path d="M38 20V62L50 53L62 62V20" fill={t.m} strokeWidth={1.8} />
+      <path d="M41 32H59M41 40H59" fill="none" strokeWidth={2} />
+    </>
+  ),
+  lamp: (t) => (
+    <>
+      <path d="M33 47L41 22H59L67 47Z" fill={t.a} />
+      <path d="M41 22H59" fill="none" />
+      <path d="M50 47V70" fill="none" strokeWidth={4} />
+      <path d="M36 80C36 72 42 70 50 70C58 70 64 72 64 80Z" fill={t.m} />
+      <path d="M64 47V58" fill="none" strokeWidth={2} />
+      <circle cx="64" cy="61" r="2.6" fill={t.k} strokeWidth={1.2} />
+      <path d="M38 54L30 62M50 56V62M62 54L70 62" fill="none" strokeWidth={1.8} opacity=".55" />
+    </>
+  ),
+  quote: (t) => (
+    <>
+      <path d="M22 54C22 39 31 29 44 27V36C38 38 35 41 35 46H44V68H22Z" fill={t.a} />
+      <path d="M56 54C56 39 65 29 78 27V36C72 38 69 41 69 46H78V68H56Z" fill={t.a} />
+      <path d="M28 76H72" fill="none" strokeWidth={2.4} />
+    </>
+  ),
+  stack: (t) => (
+    <>
+      <rect x="20" y="64" width="60" height="14" rx="2" fill={t.a} />
+      <rect x="26" y="48" width="50" height="14" rx="2" fill={t.m} />
+      <rect x="22" y="32" width="46" height="14" rx="2" fill={t.a} transform="rotate(-4 45 39)" />
+      <path d="M30 64V78M70 64V78M36 48V62M66 48V62" fill="none" strokeWidth={2} />
+      <path d="M58 18V31L62 28L66 31V18Z" fill={t.k} strokeWidth={1.4} />
+    </>
+  ),
   book: (t) => (
     <>
       <path d="M19 32V77C30 73 42 73 50 79C58 73 70 73 81 77V32Z" fill={t.a} />

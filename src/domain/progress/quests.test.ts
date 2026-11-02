@@ -4,7 +4,7 @@ import { DEFAULT_SLEEP, DEFAULT_TARGETS } from '../prefs';
 import { achievements } from './achievements';
 import { computeProgress, type ProgressInput } from './engine';
 import { addDays } from '../log/dates';
-import { dayFacts, drawQuests, QUEST_POOLS, QUEST_POOLS_V1, QUEST_XP, questBoard, questEvents, questHistory, questPool, QUESTS_FROM, QUESTS_V2_FROM, SWEEP_XP } from './quests';
+import { dayFacts, drawQuests, QUEST_POOLS, QUEST_POOLS_V1, QUEST_POOLS_V2, QUEST_XP, questBoard, questEvents, questHistory, questPool, QUESTS_FROM, QUESTS_V2_FROM, QUESTS_V3_FROM, SWEEP_XP } from './quests';
 
 const T = '2026-10-24'; // a Saturday
 let n = 0;
@@ -120,11 +120,15 @@ describe('quest pools, first and current', () => {
   it('draws from the larger pools from the cutoff on', () => {
     expect(QUESTS_V2_FROM).toBe('2026-10-30');
     expect(questPool('daily', '2026-10-29')).toBe(QUEST_POOLS_V1.daily);
-    expect(questPool('daily', QUESTS_V2_FROM)).toBe(QUEST_POOLS.daily);
+    expect(questPool('daily', QUESTS_V2_FROM)).toBe(QUEST_POOLS_V2.daily);
     expect(questPool('weekly', '2026-10-26')).toBe(QUEST_POOLS_V1.weekly);
-    expect(questPool('weekly', '2026-11-02')).toBe(QUEST_POOLS.weekly);
+    expect(questPool('weekly', '2026-11-02')).toBe(QUEST_POOLS_V2.weekly);
+    expect(questPool('weekly', QUESTS_V3_FROM)).toBe(QUEST_POOLS.weekly);
+    // periods already under way keep the pool they started with
+    expect(questPool('monthly', '2026-11-01')).toBe(QUEST_POOLS_V2.monthly);
+    expect(questPool('monthly', '2026-12-01')).toBe(QUEST_POOLS.monthly);
+    for (const period of ['daily', 'weekly', 'monthly'] as const) for (const q of QUEST_POOLS_V2[period]) expect(QUEST_POOLS[period]).toContain(q);
     expect(questPool('monthly', '2026-10-01')).toBe(QUEST_POOLS_V1.monthly);
-    expect(questPool('monthly', '2026-11-01')).toBe(QUEST_POOLS.monthly);
     const v1Ids = new Set(QUEST_POOLS_V1.daily.map((q) => q.id));
     const drawn = Array.from({ length: 60 }, (_, i) => ids('daily', addDays(QUESTS_V2_FROM, i))).flat();
     for (const id of drawn) expect(QUEST_POOLS.daily.some((q) => q.id === id)).toBe(true);

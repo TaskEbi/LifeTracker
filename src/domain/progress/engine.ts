@@ -9,6 +9,7 @@ import type { LogDayMetric, LogEntry, LtBucket, LtDetail, LtNight, LtRecord, Sec
 import type { SleepSchedule, Targets } from '../prefs';
 import type { PlansState } from '../plans/types';
 import { futureXp } from '../future/plan';
+import { readingXp } from '../reading/model';
 import { bossEvents } from './boss';
 import { questEvents } from './quests';
 
@@ -52,6 +53,10 @@ export interface ProgressInput {
   bucket?: LtBucket[];
   /** Live Future records (shortlist, tests, essays, plans); absent in old fixtures. */
   future?: LtRecord[];
+  /** Live Reading records (books, highlights); absent in old fixtures. */
+  reading?: LtRecord[];
+  /** Books a year; absent in old fixtures. */
+  readingGoal?: number;
 }
 
 const targetsFor = (input: ProgressInput, date: string) => (input.targetsAt ? input.targetsAt(weekStart(date)) : input.targets);
@@ -83,6 +88,8 @@ export const RULES = {
   bucketDone: 50,
   /** Weekly uni-prep target (Future) reached. */
   futureWeekTarget: 25,
+  /** Weekly reading target reached. */
+  readingWeekTarget: 20,
   /** Missed days in a row the day streak absorbs: one missed day never breaks it, two do. */
   streakBuffer: 1,
 } as const;
@@ -231,6 +238,7 @@ export function xpEvents(input: ProgressInput): XpEvent[] {
   weekly('gym', () => 1, (t) => t.gymWeek, RULES.gymWeekTarget, (n) => `Weekly target: ${n} gym sessions`);
   weekly('sports', () => 1, (t) => t.sportsWeek, RULES.sportsWeekTarget, (n) => `Weekly target: ${n} sports sessions`);
   weekly('future', (e) => e.minutes, (t) => t.futureWeek, RULES.futureWeekTarget, () => 'Weekly uni prep target reached');
+  weekly('reading', (e) => e.minutes, (t) => t.readingWeek, RULES.readingWeekTarget, () => 'Weekly reading target reached');
 
   // Sleep: logging the night counts; so does keeping near the planned bedtime. Never less sleep.
   for (const m of input.metrics) {
@@ -266,6 +274,7 @@ export function xpEvents(input: ProgressInput): XpEvent[] {
     if (b.done_at) out.push({ key: `bucket:${b.id}`, date: input.dayOf(b.done_at), section: 'general', xp: RULES.bucketDone, reason: `Bucket list: ${b.title}` });
   }
   for (const x of futureXp(input.future ?? [])) if (x.date <= input.today) out.push({ ...x, section: 'future' });
+  for (const x of readingXp(input.reading ?? [], input.readingGoal ?? 12)) if (x.date <= input.today) out.push({ ...x, section: 'reading' });
   // One award per key, whatever reaches us: a record that arrives twice still counts once.
   return [...new Map(out.map((e) => [e.key, e])).values()];
 }
@@ -348,7 +357,7 @@ export interface Progress {
   streak: BufferedStreak & { rest: boolean };
 }
 
-const ALL: XpSection[] = ['violin', 'coding', 'sports', 'gym', 'study', 'chess', 'sleep', 'screen', 'cabinet', 'future', 'general', 'quests'];
+const ALL: XpSection[] = ['violin', 'coding', 'sports', 'gym', 'study', 'chess', 'sleep', 'screen', 'cabinet', 'future', 'reading', 'general', 'quests'];
 
 /** Total XP needed to reach an overall level. */
 export function xpForLevel(level: number): number {
@@ -446,6 +455,7 @@ export function sectionStreaks(input: ProgressInput): Partial<Record<SectionId, 
     coding: { n: days(of('coding')), unit: 'd', label: 'day streak' },
     study: { n: days(of('study')), unit: 'd', label: 'day streak' },
     chess: { n: days(of('chess')), unit: 'd', label: 'day streak' },
+    reading: { n: days(of('reading')), unit: 'd', label: 'day streak' },
     sleep: { n: days(sleepDays), unit: 'n', label: 'nights logged in a row' },
     screen: { n: days(screenUnder), unit: 'd', label: 'days under target' },
   };

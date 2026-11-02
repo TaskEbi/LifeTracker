@@ -136,6 +136,14 @@ export function Celebrations() {
         ],
       },
       {
+        name: 'Reading',
+        items: [
+          { label: 'Book finished', sample: true, c: moment({ type: 'book', title: 'The Left Hand of Darkness', author: 'Ursula K. Le Guin', minutes: 615, n: 4, goal: 12 }) },
+          { label: 'Past halfway', sample: true, c: moment({ type: 'book-half', title: 'The Left Hand of Darkness', pct: 52 }) },
+          { label: 'Year goal', sample: true, c: moment({ type: 'read-goal', year: Number(today.slice(0, 4)), n: 12 }) },
+        ],
+      },
+      {
         name: 'Bucket list',
         items: [
           bucketPick

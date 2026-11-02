@@ -1,0 +1,478 @@
+/* ── Reading (reading.tsx): the book that shuts, the ribbon, the full shelf, pages taking flight ── */
+
+.fx-rd__bg {
+  background:
+    radial-gradient(60% 40% at 50% 41%, color-mix(in srgb, var(--tc) 28%, transparent), transparent 72%),
+    radial-gradient(90% 30% at 50% 100%, rgb(255 180 90 / 0.18), transparent 70%),
+    linear-gradient(180deg, #071720 0%, #0d2a36 55%, #1b1a18 100%);
+}
+
+/* rain past the window */
+.fx-rd__rain {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+.fx-rd__rain i {
+  position: absolute;
+  top: -90px;
+  width: 1.5px;
+  border-radius: 1px;
+  background: linear-gradient(180deg, transparent, #bfe3f2);
+  animation: fx-rd-rain var(--t) linear var(--d) infinite;
+}
+@keyframes fx-rd-rain {
+  to {
+    transform: translate3d(0, calc(100vh + 120px), 0);
+  }
+}
+
+/* ─── the book ─── */
+.fx-rd__at {
+  perspective: 900px;
+}
+.fx-rd .fx-shock {
+  animation-fill-mode: forwards;
+}
+/* after the stamp it flies down to the shelf and shrinks to take its place */
+.fx-rd__move {
+  position: absolute;
+  transform-style: preserve-3d;
+  animation: fx-rd-move 0.62s cubic-bezier(0.55, 0, 0.3, 1) 2.05s both;
+}
+@keyframes fx-rd-move {
+  to {
+    transform: translate3d(0, 19vh, -120px) scale(0.2) rotateZ(-6deg);
+    opacity: 0;
+  }
+}
+.fx-rd__tilt {
+  position: absolute;
+  transform-style: preserve-3d;
+  animation:
+    fx-rd-in 0.5s cubic-bezier(0.2, 0.9, 0.3, 1.1) both,
+    fx-rd-thud 0.4s ease-out var(--hit) both;
+}
+@keyframes fx-rd-in {
+  from {
+    transform: translate3d(0, 60px, -600px) rotateX(46deg) rotateZ(-8deg);
+    opacity: 0;
+  }
+  to {
+    transform: rotateX(18deg) rotateZ(-3deg);
+  }
+}
+@keyframes fx-rd-thud {
+  0% {
+    transform: rotateX(18deg) rotateZ(-3deg);
+  }
+  35% {
+    transform: translate3d(0, 10px, -60px) rotateX(8deg) rotateZ(-2deg) scale(1.03);
+  }
+  100% {
+    transform: rotateX(6deg) rotateZ(-2deg);
+  }
+}
+.fx-rd__book {
+  position: absolute;
+  left: 0;
+  top: -105px;
+  width: 150px;
+  height: 210px;
+  transform-style: preserve-3d;
+  /* the spine is the middle of the screen while open; it slides right as it shuts, so the closed book is centred */
+  animation: fx-rd-centre 0.34s ease-in calc(var(--hit) - 0.32s) both;
+  transform: translateX(0);
+}
+@keyframes fx-rd-centre {
+  to {
+    transform: translateX(-75px);
+  }
+}
+.fx-rd__board,
+.fx-rd__block,
+.fx-rd__leaf,
+.fx-rd__front {
+  position: absolute;
+  inset: 0;
+  display: block;
+  transform-origin: 0 50%;
+  backface-visibility: visible;
+}
+.fx-rd__board--r {
+  border-radius: 2px 6px 6px 2px;
+  background: var(--cloth);
+  box-shadow: 0 30px 40px -14px rgb(0 0 0 / 0.7);
+}
+.fx-rd__block--r {
+  inset: 5px 6px 5px 0;
+  border-radius: 0 2px 2px 0;
+  background: repeating-linear-gradient(90deg, #efe6d2 0 1px, #dcd0b6 1px 2px), #f3ead8;
+  background-size: 8px 100%;
+  background-position: right;
+  background-repeat: repeat-y;
+  background-color: #f3ead8;
+}
+.fx-rd__leaf {
+  inset: 5px 6px 5px 0;
+  border-radius: 0 2px 2px 0;
+  background:
+    repeating-linear-gradient(180deg, transparent 0 11px, rgb(40 30 20 / 0.32) 11px 12px) 14px 16px / calc(100% - 28px) calc(100% - 32px) no-repeat,
+    linear-gradient(90deg, #d8ccb2, #f6eedd 22%);
+  transform: rotateY(0deg);
+  animation:
+    fx-rd-leaf 0.32s cubic-bezier(0.4, 0, 0.5, 1) var(--d) both,
+    fx-rd-leaf-back 0.34s cubic-bezier(0.6, 0, 0.9, 0.5) calc(var(--hit) - 0.32s) forwards;
+}
+@keyframes fx-rd-leaf-back {
+  to {
+    transform: rotateY(0deg);
+  }
+}
+@keyframes fx-rd-leaf {
+  from {
+    transform: rotateY(0deg);
+  }
+  to {
+    transform: rotateY(-178deg);
+  }
+}
+/* the front board starts laid open on the left, then swings back over everything */
+.fx-rd__front {
+  transform-style: preserve-3d;
+  transform: rotateY(-176deg) translateZ(-1px);
+  animation: fx-rd-shut 0.34s cubic-bezier(0.6, 0, 0.9, 0.5) calc(var(--hit) - 0.32s) forwards;
+}
+@keyframes fx-rd-shut {
+  to {
+    transform: rotateY(0deg) translateZ(4px);
+  }
+}
+.fx-rd__inside,
+.fx-rd__face {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+.fx-rd__inside {
+  background: #e7dcc3;
+  border-radius: 6px 2px 2px 6px;
+  transform: rotateY(180deg);
+}
+.fx-rd__face {
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  padding: 18px 14px;
+  text-align: center;
+  border-radius: 2px 6px 6px 2px;
+  background:
+    linear-gradient(90deg, rgb(0 0 0 / 0.32), transparent 9%),
+    var(--cloth);
+  box-shadow: inset 0 0 0 3px rgb(255 235 190 / 0.32);
+}
+.fx-rd__title {
+  font-family: 'Fraunces', Georgia, serif;
+  font-weight: 700;
+  font-size: 23px;
+  line-height: 1.12;
+  color: #f6e6bd;
+  overflow-wrap: anywhere;
+}
+.fx-rd__title--sm {
+  font-size: 17px;
+}
+.fx-rd__title--xs {
+  font-size: 13px;
+}
+.fx-rd__rule {
+  width: 42px;
+  height: 2px;
+  background: #f6e6bd;
+  opacity: 0.7;
+}
+.fx-rd__stamp {
+  --sr: -9deg;
+  left: -56px;
+  top: 40px;
+  z-index: 3;
+  padding: 4px 12px 6px;
+  font: 400 32px/1 'Dela Gothic One', sans-serif;
+  color: #c8342a;
+  white-space: nowrap;
+  border: 3px solid currentColor;
+  border-radius: 6px;
+  background: rgb(243 234 216 / 0.94);
+}
+/* book titles run long: a little smaller than the usual caption, so they wrap inside the screen */
+:is(.fx-rd, .fx-rdh, .fx-rdg) .fx-title {
+  font-size: clamp(20px, 6.2vw, 34px);
+}
+.fx-rd__flash {
+  opacity: 0;
+}
+
+/* ─── the shelf it lands on ─── */
+.fx-rd__shelf,
+.fx-rdg__case {
+  position: absolute;
+  left: 50%;
+  width: min(86vw, 380px);
+  transform: translateX(-50%);
+}
+.fx-rd__shelf {
+  bottom: 37%;
+  opacity: 0;
+  animation: fx-rd-rise 0.4s ease-out 1.85s forwards;
+}
+@keyframes fx-rd-rise {
+  from {
+    opacity: 0;
+    transform: translate3d(-50%, 30px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(-50%, 0, 0);
+  }
+}
+.fx-rd__spines {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 2px;
+  height: 82px;
+}
+.fx-rd__spines i {
+  display: block;
+  border-radius: 2px 2px 0 0;
+  box-shadow: inset 0 3px 0 rgb(255 235 190 / 0.35);
+}
+.fx-rd__spines i.is-new {
+  animation: fx-rd-drop 0.46s cubic-bezier(0.3, 1.5, 0.5, 1) 2.45s both;
+  box-shadow: inset 0 3px 0 #ffdf70, 0 0 22px rgb(255 207 135 / 0.9);
+}
+@keyframes fx-rd-drop {
+  from {
+    transform: translate3d(0, -120px, 0);
+    opacity: 0;
+  }
+}
+.fx-rd__plank {
+  display: block;
+  height: 9px;
+  border-radius: 1px;
+  background: linear-gradient(180deg, #7c5230, #4b2f1c);
+  box-shadow: 0 12px 18px -6px rgb(0 0 0 / 0.7);
+}
+.fx-rd__count {
+  position: absolute;
+  left: 50%;
+  top: 25%;
+  transform: translateX(-50%);
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+  font: 600 14px var(--f-mono, monospace);
+  color: #f3ead8;
+  white-space: nowrap;
+  opacity: 0;
+  animation: fx-rd-fade 0.3s ease-out 2.35s forwards;
+}
+@keyframes fx-rd-fade {
+  to {
+    opacity: 1;
+  }
+}
+
+/* ─── past halfway ─── */
+.fx-rdh__at {
+  perspective: 800px;
+}
+.fx-rdh__spread,
+.fx-rdl__spread {
+  position: absolute;
+  left: -130px;
+  top: -70px;
+  width: 260px;
+  height: 170px;
+  transform-style: preserve-3d;
+  transform: rotateX(46deg);
+  animation: fx-rdh-in 0.5s cubic-bezier(0.2, 0.9, 0.3, 1.1) both;
+}
+@keyframes fx-rdh-in {
+  from {
+    transform: translate3d(0, 50px, -400px) rotateX(70deg);
+    opacity: 0;
+  }
+}
+.fx-rdh__page {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 50%;
+  display: block;
+  background:
+    repeating-linear-gradient(180deg, transparent 0 11px, rgb(40 30 20 / 0.3) 11px 12px) 14px 16px / calc(100% - 28px) calc(100% - 32px) no-repeat,
+    #f3ead8;
+}
+.fx-rdh__page--l {
+  left: 0;
+  border-radius: 4px 0 0 4px;
+  transform-origin: 100% 50%;
+  transform: rotateY(9deg);
+  background-color: #efe5cf;
+}
+.fx-rdh__page--r {
+  right: 0;
+  border-radius: 0 4px 4px 0;
+  transform-origin: 0 50%;
+  transform: rotateY(-9deg);
+}
+.fx-rdh__ribbon {
+  position: absolute;
+  left: 50%;
+  top: -150px;
+  width: 16px;
+  height: 340px;
+  margin-left: -8px;
+  transform-origin: 50% 0;
+  background: linear-gradient(90deg, #7c1f1a, #b53a30 45%, #8b241e);
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 50% 96%, 0 100%);
+  animation: fx-rdh-ribbon 0.62s cubic-bezier(0.3, 1.4, 0.5, 1) 0.42s both;
+}
+@keyframes fx-rdh-ribbon {
+  from {
+    transform: translate3d(0, -340px, 40px) rotateZ(6deg);
+    opacity: 0;
+  }
+  to {
+    transform: translateZ(4px);
+    opacity: 1;
+  }
+}
+.fx-rdh__pct {
+  position: absolute;
+  left: 50%;
+  top: 52%;
+  transform: translateX(-50%);
+  font: 800 62px 'Fraunces', Georgia, serif;
+  color: var(--tc);
+  animation: fx-rdh-pct 0.5s cubic-bezier(0.2, 1.5, 0.4, 1) var(--hit) both;
+}
+@keyframes fx-rdh-pct {
+  from {
+    transform: translate3d(-50%, 30px, 0) scale(0.5);
+    opacity: 0;
+  }
+}
+
+/* ─── the year's goal ─── */
+.fx-rdg__case {
+  top: 26%;
+}
+.fx-rdg__row {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 2px;
+  height: 122px;
+}
+.fx-rdg__row i {
+  display: block;
+  border-radius: 2px 2px 0 0;
+  box-shadow: inset 0 4px 0 rgb(255 235 190 / 0.35);
+  animation: fx-rd-drop 0.42s cubic-bezier(0.3, 1.5, 0.5, 1) var(--d) both;
+}
+.fx-rdg__k {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  font: 900 64px 'Dela Gothic One', sans-serif;
+  color: var(--tc);
+  white-space: nowrap;
+  transform: translateX(-50%);
+  animation: fx-rdh-pct 0.5s cubic-bezier(0.2, 1.5, 0.4, 1) var(--hit) both;
+}
+
+/* ─── level up: the pages take flight ─── */
+.fx-rdl__at {
+  top: 62%;
+  perspective: 800px;
+}
+.fx-rdl__spread {
+  top: -60px;
+}
+.fx-rdl__fly {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 0;
+  height: 0;
+  transform-style: preserve-3d;
+  animation: fx-rdl-fly var(--t) cubic-bezier(0.2, 0.6, 0.3, 1) var(--d) both;
+}
+.fx-rdl__fly i {
+  position: absolute;
+  left: -15px;
+  top: -20px;
+  width: 30px;
+  height: 40px;
+  display: block;
+  border-radius: 1px;
+  background:
+    repeating-linear-gradient(180deg, transparent 0 4px, rgb(40 30 20 / 0.34) 4px 5px) 4px 6px / 22px 28px no-repeat,
+    #f3ead8;
+  transform-origin: 50% 50%;
+  animation: fx-rdl-flap 0.36s ease-in-out infinite alternate;
+}
+@keyframes fx-rdl-fly {
+  0% {
+    transform: translate3d(0, 0, 0) rotateZ(0deg);
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  85% {
+    opacity: 1;
+  }
+  100% {
+    transform: translate3d(var(--x), var(--y), var(--z)) rotateZ(var(--r));
+    opacity: 0;
+  }
+}
+@keyframes fx-rdl-flap {
+  from {
+    transform: rotateY(-55deg);
+  }
+  to {
+    transform: rotateY(55deg);
+  }
+}
+.fx-rdl__k {
+  position: absolute;
+  left: 50%;
+  top: 16%;
+  font: 900 92px 'Dela Gothic One', sans-serif;
+  color: var(--tc);
+  transform: translateX(-50%);
+  animation: fx-rdh-pct 0.5s cubic-bezier(0.2, 1.5, 0.4, 1) var(--hit) both;
+}
+.fx-rdl__lv {
+  position: absolute;
+  left: 50%;
+  top: 37%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font: 600 15px var(--f-mono, monospace);
+  color: #f3ead8;
+  white-space: nowrap;
+  opacity: 0;
+  animation: fx-rd-fade 0.25s ease-out var(--hit) forwards;
+}

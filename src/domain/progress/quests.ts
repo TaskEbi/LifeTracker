@@ -119,8 +119,11 @@ const mins = (f: Facts, s: XpSection) => f.min[s] ?? 0;
 /** Logged both sleep and screen time. */
 const checkIns = (f: Facts) => Math.min(f.nights, 1) + Math.min(f.screens, 1);
 
-/** The current pools: the first ones plus more. None depends on an optional target. */
-export const QUEST_POOLS: Record<QuestPeriod, QuestDef[]> = {
+/**
+ * The second pools, frozen for the same reason: the first ones plus more. None depends on an
+ * optional target. Periods from QUESTS_V2_FROM until QUESTS_V3_FROM draw from here.
+ */
+export const QUEST_POOLS_V2: Record<QuestPeriod, QuestDef[]> = {
   daily: [
     ...v1('daily'),
     { id: 'code', title: 'Compile', desc: 'A coding session', goal: 1, section: 'coding', measure: (f) => secs(f, 'coding') },
@@ -186,8 +189,32 @@ export const QUEST_POOLS: Record<QuestPeriod, QuestDef[]> = {
   ],
 };
 
-/** The pool a period draws from: the first pools before QUESTS_V2_FROM, the current ones from then on. */
-export const questPool = (period: QuestPeriod, start: string): QuestDef[] => (start >= QUESTS_V2_FROM ? QUEST_POOLS : QUEST_POOLS_V1)[period];
+/** Periods starting on or after this day can also draw Reading's quests. */
+export const QUESTS_V3_FROM = '2026-11-09';
+
+const v2 = (period: QuestPeriod) => QUEST_POOLS_V2[period];
+
+/** The current pools: the second ones plus Reading. */
+export const QUEST_POOLS: Record<QuestPeriod, QuestDef[]> = {
+  daily: [
+    ...v2('daily'),
+    { id: 'pages', title: 'A few pages', desc: '15 minutes of reading', goal: 15, unit: 'min', section: 'reading', measure: (f) => mins(f, 'reading') },
+    { id: 'chapter', title: 'One more chapter', desc: '30 minutes of reading', goal: 30, unit: 'min', section: 'reading', measure: (f) => mins(f, 'reading') },
+  ],
+  weekly: [
+    ...v2('weekly'),
+    { id: 'read-days', title: 'Reading habit', desc: '4 reading sessions', goal: 4, section: 'reading', measure: (f) => secs(f, 'reading') },
+    { id: 'read-2h', title: 'Curled up', desc: '2 hours of reading', goal: 120, unit: 'min', section: 'reading', measure: (f) => mins(f, 'reading') },
+  ],
+  monthly: [
+    ...v2('monthly'),
+    { id: 'read10h', title: 'Ten hours of reading', desc: '10 hours of reading', goal: 600, unit: 'min', section: 'reading', measure: (f) => mins(f, 'reading') },
+    { id: 'read20', title: 'Twenty sittings', desc: '20 reading sessions', goal: 20, section: 'reading', measure: (f) => secs(f, 'reading') },
+  ],
+};
+
+/** The pool a period draws from, by the day it starts. */
+export const questPool = (period: QuestPeriod, start: string): QuestDef[] => (start >= QUESTS_V3_FROM ? QUEST_POOLS : start >= QUESTS_V2_FROM ? QUEST_POOLS_V2 : QUEST_POOLS_V1)[period];
 
 // ─── seeded draw ────────────────────────────────────────────────────────────
 

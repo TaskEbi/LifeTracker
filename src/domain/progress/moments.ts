@@ -7,6 +7,7 @@
 import { addDays, dayCount, weekStart } from '../log/dates';
 import { SECTION_IDS, type SectionId } from '../../data/types';
 import { planMoments } from '../plans/progress';
+import { bookProgress, booksOf, DEFAULT_YEAR_GOAL, isFinished, readSession, yearGoalsReached, type ReadSession } from '../reading/model';
 import { bossHistory } from './boss';
 import { activeDays, bedDelta, bufferedStreak, computeProgress, rankFor, RULES, sectionOf, type ProgressInput } from './engine';
 import { dayFacts } from './quests';
@@ -49,7 +50,13 @@ export type Moment =
   /** Overall rank went up. */
   | { type: 'rank'; from: string; to: string }
   /** Something on the bucket list crossed off; `done` of `total` on the list are now done. */
-  | { type: 'bucket'; title: string; done: number; total: number };
+  | { type: 'bucket'; title: string; done: number; total: number }
+  /** A book finished; `n` finished this year, `goal` the year's goal, `minutes` logged on it. */
+  | { type: 'book'; title: string; author: string; minutes: number; n: number; goal: number }
+  /** Past halfway in a book. */
+  | { type: 'book-half'; title: string; pct: number }
+  /** The year's reading goal reached. */
+  | { type: 'read-goal'; year: number; n: number };
 
 export type MomentType = Moment['type'];
 
@@ -178,6 +185,19 @@ function dueTasks(input: ProgressInput) {
 
 // ─── detection ──────────────────────────────────────────────────────────────
 
+/** A book counts as just finished if its date is within this many days: not a backfilled old one. */
+const BOOK_RECENT_DAYS = 7;
+
+function readSessions(input: ProgressInput): ReadSession[] {
+  const out: ReadSession[] = [];
+  for (const e of input.entries) {
+    if (sectionOf(e, input) !== 'reading') continue;
+    const d = input.details.get(e.id);
+    out.push(readSession(e, d && !d.deleted_at ? d.data : null));
+  }
+  return out;
+}
+
 export function moments(before: ProgressInput, after: ProgressInput, ctx: MomentContext = {}): Moment[] {
   if (before === after) return [];
   const today = after.today;
@@ -209,6 +229,30 @@ export function moments(before: ProgressInput, after: ProgressInput, ctx: Moment
   const list = after.bucket ?? [];
   const doneCount = list.filter((x) => x.done_at).length;
   for (const x of list) if (x.done_at && !wasDone.has(x.id)) out.push({ type: 'bucket', title: x.title, done: doneCount, total: list.length });
+
+  // Reading: books finished lately, halfway points passed, the year's goal
+  const booksA = booksOf(after.reading ?? []);
+  const booksB = booksOf(before.reading ?? []);
+  if (booksA.length) {
+    const sessionsA = readSessions(after);
+    const sessionsB = readSessions(before);
+    const goal = after.readingGoal ?? DEFAULT_YEAR_GOAL;
+    const year = today.slice(0, 4);
+    const thisYear = booksA.filter(isFinished).filter((x) => x.finishedOn.startsWith(year) && x.finishedOn <= today).length;
+    for (const x of booksA) {
+      const prev = booksB.find((y) => y.id === x.id);
+      if (isFinished(x) && !(prev && isFinished(prev)) && x.finishedOn <= today && x.finishedOn >= addDays(today, -BOOK_RECENT_DAYS)) {
+        out.push({ type: 'book', title: x.title, author: x.author, minutes: bookProgress(x, sessionsA).minutes, n: thisYear, goal });
+      } else if (x.status === 'reading' && prev) {
+        const pa = bookProgress(x, sessionsA).pct;
+        const pb = bookProgress(prev, sessionsB).pct;
+        if (pa >= 50 && pb < 50 && pa < 100) out.push({ type: 'book-half', title: x.title, pct: pa });
+      }
+    }
+    const reached = yearGoalsReached(booksA, goal).find((g) => String(g.year) === year && g.date <= today);
+    const had = yearGoalsReached(booksB, before.readingGoal ?? DEFAULT_YEAR_GOAL).some((g) => String(g.year) === year && g.date <= today);
+    if (reached && !had) out.push({ type: 'read-goal', year: reached.year, n: goal });
+  }
 
   // Combo: sections touched today
   const secA = dayFacts(after).get(today)?.sections;
@@ -339,6 +383,12 @@ export function momentLine(m: Moment): string {
       return `Rank up · ${m.from} → ${m.to}`;
     case 'bucket':
       return `Bucket list · ${m.title} (${m.done} of ${m.total})`;
+    case 'book':
+      return `Finished · ${m.title} (${m.n} this year)`;
+    case 'book-half':
+      return `Past halfway · ${m.title} (${m.pct}%)`;
+    case 'read-goal':
+      return `${m.year} reading goal reached · ${m.n} books`;
   }
 }
 

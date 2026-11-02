@@ -21,6 +21,7 @@ const FONTS: Record<LookId, string> = {
   sleep: 'family=Instrument+Serif:ital@0;1&family=Lexend:wght@100..900',
   screen: 'family=Zen+Maru+Gothic:wght@400;500;700&family=Manrope:wght@200..800',
   future: 'family=Bebas+Neue&family=Red+Hat+Mono:wght@400..700&family=Public+Sans:wght@300..800',
+  reading: 'family=Fraunces:ital,opsz,wght@0,9..144,300..900;1,9..144,300..900&family=Literata:ital,opsz,wght@0,7..72,200..900;1,7..72,200..900&family=Spline+Sans+Mono:wght@300..700',
   bucket: 'family=Shippori+Mincho:wght@500;700;800&family=Yuji+Syuku',
   cabinet: 'family=Kalam:wght@400;700&family=Literata:ital,opsz,wght@0,7..72,200..900;1,7..72,200..900&family=Courier+Prime:wght@400;700',
 };

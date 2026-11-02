@@ -1,6 +1,6 @@
 # LifeTracker overview
 
-A phone-first tracker for violin, competitive coding, sports, gym, school studies, chess, sleep and screen time, plus the Cabinet (Curio Cabinet's collection), a shared calendar, shared tasks and a bucket list. Progress is shown as one character (a drone, ten forms) with an overall level and rank, section levels, streaks, daily/weekly/monthly quests and achievements. Visual design: Home and the shared pages use the "Shōnen battle" look with a choice of colour themes; each section is its own designed space (`src/features/<section>/theme.css`), and the Cabinet keeps Curio Cabinet's own look.
+A phone-first tracker for violin, competitive coding, sports, gym, school studies, chess, reading, sleep and screen time, plus the Cabinet (Curio Cabinet's collection), a shared calendar, shared tasks and a bucket list. Progress is shown as one character (a drone, ten forms) with an overall level and rank, section levels, streaks, daily/weekly/monthly quests and achievements. Visual design: Home and the shared pages use the "Shōnen battle" look with a choice of colour themes; each section is its own designed space (`src/features/<section>/theme.css`), and the Cabinet keeps Curio Cabinet's own look.
 
 ## How it fits with the other apps
 
@@ -16,7 +16,7 @@ src/app/          shell, router (/violin, /calendar…), sheets, sign-in, theme
 src/data/         records in memory + IndexedDB + outbox sync (from Curio Cabinet), LifeTracker prefs/progress bridge (lt.ts)
 src/domain/       pure logic with tests: dates, Daily Log stats, progression (XP/levels/streaks/achievements), calendar recurrence
 src/features/     one folder per channel (home, violin, … cabinet) and shared utilities (calendar, tasks, progress)
-src/integrations/ Chess.com, DragonCode, (Google Calendar, Strava: not configured)
+src/integrations/ Chess.com, DragonCode, Open Library (book suggestions), (Google Calendar, Strava: not configured)
 src/ui/i/         instrument components (Sheet, charts, Drone, gauges)
 supabase/         migrations (AnyStop's nine + LifeTracker's additive ones), edge functions
 tests/db/         migrations and row-level security on PGlite

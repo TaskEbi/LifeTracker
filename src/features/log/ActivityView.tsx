@@ -1,4 +1,5 @@
 /** All activity: every Daily Log entry (including topics no section uses), with a plain editor. */
+import { TIMED_SECTIONS } from '../../data/types';
 import { ChannelBar } from '../../app/Shell';
 import { useMemo, useState } from 'react';
 import { registerSheet } from '../../app/sheetRegistry';
@@ -137,7 +138,7 @@ export function ActivityView() {
         label="Filter"
         value={filter}
         onChange={(v) => (setFilter(v), setShown(PAGE))}
-        options={[{ id: 'all' as const, label: 'All' }, ...SECTIONS.filter((s) => ['violin', 'coding', 'sports', 'gym', 'study', 'chess'].includes(s.id)).map((s) => ({ id: s.id, label: s.name, c: s.id })), { id: 'unmapped' as const, label: 'Other topics' }]}
+        options={[{ id: 'all' as const, label: 'All' }, ...SECTIONS.filter((s) => (TIMED_SECTIONS as readonly string[]).includes(s.id)).map((s) => ({ id: s.id, label: s.name, c: s.id })), { id: 'unmapped' as const, label: 'Other topics' }]}
       />
       <input className="i-input" type="search" value={q} onChange={(e) => (setQ(e.target.value), setShown(PAGE))} placeholder="Search topics and notes" aria-label="Search" style={{ margin: '8px 0' }} />
       {days.length ? (

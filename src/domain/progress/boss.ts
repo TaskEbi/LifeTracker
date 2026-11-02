@@ -96,7 +96,7 @@ export interface Hit {
   weak: boolean;
 }
 
-const TIMED: XpSection[] = ['violin', 'coding', 'sports', 'gym', 'study', 'chess', 'general'];
+const TIMED: XpSection[] = ['violin', 'coding', 'sports', 'gym', 'study', 'chess', 'reading', 'general'];
 
 /** What one day's records deal, as separate hits. `seen` holds sections already met this week. */
 export function dayHits(date: string, f: Facts, weak: SectionId | null, seen: Set<SectionId>): Hit[] {
