@@ -288,3 +288,53 @@
     transform: scale(1.6);
   }
 }
+
+/* ─── rarity ─── */
+.fx-bk__stars {
+  display: block;
+  margin-top: 4px;
+  font-size: 13px;
+  letter-spacing: 0.12em;
+  color: #7a3a10;
+}
+.fx-bk--common .fx-bk__rays {
+  display: none;
+}
+.fx-bk--epic .fx-bk__bg {
+  background:
+    radial-gradient(70% 45% at 50% 100%, rgb(190 90 255 / 0.3), transparent 70%),
+    radial-gradient(55% 40% at 50% 41%, color-mix(in srgb, var(--tc) 30%, transparent), transparent 72%),
+    linear-gradient(180deg, #0a0626 0%, #240e4a 55%, #3e1450 100%);
+}
+.fx-bk--legendary .fx-bk__bg {
+  background:
+    radial-gradient(80% 50% at 50% 100%, rgb(255 180 70 / 0.42), transparent 70%),
+    radial-gradient(60% 44% at 50% 41%, color-mix(in srgb, var(--tc) 42%, transparent), transparent 72%),
+    linear-gradient(180deg, #120a06 0%, #3a1d08 55%, #5a2410 100%);
+}
+.fx-bk--legendary .fx-bk__board {
+  box-shadow: 0 0 0 3px #ffc94d, 0 0 34px rgb(255 201 77 / 0.75);
+}
+.fx-bk__dragon {
+  position: absolute;
+  left: 0;
+  top: 7%;
+  width: 150vw;
+  max-width: 900px;
+  height: auto;
+  opacity: 0;
+  animation: fx-bk-dragon 2.3s cubic-bezier(0.4, 0.1, 0.5, 0.9) calc(var(--hit) - 0.1s) both;
+}
+@keyframes fx-bk-dragon {
+  0% {
+    transform: translate3d(-110%, 40px, 0);
+    opacity: 1;
+  }
+  85% {
+    opacity: 1;
+  }
+  100% {
+    transform: translate3d(110vw, -30px, 0);
+    opacity: 0;
+  }
+}

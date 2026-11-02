@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import { useRef, type PointerEvent, type ReactNode } from 'react';
 import { useProgress, useSectionStreaks } from '../../data/lt';
 import type { SectionId } from '../../data/types';
 import { sectionInfo } from '../../domain/sections';
@@ -7,6 +7,7 @@ import { ChannelBar } from '../../app/Shell';
 import { navigate } from '../../app/router';
 import { accent, Seg } from './bits';
 import { Icon } from './Icon';
+import './poke.css';
 
 const pad2 = (n: number) => String(n).padStart(2, '0');
 
@@ -28,10 +29,21 @@ export function ChannelHead({ id, sub, art }: { id: SectionId; sub?: string; art
   const info = sectionInfo(id);
   const lv = useProgress().sections[id];
   const streak = useSectionStreaks()[id];
+  const timer = useRef<number | undefined>(undefined);
+  /** Tap the picture and it answers (poke.css). Buttons in the header keep their own job. */
+  const poke = (e: PointerEvent<HTMLElement>) => {
+    if ((e.target as Element).closest('button, a')) return;
+    const el = e.currentTarget;
+    el.removeAttribute('data-poke');
+    void el.offsetWidth; // start the animations again on a second tap
+    el.setAttribute('data-poke', '');
+    window.clearTimeout(timer.current);
+    timer.current = window.setTimeout(() => el.removeAttribute('data-poke'), 1500);
+  };
   return (
     <>
       <ChannelBar current={id} />
-      <header className="i-chhead" style={accent(id)}>
+      <header className="i-chhead" style={accent(id)} onPointerUp={poke}>
         {art ?? <span className="i-chhead__art" aria-hidden="true" />}
         <span className="i-chhead__kanji" aria-hidden="true">
           {info.kanji}

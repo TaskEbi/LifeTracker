@@ -1,0 +1,125 @@
+/* The cut into a section. See Doors.tsx. */
+.dr {
+  position: fixed;
+  inset: 0;
+  z-index: 70;
+  overflow: hidden;
+  pointer-events: none;
+}
+.dr__p {
+  position: absolute;
+  inset: -4%;
+  background: #0b0b10;
+}
+.dr__p--a {
+  clip-path: polygon(0 0, 100% 0, 100% 34%, 0 62%);
+  animation: dr-a 0.56s cubic-bezier(0.7, 0, 0.2, 1) both;
+}
+.dr__p--b {
+  clip-path: polygon(0 62%, 100% 34%, 100% 100%, 0 100%);
+  animation: dr-b 0.56s cubic-bezier(0.7, 0, 0.2, 1) both;
+}
+@keyframes dr-a {
+  0% {
+    transform: translate3d(-104%, 0, 0);
+  }
+  32%,
+  58% {
+    transform: none;
+  }
+  100% {
+    transform: translate3d(0, -104%, 0);
+  }
+}
+@keyframes dr-b {
+  0% {
+    transform: translate3d(104%, 0, 0);
+  }
+  32%,
+  58% {
+    transform: none;
+  }
+  100% {
+    transform: translate3d(0, 104%, 0);
+  }
+}
+.dr__slash {
+  position: absolute;
+  left: -10%;
+  right: -10%;
+  top: 48%;
+  height: 7px;
+  background: var(--dc);
+  box-shadow: 0 0 20px var(--dc);
+  transform: rotate(-15.5deg) scaleX(0);
+  animation: dr-slash 0.56s ease-out both;
+}
+@keyframes dr-slash {
+  0%,
+  20% {
+    transform: rotate(-15.5deg) scaleX(0);
+    opacity: 1;
+  }
+  42% {
+    transform: rotate(-15.5deg) scaleX(1);
+    opacity: 1;
+  }
+  62%,
+  100% {
+    transform: rotate(-15.5deg) scaleX(1);
+    opacity: 0;
+  }
+}
+.dr__k {
+  position: absolute;
+  left: 50%;
+  top: 41%;
+  font: 400 128px/1 'Dela Gothic One', var(--f-label), sans-serif;
+  color: var(--dc);
+  white-space: nowrap;
+  text-shadow: 4px 4px 0 #000;
+  transform: translate(-50%, -50%);
+  animation: dr-k 0.56s cubic-bezier(0.2, 1.1, 0.3, 1) both;
+}
+@keyframes dr-k {
+  0%,
+  16% {
+    transform: translate(-50%, -50%) scale(2.2) rotate(-7deg);
+    opacity: 0;
+  }
+  36%,
+  60% {
+    transform: translate(-50%, -50%) scale(1) rotate(0deg);
+    opacity: 1;
+  }
+  84%,
+  100% {
+    transform: translate(-50%, -50%) scale(0.92);
+    opacity: 0;
+  }
+}
+.dr__l {
+  position: absolute;
+  left: 50%;
+  top: calc(41% + 84px);
+  font: 400 15px 'Dela Gothic One', var(--f-label), sans-serif;
+  letter-spacing: 0.08em;
+  color: #fff;
+  white-space: nowrap;
+  transform: translateX(-50%);
+  animation: dr-l 0.56s ease-out both;
+}
+@keyframes dr-l {
+  0%,
+  28% {
+    opacity: 0;
+  }
+  40%,
+  62% {
+    opacity: 1;
+  }
+  80%,
+  100% {
+    opacity: 0;
+  }
+}

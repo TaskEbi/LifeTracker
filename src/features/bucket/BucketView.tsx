@@ -1,3 +1,4 @@
+import { rarityInfo, rarityOf } from '../../domain/bucket/rarity';
 import { useEffect, useMemo, useRef, useState, type ClipboardEvent, type CSSProperties, type FormEvent } from 'react';
 import { ChannelBar } from '../../app/Shell';
 import { openSheet } from '../../app/sheets';
@@ -158,8 +159,9 @@ export function BucketView() {
   const row = (b: LtBucket) => {
     const y = targetYear(b);
     const step = nextStep(b);
+    const rar = rarityInfo(rarityOf(b));
     return (
-      <li key={b.id} id={`bk-${b.id}`} className={`bk-row${crossing === b.id ? ' is-crossing' : ''}${picked === b.id ? (rolling ? ' is-rolling' : ' is-picked') : ''}`}>
+      <li key={b.id} id={`bk-${b.id}`} style={{ '--rc': rar.color } as CSSProperties} data-rarity={rar.id} className={`bk-row${crossing === b.id ? ' is-crossing' : ''}${picked === b.id ? (rolling ? ' is-rolling' : ' is-picked') : ''}`}>
         <button type="button" className="bk-ck" onClick={() => cross(b.id)} aria-label={`Cross off: ${b.title}`} disabled={!!crossing}>
           <svg viewBox="0 0 24 24" aria-hidden="true">
             <path d="M5 12.5l4.5 4.5L19 7" />
@@ -167,6 +169,9 @@ export function BucketView() {
         </button>
         <button type="button" className="bk-row__t" onClick={() => openSheet({ type: 'bucket', editId: b.id })}>
           <b>{b.title}</b>
+          <span className="bk-row__rar" aria-label={`${rar.name} wish`}>
+            {'★'.repeat(rar.stars)}
+          </span>
           {(y || step) && (
             <span className="bk-row__meta">
               {y && <em className={y < year ? 'is-late' : y === year ? 'is-now' : ''}>{whenLabel(y, year)}</em>}

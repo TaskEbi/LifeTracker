@@ -1068,3 +1068,42 @@
     transition: none;
   }
 }
+
+/* rarity: a few stars on the row; the rarest shimmer */
+.bk-row__rar {
+  display: block;
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  line-height: 1.3;
+  color: var(--rc);
+}
+.bk-row[data-rarity='legendary'] {
+  position: relative;
+  overflow: hidden;
+}
+.bk-row[data-rarity='legendary']::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 40%;
+  pointer-events: none;
+  background: linear-gradient(100deg, transparent, rgb(255 214 110 / 0.2), transparent);
+  transform: translateX(-120%);
+  animation: bk-shimmer 5.5s ease-in-out infinite;
+}
+.bk-row[data-rarity='epic'] .bk-row__rar {
+  text-shadow: 0 0 8px var(--rc);
+}
+@keyframes bk-shimmer {
+  60%,
+  100% {
+    transform: translateX(320%);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .bk-row[data-rarity='legendary']::after {
+    animation: none;
+  }
+}

@@ -4,6 +4,7 @@ import { closeSheet, type SheetSpec } from '../../app/sheets';
 import { dayOf, useToday } from '../../data/lt';
 import { data } from '../../data/store';
 import { BUCKET_SECTIONS, guessSection, isBucketSection, nextStep, targetYear, type BucketSectionId } from '../../domain/bucket/sections';
+import { guessRarity, isRarity, RARITIES, type RarityId } from '../../domain/bucket/rarity';
 import { shortDay } from '../../domain/log/dates';
 import { useStore } from '../../lib/createStore';
 import { Sheet } from '../../ui/i/Sheet';
@@ -18,6 +19,7 @@ function BucketSheet({ spec }: { spec: SheetSpec }) {
   const [cat, setCat] = useState<BucketSectionId | null>(isBucketSection(prev?.data.cat) ? prev.data.cat : null);
   const [by, setBy] = useState<number | null>(prev ? targetYear(prev) : null);
   const [step, setStep] = useState(prev ? (nextStep(prev) ?? '') : '');
+  const [rarity, setRarity] = useState<RarityId | null>(isRarity(prev?.data.rarity) ? prev.data.rarity : null);
   const [error, setError] = useState<string | null>(null);
   const taskId = useStore(data, (s) => (spec.editId ? s.lt_bucket.get(spec.editId as string)?.data.task : undefined)) as string | undefined;
   const task = useStore(data, (s) => (taskId ? s.todos.get(taskId) : undefined));
@@ -31,7 +33,9 @@ function BucketSheet({ spec }: { spec: SheetSpec }) {
 
   const guess = guessSection(title || prev.title, note);
   const shownCat = cat ?? guess;
-  const patch = (): BucketPatch => ({ title, note, cat, by, step });
+  const patch = (): BucketPatch => ({ title, note, cat, by, step, rarity });
+  const rarityGuess = guessRarity({ title: title || prev.title, note, data: { ...prev.data, cat: cat ?? undefined } });
+  const shownRarity = rarity ?? rarityGuess;
   const save = () => {
     const err = updateBucket(prev.id, patch());
     if (err) return setError(err);
@@ -89,6 +93,19 @@ function BucketSheet({ spec }: { spec: SheetSpec }) {
           {BUCKET_SECTIONS.map((s) => (
             <button key={s.id} type="button" className="i-chip" aria-pressed={shownCat === s.id} onClick={() => setCat(s.id === guess ? null : s.id)} style={{ '--c': s.color } as CSSProperties}>
               <span aria-hidden="true">{s.kanji}</span> {s.short}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="i-field">
+        <span className="i-lab" id="bk-rar-lab">
+          Rarity{rarity ? '' : ' · guessed from the section'} · how big the moment is
+        </span>
+        <div className="i-chips i-chips--wrap" role="group" aria-labelledby="bk-rar-lab">
+          {RARITIES.map((r) => (
+            <button key={r.id} type="button" className="i-chip" aria-pressed={shownRarity === r.id} onClick={() => setRarity(r.id === rarityGuess ? null : r.id)} style={{ '--c': r.color } as CSSProperties}>
+              {'★'.repeat(r.stars)} {r.name}
             </button>
           ))}
         </div>

@@ -11,6 +11,7 @@ import { CelebrationLayer } from '../ui/i/fx/CelebrationLayer';
 import { navigate, useRoute, useRouteDir, type RouteName } from './router';
 import { openSheet } from './sheets';
 import { SheetHost } from './SheetHost';
+import { Doors } from './Doors';
 import { Home } from '../features/home/Home';
 import { FocusPill } from '../features/focus/FocusSheet';
 import { sectionViews } from './views';
@@ -71,7 +72,7 @@ function Rail({ current, rest }: { current: RouteName; rest: string[] }) {
     <nav className="i-rail" aria-label="Channels">
       <div className="i-rail__brand">
         <span>LifeTracker</span>
-        <span className="i-rail__badge">LV {p.overall.level}</span>
+        <span className="i-rail__badge" data-xp-target="">LV {p.overall.level}</span>
       </div>
       <button type="button" className="i-btn i-btn--sig i-rail__log" onClick={() => openSheet({ type: 'quick' })}>
         <Icon name="plus" /> Log
@@ -101,7 +102,7 @@ function CommandBar({ current }: { current: RouteName }) {
   const quests = useQuests();
   const open = quests.daily.quests.filter((q) => !q.doneOn).length;
   const btn = (id: keyof typeof SYSTEM_KANJI, label: string, badge?: ReactNode) => (
-    <button type="button" className="i-cmd__btn" aria-current={current === id ? 'page' : undefined} onClick={() => navigate(id)}>
+    <button type="button" className="i-cmd__btn" data-xp-target={id === 'progress' ? '' : undefined} aria-current={current === id ? 'page' : undefined} onClick={() => navigate(id)}>
       <span className="i-cmd__k" aria-hidden="true">
         {SYSTEM_KANJI[id]}
       </span>
@@ -231,6 +232,7 @@ export function Shell() {
       <Toasts />
       <RewardOverlay />
       <CelebrationLayer />
+      <Doors name={route.name} />
     </div>
   );
 }

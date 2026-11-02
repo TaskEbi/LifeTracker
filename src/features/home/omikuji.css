@@ -1,0 +1,412 @@
+/* おみくじ: the card on Home, then a shrine at night: a box to shake, a stick, a paper that unrolls. */
+
+.om-card {
+  display: grid;
+  grid-template-columns: 56px minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 62px;
+  margin-top: 10px;
+  padding: 8px 14px 8px 8px;
+  text-align: left;
+  color: #fbeed4;
+  background:
+    repeating-linear-gradient(90deg, rgb(255 255 255 / 0.03) 0 2px, transparent 2px 7px),
+    linear-gradient(100deg, #6b1d14, #3b1009 70%);
+  box-shadow: inset 0 0 0 1px rgb(230 184 77 / 0.5);
+  clip-path: polygon(0 0, 100% 0, calc(100% - 10px) 100%, 0 100%);
+}
+.om-card:active {
+  transform: scale(0.99);
+}
+.om-card__k {
+  font: 400 24px/1 'Yuji Syuku', 'Shippori Mincho', serif;
+  text-align: center;
+  color: #ffd98a;
+}
+.om-card.is-seen .om-card__k {
+  font-size: 28px;
+}
+.om-card__t {
+  min-width: 0;
+  display: grid;
+  gap: 1px;
+}
+.om-card__t b {
+  font: 400 15px var(--f-label);
+  letter-spacing: 0.02em;
+}
+.om-card__t small {
+  overflow: hidden;
+  font-size: 12px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  opacity: 0.8;
+}
+
+/* ─── the shrine ─── */
+.om {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  display: grid;
+  place-items: center;
+  overflow: hidden auto;
+  padding: 58px 16px 28px;
+  color: #fbeed4;
+  animation: om-in 0.3s ease-out both;
+}
+@keyframes om-in {
+  from {
+    opacity: 0;
+  }
+}
+.om__bg {
+  position: fixed;
+  inset: 0;
+  background:
+    radial-gradient(70% 42% at 50% 42%, rgb(255 170 90 / 0.26), transparent 72%),
+    linear-gradient(180deg, #120a1e 0%, #24102a 55%, #3a1414 100%);
+}
+.om--good .om__bg {
+  background:
+    radial-gradient(70% 42% at 50% 42%, rgb(255 208 110 / 0.36), transparent 72%),
+    linear-gradient(180deg, #160a24 0%, #2d1230 55%, #4a1a14 100%);
+}
+.om--poor .om__bg {
+  background:
+    radial-gradient(70% 42% at 50% 42%, rgb(130 140 190 / 0.22), transparent 72%),
+    linear-gradient(180deg, #080a14 0%, #11142a 60%, #1c1a2a 100%);
+}
+.om__close {
+  position: fixed;
+  top: calc(12px + env(safe-area-inset-top, 0px));
+  right: 12px;
+  z-index: 2;
+  min-height: 44px;
+  padding: 0 16px;
+  color: #fbeed4;
+  font: 600 14px var(--f-body);
+  background: rgb(255 255 255 / 0.1);
+  border-radius: 8px;
+}
+.om__stage {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  gap: 18px;
+}
+.om__hint {
+  min-height: 20px;
+  margin: 0;
+  font-size: 14px;
+  text-align: center;
+  opacity: 0.85;
+}
+.om__box {
+  position: relative;
+  width: 150px;
+  height: 250px;
+  transform-origin: 50% 50%;
+}
+.om__box svg {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.om--box .om__box {
+  animation: om-idle 2.6s ease-in-out infinite;
+}
+@keyframes om-idle {
+  50% {
+    transform: rotate(-1.5deg);
+  }
+}
+.om--shaking .om__box {
+  animation: om-shake 1.05s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+}
+@keyframes om-shake {
+  0% {
+    transform: rotate(0deg);
+  }
+  10% {
+    transform: rotate(-16deg) translateY(-14px);
+  }
+  22% {
+    transform: rotate(14deg) translateY(4px);
+  }
+  34% {
+    transform: rotate(-18deg) translateY(-18px);
+  }
+  46% {
+    transform: rotate(16deg) translateY(4px);
+  }
+  58% {
+    transform: rotate(-20deg) translateY(-22px);
+  }
+  70% {
+    transform: rotate(18deg) translateY(2px);
+  }
+  84% {
+    transform: rotate(-8deg) translateY(-6px);
+  }
+  100% {
+    transform: rotate(180deg);
+  }
+}
+/* upside down, the stick slides out of the small hole at the top of the box */
+.om--stick .om__box {
+  transform: rotate(180deg);
+}
+.om__stick {
+  position: absolute;
+  left: 50%;
+  top: 14px;
+  width: 15px;
+  height: 180px;
+  margin-left: -7.5px;
+  border-radius: 2px;
+  background: linear-gradient(90deg, #d9b878, #f5e3b4 50%, #cfa963);
+  box-shadow: 0 0 0 1px #6b4a1c;
+  transform: translateY(0);
+}
+.om--stick .om__stick {
+  animation: om-stick 0.6s cubic-bezier(0.25, 1.3, 0.5, 1) both;
+}
+@keyframes om-stick {
+  to {
+    transform: translateY(-150px);
+  }
+}
+.om__stick b {
+  position: absolute;
+  top: 8px;
+  left: 0;
+  right: 0;
+  font: 700 11px var(--f-mono);
+  text-align: center;
+  color: #7b1d12;
+  transform: rotate(180deg);
+}
+.om__go {
+  min-width: 220px;
+}
+
+/* ─── the paper ─── */
+.om__paper {
+  position: relative;
+  width: min(100%, 360px);
+  transform-origin: 50% 0;
+}
+.om__roll {
+  position: relative;
+  z-index: 1;
+  height: 14px;
+  border-radius: 7px;
+  background: linear-gradient(180deg, #8b5a2c, #d6a160 45%, #6b4420);
+  box-shadow: 0 3px 6px rgb(0 0 0 / 0.5);
+}
+.om__sheet {
+  margin: -3px 8px;
+  padding: 14px 16px 16px;
+  color: #2a1a10;
+  background:
+    repeating-linear-gradient(180deg, rgb(120 90 40 / 0.05) 0 1px, transparent 1px 6px),
+    #f4ecd8;
+  transform-origin: 50% 0;
+  animation: om-unroll 0.62s cubic-bezier(0.2, 0.85, 0.3, 1) both;
+}
+@keyframes om-unroll {
+  from {
+    transform: scaleY(0.02);
+    opacity: 0.6;
+  }
+}
+.om__roll--bottom {
+  animation: om-roll-down 0.62s cubic-bezier(0.2, 0.85, 0.3, 1) both;
+}
+@keyframes om-roll-down {
+  from {
+    transform: translateY(-420px);
+  }
+}
+.om__head {
+  display: flex;
+  justify-content: space-between;
+  padding-bottom: 6px;
+  font: 400 13px 'Shippori Mincho', serif;
+  color: #7b1d12;
+  border-bottom: 2px solid #7b1d12;
+}
+.om__rank {
+  display: grid;
+  justify-items: center;
+  gap: 2px;
+  padding: 14px 0 12px;
+  animation: om-rank 0.5s cubic-bezier(0.2, 1.6, 0.4, 1) 0.5s both;
+}
+@keyframes om-rank {
+  from {
+    transform: scale(1.8);
+    opacity: 0;
+  }
+}
+.om__rank b {
+  font: 400 72px/1.05 'Yuji Syuku', 'Shippori Mincho', serif;
+  color: #b3261e;
+}
+.om--poor .om__rank b {
+  color: #2f3560;
+}
+.om__rank h2 {
+  margin: 0;
+  font: 600 16px 'Shippori Mincho', Georgia, serif;
+  letter-spacing: 0.04em;
+  text-transform: none;
+}
+.om__lines {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 10px 0;
+  list-style: none;
+  border-top: 1px solid rgb(123 29 18 / 0.3);
+}
+.om__lines li {
+  display: grid;
+  grid-template-columns: 40px minmax(0, 1fr);
+  gap: 8px;
+  align-items: start;
+  animation: om-line 0.32s ease-out calc(0.75s + var(--i) * 0.12s) both;
+}
+@keyframes om-line {
+  from {
+    transform: translateY(8px);
+    opacity: 0;
+  }
+}
+.om__lines span {
+  font: 400 15px/1.2 'Yuji Syuku', 'Shippori Mincho', serif;
+  color: #7b1d12;
+}
+.om__lines small {
+  display: block;
+  font-size: 11px;
+  color: #7a6a52;
+}
+.om__lines p {
+  margin: 0;
+  font: 500 14.5px/1.35 'Shippori Mincho', Georgia, serif;
+}
+.om__nudge {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 52px;
+  margin: 2px 0 0;
+  padding: 8px 10px;
+  text-align: left;
+  color: #2a1a10;
+  background: rgb(179 38 30 / 0.1);
+  border-radius: 6px;
+  box-shadow: inset 0 0 0 1px rgb(179 38 30 / 0.35);
+}
+.om__nudge > span:first-child {
+  font: 400 22px 'Yuji Syuku', 'Shippori Mincho', serif;
+  color: #b3261e;
+}
+.om__nudge b {
+  display: block;
+  font-size: 14px;
+}
+.om__nudge small {
+  font-size: 12px;
+  color: #5e4c35;
+}
+.om__nudge--plain {
+  display: block;
+  font-size: 13.5px;
+}
+.om__fun {
+  margin: 8px 0 0;
+  font-size: 11.5px;
+  text-align: center;
+  color: #7a6a52;
+}
+.om__tie {
+  margin-top: 8px;
+  --surf: #e7dcc2;
+  --fg: #2a1a10;
+  --rule: #b4a582;
+  color: #2a1a10;
+}
+
+/* ─── tied to the branch ─── */
+.om__tied {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+  text-align: center;
+}
+.om__tied svg {
+  width: min(84vw, 320px);
+  height: auto;
+}
+.om__knot {
+  transform-origin: 120px 50px;
+  animation: om-knot 1.3s ease-in-out both;
+}
+@keyframes om-knot {
+  0% {
+    transform: translateY(70px) scale(1.5);
+    opacity: 0;
+  }
+  35% {
+    opacity: 1;
+    transform: rotate(0deg);
+  }
+  55% {
+    transform: rotate(8deg);
+  }
+  75% {
+    transform: rotate(-5deg);
+  }
+  100% {
+    transform: rotate(0deg);
+  }
+}
+.om__tied h2 {
+  margin: 8px 0 0;
+  font: 500 22px 'Shippori Mincho', Georgia, serif;
+  letter-spacing: 0.02em;
+  text-transform: none;
+}
+.om__tied p {
+  margin: 0;
+  opacity: 0.8;
+}
+
+/* calm: no shaking, no unrolling */
+.om--calm .om__box,
+.om--calm .om__sheet,
+.om--calm .om__roll,
+.om--calm .om__rank,
+.om--calm .om__lines li,
+.om--calm .om__knot {
+  animation: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .om,
+  .om__box,
+  .om__sheet,
+  .om__roll,
+  .om__rank,
+  .om__lines li,
+  .om__knot {
+    animation: none !important;
+  }
+}

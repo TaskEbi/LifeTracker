@@ -1,3 +1,4 @@
+import { RARITIES, rarityOf } from '../../domain/bucket/rarity';
 import { useMemo } from 'react';
 import { loadSectionFonts } from '../../app/sectionLook';
 import { getSleepSchedule, progressInput, sectionRecords, useAchievements, useBoss, useProgress, useQuests, useTargets, useToday } from '../../data/lt';
@@ -147,8 +148,9 @@ export function Celebrations() {
         name: 'Bucket list',
         items: [
           bucketPick
-            ? { label: `Crossed off · ${bucketPick.title}`, c: moment({ type: 'bucket', title: bucketPick.title, done: bucketDone + (bucketPick.done_at ? 0 : 1), total: bucketTotal }) }
-            : { label: 'Crossed off', sample: true, c: moment({ type: 'bucket', title: 'See the northern lights', done: 1, total: 12 }) },
+            ? { label: `Crossed off · ${bucketPick.title}`, c: moment({ type: 'bucket', title: bucketPick.title, done: bucketDone + (bucketPick.done_at ? 0 : 1), total: bucketTotal, rarity: rarityOf(bucketPick) }) }
+            : { label: 'Crossed off', sample: true, c: moment({ type: 'bucket', title: 'See the northern lights', done: 1, total: 12, rarity: 'epic' }) },
+          ...RARITIES.map((r) => ({ label: r.name, sample: true, c: moment({ type: 'bucket', title: 'See the northern lights', done: 3, total: 12, rarity: r.id }) })),
         ],
       },
     ];
@@ -173,6 +175,14 @@ export function Celebrations() {
           <Toggle on={prefs.chapter} label="Chapter card on the first log of the day" hint="a short 第N話 page turn" onChange={(chapter) => setFxPrefs({ chapter })} />
         </div>
       )}
+      {mode === 'full' && (
+        <div style={{ marginTop: 8 }}>
+          <Toggle on={prefs.doors} label="Kanji cut when you enter a section" hint="half a second, doesn't hold anything up" onChange={(doors) => setFxPrefs({ doors })} />
+        </div>
+      )}
+      <div style={{ marginTop: 8 }}>
+        <Toggle on={prefs.sky} label="Seasons and time of day on Home" hint="snow, sakura, rain, fireflies, autumn leaves" onChange={(sky) => setFxPrefs({ sky })} />
+      </div>
 
       <div className="i-pnl" style={{ marginTop: 10 }}>
         <p className="i-note" style={{ margin: '0 0 8px' }}>

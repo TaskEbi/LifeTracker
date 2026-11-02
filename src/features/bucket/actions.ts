@@ -58,6 +58,8 @@ export interface BucketPatch {
   by?: number | null;
   /** The smallest next step. */
   step?: string;
+  /** A rarity, or null to let the section decide again. */
+  rarity?: string | null;
 }
 
 /** Set or clear keys of `data`; null removes a key, undefined leaves it. */
@@ -78,7 +80,7 @@ export function updateBucket(id: string, patch: BucketPatch): string | null {
   if (!title) return 'Write what it is.';
   const note = patch.note.trim().slice(0, 2000) || null;
   const step = patch.step === undefined ? undefined : clean(patch.step);
-  const d = merge(prev.data, { cat: patch.cat, by: patch.by, step });
+  const d = merge(prev.data, { cat: patch.cat, by: patch.by, step, rarity: patch.rarity });
   commit('lt_bucket', [{ ...prev, title, note, data: d, updated_at: now() }]);
   return null;
 }

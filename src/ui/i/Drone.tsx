@@ -191,9 +191,11 @@ export function Drone({ stage, still, happy, label = true }: { stage: number; st
             </>
           ))}
         <rect x={100 - r * 0.62} y="86" width={r * 1.24} height="20" rx="10" fill={dark ? '#000' : 'var(--fg)'} stroke={dark ? c2 : 'none'} strokeWidth="1.5" />
+        <g className="dr-gaze">
         <g className={still ? undefined : 'i-blink'}>
           <rect x={happy ? 84 : 86} y={happy ? 92 : 91} width={happy ? 32 : 28} height={happy ? 6 : 10} rx={happy ? 3 : 5} fill={c} />
           <rect x={happy ? 84 : 86} y={happy ? 92 : 91} width={happy ? 32 : 28} height={happy ? 3 : 4} rx="2" fill={c2} opacity=".7" />
+        </g>
         </g>
         {s >= 19 && <path d="M100 70 l6 7 -6 7 -6 -7z" fill={c2} stroke={c} strokeWidth="1.5" />}
         {s >= 14 && (

@@ -73,17 +73,24 @@ export function playStyle(): 'full' | 'calm' {
 
 // ─── per-device extras ───────────────────────────────────────────────────────
 
-/** chapter: play the 第N話 card on the first save of each day (default on). */
+/**
+ * chapter: play the 第N話 card on the first save of each day; doors: the cut into a section;
+ * sky: Home's seasons and time of day. All on unless turned off.
+ */
 export interface FxPrefs {
   chapter: boolean;
+  doors: boolean;
+  sky: boolean;
 }
 const CHAPTER_KEY = 'lifetracker-fx-chapter';
+const DOORS_KEY = 'lifetracker-fx-doors';
+const SKY_KEY = 'lifetracker-fx-sky';
 
 function readPrefs(): FxPrefs {
   try {
-    return { chapter: localStorage.getItem(CHAPTER_KEY) !== 'off' };
+    return { chapter: localStorage.getItem(CHAPTER_KEY) !== 'off', doors: localStorage.getItem(DOORS_KEY) !== 'off', sky: localStorage.getItem(SKY_KEY) !== 'off' };
   } catch {
-    return { chapter: true };
+    return { chapter: true, doors: true, sky: true };
   }
 }
 
@@ -94,6 +101,8 @@ export function setFxPrefs(patch: Partial<FxPrefs>) {
   const next = { ...fxPrefs.get(), ...patch };
   try {
     localStorage.setItem(CHAPTER_KEY, next.chapter ? 'on' : 'off');
+    localStorage.setItem(DOORS_KEY, next.doors ? 'on' : 'off');
+    localStorage.setItem(SKY_KEY, next.sky ? 'on' : 'off');
   } catch {
     /* private mode: kept for this visit only */
   }

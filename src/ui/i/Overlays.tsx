@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { rewardStore, useProgress } from '../../data/lt';
 import { dismissToast, ui } from '../../data/ui';
 import { STAGES } from '../../domain/progress/engine';
@@ -6,7 +6,8 @@ import { momentLine } from '../../domain/progress/moments';
 import { sectionInfo } from '../../domain/sections';
 import { useStore } from '../../lib/createStore';
 import { Drone } from './Drone';
-import { useCelebrating } from './fx/celebrate';
+import { fxStore, playStyle, useCelebrating } from './fx/celebrate';
+import { flyXp } from './fx/orbs';
 
 /** Toasts from anywhere (saves, undo). Announced politely to screen readers. */
 export function Toasts() {
@@ -35,6 +36,29 @@ export function Toasts() {
 
 const pad2 = (n: number) => String(n).padStart(2, '0');
 
+/** The XP number runs up to what was earned (the real figure is there for screen readers from the start). */
+function XpCount({ to }: { to: number }) {
+  const animate = fxStore.get().mode === 'full' && playStyle() === 'full';
+  const [v, setV] = useState(animate ? 0 : to);
+  useEffect(() => {
+    if (!animate) return setV(to);
+    const start = performance.now();
+    let raf = 0;
+    const tick = (t: number) => {
+      const k = Math.min(1, (t - start) / 620);
+      setV(Math.round(to * (1 - (1 - k) ** 3)));
+      if (k < 1) raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [to, animate]);
+  return (
+    <span aria-label={`plus ${to}`}>
+      <span aria-hidden="true">+{v}</span>
+    </span>
+  );
+}
+
 /** What a save earned. Shown only when there is something to show; the numbers are the real difference. */
 export function RewardOverlay() {
   const r = useStore(rewardStore, (s) => s.reward);
@@ -42,7 +66,11 @@ export function RewardOverlay() {
   const ok = useRef<HTMLButtonElement>(null);
   // Celebrations (a quest, an achievement, a level…) play first; the box follows them.
   const waiting = useCelebrating();
-  const close = () => rewardStore.set({ reward: null });
+  const xpRef = useRef<HTMLDivElement>(null);
+  const close = () => {
+    if (r && !r.preview) flyXp(xpRef.current, r.total);
+    rewardStore.set({ reward: null });
+  };
   useEffect(() => {
     if (!r || waiting) return;
     ok.current?.focus();
@@ -85,8 +113,8 @@ export function RewardOverlay() {
         ) : !r.preview ? (
           <>
             {(r.total > 0 || !lines.length) && (
-              <div className="i-reward__xp">
-                +{r.total}
+              <div className="i-reward__xp" ref={xpRef}>
+                <XpCount to={r.total} />
                 <small> XP</small>
               </div>
             )}

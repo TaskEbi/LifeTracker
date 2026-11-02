@@ -6,6 +6,7 @@
  */
 import { addDays, dayCount, weekStart } from '../log/dates';
 import { SECTION_IDS, type SectionId } from '../../data/types';
+import { rarityOf, type RarityId } from '../bucket/rarity';
 import { planMoments } from '../plans/progress';
 import { bookProgress, booksOf, DEFAULT_YEAR_GOAL, isFinished, readSession, yearGoalsReached, type ReadSession } from '../reading/model';
 import { bossHistory } from './boss';
@@ -50,7 +51,7 @@ export type Moment =
   /** Overall rank went up. */
   | { type: 'rank'; from: string; to: string }
   /** Something on the bucket list crossed off; `done` of `total` on the list are now done. */
-  | { type: 'bucket'; title: string; done: number; total: number }
+  | { type: 'bucket'; title: string; done: number; total: number; rarity: RarityId }
   /** A book finished; `n` finished this year, `goal` the year's goal, `minutes` logged on it. */
   | { type: 'book'; title: string; author: string; minutes: number; n: number; goal: number }
   /** Past halfway in a book. */
@@ -228,7 +229,7 @@ export function moments(before: ProgressInput, after: ProgressInput, ctx: Moment
   const wasDone = new Set((before.bucket ?? []).filter((x) => x.done_at).map((x) => x.id));
   const list = after.bucket ?? [];
   const doneCount = list.filter((x) => x.done_at).length;
-  for (const x of list) if (x.done_at && !wasDone.has(x.id)) out.push({ type: 'bucket', title: x.title, done: doneCount, total: list.length });
+  for (const x of list) if (x.done_at && !wasDone.has(x.id)) out.push({ type: 'bucket', title: x.title, done: doneCount, total: list.length, rarity: rarityOf(x) });
 
   // Reading: books finished lately, halfway points passed, the year's goal
   const booksA = booksOf(after.reading ?? []);

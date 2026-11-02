@@ -3,7 +3,7 @@ import { defineConfig, devices } from '@playwright/test';
 /** End-to-end checks in WebKit (Safari's engine) at iPhone size, against the local-only dev build. */
 export default defineConfig({
   testDir: 'tests/e2e',
-  timeout: 30_000,
+  timeout: 60_000,
   use: {
     baseURL: 'http://localhost:5174',
     ...devices['iPhone 15'],

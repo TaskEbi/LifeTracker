@@ -105,8 +105,8 @@ describe('bucket list', () => {
   it('fires for each thing crossed off in this save, not for old ones', () => {
     const before = input({ ...ACTIVE_TODAY, bucket: [wish('a', '2026-10-02'), wish('b', null), wish('c', null)] });
     const after = { ...before, bucket: [wish('a', '2026-10-02'), wish('b', T), wish('c', null)] };
-    expect(only(moments(before, after), 'bucket')).toEqual([{ type: 'bucket', title: 'Wish b', done: 2, total: 3 }]);
-    expect(momentLine({ type: 'bucket', title: 'Wish b', done: 2, total: 3 })).toBe('Bucket list · Wish b (2 of 3)');
+    expect(only(moments(before, after), 'bucket')).toEqual([{ type: 'bucket', title: 'Wish b', done: 2, total: 3, rarity: 'rare' }]);
+    expect(momentLine({ type: 'bucket', title: 'Wish b', done: 2, total: 3, rarity: 'rare' })).toBe('Bucket list · Wish b (2 of 3)');
     // adding to the list or editing it fires nothing
     expect(only(moments(after, { ...after, bucket: [...after.bucket!, wish('d', null)] }), 'bucket')).toEqual([]);
   });

@@ -66,6 +66,7 @@ export function ReadingArt({ pct, finished, titles }: { pct: number | null; fini
           <path d="M292 142C288 128 296 118 312 118C322 118 328 122 332 128L336 121L339 130C342 134 342 139 340 142Z" />
           <path className="rd-art__tail" d="M294 141C284 141 278 138 277 132C276 128 280 126 282 128C281 133 286 136 296 136Z" />
         </g>
+        <text className="rd-art__nya" x="244" y="114" textAnchor="middle" fontSize="11" fill="#fff3d6" fontFamily="'Shippori Mincho', serif">にゃ</text>
         <path d="M247 133q2 1.6 4 0" stroke="#5c5046" strokeWidth="0.9" fill="none" />
 
         <g transform="translate(0 10)">

@@ -12,13 +12,17 @@ import { activeDays, rankFor, scheduleFor, sectionLevel, STAGES } from '../../do
 import { SECTIONS, sectionInfo, SYSTEM_KANJI } from '../../domain/sections';
 import { useStore } from '../../lib/createStore';
 import { accent } from '../../ui/i/bits';
-import { Drone } from '../../ui/i/Drone';
+import { droneMood, hourIn, seasonOf, timeOfDay, TOD_LABEL } from '../../domain/fun/season';
+import { LivingDrone } from './LivingDrone';
+import { OmikujiCard } from './Omikuji';
+import { Sky } from './Sky';
 import { bucketItems } from '../bucket/actions';
 import { booksIn, sessionsIn } from '../reading/actions';
 import { bookProgress, likelyBook } from '../../domain/reading/model';
 import { useFocus } from '../focus/focus';
 import { BossCard } from '../progress/BossPanel';
 import { Recap } from '../progress/LookBack';
+import { useFxPrefs } from '../../ui/i/fx/celebrate';
 import { QuestCard } from '../progress/QuestsPanel';
 import { PlanToday } from '../plans/PlanToday';
 import './home.css';
@@ -127,6 +131,9 @@ export function Home() {
   const next = STAGES[p.overall.stage + 1];
   const daily = quests.daily.quests;
   const dailyDone = daily.filter((q) => q.doneOn).length;
+  const hour = hourIn(st.settings.log_timezone);
+  const tod = timeOfDay(hour);
+  const skyOn = useFxPrefs().sky;
 
   const poke = () => {
     const violinWeek = input.entries.filter((e) => e.date >= addDays(today, -weekdayIndex(today)) && input.topicSection.get(e.topic_id) === 'violin').reduce((s, e) => s + e.minutes, 0);
@@ -174,10 +181,14 @@ export function Home() {
         <div>
           <section className="h-hero" style={{ '--c': stage.c, '--c2': stage.c2 } as CSSProperties} aria-label="Your character">
             <div className="h-hero__in">
+              <Sky date={today} tod={tod} />
               <span className="h-hero__speed" aria-hidden="true" />
-              <button type="button" className="h-hero__drone i-drone" onClick={poke} aria-label="Talk to your drone">
-                <Drone stage={p.overall.stage} label={false} />
-              </button>
+              {skyOn && (
+                <span className="h-hero__season" title={seasonOf(today).label} aria-hidden="true">
+                  {seasonOf(today).kanji} · {TOD_LABEL[tod]}
+                </span>
+              )}
+              <LivingDrone stage={p.overall.stage} mood={droneMood({ hour, streakHeld: p.streak.held, dailyDone: dailyDone === daily.length })} onTalk={poke} onSay={setBubble} />
               <span className="h-hero__lv">
                 <span className="h-hero__lvk">LV</span>
                 <b>{p.overall.level}</b>
@@ -223,6 +234,8 @@ export function Home() {
               ▶
             </span>
           </button>
+
+          <OmikujiCard />
 
           <PlanToday />
 

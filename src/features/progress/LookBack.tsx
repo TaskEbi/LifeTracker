@@ -5,6 +5,7 @@ import { longDay, monthName, rangeLabel, shortDay } from '../../domain/log/dates
 import type { XpSection } from '../../domain/progress/engine';
 import { HEAT_BANDS, type HeatDay, type WeekRecap } from '../../domain/progress/recap';
 import { sectionInfo } from '../../domain/sections';
+import { PlayEpisode } from './Episode';
 import './lookback.css';
 
 const secName = (s: XpSection) => (s === 'general' ? 'Other topics' : s === 'quests' ? 'Quests' : sectionInfo(s).name);
@@ -57,6 +58,7 @@ export function Recap({ recap }: { recap: WeekRecap }) {
           </ul>
         </>
       )}
+      <PlayEpisode recap={recap} />
     </section>
   );
 }
