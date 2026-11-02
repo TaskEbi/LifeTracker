@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { LogDayMetric, LogEntry, SectionId } from '../../data/types';
+import { TIMED_SECTIONS } from '../../data/types';
 import { addDays } from '../log/dates';
 import { DEFAULT_SLEEP, DEFAULT_TARGETS } from '../prefs';
 import { achievements } from './achievements';
@@ -57,6 +58,14 @@ describe('boss damage', () => {
     const expected = 50 + DMG.newSection + (timedWeak ? 10 * DMG.weakMultiplier + DMG.newSection : 0);
     expect(f.damage).toBe(expected);
     if (timedWeak) expect(f.hits.some((h) => h.weak && h.source === weak)).toBe(true);
+  });
+
+  it('takes minutes from every timed section', () => {
+    for (const s of TIMED_SECTIONS) {
+      const f = bossFight(input({ topicSection: new Map([[topicOf(s), s]]), entries: [entry(MON, 30, topicOf(s))] }), MON);
+      expect(f.hits.some((h) => h.source === s && h.label === '30 min')).toBe(true);
+      expect(f.damage).toBe(30 * (bossFor(MON).weak === s ? DMG.weakMultiplier : 1) + DMG.newSection);
+    }
   });
 
   it('starts at the minimum HP and is defeated on the day the damage reaches it', () => {

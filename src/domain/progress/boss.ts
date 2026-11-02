@@ -5,7 +5,7 @@
  * the bosses grow as you do. Defeating it is an XP event keyed by the week, so it pays once.
  */
 import { addDays, dayCount, weekStart } from '../log/dates';
-import { SECTION_IDS, type SectionId } from '../../data/types';
+import { SECTION_IDS, TIMED_SECTIONS, type SectionId } from '../../data/types';
 import type { ProgressInput, XpEvent, XpSection } from './engine';
 import { dayFacts, hash, type Facts } from './quests';
 
@@ -96,7 +96,8 @@ export interface Hit {
   weak: boolean;
 }
 
-const TIMED: XpSection[] = ['violin', 'coding', 'sports', 'gym', 'study', 'chess', 'reading', 'general'];
+/** Every timed section, so a new one can't be left out, plus topics no section uses. */
+const TIMED: XpSection[] = [...TIMED_SECTIONS, 'general'];
 
 /** What one day's records deal, as separate hits. `seen` holds sections already met this week. */
 export function dayHits(date: string, f: Facts, weak: SectionId | null, seen: Set<SectionId>): Hit[] {
