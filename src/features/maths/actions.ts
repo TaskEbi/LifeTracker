@@ -173,7 +173,7 @@ export function removeSitting(s: Sitting) {
 }
 
 /** Add this season's contests. Skips any already there; returns how many were added. */
-export function addSeason(amcDate: string): number {
+export function addSeason(): number {
   const have = new Set(sittingsIn(data.get()).map((s) => s.label.toLowerCase()));
   const todo = SEASON_2026.filter((s) => !have.has(s.label.toLowerCase()));
   if (!todo.length) return 0;
@@ -184,8 +184,9 @@ export function addSeason(amcDate: string): number {
         label: s.label,
         real: true,
         max: contestInfo(s.contest).max,
-        date: s.contest === 'amc12' ? amcDate : s.date,
+        date: s.date,
         ...(s.score != null ? { score: s.score } : {}),
+        ...(s.note ? { note: s.note } : {}),
       });
     }
   });

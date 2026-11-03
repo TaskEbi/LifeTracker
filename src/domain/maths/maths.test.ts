@@ -24,6 +24,8 @@ describe('contests', () => {
 
   it('starts the season with the score the user gave and dates in order', () => {
     expect(SEASON_2026.find((s) => s.contest === 'smc')?.score).toBe(112);
+    expect(SEASON_2026.find((s) => s.contest === 'amc12')?.date).toBe('2026-11-14');
+    expect(SEASON_2026.find((s) => s.contest === 'bmo1')).toMatchObject({ date: '2026-11-19', note: 'At school' });
     const days = SEASON_2026.map((s) => s.date);
     expect([...days].sort()).toEqual(days);
   });

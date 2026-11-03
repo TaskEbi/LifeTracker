@@ -27,7 +27,6 @@ import {
   results,
   roadOf,
   ROADS,
-  SEASON_2026,
   statusOf,
   topicSpread,
   TOPICS,
@@ -105,7 +104,6 @@ export function MathsChannel() {
 // ─── first visit ────────────────────────────────────────────────────────────
 
 function Welcome() {
-  const [amc, setAmc] = useState(SEASON_2026.find((s) => s.contest === 'amc12')!.date);
   return (
     <section className="ma-pnl ma-welcome">
       <h2>This season</h2>
@@ -117,19 +115,18 @@ function Welcome() {
         </li>
         <li>
           <b>AMC 12B 2026</b>
-          <input className="i-input" type="date" value={amc} onChange={(e) => e.target.value && setAmc(e.target.value)} aria-label="AMC 12B date" />
+          <span>Sat 14 Nov</span>
         </li>
         <li>
           <b>BMO1 2026</b>
-          <span>18 Nov · from UKMT’s calendar</span>
+          <span>Thu 19 Nov · at school</span>
         </li>
       </ul>
-      <p className="i-note">13 Nov is the AMC 12B date other sites give for MAA. If your centre runs it on another day, change it here.</p>
       <button
         type="button"
         className="i-btn i-btn--sig i-btn--block"
         onClick={() => {
-          const n = addSeason(amc);
+          const n = addSeason();
           toast(n ? `${n} contests added` : 'They were already here');
         }}
       >
@@ -153,7 +150,7 @@ function Next({ s, after, today }: { s: Sitting; after: Sitting | null; today: s
       <button type="button" className="ma-next__head" onClick={() => openSitting(s)}>
         <span className="ma-next__k">Next contest</span>
         <b>{s.label}</b>
-        <span className="ma-next__when">{n == null ? 'Date not set · tap to add it' : `${whenWord(n)} · ${shortDay(s.date!)}`}</span>
+        <span className="ma-next__when">{n == null ? 'Date not set · tap to add it' : `${whenWord(n)} · ${shortDay(s.date!)}${s.note.length <= 30 && s.note ? ` · ${s.note.toLowerCase()}` : ''}`}</span>
       </button>
       {info.format && <p className="ma-next__fmt">{info.format}</p>}
       {gap != null && gap <= 21 && <p className="i-note">{after!.label} follows {gap === 0 ? 'the same day' : gap === 1 ? 'the next day' : `${gap} days later`}.</p>}

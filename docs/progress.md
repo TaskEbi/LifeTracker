@@ -236,7 +236,7 @@ An eleventh Hideout room (灯台, `/base/lighthouse`), for the days you don't fe
 
 ## M24 · Maths (CH12) (built on branch `maths-section`; needs the migration first)
 A twelfth section, Maths · 数, for competitions: UKMT (SMC, BMO1, BMO2) and MAA (AMC 12, AIME, USAMO). Its own space (`data-sect='maths'`): a page of Oliver Byrne's 1847 Euclid, with Proposition I.47 in red, blue and yellow on cream. The square on the hypotenuse counts down to the next contest, a tombstone is added for each real contest sat, and tapping the page swings the dividers and writes Q.E.D. IM Fell English for the big words, EB Garamond for anything holding a number (Fell's old-style 1 reads as I).
-- First visit: this season ready to add in one tap (SMC 7 Oct, 112/125; AMC 12B; BMO1 18 Nov), with the AMC date editable first.
+- First visit: this season ready to add in one tap (SMC 7 Oct, 112/125; AMC 12B Sat 14 Nov; BMO1 Thu 19 Nov at school).
 - Desk: countdown to the next contest, what follows it, the brief, a practice paper against the clock; asks for a result once the day has passed; problems due another go; this week against the target (default 2 h, stepper); 4-week matrix; emblems; sessions.
 - Road: each ladder with what's scored, booked, open and ahead, and all results. No qualifying scores are written down, because they change every year.
 - Notebook: problems with source, topic, key idea and every attempt. Stuck comes back after 7 days, needing a hint after 21, solved never. Four corners shows the spread across algebra, combinatorics, geometry and number theory and names the one to work on.
@@ -248,5 +248,5 @@ A twelfth section, Maths · 数, for competitions: UKMT (SMC, BMO1, BMO2) and MA
 - Celebrations (`src/ui/i/fx/scenes/maths.tsx`): a contest result (the squares lock around the triangle, Q.E.D. is stamped, the score flips), finally solved (wrong lines struck through, the tombstone drops), Maths' own level-up. Calm cards and previews in Settings.
 - Scroll: contest words log here ("bmo 60 geometry", "amc 12 45 past paper"); plain "maths 40" stays the school subject in Study.
 - Data: lt_records kinds sitting, problem; lt_details section maths; targets.mathsWeek. Migration `20261103120000_lifetracker_maths.sql` widens the section checks (lt_records, lt_details, lt_events, todos.section) to allow 'maths'. Additive; Curio Cabinet unaffected.
-- Dates and facts: SMC, BMO1 and BMO2 dates from UKMT's calendar. AMC 12B 13 Nov 2026 from third-party listings (maa.org refused the fetch), so it's editable and labelled.
+- Dates: the AMC 12B and BMO1 dates are the ones the user sits them on, which differ by a day from the published 13 and 18 Nov. The SMC date is from UKMT's calendar.
 - Release order: apply the migration (`npx supabase db push`), then merge `maths-section` to main (deploys). Writing 'maths' rows before the migration would be refused by the server's checks.

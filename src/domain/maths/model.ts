@@ -113,13 +113,13 @@ export const ROADS: { id: 'uk' | 'us'; name: string; rungs: ContestId[] }[] = [
 ];
 
 /**
- * What's known about this season, one tap away on the first visit. Dates: UKMT's calendar for the SMC
- * and BMO1; the AMC 12B date is MAA's, and a centre may differ, so it's editable before adding.
+ * This season, one tap away on the first visit. The SMC date is UKMT's; the AMC 12B and BMO1 dates are
+ * the ones the user gave, which beat the published ones: they sit them on the 14th and, at school, the 19th.
  */
-export const SEASON_2026: { contest: ContestId; label: string; date: string; score?: number }[] = [
+export const SEASON_2026: { contest: ContestId; label: string; date: string; score?: number; note?: string }[] = [
   { contest: 'smc', label: 'SMC 2026', date: '2026-10-07', score: 112 },
-  { contest: 'amc12', label: 'AMC 12B 2026', date: '2026-11-13' },
-  { contest: 'bmo1', label: 'BMO1 2026', date: '2026-11-18' },
+  { contest: 'amc12', label: 'AMC 12B 2026', date: '2026-11-14' },
+  { contest: 'bmo1', label: 'BMO1 2026', date: '2026-11-19', note: 'At school' },
 ];
 
 // ─── scoring ────────────────────────────────────────────────────────────────

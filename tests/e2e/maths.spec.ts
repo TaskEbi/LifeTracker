@@ -15,7 +15,7 @@ test('maths: add the season, see the countdown and the calendar, then score the 
   // the next contest is the AMC, with the BMO close behind
   const next = page.getByRole('region', { name: 'Next contest' });
   await expect(next.getByText('AMC 12B 2026')).toBeVisible();
-  await expect(next.getByText(/10 days/)).toBeVisible();
+  await expect(next.getByText(/11 days · Sat 14 Nov/)).toBeVisible();
   await expect(next.getByText('BMO1 2026 follows 5 days later.')).toBeVisible();
 
   // the brief does the AMC's sums
@@ -31,7 +31,9 @@ test('maths: add the season, see the countdown and the calendar, then score the 
 
   // it's on the calendar too
   await page.goto('/calendar');
-  await page.clock.setFixedTime(new Date('2026-11-14T09:00:00+09:00'));
+  await page.clock.setFixedTime(new Date('2026-11-15T09:00:00+09:00'));
+  await page.goto('/maths');
+  await expect(page.getByRole('region', { name: 'Next contest' }).getByText(/4 days · Thu 19 Nov · at school/)).toBeVisible();
 
   // after the day: it asks how it went, and a score lands on the road
   await page.goto('/maths');
