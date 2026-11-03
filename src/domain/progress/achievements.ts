@@ -11,6 +11,7 @@ import { SECTION_IDS, TIMED_SECTIONS, type LogEntry, type SectionId } from '../.
 import { activeDays, allXpEvents, bedDelta, RULES, sectionLevel, sectionOf, STAGES, xpForLevel, xpForSectionLevel, type ProgressInput, type XpEvent, type XpSection } from './engine';
 import { BOSSES, bossHistory, type BossFight } from './boss';
 import { sectionOf as bucketSectionOf } from '../bucket/sections';
+import { cameBack, problemsOf, sittingsOf, solvedOn, statusOf, TOPICS } from '../maths/model';
 import { booksOf, dayGap, DEFAULT_YEAR_GOAL, highlightsOf, isFinished, yearGoalsReached } from '../reading/model';
 import { dayFacts, doneSets, questHistory, WAKE_WINDOW, type Facts, type QuestSet } from './quests';
 import type { AchievementGroup, Glyph } from './glyphs';
@@ -138,7 +139,7 @@ export interface AchievementExtras {
 }
 
 const SECTION_NAME: Record<SectionId, string> = {
-  violin: 'Violin', coding: 'Coding', sports: 'Sports', gym: 'Gym', study: 'Study', chess: 'Chess', sleep: 'Sleep', screen: 'Screen time', cabinet: 'Cabinet', future: 'Future', reading: 'Reading',
+  violin: 'Violin', coding: 'Coding', sports: 'Sports', gym: 'Gym', study: 'Study', chess: 'Chess', sleep: 'Sleep', screen: 'Screen time', cabinet: 'Cabinet', future: 'Future', reading: 'Reading', maths: 'Maths',
 };
 /** Section level emblems: titles and glyphs for levels 5, 10, 20 and 30. */
 const SECTION_LEVELS: Record<SectionId, [string, Glyph][]> = {
@@ -153,10 +154,11 @@ const SECTION_LEVELS: Record<SectionId, [string, Glyph][]> = {
   cabinet: [['Finder', 'key'], ['Archivist', 'chest'], ['Keeper of Curios', 'cabinet'], ['Grand Curator', 'crown']],
   future: [['Ticket Holder', 'scroll'], ['Navigator', 'compass'], ['Pathmaker', 'flag'], ['Visionary', 'crown']],
   reading: [['Avid Reader', 'book'], ['Bibliophile', 'stack'], ['Librarian', 'lamp'], ['Keeper of Stories', 'crown']],
+  maths: [['Lemma', 'pencil'], ['Theorem', 'triangle'], ['Corollary', 'sigma'], ['Fields Dreamer', 'crown']],
 };
-/** The sections there were before Future and Reading, for emblems that count every section: a new section never takes one back. */
+/** The sections there were before Future, Reading and Maths, for emblems that count every section: a new section never takes one back. */
 const RENAISSANCE: SectionId[] = ['violin', 'coding', 'sports', 'gym', 'study', 'chess'];
-const CLASSIC_SECTIONS = SECTION_IDS.filter((s) => s !== 'future' && s !== 'reading');
+const CLASSIC_SECTIONS = SECTION_IDS.filter((s) => s !== 'future' && s !== 'reading' && s !== 'maths');
 const LEVEL_TIERS: [number, Tier][] = [[5, 'bronze'], [10, 'bronze'], [20, 'silver'], [30, 'gold']];
 
 /** A rung of a ladder: id, goal, tier, glyph, title. */
@@ -828,6 +830,106 @@ function compute(input: ProgressInput, extras: AchievementExtras): Achievement[]
     (g) => `${g} ${g === 1 ? 'highlight' : 'highlights'} saved`,
   );
 
+  // ── maths ──
+  inGroup('maths', 'maths');
+  sessionsAndHours(
+    'maths',
+    [
+      ['maths1', 1, 'bronze', 'pencil', 'Let x Be…'],
+      ['maths10', 10, 'bronze', 'pencil', 'Working Out'],
+      ['maths50', 50, 'silver', 'sigma', 'Show Your Working'],
+      ['maths100', 100, 'gold', 'sigma', 'Century of Sums'],
+    ],
+    [
+      ['maths5h', 5, 'bronze', 'clock', 'Five Hours of Thinking'],
+      ['maths25h', 25, 'bronze', 'hourglass', 'Deep in It'],
+      ['maths100h', 100, 'gold', 'triangle', 'Hundred Hours Hard'],
+      ['maths500h', 500, 'platinum', 'crown', 'Life of the Mind'],
+    ],
+  );
+  const mathsWeeks = new Map<string, number>();
+  for (const e of by('maths')) mathsWeeks.set(weekStart(e.date), (mathsWeeks.get(weekStart(e.date)) ?? 0) + e.minutes);
+  streakLadder(
+    [
+      ['mathsweeks4', 4, 'bronze', 'target', 'Month of Maths'],
+      ['mathsweeks12', 12, 'silver', 'target', 'Term of Maths'],
+    ],
+    streaks([...mathsWeeks].filter(([w, m]) => m >= targetsFor(w).mathsWeek).map(([w]) => w), prevWeek),
+    (g) => `Maths target ${g} weeks running`,
+    (w) => weekDone(w, today),
+  );
+  const sittings = sittingsOf(input.maths ?? []).filter((s) => s.score != null && s.date && s.date <= today);
+  const contests = sittings.filter((s) => s.real);
+  const papers = sittings.filter((s) => !s.real);
+  const datesAt = (l: typeof sittings) => l.map((s) => s.date!).sort();
+  counts(
+    [
+      ['mcontest1', 1, 'bronze', 'flag', 'Pencils Down'],
+      ['mcontest3', 3, 'silver', 'flag', 'Regular Competitor'],
+      ['mcontest10', 10, 'gold', 'crown', 'Contest Veteran'],
+    ],
+    datesAt(contests),
+    (g) => `${g} real ${g === 1 ? 'contest' : 'contests'} with a score`,
+  );
+  counts(
+    [
+      ['mpaper1', 1, 'bronze', 'scroll', 'Under Exam Conditions'],
+      ['mpaper5', 5, 'bronze', 'scroll', 'Past Master'],
+      ['mpaper25', 25, 'silver', 'stack', 'Every Paper Going'],
+    ],
+    datesAt(papers),
+    (g) => `${g} practice ${g === 1 ? 'paper' : 'papers'} marked`,
+  );
+  once('nextround', 'silver', 'bolt', 'Next Round', 'Sat a second-round paper: BMO1, BMO2, AIME or USAMO', datesAt(contests.filter((s) => s.contest === 'bmo1' || s.contest === 'bmo2' || s.contest === 'aime' || s.contest === 'usamo')));
+  once('bothflags', 'silver', 'compass', 'Two Flags', 'Real contests on both sides of the Atlantic', (() => {
+    const uk = datesAt(contests.filter((s) => s.contest === 'smc' || s.contest === 'bmo1' || s.contest === 'bmo2'))[0];
+    const us = datesAt(contests.filter((s) => s.contest === 'amc12' || s.contest === 'aime' || s.contest === 'usamo'))[0];
+    return uk && us ? [uk > us ? uk : us] : [];
+  })());
+  once('fullmarks', 'silver', 'star', 'Full Marks on One', 'Every mark on one proof problem, real or practice', datesAt(sittings.filter((s) => s.marks.some((m) => m != null && m >= 10) || (s.contest === 'usamo' && s.marks.some((m) => m === 7)))));
+  once('amc100', 'silver', 'target', 'Triple Figures', '100 or more on the AMC 12, real or practice', datesAt(sittings.filter((s) => s.contest === 'amc12' && (s.score ?? 0) >= 100)));
+  once('flawless', 'platinum', 'gem', 'Flawless', 'Every mark on a whole paper, real or practice', datesAt(sittings.filter((s) => s.score === s.max && s.max > 0)));
+  once('beatbest', 'bronze', 'bolt', 'Personal Best', 'Beat your best score at a contest', (() => {
+    const seen = new Map<string, number>();
+    const hits: string[] = [];
+    for (const s of [...sittings].sort((a, b) => a.date!.localeCompare(b.date!))) {
+      const had = seen.get(s.contest);
+      if (had != null && s.score! > had) hits.push(s.date!);
+      if (had == null || s.score! > had) seen.set(s.contest, s.score!);
+    }
+    return hits;
+  })());
+  const notebook = problemsOf(input.maths ?? []);
+  const solvedDays = notebook.map(solvedOn).filter((d): d is string => !!d && d <= today).sort();
+  counts(
+    [
+      ['msolved1', 1, 'bronze', 'proof', 'Q.E.D.'],
+      ['msolved10', 10, 'bronze', 'proof', 'Ten Proofs'],
+      ['msolved50', 50, 'silver', 'proof', 'Problem Solver'],
+      ['msolved100', 100, 'gold', 'triangle', 'Hundred Solved'],
+      ['msolved250', 250, 'platinum', 'sigma', 'From The Book'],
+    ],
+    solvedDays,
+    (g) => `${g} ${g === 1 ? 'problem' : 'problems'} solved without help`,
+  );
+  counts(
+    [
+      ['again1', 1, 'bronze', 'wing', 'Second Attempt'],
+      ['again10', 10, 'silver', 'wing', 'Unstuck'],
+    ],
+    notebook.filter(cameBack).map(solvedOn).filter((d): d is string => !!d && d <= today).sort(),
+    (g) => `${g} ${g === 1 ? 'problem' : 'problems'} solved after being stuck or needing a hint`,
+  );
+  const cornersOn = (() => {
+    const seen = new Map<string, number>();
+    for (const p of notebook.filter((x) => x.topic && statusOf(x) === 'clean' && solvedOn(x)! <= today).sort((a, b) => solvedOn(a)!.localeCompare(solvedOn(b)!))) {
+      seen.set(p.topic!, (seen.get(p.topic!) ?? 0) + 1);
+      if (TOPICS.every((t) => (seen.get(t) ?? 0) >= 5)) return solvedOn(p);
+    }
+    return null;
+  })();
+  add('corners', 'gold', 'compass', 'All Four Corners', '5 problems solved in each of algebra, combinatorics, geometry and number theory', 4, TOPICS.filter((t) => notebook.filter((p) => p.topic === t && statusOf(p) === 'clean').length >= 5).length, cornersOn);
+
   // ── sleep ──
   inGroup('sleep', 'sleep');
   const nights = input.metrics.filter((m) => m.metric === 'sleep' && m.date <= today).map((m) => m.date).sort();
@@ -1200,6 +1302,7 @@ function compute(input: ProgressInput, extras: AchievementExtras): Achievement[]
   once('bookends', 'silver', 'stack', 'Bookends', 'Finished two books on one day', [...finishDays].filter(([, n]) => n >= 2).map(([d]) => d).sort(), true);
   once('onesitting', 'silver', 'lamp', 'In One Sitting', 'Started and finished a book on the same day', finished.filter((b) => b.startedOn === b.finishedOn).map((b) => b.finishedOn), true);
   once('tsundoku', 'bronze', 'stack', 'Tsundoku', '積ん読: 10 books waiting in the pile', shelf.filter((b) => b.status === 'want').length >= 10 ? [today] : [], true);
+  once('piweek', 'silver', 'sigma', 'A Slice of Pi', '314 minutes of maths in one week', [...mathsWeeks].filter(([, m]) => m >= 314).map(([w]) => weekDone(w, today)!).sort(), true);
   once('fahrenheit', 'silver', 'flame', 'Fahrenheit 451', '451 minutes of reading in one week', [...readWeeks].filter(([, m]) => m >= 451).map(([w]) => weekDone(w, today)!).sort(), true);
   add('over9000', 'gold', 'bolt', "It's Over 9000!", 'More than 9,000 XP in total', 9001, overall.total, overall.reach(9001), true);
   const sectionsOnDay = (f: Facts) => CLASSIC_SECTIONS.reduce((n, s) => n + ((s === 'cabinet' ? f.cabinet > 0 : f.sections.has(s)) ? 1 : 0), 0);

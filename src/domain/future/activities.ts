@@ -26,6 +26,7 @@ const TITLES: Record<string, { title: string; role: string; desc: string }> = {
   violin: { title: 'Violin', role: 'Violinist', desc: 'Solo and orchestral playing' },
   coding: { title: 'Competitive programming', role: 'Competitor', desc: 'Training for informatics olympiads' },
   chess: { title: 'Chess', role: 'Player', desc: 'Online and over-the-board play' },
+  maths: { title: 'Mathematics competitions', role: 'Competitor', desc: 'UKMT and MAA contests and olympiad training' },
   gym: { title: 'Strength training', role: '', desc: 'Structured gym programme' },
   running: { title: 'Running', role: 'Runner', desc: 'Distance running and races' },
   cycling: { title: 'Cycling', role: 'Cyclist', desc: 'Road cycling' },

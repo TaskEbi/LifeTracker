@@ -32,6 +32,8 @@ const SECTION_WORDS: [RegExp, TimedSection][] = [
   [/^(stud(?:y|ied|ying)|revis(?:e|ed|ion)|homework|hw|past paper|school(?:work)?)\b/, 'study'],
   [/^(chess|puzzles?|tactics|openings?|endgames?)\b/, 'chess'],
   [/^(read(?:ing)?|kindle|books?)\b/, 'reading'],
+  // Contest words only: plain "maths" is the school subject, in Study.
+  [/^(maths? (?:contests?|comps?|competitions?|olympiad)|olympiad|bmo[12]?|amc(?: ?1[02])?|aime|smc|ukmt)\b/, 'maths'],
   [/^(uni(?: prep)?|sat|tmua|essays?|ucas|common app|personal statement|applications?)\b/, 'future'],
 ];
 const SPORT_WORDS: [RegExp, Sport][] = [
@@ -45,7 +47,7 @@ const SPORT_WORDS: [RegExp, Sport][] = [
 const STUDY_KINDS = ['Homework', 'Revision', 'Past paper', 'Reading', 'Lesson prep'];
 
 /** Words that start a new clause when they follow "and" or "then". */
-const STARTS = 'violin|fiddle|practi[sc]ed?|cod(?:e|ed|ing)|gym|lift(?:ed)?|stud(?:y|ied)|revis(?:e|ed)|chess|read|uni|run|ran|jog(?:ged)?|cycl(?:e|ed)|bik(?:e|ed)|rode|swim|swam|tennis|volleyball|slept|sleep|screen|phone|task|todo|wish';
+const STARTS = 'violin|fiddle|practi[sc]ed?|cod(?:e|ed|ing)|gym|lift(?:ed)?|stud(?:y|ied)|revis(?:e|ed)|chess|read|olympiad|bmo[12]?|amc|uni|run|ran|jog(?:ged)?|cycl(?:e|ed)|bik(?:e|ed)|rode|swim|swam|tennis|volleyball|slept|sleep|screen|phone|task|todo|wish';
 const FREE_TEXT = /^(?:task|todo|to-do|remind me to|remember to|wish|bucket(?: list)?|someday)\s/i;
 const escapeRe = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
@@ -187,7 +189,8 @@ function parseClause(raw: string, ctx: ScrollContext, dayHint: string): Intent |
 
   // A school subject on its own means study: "physics 40 moments".
   const subject = [...ctx.subjects].sort((a, b) => b.length - a.length).find((s) => lower.startsWith(s.toLowerCase()) && (lower.length === s.length || /\W/.test(lower[s.length])));
-  if (subject) {
+  // "maths contest 30" is the Maths section, even with Maths as a school subject.
+  if (subject && !/^maths? (?:contests?|comps?|competitions?|olympiad)\b/.test(lower)) {
     const d = takeDuration(text.slice(subject.length));
     if (d.minutes == null) return { kind: 'unknown', text: raw, hint: `How long? “${subject} 40”.` };
     return studySession(date, d.minutes, subject, d.rest);

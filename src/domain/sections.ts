@@ -25,6 +25,7 @@ export const SECTIONS: SectionInfo[] = [
   { id: 'cabinet', name: 'Cabinet', full: 'Cabinet', code: 'CH09', sub: 'collection', kanji: '蔵' },
   { id: 'future', name: 'Future', full: 'Future', code: 'CH10', sub: 'uni prep · plans', kanji: '志' },
   { id: 'reading', name: 'Reading', full: 'Reading', code: 'CH11', sub: 'books · time · highlights', kanji: '読' },
+  { id: 'maths', name: 'Maths', full: 'Maths', code: 'CH12', sub: 'contests · problems · proofs', kanji: '数' },
 ];
 
 /** Kanji for the shared screens. */
@@ -42,4 +43,6 @@ export const TOPIC_NAME_HINTS: Record<string, string[]> = {
   chess: ['chess'],
   future: ['uni prep', 'university prep', 'university applications', 'applications', 'future'],
   reading: ['reading', 'books', 'book'],
+  // Narrow on purpose: a plain "Maths" topic is likely schoolwork, and its old entries shouldn't move here.
+  maths: ['maths competitions', 'math competitions', 'maths contests', 'olympiad maths'],
 };

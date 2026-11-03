@@ -573,6 +573,26 @@ const GLYPH: Record<Glyph | 'secret', (t: T) => ReactNode> = {
       <path d="M38 54L30 62M50 56V62M62 54L70 62" fill="none" strokeWidth={1.8} opacity=".55" />
     </>
   ),
+  sigma: (t) => (
+    <>
+      <path d="M26 20H74V36H66V29H43L58 50L43 71H66V64H74V80H26V74L44 50L26 26Z" fill={t.a} />
+    </>
+  ),
+  triangle: (t) => (
+    <>
+      <path d="M50 18L82 76H18Z" fill={t.a} />
+      <path d="M50 18V76M18 76L50 18" fill="none" strokeWidth={2.2} />
+      <path d="M50 66H60V76" fill="none" strokeWidth={2.2} />
+      <circle cx="50" cy="55" r="5" fill={t.k} />
+    </>
+  ),
+  proof: (t) => (
+    <>
+      <rect x="28" y="28" width="44" height="44" fill={t.a} />
+      <path d="M36 62L46 48L52 56L64 38" fill="none" strokeWidth={3} />
+      <rect x="62" y="62" width="14" height="14" fill={t.k} />
+    </>
+  ),
   quote: (t) => (
     <>
       <path d="M22 54C22 39 31 29 44 27V36C38 38 35 41 35 46H44V68H22Z" fill={t.a} />

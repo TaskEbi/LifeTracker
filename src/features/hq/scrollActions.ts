@@ -49,6 +49,8 @@ function sessionOf(i: Extract<Intent, { kind: 'session' }>): SessionSave {
     }
     case 'reading':
       return { ...base, note: i.note, subcategory: i.book?.slice(0, 60) ?? null, detail: null };
+    case 'maths':
+      return { ...base, note: i.note, subcategory: 'Problems', detail: { kind: 'Problems' } };
   }
 }
 

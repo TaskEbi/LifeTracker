@@ -142,6 +142,16 @@ describe('the scroll', () => {
     expect(one('uni prep 40 essay draft')).toMatchObject({ section: 'future', minutes: 40 });
   });
 
+  it('tells contest maths from school maths', () => {
+    expect(one('bmo 60 geometry')).toMatchObject({ section: 'maths', minutes: 60, note: 'geometry' });
+    expect(one('bmo1 90')).toMatchObject({ section: 'maths', minutes: 90 });
+    expect(one('amc 12 45 past paper')).toMatchObject({ section: 'maths', minutes: 45 });
+    expect(one('olympiad 30')).toMatchObject({ section: 'maths', minutes: 30 });
+    expect(one('maths contest 30')).toMatchObject({ section: 'maths', minutes: 30 });
+    // the school subject stays in Study
+    expect(one('maths 40 integration')).toMatchObject({ section: 'study', subject: 'Maths', minutes: 40 });
+  });
+
   it('reads runs: distance, time and sport', () => {
     expect(one('ran 8k in 44')).toMatchObject({ section: 'sports', sport: 'running', km: 8, minutes: 44 });
     expect(one('run 10.5km 58:30')).toMatchObject({ km: 10.5, minutes: 59 });

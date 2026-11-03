@@ -19,6 +19,8 @@ import { Sky } from './Sky';
 import { bucketItems } from '../bucket/actions';
 import { booksIn, sessionsIn } from '../reading/actions';
 import { bookProgress, likelyBook } from '../../domain/reading/model';
+import { daysUntil, upcoming } from '../../domain/maths/model';
+import { sittingsIn } from '../maths/actions';
 import { useFocus } from '../focus/focus';
 import { BossCard } from '../progress/BossPanel';
 import { Recap } from '../progress/LookBack';
@@ -126,6 +128,7 @@ export function Home() {
     const book = likelyBook(booksIn(st), sessions);
     return book ? { title: book.title, pct: bookProgress(book, sessions).pct } : null;
   }, [st]);
+  const nextContest = useMemo(() => upcoming(sittingsIn(st), today)[0] ?? null, [st, today]);
   const bucket = useMemo(() => {
     const { open, done } = bucketItems(st);
     return { total: open.length + done.length, done: done.length, next: open[0]?.title };
@@ -346,6 +349,16 @@ export function Home() {
                 <span aria-hidden="true">{sectionInfo('reading').kanji}</span>
                 <b>Now reading</b>
                 <small>{nowReading.title} · {nowReading.pct}%</small>
+              </button>
+            )}
+            {nextContest && (
+              <button type="button" className="h-sys__btn h-sys__btn--wide" onClick={() => navigate('maths')}>
+                <span aria-hidden="true">{sectionInfo('maths').kanji}</span>
+                <b>Next contest</b>
+                <small>
+                  {nextContest.label}
+                  {nextContest.date ? ` · ${daysUntil(nextContest.date, today) === 0 ? 'today' : daysUntil(nextContest.date, today) === 1 ? 'tomorrow' : `in ${daysUntil(nextContest.date, today)} days`}` : ' · date not set'}
+                </small>
               </button>
             )}
             <button type="button" className="h-sys__btn h-sys__btn--wide" onClick={() => navigate('bucket')}>

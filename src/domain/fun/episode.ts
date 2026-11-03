@@ -11,6 +11,7 @@ const TITLES: Partial<Record<XpSection, string>> = {
   chess: 'Sixty-Four Squares',
   future: 'Platform 2028',
   reading: 'The Turning of Pages',
+  maths: 'Proof by Exhaustion',
 };
 
 export function episodeTitle(r: Pick<WeekRecap, 'sections' | 'minutes' | 'activeDays'>): string {

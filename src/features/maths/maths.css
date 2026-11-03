@@ -1,0 +1,366 @@
+/* Maths' own parts. The look around them is in theme.css. */
+
+.ma-tabs {
+  display: flex;
+  gap: 2px;
+  margin: 12px 0;
+  border-bottom: 1px solid var(--rule);
+}
+.ma-tab {
+  flex: 1;
+  min-height: 44px;
+  padding: 8px 2px;
+  border: 0;
+  border-bottom: 3px solid transparent;
+  background: none;
+  color: var(--fg-2);
+  font: inherit;
+  font-size: 15px;
+  cursor: pointer;
+}
+.ma-tab[aria-current='page'] {
+  border-bottom-color: var(--c-maths);
+  color: var(--fg);
+  font-weight: 600;
+}
+
+.ma-pnl {
+  display: block;
+  width: 100%;
+  padding: 14px;
+  border: 1px solid var(--fg);
+  outline: 1px solid var(--fg);
+  outline-offset: 2px;
+  background: var(--surf);
+  color: var(--fg);
+  text-align: left;
+}
+
+.ma-acts {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.ma .i-chips {
+  margin-top: 12px;
+}
+.ma > .i-note {
+  margin-top: 10px;
+}
+
+/* first visit */
+.ma-welcome h2 {
+  margin: 0 0 4px;
+  font-family: var(--f-fell);
+  font-size: 26px;
+  font-weight: 400;
+}
+.ma-welcome p {
+  margin: 0 0 10px;
+}
+.ma-season {
+  margin: 0 0 10px;
+  padding: 0;
+  list-style: none;
+}
+.ma-season li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  min-height: 48px;
+  padding: 6px 0;
+  border-top: 1px solid var(--rule);
+}
+.ma-season span {
+  color: var(--fg-2);
+  font-size: 14px;
+}
+.ma-season .i-input {
+  width: auto;
+  min-height: 42px;
+}
+
+/* the next contest */
+.ma-next__head {
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.ma-next__k {
+  display: block;
+  color: var(--c-maths);
+  font-size: 13px;
+  font-style: italic;
+}
+.ma-next__head b {
+  display: block;
+  font-size: 28px;
+  font-weight: 500;
+  line-height: 1.15;
+}
+.ma-next__when {
+  display: block;
+  margin-top: 2px;
+  font-size: 16px;
+  font-weight: 600;
+}
+.ma-next__fmt {
+  margin: 8px 0 0;
+  color: var(--fg-2);
+  font-size: 14px;
+  line-height: 1.4;
+}
+.ma-await {
+  margin-top: 12px;
+  border-color: var(--c-maths);
+  outline-color: var(--c-maths);
+  font: inherit;
+  cursor: pointer;
+}
+.ma-await b,
+.ma-await small {
+  display: block;
+}
+.ma-await small {
+  color: var(--fg-2);
+}
+.ma-target {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+/* the road */
+.ma-road {
+  margin: 0;
+  padding: 2px 14px;
+  list-style: none;
+}
+.ma-rung {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.ma-rung + .ma-rung {
+  border-top: 1px solid var(--rule);
+}
+.ma-rung__b {
+  flex: 1;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  min-height: 56px;
+  padding: 10px 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.ma-rung__b b {
+  display: block;
+  font-size: 17px;
+}
+.ma-rung__b small {
+  display: block;
+  color: var(--fg-2);
+  font-size: 13px;
+  line-height: 1.35;
+}
+.ma-rung__info {
+  flex: none;
+  min-height: 44px;
+  padding: 0 4px;
+}
+.ma-rung__mark {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  margin-top: 3px;
+  border: 2px solid var(--fg);
+  transform: rotate(45deg) scale(0.74);
+}
+.ma-rung.is-done .ma-rung__mark {
+  background: var(--fg);
+  transform: none;
+}
+.ma-rung.is-booked .ma-rung__mark {
+  border-color: var(--c-maths);
+  background: var(--c-maths);
+}
+.ma-rung.is-ahead {
+  opacity: 0.72;
+}
+
+/* the notebook */
+.ma-shape {
+  flex: none;
+  width: 16px;
+  height: 16px;
+  background: var(--rule);
+}
+.ma-shape--stuck {
+  background: #c8392b;
+}
+.ma-shape--hint {
+  background: #e8b52a;
+  border-radius: 50%;
+}
+.ma-shape--clean {
+  background: #1f4e8c;
+  clip-path: polygon(50% 0, 100% 100%, 0 100%);
+}
+.ma-topics {
+  display: grid;
+  gap: 8px;
+}
+.ma-topic {
+  display: grid;
+  grid-template-columns: 112px 1fr auto;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+}
+.ma-topic b {
+  font-variant-numeric: tabular-nums;
+}
+.ma-topic__bar {
+  position: relative;
+  display: block;
+  height: 10px;
+  background: var(--surf-2);
+}
+.ma-topic__bar::before {
+  content: '';
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: var(--t);
+  background: var(--surf-3);
+}
+.ma-topic__bar i {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: var(--t);
+  background: linear-gradient(90deg, #1f4e8c var(--s), transparent var(--s));
+}
+.ma-topics .i-note {
+  margin: 2px 0 0;
+}
+
+/* papers */
+.ma-clock {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(88px, 1fr));
+  gap: 8px;
+}
+.ma-clock__b {
+  min-height: 66px;
+  padding: 8px 4px;
+  border: 1px solid var(--fg);
+  background: var(--surf);
+  color: var(--fg);
+  font: inherit;
+  cursor: pointer;
+}
+.ma-clock__b b,
+.ma-clock__b small {
+  display: block;
+}
+.ma-clock__b small {
+  color: var(--fg-2);
+  font-size: 12px;
+}
+.ma-steps {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 8px;
+}
+.ma-sum {
+  margin: 8px 0 0;
+  font-size: 22px;
+  font-weight: 500;
+}
+.ma-sum small {
+  font-family: var(--f-body);
+  font-size: 13px;
+  color: var(--fg-2);
+}
+
+/* the paper sheet */
+.ma-marks {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(52px, 1fr));
+  gap: 8px;
+}
+.ma-mark {
+  display: grid;
+  gap: 2px;
+  text-align: center;
+  font-size: 13px;
+}
+.ma-mark .i-input {
+  padding-inline: 2px;
+  text-align: center;
+}
+.ma-total__row {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 8px;
+}
+
+/* the brief */
+.ma-brief__fmt {
+  margin: 0 0 6px;
+  font-size: 17px;
+  line-height: 1.4;
+}
+.ma-brief__tips {
+  margin-bottom: 14px;
+}
+.ma-brief__tips h3 {
+  margin: 14px 0 4px;
+  font-family: var(--f-fell);
+  font-size: 18px;
+  font-weight: 400;
+}
+.ma-brief__tips p {
+  margin: 0 0 4px;
+}
+.ma-brief__tips ul {
+  margin: 0;
+  padding-left: 18px;
+}
+.ma-brief__tips li + li {
+  margin-top: 4px;
+}
+.ma-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+.ma-table th,
+.ma-table td {
+  padding: 6px 4px;
+  border-bottom: 1px solid var(--rule);
+  text-align: left;
+  font-variant-numeric: tabular-nums;
+}
+.ma-table th {
+  font-weight: 600;
+}

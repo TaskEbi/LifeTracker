@@ -1,0 +1,192 @@
+/* ── Maths (maths.tsx): the squares of I.47 locking together, a proof that finally works ── */
+
+.fx-ma__bg {
+  background:
+    radial-gradient(60% 40% at 50% 41%, color-mix(in srgb, var(--tc) 26%, transparent), transparent 72%),
+    #14120f;
+}
+.fx-ma__at {
+  perspective: 900px;
+}
+.fx-ma__fig {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: min(50vw, 210px);
+  transform: translate(-50%, -50%);
+  overflow: visible;
+}
+.fx-ma__sq,
+.fx-ma__tri {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+.fx-ma__tri {
+  animation: fx-ma-tri 0.4s ease-out 0.1s both;
+}
+@keyframes fx-ma-tri {
+  from {
+    opacity: 0;
+    transform: scale(0.4);
+  }
+}
+.fx-ma__sq {
+  animation: fx-ma-in 0.62s cubic-bezier(0.3, 0, 0.3, 1) both;
+}
+.fx-ma__sq--a {
+  --x: -240px;
+  --y: -180px;
+  --r: -160deg;
+  animation-delay: 0.3s;
+}
+.fx-ma__sq--b {
+  --x: 240px;
+  --y: -200px;
+  --r: 140deg;
+  animation-delay: 0.38s;
+}
+.fx-ma__sq--c {
+  --x: 0;
+  --y: 320px;
+  --r: 180deg;
+  animation-delay: 0.44s;
+}
+@keyframes fx-ma-in {
+  from {
+    opacity: 0;
+    transform: translate(var(--x), var(--y)) rotate(var(--r)) scale(2.1);
+  }
+  60% {
+    opacity: 1;
+  }
+}
+.fx-ma__stamp {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  margin: 34px 0 0 -38px;
+  color: #f5ecd7;
+  font-size: 30px;
+  font-family: 'IM Fell English', Georgia, serif;
+  font-style: italic;
+  white-space: nowrap;
+}
+.fx-ma__score {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 10%;
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 10px;
+  color: #f5ecd7;
+  font-size: 34px;
+}
+.fx-ma__score > span:last-child {
+  font-family: 'IM Fell English', Georgia, serif;
+  font-size: 18px;
+  font-style: italic;
+}
+
+/* a proof that finally works */
+.fx-ma__page {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  display: grid;
+  gap: 14px;
+  width: min(76vw, 310px);
+  padding: 22px 20px 44px;
+  transform: translate(-50%, -50%);
+  background: #f5ecd7;
+  color: #1c1a17;
+  font-family: 'IM Fell English', Georgia, serif;
+  font-size: 19px;
+  font-style: italic;
+  animation: fx-ma-page 0.4s ease-out both;
+}
+@keyframes fx-ma-page {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -38%) rotateX(24deg);
+  }
+}
+.fx-ma__wrong {
+  position: relative;
+  color: #6b6455;
+}
+.fx-ma__wrong::after {
+  content: '';
+  position: absolute;
+  left: -2px;
+  right: -2px;
+  top: 52%;
+  height: 2px;
+  background: #c8392b;
+  transform: scaleX(0);
+  transform-origin: left;
+  animation: fx-ma-strike 0.28s ease-out 0.5s forwards;
+}
+.fx-ma__wrong--b::after {
+  animation-delay: 0.74s;
+}
+@keyframes fx-ma-strike {
+  to {
+    transform: scaleX(1);
+  }
+}
+.fx-ma__right {
+  animation: fx-ma-write 0.3s ease-out 1s both;
+}
+@keyframes fx-ma-write {
+  from {
+    opacity: 0;
+    transform: translateX(-8px);
+  }
+}
+.fx-ma__stone {
+  position: absolute;
+  right: 18px;
+  bottom: 16px;
+  width: 18px;
+  height: 22px;
+  background: #1c1a17;
+  animation: fx-ma-drop 0.26s cubic-bezier(0.5, 0, 1, 0.6) 1.1s both;
+}
+@keyframes fx-ma-drop {
+  from {
+    opacity: 0;
+    transform: translateY(-70px) scale(1.8);
+  }
+}
+
+/* a level */
+.fx-ma__at--spin .fx-ma__fig {
+  animation: fx-ma-spin 1.1s cubic-bezier(0.2, 0.8, 0.3, 1) both;
+}
+@keyframes fx-ma-spin {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -50%) rotateY(-300deg) scale(0.3);
+  }
+}
+.fx-ma__k {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 11%;
+  display: flex;
+  justify-content: center;
+  color: #f5ecd7;
+  font-size: 64px;
+}
+.fx-ma__lv {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 27%;
+  color: #f5ecd7;
+  font-size: 28px;
+  text-align: center;
+}

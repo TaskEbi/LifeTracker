@@ -34,6 +34,8 @@ export const MOMENT_PRI: Record<MomentType, number> = {
   'read-goal': 10.4,
   book: 10.2,
   'book-half': 3,
+  contest: 10.3,
+  unstuck: 4,
   'plan-phase': 9.5,
   rank: 8.5,
   'pr-lift': 7.5,
@@ -56,7 +58,7 @@ export const MOMENT_PRI: Record<MomentType, number> = {
 const momentPri = (m: Moment) => (m.type === 'streak' && m.days >= 30 ? 7 : MOMENT_PRI[m.type]);
 
 /** Where a moment plays: the chapter card opens, then what was crossed off the bucket list; the rank follows the level, the rest come after the quests. */
-const momentOrder = (m: Moment, i: number) => (m.type === 'chapter' ? -1 : m.type === 'comeback' ? -0.9 : m.type === 'bucket' || m.type === 'book' || m.type === 'read-goal' ? -0.8 + i * 0.01 : m.type === 'rank' ? 4.5 : 0.5 + i * 0.01);
+const momentOrder = (m: Moment, i: number) => (m.type === 'chapter' ? -1 : m.type === 'comeback' ? -0.9 : m.type === 'bucket' || m.type === 'book' || m.type === 'read-goal' || m.type === 'contest' ? -0.8 + i * 0.01 : m.type === 'rank' ? 4.5 : 0.5 + i * 0.01);
 
 /** The moments worth playing: one scene per thing (a marathon is the race, not also a record). */
 export function playableMoments(r: Pick<RewardView, 'moments' | 'rest'>): Moment[] {

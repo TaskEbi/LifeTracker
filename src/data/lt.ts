@@ -133,6 +133,7 @@ const DEFAULT_TOPIC: Record<TimedSection, { name: string; color: LogTopic['color
   chess: { name: 'Chess', color: 'slate' },
   future: { name: 'Uni prep', color: 'apricot' },
   reading: { name: 'Reading', color: 'slate' },
+  maths: { name: 'Maths competitions', color: 'cherry' },
 };
 
 /**
@@ -204,6 +205,7 @@ export function progressInput(st: DataState, today: string): ProgressInput {
     future: live(st.lt_records).filter((r) => r.section === 'future'),
     reading: live(st.lt_records).filter((r) => r.section === 'reading'),
     readingGoal: yearGoalOf(st.lt_prefs),
+    maths: live(st.lt_records).filter((r) => r.section === 'maths'),
   };
   lastState = st;
   lastToday = today;

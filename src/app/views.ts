@@ -19,6 +19,7 @@ import { ActivityView } from '../features/log/ActivityView';
 import { BucketView } from '../features/bucket/BucketView';
 import { FutureChannel } from '../features/future/FutureChannel';
 import { ReadingChannel } from '../features/reading/ReadingChannel';
+import { MathsChannel } from '../features/maths/MathsChannel';
 import { HqView } from '../features/hq/HqView';
 
 export const sectionViews: Partial<Record<RouteName, ComponentType>> = {
@@ -38,5 +39,6 @@ export const sectionViews: Partial<Record<RouteName, ComponentType>> = {
   bucket: BucketView,
   future: FutureChannel,
   reading: ReadingChannel,
+  maths: MathsChannel,
   base: HqView,
 };

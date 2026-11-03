@@ -13,9 +13,11 @@ export const GLYPHS = [
   'pencil', 'pawn', 'knight', 'king', 'bed', 'zzz', 'phone', 'lotus', 'cabinet', 'drone',
   // reading
   'bookmark', 'lamp', 'quote', 'stack',
+  // maths
+  'sigma', 'triangle', 'proof',
 ] as const;
 export type Glyph = (typeof GLYPHS)[number];
 
 /** How the Emblems tab groups them. */
-export const ACHIEVEMENT_GROUPS = ['start', 'streaks', 'time', 'violin', 'coding', 'sports', 'gym', 'study', 'chess', 'future', 'reading', 'sleep', 'screen', 'tasks', 'cabinet', 'bucket', 'levels', 'quests', 'bosses', 'secret'] as const;
+export const ACHIEVEMENT_GROUPS = ['start', 'streaks', 'time', 'violin', 'coding', 'sports', 'gym', 'study', 'chess', 'future', 'reading', 'maths', 'sleep', 'screen', 'tasks', 'cabinet', 'bucket', 'levels', 'quests', 'bosses', 'secret'] as const;
 export type AchievementGroup = (typeof ACHIEVEMENT_GROUPS)[number];

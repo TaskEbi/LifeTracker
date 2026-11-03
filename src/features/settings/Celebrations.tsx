@@ -145,6 +145,13 @@ export function Celebrations() {
         ],
       },
       {
+        name: 'Maths',
+        items: [
+          { label: 'Contest result', sample: true, c: moment({ type: 'contest', label: 'BMO1 2026', score: 34, max: 60, real: true, best: true }) },
+          { label: 'Finally solved', sample: true, c: moment({ type: 'unstuck', title: 'BMO1 2019 Q3' }) },
+        ],
+      },
+      {
         name: 'Bucket list',
         items: [
           bucketPick

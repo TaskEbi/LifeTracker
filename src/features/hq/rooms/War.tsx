@@ -191,6 +191,7 @@ export function WarRoom() {
                             {s.id === 'violin' && <small>target {targets.violinWeek} min</small>}
                             {s.id === 'future' && <small>target {targets.futureWeek} min</small>}
                             {s.id === 'reading' && <small>target {targets.readingWeek} min</small>}
+                            {s.id === 'maths' && <small>target {targets.mathsWeek} min</small>}
                           </span>
                           <span className="i-row__n">{formatMinutes(s.minutes)}</span>
                         </div>

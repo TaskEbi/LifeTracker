@@ -41,11 +41,11 @@ export interface MoveContext {
   sleepLogged: boolean;
 }
 
-const NAMES: Record<TimedSection, string> = { violin: 'Violin', coding: 'Coding', sports: 'Sport', gym: 'Gym', study: 'Study', chess: 'Chess', future: 'Uni prep', reading: 'Reading' };
+const NAMES: Record<TimedSection, string> = { violin: 'Violin', coding: 'Coding', sports: 'Sport', gym: 'Gym', study: 'Study', chess: 'Chess', future: 'Uni prep', reading: 'Reading', maths: 'Maths' };
 /** How hard each is on a tired head or body (1 easy, 3 hard). */
-const EFFORT: Record<TimedSection, number> = { violin: 2, coding: 3, sports: 3, gym: 3, study: 3, chess: 2, future: 2, reading: 1 };
+const EFFORT: Record<TimedSection, number> = { violin: 2, coding: 3, sports: 3, gym: 3, study: 3, chess: 2, future: 2, reading: 1, maths: 3 };
 /** Shortest stretch that is worth starting. */
-const MIN_FIT: Record<TimedSection, number> = { violin: 10, coding: 20, sports: 20, gym: 30, study: 15, chess: 10, future: 15, reading: 5 };
+const MIN_FIT: Record<TimedSection, number> = { violin: 10, coding: 20, sports: 20, gym: 30, study: 15, chess: 10, future: 15, reading: 5, maths: 20 };
 
 const toMin = (t: string) => +t.slice(0, 2) * 60 + +t.slice(3, 5);
 const fmt = (m: number) => (m >= 60 ? `${Math.floor(m / 60)}h${m % 60 ? ` ${m % 60}m` : ''}` : `${m} min`);
@@ -98,7 +98,7 @@ export function nextMoves(input: ProgressInput, ctx: MoveContext, limit = 3): Mo
     const why: string[] = [];
     let score = 10;
     const w = week.get(s) ?? { min: 0, n: 0 };
-    const target = s === 'violin' ? input.targets.violinWeek : s === 'future' ? input.targets.futureWeek : s === 'reading' ? input.targets.readingWeek : null;
+    const target = s === 'violin' ? input.targets.violinWeek : s === 'future' ? input.targets.futureWeek : s === 'reading' ? input.targets.readingWeek : s === 'maths' ? input.targets.mathsWeek : null;
     if (target != null) {
       const behind = Math.round((target * dayNo) / 7 - w.min);
       if (behind > 0) {

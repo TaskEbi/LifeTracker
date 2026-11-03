@@ -195,6 +195,14 @@ describe('shapes', () => {
     await expect(as(member, `insert into public.lt_details (id, section) values (gen_random_uuid(), 'screen')`)).rejects.toThrow(/check/);
   });
 
+  it('takes the Maths section in every table that has a section', async () => {
+    await as(member, `insert into public.lt_records (id, section, kind, data) values (gen_random_uuid(), 'maths', 'sitting', '{"contest": "bmo1"}')`);
+    await as(member, `insert into public.lt_details (id, section) values (gen_random_uuid(), 'maths')`);
+    await as(member, `insert into public.lt_events (id, title, date, section, kind) values (gen_random_uuid(), 'BMO1', '2026-11-18', 'maths', 'competition')`);
+    await as(member, `insert into public.todos (id, title, section) values (gen_random_uuid(), 'Do a past paper', 'maths')`);
+    await expect(as(member, `insert into public.lt_records (id, section, kind) values (gen_random_uuid(), 'sums', 'sitting')`)).rejects.toThrow(/check/);
+  });
+
   it('takes the Reading section in every table that has a section', async () => {
     await as(member, `insert into public.lt_records (id, section, kind, data) values (gen_random_uuid(), 'reading', 'book', '{"title": "Dune"}')`);
     await as(member, `insert into public.lt_details (id, section) values (gen_random_uuid(), 'reading')`);

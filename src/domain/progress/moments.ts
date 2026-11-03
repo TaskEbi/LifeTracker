@@ -8,6 +8,7 @@ import { addDays, dayCount, weekStart } from '../log/dates';
 import { SECTION_IDS, type SectionId } from '../../data/types';
 import { rarityOf, type RarityId } from '../bucket/rarity';
 import { planMoments } from '../plans/progress';
+import { bestAt, cameBack, problemsOf, sittingsOf } from '../maths/model';
 import { bookProgress, booksOf, DEFAULT_YEAR_GOAL, isFinished, readSession, yearGoalsReached, type ReadSession } from '../reading/model';
 import { bossHistory } from './boss';
 import { activeDays, bedDelta, bufferedStreak, computeProgress, rankFor, RULES, sectionOf, type ProgressInput } from './engine';
@@ -57,7 +58,11 @@ export type Moment =
   /** Past halfway in a book. */
   | { type: 'book-half'; title: string; pct: number }
   /** The year's reading goal reached. */
-  | { type: 'read-goal'; year: number; n: number };
+  | { type: 'read-goal'; year: number; n: number }
+  /** A paper's score came in: a real contest, or a practice paper that beat your best there. */
+  | { type: 'contest'; label: string; score: number; max: number; real: boolean; best: boolean }
+  /** A problem you'd been stuck on, solved. */
+  | { type: 'unstuck'; title: string };
 
 export type MomentType = Moment['type'];
 
@@ -255,6 +260,22 @@ export function moments(before: ProgressInput, after: ProgressInput, ctx: Moment
     if (reached && !had) out.push({ type: 'read-goal', year: reached.year, n: goal });
   }
 
+  // Maths: a score just in, a problem that finally gave way
+  const papersA = sittingsOf(after.maths ?? []);
+  const papersB = sittingsOf(before.maths ?? []);
+  for (const x of papersA) {
+    const prev = papersB.find((y) => y.id === x.id);
+    if (x.score == null || prev?.score != null || !x.date || x.date > today || x.date < addDays(today, -BOOK_RECENT_DAYS)) continue;
+    const had = bestAt(papersB, x.contest);
+    const best = had != null && x.score > had.score!;
+    if (x.real || best) out.push({ type: 'contest', label: x.label, score: x.score, max: x.max, real: x.real, best });
+  }
+  const notesB = problemsOf(before.maths ?? []);
+  for (const x of problemsOf(after.maths ?? [])) {
+    const prev = notesB.find((y) => y.id === x.id);
+    if (prev && !cameBack(prev) && cameBack(x)) out.push({ type: 'unstuck', title: x.title });
+  }
+
   // Combo: sections touched today
   const secA = dayFacts(after).get(today)?.sections;
   const secB = dayFacts(before).get(today)?.sections;
@@ -390,6 +411,10 @@ export function momentLine(m: Moment): string {
       return `Past halfway · ${m.title} (${m.pct}%)`;
     case 'read-goal':
       return `${m.year} reading goal reached · ${m.n} books`;
+    case 'contest':
+      return `${m.label} · ${m.score}/${m.max}${m.best ? ' · your best' : ''}`;
+    case 'unstuck':
+      return `Finally solved · ${m.title}`;
   }
 }
 

@@ -1,0 +1,309 @@
+/* ── Maths · a page of Byrne's Euclid ────────────────────────────────────────
+   Oliver Byrne's 1847 Elements set Euclid's proofs in red, blue and yellow shapes on cream paper with
+   black ink. IM Fell English for the big words (a 17th-century type, the right sort of old), EB Garamond
+   for the rest. Fell's figures are old-style, so its 1 reads as I and its 0 as o: anything holding a
+   number stays in Garamond. Thin double rules, square corners. Entering, the figure is constructed. */
+
+.i-shell[data-sect='maths'] {
+  --bg: #f5ecd7;
+  --bg-dot: transparent;
+  --surf: #fbf5e6;
+  --surf-2: #efe5cd;
+  --surf-3: #ddd0b2;
+  --fg: #1c1a17;
+  --fg-2: #4a453b;
+  --fg-3: #6b6455;
+  --rule: #c9bda0;
+  --grid: #e3d8bd;
+  --led-off: #d8ccb0;
+  --sig: #c8392b;
+  --sig-fg: #fff8ea;
+  --sig-soft: rgb(200 57 43 / 0.1);
+  --acc2: #1f4e8c;
+  --acc2-fg: #fff8ea;
+  --ok: #1f6b4a;
+  --warn: #a8401f;
+  --c-maths: #c8392b;
+  --f-fell: 'IM Fell English', Georgia, 'Times New Roman', serif;
+  --f-label: 'EB Garamond', Georgia, 'Times New Roman', serif;
+  --f-body: 'EB Garamond', Georgia, 'Times New Roman', serif;
+  --f-mono: 'EB Garamond', Georgia, serif;
+  --w-label: 500;
+  --tt-label: none;
+  --slant: 0deg;
+  --r-1: 0;
+  --r-2: 0;
+  --r-3: 0;
+  --lift: 0 0 0 1px #1c1a17, 0 24px 60px rgb(60 40 10 / 0.3);
+  color-scheme: light;
+  background: var(--bg);
+  font-size: 16.5px;
+}
+.i-shell[data-sect='maths'] .i-mono,
+.i-shell[data-sect='maths'] .i-row__n,
+.i-shell[data-sect='maths'] .i-meter__v {
+  font-variant-numeric: lining-nums tabular-nums;
+}
+
+.i-shell[data-sect='maths'] .i-pnl {
+  border: 1px solid #1c1a17;
+  border-radius: 0;
+  background: var(--surf);
+  box-shadow: none;
+  clip-path: none;
+}
+.i-shell[data-sect='maths'] .i-sheet,
+.i-shell[data-sect='maths'] .i-reward__box {
+  background: var(--surf);
+  clip-path: none;
+}
+
+/* headings: each one set against a shape, in turn, as Byrne labels his figures */
+.i-shell[data-sect='maths'] .i-h2 h2 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--f-fell);
+  font-size: 21px;
+  font-weight: 400;
+  letter-spacing: 0;
+  text-transform: none;
+}
+.i-shell[data-sect='maths'] .i-h2 h2::before {
+  content: '';
+  flex: none;
+  width: 12px;
+  height: 12px;
+  background: #c8392b;
+}
+.i-shell[data-sect='maths'] .i-h2:nth-of-type(3n + 2) h2::before {
+  background: #1f4e8c;
+  clip-path: polygon(50% 0, 100% 100%, 0 100%);
+}
+.i-shell[data-sect='maths'] .i-h2:nth-of-type(3n) h2::before {
+  background: #e8b52a;
+  border-radius: 50%;
+}
+
+/* meters: red, blue and yellow rules */
+.i-shell[data-sect='maths'] .i-meters {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+.i-shell[data-sect='maths'] .i-meter {
+  border: 1px solid #1c1a17;
+  border-top: 5px solid #c8392b;
+  border-radius: 0;
+  background: var(--surf);
+  box-shadow: none;
+  clip-path: none;
+  padding: 8px 8px 7px;
+}
+.i-shell[data-sect='maths'] .i-meter:nth-child(2) {
+  border-top-color: #1f4e8c;
+}
+.i-shell[data-sect='maths'] .i-meter:nth-child(3) {
+  border-top-color: #e8b52a;
+}
+.i-shell[data-sect='maths'] .i-meter__v {
+  font-family: var(--f-body);
+  font-size: 22px;
+  font-weight: 600;
+  line-height: 1.15;
+}
+.i-shell[data-sect='maths'] .i-meter__l {
+  font-size: 12.5px;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+/* buttons: plain and square */
+.i-shell[data-sect='maths'] .i-btn {
+  border: 1px solid #1c1a17;
+  border-radius: 0;
+  background: var(--surf);
+  color: var(--fg);
+  box-shadow: none;
+  clip-path: none;
+  font-family: var(--f-body);
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: 0;
+  text-transform: none;
+}
+.i-shell[data-sect='maths'] .i-btn--sig {
+  border-color: #8e2317;
+  background: #c8392b;
+  color: #fff8ea;
+}
+.i-shell[data-sect='maths'] :is(.i-chip, .i-pick) {
+  border-radius: 0;
+  clip-path: none;
+  font-family: var(--f-body);
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+/* header: the page itself */
+.i-shell[data-sect='maths'] .i-chhead {
+  min-height: 296px;
+  padding: 16px 16px 118px;
+  border: 1px solid #1c1a17;
+  outline: 1px solid #1c1a17;
+  outline-offset: 3px;
+  margin: 4px;
+  border-radius: 0;
+  clip-path: none;
+  background: var(--surf);
+  box-shadow: none;
+}
+.i-shell[data-sect='maths'] .i-chhead::before,
+.i-shell[data-sect='maths'] .i-chhead__kanji {
+  display: none;
+}
+.i-shell[data-sect='maths'] .i-chhead h1 {
+  font-family: var(--f-fell);
+  font-size: clamp(44px, 14vw, 62px);
+  font-weight: 400;
+  letter-spacing: 0;
+  line-height: 1;
+  text-transform: none;
+}
+.i-shell[data-sect='maths'] .i-chhead__k {
+  max-width: 13em;
+  color: #c8392b;
+  font-family: var(--f-body);
+  font-size: 14px;
+  font-style: italic;
+  letter-spacing: 0;
+  text-transform: none;
+}
+.i-shell[data-sect='maths'] .i-chhead__rank {
+  font-family: var(--f-body);
+  font-style: italic;
+  letter-spacing: 0;
+  text-transform: none;
+}
+.i-shell[data-sect='maths'] .i-chhead__lv {
+  position: absolute;
+  top: 14px;
+  right: 16px;
+  color: var(--fg);
+  font-family: var(--f-body);
+  letter-spacing: 0;
+}
+.i-shell[data-sect='maths'] .i-chhead__lv b {
+  font-family: var(--f-body);
+  font-size: 30px;
+  font-weight: 500;
+  text-shadow: none;
+}
+/* the bar keeps to the left column: the figure has the right */
+.i-shell[data-sect='maths'] .i-chhead .i-seg {
+  width: 42%;
+  justify-self: start;
+}
+.i-shell[data-sect='maths'] .i-seg i.is-on {
+  background: #1c1a17;
+}
+
+.ma-art {
+  overflow: hidden;
+}
+.ma-art svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+/* the construction, on entering: the lines are ruled, then the squares fill */
+.ma-art__tri {
+  animation: ma-rule 0.32s ease-out both;
+}
+.ma-art__fill {
+  animation: ma-fill 0.28s ease-out both;
+}
+.ma-art__fill--a {
+  animation-delay: 0.14s;
+}
+.ma-art__fill--b {
+  animation-delay: 0.22s;
+}
+.ma-art__fill--c {
+  animation-delay: 0.3s;
+}
+.ma-art__count {
+  animation: ma-fade 0.3s ease-out 0.42s both;
+}
+.ma-art__line {
+  animation: ma-fade 0.3s ease-out 0.3s both;
+}
+.ma-art__stone {
+  animation: ma-fade 0.2s ease-out both;
+}
+.ma-art__qed {
+  opacity: 0;
+}
+.ma-art__dividers {
+  transform-box: fill-box;
+  transform-origin: 50% 0;
+}
+@keyframes ma-rule {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+}
+@keyframes ma-fill {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes ma-fade {
+  from {
+    opacity: 0;
+  }
+}
+
+/* tap the page: the dividers swing, the squares shear and Q.E.D. is written */
+.i-chhead[data-poke] .ma-art__dividers {
+  animation: ma-swing 0.9s ease-in-out;
+}
+.i-chhead[data-poke] .ma-art__fill--a {
+  animation: ma-shear 0.8s ease-in-out;
+}
+.i-chhead[data-poke] .ma-art__fill--b {
+  animation: ma-shear 0.8s ease-in-out 0.1s;
+}
+.i-chhead[data-poke] .ma-art__qed {
+  animation: ma-qed 1.4s ease-out;
+}
+@keyframes ma-swing {
+  30% {
+    rotate: 16deg;
+  }
+  65% {
+    rotate: -10deg;
+  }
+}
+@keyframes ma-shear {
+  50% {
+    opacity: 0.45;
+  }
+}
+@keyframes ma-qed {
+  12%,
+  78% {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ma-art__tri,
+  .ma-art__fill,
+  .ma-art__count,
+  .ma-art__line,
+  .ma-art__stone {
+    animation: none;
+  }
+}

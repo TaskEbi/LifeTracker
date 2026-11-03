@@ -26,7 +26,7 @@ const secName = (s: XpSection) => (s === 'general' ? 'Other topics' : s === 'que
 const RULE_LINES: [string, string][] = [
   ['Any timed session', `1 XP per ${RULES.minutesPerXp} min, up to ${RULES.timeCapPerEntry} per session and ${RULES.timeCapPerDay} per section per day, plus ${RULES.entryLogged} for logging it`],
   ['Gym session finished', `${RULES.gymCompleted} XP, 1 per set done (capped at the plan, max ${RULES.gymSetsCap}), ${RULES.gymCheckIn} for the check-in`],
-  ['Weekly targets', `violin ${RULES.violinWeekTarget}, gym ${RULES.gymWeekTarget}, sports ${RULES.sportsWeekTarget}, uni prep ${RULES.futureWeekTarget}, reading ${RULES.readingWeekTarget} XP when the week's target is met`],
+  ['Weekly targets', `violin ${RULES.violinWeekTarget}, gym ${RULES.gymWeekTarget}, sports ${RULES.sportsWeekTarget}, uni prep ${RULES.futureWeekTarget}, reading ${RULES.readingWeekTarget}, maths ${RULES.mathsWeekTarget} XP when the week's target is met`],
   ['Books', `${READING_XP.bookFinished} XP for finishing a book, ${READING_XP.yearGoal} for reaching the year's goal`],
   ['Sleep', `${RULES.nightLogged} XP per night logged, ${RULES.bedtimeKept} more for bed within ${RULES.bedtimeWindow} min of the schedule`],
   ['Screen time', `${RULES.screenLogged} XP for logging the day, ${RULES.screenUnderTarget} more under the target`],
