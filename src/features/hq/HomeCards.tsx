@@ -6,6 +6,7 @@ import { progressInput, useBoss, usePlans, useQuests, useToday } from '../../dat
 import { data } from '../../data/store';
 import { legsHurt } from '../../domain/hq/body';
 import { roughToday } from '../../domain/hq/beacon';
+import { closingDate, firstThingToday, isClosingTime } from '../../domain/hq/diary';
 import { wordsOfDay } from '../../domain/hq/quotes';
 import { weatherOf, WEATHER } from '../../domain/hq/checkin';
 import { nextMoves, type Energy, type Move } from '../../domain/hq/nextMove';
@@ -26,7 +27,7 @@ import { RitualRow } from './rooms/Rituals';
 import { deadlinesOf, saveCheckIn, tickBig, useHq } from './store';
 import './cards.css';
 
-const minutesNow = (tz: string, d = new Date()) => {
+export const minutesNow = (tz: string, d = new Date()) => {
   try {
     const parts = new Intl.DateTimeFormat('en-GB', { timeZone: tz, hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).formatToParts(d);
     return +parts.find((p) => p.type === 'hour')!.value * 60 + +parts.find((p) => p.type === 'minute')!.value;
@@ -58,7 +59,7 @@ const readChoice = (): { minutes: string; energy: Energy } => {
 };
 
 /** The best moves for this much time and energy, from the records. */
-export function useMoves(minutes: number, energy: Energy): Move[] {
+export function useMoves(minutes: number, energy: Energy, limit = 3): Move[] {
   const today = useToday();
   const st = useStore(data, (s) => s);
   const hq = useHq();
@@ -84,8 +85,8 @@ export function useMoves(minutes: number, energy: Energy): Move[] {
       quests: quests.daily.quests.filter((q) => !q.doneOn && q.section).map((q) => ({ title: q.title, section: q.section! })),
       overdueTasks: input.todos.filter((t) => !t.done_at && t.due && t.due < today).length,
       sleepLogged: input.metrics.some((x) => x.metric === 'sleep' && x.date === today),
-    });
-  }, [st, today, hq, boss, quests, plans, minutes, energy]);
+    }, limit);
+  }, [st, today, hq, boss, quests, plans, minutes, energy, limit]);
 }
 
 /** 次の一手: how long, how you feel, and the best thing to do with that. */
@@ -171,6 +172,64 @@ export function BeaconCard() {
           {rough ? 'Rough weather today' : 'Struggling?'}
           {rough && n > 0 && <small>You left yourself {n === 1 ? 'a message' : `${n} messages`}</small>}
         </span>
+      </button>
+    </section>
+  );
+}
+
+/** Morning: what you decided last night. Evening: the way in to closing the day. */
+export function BookendCard() {
+  const today = useToday();
+  const hq = useHq();
+  const st = useStore(data, (s) => s);
+  const hour = hourIn(st.settings.log_timezone);
+  const first = firstThingToday(hq.closes, today);
+  const [gone, setGone] = useState(() => {
+    try {
+      return localStorage.getItem('lt.hq.first-done') === today;
+    } catch {
+      return false;
+    }
+  });
+  const closed = hq.closes.some((c) => c.date === closingDate(today, hour) && c.at);
+  if (isClosingTime(hour)) {
+    if (closed) return null;
+    return (
+      <button type="button" className="hc-review hc-review--night" onClick={() => navigate('base', ['close'])}>
+        <span className="hc-review__k" aria-hidden="true">
+          終礼
+        </span>
+        <span>
+          <b>Close the day</b>
+          <small>Clear what’s left, pick tomorrow’s first thing, stop</small>
+        </span>
+        <span aria-hidden="true">▶</span>
+      </button>
+    );
+  }
+  if (!first || gone) return null;
+  return (
+    <section className="hc-first" aria-label="First thing today">
+      <span className="hc-first__k" aria-hidden="true">
+        朝一
+      </span>
+      <span className="hc-first__t">
+        <small>Last night you decided to start with</small>
+        <b>{first}</b>
+      </span>
+      <button
+        type="button"
+        className="i-btn i-btn--sm"
+        onClick={() => {
+          setGone(true);
+          try {
+            localStorage.setItem('lt.hq.first-done', today);
+          } catch {
+            /* comes back on reload */
+          }
+        }}
+      >
+        Done
       </button>
     </section>
   );

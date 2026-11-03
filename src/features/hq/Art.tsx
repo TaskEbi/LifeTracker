@@ -43,6 +43,89 @@ const F = { fill: 'var(--rc)' };
 const D = { fill: 'var(--rc)', opacity: 0.22 };
 
 const SCENES: Record<RoomId, ReactElement> = {
+  forge: (
+    <>
+      <path d="M30 40 h44 c0 8 -6 12 -16 12 h-12 c-10 0 -16 -4 -16 -12z" {...D} />
+      <path d="M22 34 h60 l-8 6 h-44z M30 40 c0 8 6 12 16 12 h12 c10 0 16 -4 16 -12 M40 52 v4 M64 52 v4 M34 56 h36" {...L} />
+      <path d="M92 44 l14 -24 M86 18 l26 10 -4 8 -26 -10z" {...L} />
+      <circle cx="60" cy="22" r="1.6" {...F} />
+      <circle cx="48" cy="16" r="1.2" {...F} className="hq-bub" />
+      <circle cx="70" cy="12" r="1.2" {...F} />
+    </>
+  ),
+  arena: (
+    <>
+      <ellipse cx="60" cy="50" rx="50" ry="7" {...L} />
+      <path d="M38 44 L58 16 M58 16 l-6 2 M58 16 l-2 6 M42 34 l6 6" {...L} />
+      <path d="M82 44 L62 16 M62 16 l6 2 M62 16 l2 6 M78 34 l-6 6" {...L} />
+      <circle cx="60" cy="12" r="3" {...F} />
+    </>
+  ),
+  oath: (
+    <>
+      <rect x="34" y="8" width="52" height="46" rx="1" {...D} />
+      <path d="M34 8 h52 v46 h-52z M42 18 h36 M42 26 h36 M42 34 h22" {...L} />
+      <circle cx="74" cy="44" r="7" fill="none" stroke="var(--rc)" strokeWidth="2.4" />
+      <path d="M71 44 h6 M74 41 v6" {...L} />
+    </>
+  ),
+  close: (
+    <>
+      <path d="M12 54 h96" {...L} />
+      <path d="M40 54 v-24 a20 20 0 0 1 40 0 v24" {...L} />
+      <path d="M60 10 v44" {...L} />
+      <circle cx="54" cy="36" r="1.5" {...F} />
+      <circle cx="66" cy="36" r="1.5" {...F} />
+      <path d="M96 10 a7 7 0 1 0 6 11 a6 6 0 1 1 -6 -11z" {...D} />
+      <path d="M96 10 a7 7 0 1 0 6 11 a6 6 0 1 1 -6 -11z" {...L} />
+    </>
+  ),
+  exam: (
+    <>
+      <rect x="22" y="14" width="36" height="42" rx="1" {...D} />
+      <path d="M22 14 h36 v42 h-36z M30 24 h20 M30 32 h20 M30 40 h12" {...L} />
+      <circle cx="84" cy="30" r="17" {...L} />
+      <path d="M84 30 v-11 M84 30 l8 5 M80 8 h8" {...L} />
+    </>
+  ),
+  breath: (
+    <>
+      <circle cx="60" cy="30" r="24" {...D} className="hq-beam" />
+      <circle cx="60" cy="30" r="24" {...L} />
+      <circle cx="60" cy="30" r="14" {...L} />
+      <circle cx="60" cy="30" r="5" {...F} />
+    </>
+  ),
+  ledger: (
+    <>
+      <path d="M22 10 h76 v44 h-76z" {...D} />
+      <path d="M22 10 h76 v44 h-76z M60 10 v44 M28 20 h24 M28 28 h24 M28 36 h16 M68 20 h24 M68 28 h24" {...L} />
+      <path d="M82 50 l18 -26 4 3 -18 26 -5 2z" {...F} opacity="0.5" />
+    </>
+  ),
+  scales: (
+    <>
+      <path d="M60 8 v44 M42 54 h36 M24 16 h72 M24 16 l-10 22 h20z M96 16 l-10 22 h20z" {...L} />
+      <path d="M14 38 a10 7 0 0 0 20 0z" {...D} />
+      <path d="M86 38 a10 7 0 0 0 20 0z" {...D} />
+    </>
+  ),
+  diary: (
+    <>
+      <path d="M60 14 c-10 -7 -26 -8 -40 -5 v42 c14 -3 30 -2 40 5 c10 -7 26 -8 40 -5 v-42 c-14 -3 -30 -2 -40 5z" {...D} />
+      <path d="M60 14 c-10 -7 -26 -8 -40 -5 v42 c14 -3 30 -2 40 5 c10 -7 26 -8 40 -5 v-42 c-14 -3 -30 -2 -40 5z M60 14 v42 M28 20 h22 M28 28 h22 M70 20 h22" {...L} />
+    </>
+  ),
+  cinema: (
+    <>
+      <circle cx="34" cy="24" r="14" {...L} />
+      <circle cx="34" cy="24" r="4" {...F} />
+      <circle cx="68" cy="24" r="10" {...L} />
+      <rect x="22" y="38" width="52" height="16" rx="2" {...D} />
+      <rect x="22" y="38" width="52" height="16" rx="2" {...L} />
+      <path d="M74 44 l26 -12 v28 l-26 -8" {...F} opacity="0.35" />
+    </>
+  ),
   lighthouse: (
     <>
       <path d="M0 54 q15 -5 30 0 t30 0 t30 0 t30 0" {...L} />

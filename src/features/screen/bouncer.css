@@ -1,0 +1,82 @@
+.bo-card {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 64px;
+  margin-top: 10px;
+  padding: 8px 14px;
+  text-align: left;
+  color: var(--fg);
+  border-radius: var(--r-3);
+  background: var(--surf);
+  box-shadow: inset 0 0 0 1px var(--rule);
+}
+.bo-card__k {
+  font-size: 22px;
+  color: var(--c);
+}
+.bo-card b {
+  display: block;
+}
+.bo-card small {
+  font-size: 12.5px;
+  color: var(--fg-3);
+}
+.bo-head h1 {
+  margin: 4px 0 0;
+  font-size: 22px;
+  font-weight: 500;
+}
+.bo-head h1 span {
+  color: var(--c);
+}
+.bo-wait {
+  display: grid;
+  justify-items: center;
+  gap: 10px;
+  padding: 18px 8px;
+  text-align: center;
+}
+.bo-ring {
+  display: grid;
+  place-items: center;
+  width: 170px;
+  height: 170px;
+  border-radius: 50%;
+  background: conic-gradient(var(--c) var(--p), color-mix(in srgb, var(--fg) 10%, transparent) 0);
+}
+.bo-ring b {
+  display: grid;
+  place-items: center;
+  width: 146px;
+  height: 146px;
+  font-size: 52px;
+  font-weight: 400;
+  border-radius: 50%;
+  background: var(--bg);
+}
+.bo-big {
+  margin: 0;
+  font-size: 20px;
+  line-height: 1.25;
+}
+.bo-steps {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding-left: 20px;
+  font-size: 14.5px;
+}
+.bo-url {
+  display: block;
+  margin-top: 8px;
+  padding: 8px 10px;
+  overflow-wrap: anywhere;
+  font-size: 13.5px;
+  border-radius: 6px;
+  background: var(--surf);
+  box-shadow: inset 0 0 0 1px var(--rule);
+  user-select: all;
+}

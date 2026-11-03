@@ -1,4 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
+import { navigate, useRoute } from '../../app/router';
+import { BoardVision } from './BoardVision';
 import { registerSheet } from '../../app/sheetRegistry';
 import { closeSheet, openSheet, type SheetSpec } from '../../app/sheets';
 import { dayOf, ltToday, prefValue, sectionEntries, setPref, useToday, withReward } from '../../data/lt';
@@ -224,6 +226,12 @@ function OnlinePanel({ username }: { username: string }) {
 }
 
 export function ChessChannel() {
+  const route = useRoute();
+  if (route.rest[0] === 'vision') return <BoardVision />;
+  return <ChessMain />;
+}
+
+function ChessMain() {
   const st = useStore(data, (s) => s);
   const username = String(prefValue(st, 'chess_username') ?? DEFAULT_USER);
   const sessions = useMemo(() => sectionEntries<ChessDetail>(st, 'chess'), [st]);
@@ -232,6 +240,9 @@ export function ChessChannel() {
       <ChannelHead id="chess" art={<ChessArt />} />
       <button type="button" className="i-btn i-btn--sig i-btn--block" onClick={() => openSheet({ type: 'chess' })}>
         <Icon name="plus" /> Log puzzles or study
+      </button>
+      <button type="button" className="i-btn i-btn--block" style={{ marginTop: 8 }} onClick={() => navigate('chess', ['vision'])}>
+        Board vision: 30-second square drill
       </button>
       <H2 aside={<button type="button" className="i-link" onClick={() => openSheet({ type: 'chess-user' })}>{username}</button>}>Chess.com</H2>
       <OnlinePanel username={username} />

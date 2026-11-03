@@ -1,4 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
+import { navigate, useRoute } from '../../app/router';
+import { TechTree } from './TechTree';
 import { registerSheet } from '../../app/sheetRegistry';
 import { closeSheet, openSheet, type SheetSpec } from '../../app/sheets';
 import { ltToday, sectionEntries, useToday, withReward } from '../../data/lt';
@@ -454,10 +456,19 @@ function AllCoding() {
 }
 
 export function CodingChannel() {
+  const route = useRoute();
+  if (route.rest[0] === 'tree') return <TechTree />;
+  return <CodingMain />;
+}
+
+function CodingMain() {
   const [tab, setTab] = useState<'road' | 'all'>(() => (location.hash === '#all' ? 'all' : 'road'));
   return (
     <div style={accent('coding')}>
       <ChannelHead id="coding" art={<CodingArt />} />
+      <button type="button" className="i-btn i-btn--block" style={{ marginBottom: 8 }} onClick={() => navigate('coding', ['tree'])}>
+        Tech tree: what to learn next
+      </button>
       <Chips label="View" value={tab} onChange={setTab} options={[{ id: 'road', label: 'Road to IOI' }, { id: 'all', label: 'All coding' }]} />
       {tab === 'road' ? <Road /> : <AllCoding />}
       <RelatedTasks section="coding" />

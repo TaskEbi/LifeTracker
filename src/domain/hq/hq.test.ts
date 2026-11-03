@@ -55,6 +55,13 @@ describe('the next move', () => {
     expect(isBedtime(input(), 16 * 60)).toBe(false);
   });
 
+  it('only counts the night as late: mornings and afternoons never are', () => {
+    // Planned bed is 22:45; the window opens half an hour before and closes at 05:00.
+    for (const hour of [5, 6, 7, 9, 11, 12, 15, 20, 22]) expect(isBedtime(input(), hour * 60), `${hour}:00`).toBe(false);
+    for (const m of [22 * 60 + 20, 23 * 60, 0, 90, 4 * 60 + 59]) expect(isBedtime(input(), m), `minute ${m}`).toBe(true);
+    expect(nextMoves(input(), ctx({ nowMin: 9 * 60 }))[0].id).not.toBe('bed');
+  });
+
   it('puts a near deadline first and says why', () => {
     const moves = nextMoves(input(), ctx({ deadlines: [{ section: 'coding', title: 'JOI second round', date: addDays(T, 3) }] }));
     expect(moves[0].id).toBe('coding');

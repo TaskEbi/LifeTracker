@@ -82,7 +82,7 @@ function ViolinLogSheet({ spec }: { spec: SheetSpec }) {
   const st = data.get();
   const editing = editId ? sectionEntries<ViolinDetail>(st, 'violin').find((s) => s.entry.id === editId) : undefined;
 
-  const [step, setStep] = useState(editing ? 3 : 1);
+  const [step, setStep] = useState(editing || spec.conducted ? 3 : 1);
   const [d, setD] = useState<Draft>(() => {
     if (editing) {
       const det = isViolinDetail(editing.detail) ? editing.detail : null;
@@ -97,7 +97,9 @@ function ViolinLogSheet({ spec }: { spec: SheetSpec }) {
         note: editing.entry.note ?? '',
       };
     }
-    return { type: null, date: today, minutes: preset ?? 30, pieces: [], scales: [], splitOn: false, split: {}, note: '' };
+    // A planned programme arrives with what was on it; the focus timer only with minutes.
+    const split = (spec.split as Record<string, number> | undefined) ?? {};
+    return { type: spec.conducted ? 'solo' : null, date: today, minutes: preset ?? 30, pieces: (spec.pieces as string[] | undefined) ?? [], scales: (spec.scales as string[] | undefined) ?? [], splitOn: Object.keys(split).length > 0, split, note: '' };
   });
   const [useTimer, setUseTimer] = useState(() => !editing && (timer.get().startedAt != null || timer.get().banked > 0));
   const [error, setError] = useState<string | null>(null);

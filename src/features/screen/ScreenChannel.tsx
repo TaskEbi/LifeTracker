@@ -1,4 +1,6 @@
 import { useMemo, useState } from 'react';
+import { useRoute } from '../../app/router';
+import { BouncerCard, BouncerPage } from './Bouncer';
 import { registerSheet } from '../../app/sheetRegistry';
 import { closeSheet, openSheet, type SheetSpec } from '../../app/sheets';
 import { ltToday, progressInput, setTargets, useTargets, useToday } from '../../data/lt';
@@ -131,6 +133,12 @@ function ExchangeRate({ minutes, days }: { minutes: number; days: number }) {
 }
 
 export function ScreenChannel() {
+  const route = useRoute();
+  if (route.rest[0] === 'bouncer') return <BouncerPage />;
+  return <ScreenMain />;
+}
+
+function ScreenMain() {
   const today = useToday();
   const days = useScreenDays();
   const targets = useTargets();
@@ -167,6 +175,7 @@ export function ScreenChannel() {
         <Meter value={tw != null ? formatMinutes(tw) : '—'} label="Daily average · this week" />
         <Meter value={tw != null && lw != null ? <span style={{ color: tw <= lw ? 'var(--ok)' : 'var(--warn)' }}>{tw <= lw ? '−' : '+'}{Math.abs(tw - lw)}m</span> : '—'} label={`vs last week${lw != null ? ` (${formatMinutes(lw)})` : ''}`} />
       </div>
+      <BouncerCard />
       <ExchangeRate minutes={thisWeek.reduce((n, d) => n + (days.get(d) ?? 0), 0)} days={thisWeek.filter((d) => days.has(d)).length} />
       <H2 aside="hours a day">Last 14 days</H2>
       <div className="i-pnl">

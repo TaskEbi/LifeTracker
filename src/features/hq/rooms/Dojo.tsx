@@ -6,7 +6,8 @@ import { prefValue, useToday } from '../../../data/lt';
 import { deleteRecord } from '../../../data/records';
 import { data } from '../../../data/store';
 import { toast } from '../../../data/ui';
-import { blankWords, CAUSES, clozeOf, deckStats, GRADES, hasBlank, intervalLabel, leaks, reviewQueue, tappableWords, type Card, type Cause, type Grade } from '../../../domain/hq/srs';
+import { newCards, STARTER_DECKS } from '../../../domain/hq/decks';
+import { blankWords, CAUSES, clozeOf, deckStats, GRADES, hasBlank, intervalLabel, leaks, NEW_PER_DAY, reviewQueue, tappableWords, type Card, type Cause, type Grade } from '../../../domain/hq/srs';
 import { addDays } from '../../../domain/log/dates';
 import { useStore } from '../../../lib/createStore';
 import { H2, Meter, Picks } from '../../../ui/i/bits';
@@ -306,6 +307,39 @@ export function DojoRoom() {
           Cut a highlight
         </button>
       </div>
+
+      <H2 aside="ready-made">Deck library</H2>
+      <div className="i-pnl i-pnl--flush">
+        {STARTER_DECKS.map((d) => {
+          const fresh = newCards(d, hq.cards);
+          return (
+            <div key={d.id} className="i-row">
+              <span className="i-row__t">
+                <b>{d.name}</b>
+                <small>
+                  {d.blurb} · {d.cards.length} cards
+                </small>
+              </span>
+              {fresh.length ? (
+                <button
+                  type="button"
+                  className="i-btn i-btn--sm"
+                  onClick={() => {
+                    for (const [front, back] of fresh) saveCard({ deck: d.deck, front, back }, today);
+                    toast(`${fresh.length} cards added to ${d.deck}`);
+                  }}
+                  aria-label={`Add ${d.name}: ${fresh.length} cards`}
+                >
+                  Add {fresh.length}
+                </button>
+              ) : (
+                <span className="i-tag i-tag--ok">Added</span>
+              )}
+            </div>
+          );
+        })}
+      </div>
+      <p className="i-note">Standard formulae and facts. Check your own board’s booklet for what you’re given and what you must learn. New cards are introduced {NEW_PER_DAY} a day, so adding a deck never buries you.</p>
 
       {decks.length > 0 && (
         <>

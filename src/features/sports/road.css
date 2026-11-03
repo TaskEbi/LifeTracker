@@ -1,0 +1,209 @@
+/* The Tōkaidō and the race kit. Woodblock colours on the sports section's paper. */
+.tk-card {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 72px;
+  margin-top: 10px;
+  padding: 10px 12px;
+  text-align: left;
+  color: #f4e9d2;
+  border-radius: 6px;
+  background: linear-gradient(110deg, #1e4e7c, #2c4a3b);
+}
+.tk-card__k {
+  writing-mode: vertical-rl;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: #ffd9a0;
+}
+.tk-card__t b {
+  display: block;
+  font-size: 17px;
+}
+.tk-card__t small {
+  display: block;
+  font-size: 12.5px;
+  color: #d6dfe0;
+}
+.tk-card__bar {
+  display: block;
+  height: 5px;
+  margin-top: 6px;
+  background: rgb(255 255 255 / 0.2);
+}
+.tk-card__bar i {
+  display: block;
+  height: 100%;
+  background: #ffb24d;
+}
+.tk-print {
+  overflow: hidden;
+  margin-top: 8px;
+  border-radius: 6px;
+  box-shadow: 0 0 0 3px #f4e9d2, 0 0 0 4px #3a2d1a;
+}
+.tk-print svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+.tk-print__t {
+  padding: 8px 12px;
+  font-size: 15px;
+  color: #241c10;
+  background: #f4e9d2;
+}
+.tk-print__t b {
+  font-size: 20px;
+}
+.tk-print__t small {
+  display: block;
+  font-size: 12.5px;
+  color: #5d5038;
+}
+.tk-road {
+  position: relative;
+  display: grid;
+  gap: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.tk-road li {
+  position: relative;
+  display: grid;
+  grid-template-columns: 22px 62px minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 8px;
+  padding: 8px 0;
+  color: var(--fg-3);
+}
+.tk-road li::before {
+  content: '';
+  position: absolute;
+  left: 10px;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: var(--rule);
+}
+.tk-road li.is-passed::before {
+  background: #d3372b;
+}
+.tk-road li.is-passed {
+  color: var(--fg);
+}
+.tk-road__dot {
+  position: relative;
+  z-index: 1;
+  width: 12px;
+  height: 12px;
+  margin: 3px 0 0 5px;
+  border-radius: 50%;
+  background: var(--surf);
+  box-shadow: inset 0 0 0 2px var(--rule);
+}
+.is-passed .tk-road__dot {
+  background: #d3372b;
+  box-shadow: none;
+}
+.is-here .tk-road__dot {
+  width: 18px;
+  height: 18px;
+  margin: 0 0 0 2px;
+  box-shadow: 0 0 0 3px #fff, 0 0 12px #d3372b;
+}
+.tk-road__ja {
+  font-size: 14px;
+  white-space: nowrap;
+}
+.tk-road__t b {
+  display: inline;
+  margin-right: 6px;
+  font-weight: 600;
+}
+.tk-road__t small {
+  display: block;
+  margin-top: 2px;
+  font-size: 12.5px;
+  line-height: 1.3;
+  color: var(--fg-2);
+}
+.tk-road__km {
+  font-size: 12px;
+}
+
+/* race kit */
+.rk-band {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 15px;
+}
+.rk-band th,
+.rk-band td {
+  padding: 7px 8px;
+  text-align: right;
+  border-bottom: 1px solid var(--rule);
+}
+.rk-band th:first-child,
+.rk-band td:first-child {
+  text-align: left;
+}
+.rk-band thead th {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--fg-3);
+}
+.rk-band td:nth-child(2) {
+  font-family: var(--f-mono);
+  font-weight: 700;
+}
+.rk-band .is-half td {
+  font-weight: 700;
+  background: color-mix(in srgb, var(--c) 14%, transparent);
+}
+.rk-step {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 56px;
+  padding: 6px 10px 6px 4px;
+  text-align: left;
+  color: var(--fg);
+  border-bottom: 1px solid var(--rule);
+}
+.rk-step:last-child {
+  border-bottom: 0;
+}
+.rk-step__box {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  margin-left: 6px;
+  font-size: 16px;
+  color: var(--bg);
+  box-shadow: inset 0 0 0 2px var(--c);
+}
+.rk-step.is-done .rk-step__box {
+  background: var(--c);
+}
+.rk-step b {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--fg-3);
+}
+.rk-step span:last-child {
+  font-size: 14.5px;
+  line-height: 1.3;
+}
+.rk-step.is-done span:last-child {
+  color: var(--fg-3);
+}

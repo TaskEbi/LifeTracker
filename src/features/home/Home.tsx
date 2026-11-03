@@ -25,7 +25,7 @@ import { Recap } from '../progress/LookBack';
 import { useFxPrefs } from '../../ui/i/fx/celebrate';
 import { QuestCard } from '../progress/QuestsPanel';
 import { PlanToday } from '../plans/PlanToday';
-import { BeaconCard, BigThreeCard, CheckInCard, NextMoveCard, RitualsCard, ShadowCard } from '../hq/HomeCards';
+import { BeaconCard, BigThreeCard, BookendCard, CheckInCard, NextMoveCard, RitualsCard, ShadowCard } from '../hq/HomeCards';
 import { useHq } from '../hq/store';
 import { reviewQueue } from '../../domain/hq/srs';
 import './home.css';
@@ -239,6 +239,8 @@ export function Home() {
               ▶
             </span>
           </button>
+
+          <BookendCard />
 
           <BeaconCard />
 

@@ -17,6 +17,7 @@ import { isGymDetail, legsHeavy, progression, setsDone, setsTotal, STARTER_TEMPL
 import './sheets';
 import './gym.css';
 import { GymArt } from './Art';
+import { BarTools } from './BarTools';
 import { GymPlanPanel } from '../plans/GymPlanPanel';
 import { planTemplateForToday, planWorkoutOf } from '../plans/plans';
 import { DAY_NAMES } from '../../domain/plans/marathon';
@@ -307,6 +308,8 @@ export function GymChannel() {
           <p className="i-note" style={{ padding: '12px 0' }}>Finished sessions appear here.</p>
         )}
       </div>
+
+      <BarTools sessions={sessions} />
 
       <H2>Weekly target</H2>
       <div className="i-pnl i-pnl--flush">
