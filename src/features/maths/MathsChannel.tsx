@@ -150,7 +150,7 @@ function Next({ s, after, today }: { s: Sitting; after: Sitting | null; today: s
       <button type="button" className="ma-next__head" onClick={() => openSitting(s)}>
         <span className="ma-next__k">Next contest</span>
         <b>{s.label}</b>
-        <span className="ma-next__when">{n == null ? 'Date not set · tap to add it' : `${whenWord(n)} · ${shortDay(s.date!)}${s.note.length <= 30 && s.note ? ` · ${s.note.toLowerCase()}` : ''}`}</span>
+        <span className="ma-next__when">{n == null ? 'Date not set · tap to add it' : `${whenWord(n)} · ${shortDay(s.date!)}${s.note && s.note.length <= 30 ? ` · ${s.note.toLowerCase()}` : ''}`}</span>
       </button>
       {info.format && <p className="ma-next__fmt">{info.format}</p>}
       {gap != null && gap <= 21 && <p className="i-note">{after!.label} follows {gap === 0 ? 'the same day' : gap === 1 ? 'the next day' : `${gap} days later`}.</p>}

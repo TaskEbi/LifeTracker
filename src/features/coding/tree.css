@@ -1,0 +1,38 @@
+/* The tech tree. Uses whichever tokens the coding section has set. */
+.tt-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 6px;
+  margin-top: 8px;
+}
+.tt-node {
+  display: grid;
+  gap: 4px;
+  min-height: 56px;
+  padding: 6px 8px;
+  text-align: left;
+  font-size: 14px;
+  line-height: 1.15;
+  color: var(--fg);
+  background: var(--surf);
+  box-shadow: inset 0 0 0 1px var(--rule);
+}
+.tt-node__pips {
+  display: flex;
+  gap: 3px;
+}
+.tt-node__pips i {
+  width: 18px;
+  height: 5px;
+  background: var(--surf-3);
+}
+.tt-node__pips i.is-on {
+  background: var(--c);
+}
+.tt-node.is-l3 {
+  box-shadow: inset 0 0 0 2px var(--c);
+}
+.tt-node.is-locked {
+  color: var(--fg-3);
+  opacity: 0.62;
+}

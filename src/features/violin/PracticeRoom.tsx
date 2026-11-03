@@ -7,7 +7,11 @@ import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
 import { registerSheet } from '../../app/sheetRegistry';
 import { closeSheet, openSheet, type SheetSpec } from '../../app/sheets';
 import { navigate } from '../../app/router';
-import { prefValue, sectionRecords, setPref, useToday } from '../../data/lt';
+import { prefValue, sectionEntries, sectionRecords, setPref, useToday } from '../../data/lt';
+import { occurrences } from '../../domain/calendar/occurrences';
+import { INTERVALS, pickInterval, programme, splitOf, weakest, type EarStats, type IntervalId, type Segment, type StandItem } from '../../domain/hq/music';
+import { addDays, dayCount } from '../../domain/log/dates';
+import { itemStats, pieceOf, type ViolinDetail } from './model';
 import { deleteRecord, saveRecord } from '../../data/records';
 import { data } from '../../data/store';
 import { detectPitch, freqOfMidi, ladderStatus, logTempo, midiName, nearestNote, tapTempo, VIOLIN_STRINGS, type Ladder, type Tuned } from '../../domain/hq/pitch';
@@ -25,6 +29,234 @@ function audio(): AudioContext {
   if (!shared) shared = new (window.AudioContext ?? (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
   void shared.resume();
   return shared;
+}
+
+function beep(freq = 880, at = 0) {
+  try {
+    const c = audio();
+    const o = c.createOscillator();
+    const g = c.createGain();
+    o.frequency.value = freq;
+    g.gain.setValueAtTime(0.0001, c.currentTime + at);
+    g.gain.exponentialRampToValueAtTime(0.3, c.currentTime + at + 0.02);
+    g.gain.exponentialRampToValueAtTime(0.0001, c.currentTime + at + 0.5);
+    o.connect(g).connect(c.destination);
+    o.start(c.currentTime + at);
+    o.stop(c.currentTime + at + 0.55);
+  } catch {
+    /* no sound here: the screen still changes */
+  }
+}
+
+// ─── the conductor ──────────────────────────────────────────────────────────
+
+const clock = (sec: number) => `${Math.floor(sec / 60)}:${String(sec % 60).padStart(2, '0')}`;
+
+/** A session planned for the time you have, run segment by segment, then logged with the split filled in. */
+function Conductor() {
+  const today = useToday();
+  const st = useStore(data, (s) => s);
+  const [minutes, setMinutes] = useState('30');
+  const items = useMemo<StandItem[]>(() => {
+    const sessions = sectionEntries<ViolinDetail>(st, 'violin');
+    const shows = occurrences(st.lt_events.values(), today, addDays(today, 120)).filter((o) => o.event.kind === 'performance' && !o.cancelled);
+    return [...sectionRecords(st, 'violin', 'piece'), ...sectionRecords(st, 'violin', 'scale')]
+      .map(pieceOf)
+      .filter((p) => !p.archived)
+      .map((p) => {
+        const last = itemStats(sessions, p.id).last;
+        const show = shows.find((o) => Array.isArray(o.event.data.pieces) && (o.event.data.pieces as string[]).includes(p.id));
+        return { id: p.id, kind: p.kind, title: p.kind === 'piece' && p.composer ? `${p.composer} ${p.title}` : p.title, status: p.status, idle: last ? dayCount(last, today) - 1 : null, performIn: show ? dayCount(today, show.date) - 1 : null };
+      });
+  }, [st, today]);
+  const segments = useMemo(() => programme(items, Number(minutes)), [items, minutes]);
+  const [run, setRun] = useState<{ segments: Segment[]; i: number; endsAt: number; startedAt: number } | null>(null);
+  const [, tick] = useState(0);
+  useEffect(() => {
+    if (!run) return;
+    const t = setInterval(() => {
+      tick((n) => n + 1);
+      setRun((r) => {
+        if (!r || Date.now() < r.endsAt) return r;
+        beep(880);
+        beep(1175, 0.18);
+        if (r.i + 1 >= r.segments.length) return { ...r, i: r.segments.length, endsAt: Infinity };
+        return { ...r, i: r.i + 1, endsAt: Date.now() + r.segments[r.i + 1].minutes * 60_000 };
+      });
+    }, 500);
+    return () => clearInterval(t);
+  }, [!!run]);
+  const finish = (r: NonNullable<typeof run>) => {
+    const done = r.segments.slice(0, Math.max(1, Math.min(r.i + 1, r.segments.length)));
+    const pieces = [...new Set(done.map((s) => s.itemId).filter((id): id is string => !!id && items.find((x) => x.id === id)?.kind === 'piece'))];
+    const scales = [...new Set(done.map((s) => s.itemId).filter((id): id is string => !!id && items.find((x) => x.id === id)?.kind === 'scale'))];
+    setRun(null);
+    openSheet({ type: 'violin', minutes: Math.max(1, Math.round((Date.now() - r.startedAt) / 60000)), conducted: true, pieces, scales, split: splitOf(done) });
+  };
+  if (run) {
+    const seg = run.segments[run.i];
+    if (!seg) {
+      return (
+        <div className="i-stack">
+          <p className="pr-conduct__done">That’s the session.</p>
+          <button type="button" className="i-btn i-btn--sig i-btn--block" onClick={() => finish(run)}>
+            Log it
+          </button>
+        </div>
+      );
+    }
+    const left = Math.max(0, Math.ceil((run.endsAt - Date.now()) / 1000));
+    return (
+      <section className="pr-conduct" aria-label="Session in progress">
+        <span className="i-lab">
+          {run.i + 1} of {run.segments.length}
+        </span>
+        <b className="pr-conduct__t">{seg.title}</b>
+        <span className="pr-conduct__c i-mono" role="timer" aria-label={`${Math.ceil(left / 60)} minutes left`}>
+          {clock(left)}
+        </span>
+        <p>{seg.what}</p>
+        {run.segments[run.i + 1] && <small>Next: {run.segments[run.i + 1].title}</small>}
+        <div className="pr-metro__acts">
+          <button
+            type="button"
+            className="i-btn"
+            onClick={() =>
+              setRun((r) => {
+                if (!r) return r;
+                if (r.i + 1 >= r.segments.length) return { ...r, i: r.segments.length, endsAt: Infinity };
+                return { ...r, i: r.i + 1, endsAt: Date.now() + r.segments[r.i + 1].minutes * 60_000 };
+              })
+            }
+          >
+            Next
+          </button>
+          <button type="button" className="i-btn i-btn--block" onClick={() => finish(run)}>
+            Stop and log
+          </button>
+        </div>
+      </section>
+    );
+  }
+  return (
+    <div className="i-stack">
+      <Chips label="How long" value={minutes} onChange={setMinutes} options={['15', '30', '45', '60', '90'].map((m) => ({ id: m, label: `${m} min` }))} />
+      <ol className="pr-prog" aria-label="Today’s programme">
+        {segments.map((s) => (
+          <li key={s.id}>
+            <b className="i-mono">{s.minutes}′</b>
+            <span>
+              <strong>{s.title}</strong>
+              <small>{s.what}</small>
+            </span>
+          </li>
+        ))}
+      </ol>
+      <button type="button" className="i-btn i-btn--sig i-btn--block" onClick={() => setRun({ segments, i: 0, startedAt: Date.now(), endsAt: Date.now() + segments[0].minutes * 60_000 })}>
+        Begin the session
+      </button>
+      <p className="i-note">Pieces with a performance coming go first, then whatever you’ve left longest. Add pieces to a performance in the calendar and it knows.</p>
+    </div>
+  );
+}
+
+// ─── the ear trainer ────────────────────────────────────────────────────────
+
+function EarTrainer({ a4 }: { a4: number }) {
+  const st = useStore(data, (s) => s);
+  const stats = useMemo(() => ((prefValue(st, 'ear_stats') ?? {}) as EarStats), [st]);
+  const [mode, setMode] = useState<'up' | 'down' | 'together'>('up');
+  const [q, setQ] = useState<{ iv: (typeof INTERVALS)[number]; root: number } | null>(null);
+  const [got, setGot] = useState<{ id: string; right: boolean } | null>(null);
+  const [streak, setStreak] = useState(0);
+  const play = (iv: (typeof INTERVALS)[number], root: number) => {
+    try {
+      const c = audio();
+      const note = (midi: number, at: number, len = 0.8) => {
+        const o = c.createOscillator();
+        const g = c.createGain();
+        o.type = 'triangle';
+        o.frequency.value = freqOfMidi(midi, a4);
+        g.gain.setValueAtTime(0.0001, c.currentTime + at);
+        g.gain.exponentialRampToValueAtTime(0.28, c.currentTime + at + 0.03);
+        g.gain.exponentialRampToValueAtTime(0.0001, c.currentTime + at + len);
+        o.connect(g).connect(c.destination);
+        o.start(c.currentTime + at);
+        o.stop(c.currentTime + at + len + 0.05);
+      };
+      const top = root + iv.semitones;
+      if (mode === 'together') {
+        note(root, 0, 1.3);
+        note(top, 0, 1.3);
+      } else {
+        note(mode === 'up' ? root : top, 0);
+        note(mode === 'up' ? top : root, 0.7);
+      }
+    } catch {
+      /* no sound here */
+    }
+  };
+  const next = () => {
+    const iv = pickInterval(stats, Math.random());
+    const root = 55 + Math.floor(Math.random() * 13);
+    setQ({ iv, root });
+    setGot(null);
+    play(iv, root);
+  };
+  const answer = (id: IntervalId) => {
+    if (!q || got) return;
+    const right = id === q.iv.id;
+    const cur = stats[q.iv.id] ?? { asked: 0, right: 0 };
+    setPref('ear_stats', { ...stats, [q.iv.id]: { asked: cur.asked + 1, right: cur.right + (right ? 1 : 0) } });
+    setStreak(right ? streak + 1 : 0);
+    setGot({ id, right });
+  };
+  const asked = Object.values(stats).reduce((n, s) => n + (s?.asked ?? 0), 0);
+  const correct = Object.values(stats).reduce((n, s) => n + (s?.right ?? 0), 0);
+  const weak = weakest(stats);
+  return (
+    <div className="i-stack">
+      <Chips
+        label="How it plays"
+        value={mode}
+        onChange={setMode}
+        options={[
+          { id: 'up' as const, label: 'Rising' },
+          { id: 'down' as const, label: 'Falling' },
+          { id: 'together' as const, label: 'Together' },
+        ]}
+      />
+      <div className="pr-metro__acts">
+        <button type="button" className="i-btn i-btn--sig i-btn--block" onClick={next}>
+          {q ? 'Next interval' : 'Play an interval'}
+        </button>
+        {q && (
+          <button type="button" className="i-btn" onClick={() => play(q.iv, q.root)}>
+            Again
+          </button>
+        )}
+      </div>
+      <div className="pr-ivs" role="group" aria-label="Which interval was it">
+        {INTERVALS.map((i) => {
+          const isAnswer = got && q?.iv.id === i.id;
+          const isWrong = got && !got.right && got.id === i.id;
+          return (
+            <button key={i.id} type="button" className={`pr-iv${isAnswer ? ' is-right' : ''}${isWrong ? ' is-wrong' : ''}`} disabled={!q || !!got} onClick={() => answer(i.id)}>
+              {i.name}
+            </button>
+          );
+        })}
+      </div>
+      <p className="i-note" role="status">
+        {got ? (got.right ? `Yes: ${q!.iv.name}.${streak > 1 ? ` ${streak} in a row.` : ''}` : `It was a ${q!.iv.name.toLowerCase()}.`) : q ? 'What was that?' : 'The ones you get wrong come up more often.'}
+      </p>
+      {asked > 0 && (
+        <p className="i-note">
+          {Math.round((correct / asked) * 100)}% of {asked} right.{weak ? ` Weakest: ${weak.name.toLowerCase()}.` : ''}
+        </p>
+      )}
+    </div>
+  );
 }
 
 // ─── metronome ──────────────────────────────────────────────────────────────
@@ -475,7 +707,7 @@ export function PracticeRoom() {
   };
   const a4 = typeof prefValue(st, 'violin_a4') === 'number' ? (prefValue(st, 'violin_a4') as number) : 442;
   const ladders = useMemo(() => sectionRecords(st, 'violin', 'tempo_ladder').map(ladderOf), [st]);
-  const [tab, setTab] = useState<'metronome' | 'tuner' | 'drone' | 'mirror'>('metronome');
+  const [tab, setTab] = useState<'programme' | 'metronome' | 'tuner' | 'drone' | 'ear' | 'mirror'>('metronome');
   return (
     <div style={accent('violin')}>
       <ChannelHead id="violin" sub="practice room" art={<ViolinArt />} />
@@ -487,13 +719,17 @@ export function PracticeRoom() {
         value={tab}
         onChange={setTab}
         options={[
+          { id: 'programme' as const, label: 'Plan a session' },
           { id: 'metronome' as const, label: 'Metronome' },
           { id: 'tuner' as const, label: 'Tuner' },
           { id: 'drone' as const, label: 'Drone' },
+          { id: 'ear' as const, label: 'Ear trainer' },
           { id: 'mirror' as const, label: 'Mirror' },
         ]}
       />
       <div className="i-pnl pr-panel">
+        {tab === 'programme' && <Conductor />}
+        {tab === 'ear' && <EarTrainer a4={a4} />}
         {tab === 'metronome' && <Metronome bpm={bpm} setBpm={saveBpm} />}
         {tab === 'tuner' && <Tuner a4={a4} setA4={(n) => setPref('violin_a4', n)} />}
         {tab === 'drone' && <Drone a4={a4} />}

@@ -52,10 +52,11 @@ const fmt = (m: number) => (m >= 60 ? `${Math.floor(m / 60)}h${m % 60 ? ` ${m % 
 
 /** Late: within 30 minutes of the planned bedtime, or in the small hours. */
 export function isBedtime(input: ProgressInput, nowMin: number): boolean {
-  if (nowMin < 300) return true;
   const bed = toMin(scheduleFor(addDays(input.today, 1), input.sleep).bed);
+  // Counted from noon, so the night runs in one piece across midnight, ending at 05:00.
   const fromNoon = (m: number) => (m + 720) % 1440;
-  return fromNoon(nowMin) >= fromNoon(bed) - 30;
+  const now = fromNoon(nowMin);
+  return now >= fromNoon(bed) - 30 && now < fromNoon(300);
 }
 
 export function nextMoves(input: ProgressInput, ctx: MoveContext, limit = 3): Move[] {

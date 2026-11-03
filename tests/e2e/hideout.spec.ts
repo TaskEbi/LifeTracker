@@ -13,15 +13,25 @@ test('hideout: every room opens from the base and shows its lamp state', async (
   for (const [room, heading] of [
     ['Lighthouse', 'Lighthouse'],
     ['War room', 'War room'],
+    ['Forge', 'Forge'],
+    ['Arena', 'Arena'],
+    ['Oath', 'Oath'],
+    ['Close the day', 'Close the day'],
     ['Dojo', 'Dojo'],
-    ['Lab', 'Lab'],
-    ['Observatory', 'Observatory'],
+    ['Exam hall', 'Exam hall'],
     ['Infirmary', 'Infirmary'],
     ['Armoury', 'Armoury'],
+    ['Breathing room', 'Breathing room'],
+    ['Lab', 'Lab'],
+    ['Observatory', 'Observatory'],
+    ['Ledger', 'Ledger'],
+    ['Scales', 'Scales'],
     ['Oracle', 'Oracle'],
-    ['Vault', 'Vault'],
     ['Rituals', 'Rituals'],
+    ['Five-year diary', 'Five-year diary'],
+    ['Vault', 'Vault'],
     ['Hall of records', 'Hall of records'],
+    ['Projection room', 'Projection room'],
   ]) {
     await page.getByRole('button', { name: new RegExp(`^${room}:`) }).click();
     await expect(page.getByRole('heading', { name: heading, level: 1 })).toBeVisible();

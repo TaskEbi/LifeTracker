@@ -343,6 +343,9 @@ function NextStep({ feeling }: { feeling: FeelingId | null }) {
           <button type="button" className="i-btn i-btn--sig i-btn--block" onClick={() => openSheet({ type: 'hq-prediction', claim: 'What I’m afraid of: ' })}>
             Put a number on it
           </button>
+          <button type="button" className="i-btn i-btn--block" onClick={() => go('base', ['breath'])}>
+            Breathe for a minute first
+          </button>
         </>
       )}
       {feeling === 'doubt' && (

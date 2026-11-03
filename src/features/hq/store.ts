@@ -5,6 +5,10 @@
  */
 import { prefValue, progressInput, progressOf, sectionRecords, setPref } from '../../data/lt';
 import { noteOf, ownQuoteOf, type Note } from '../../domain/hq/beacon';
+import { closeDayOf, diaryOf, type CloseDay, type DiaryEntry } from '../../domain/hq/diary';
+import type { UrgeDay } from '../../domain/hq/drills';
+import { oathOf, type Oath } from '../../domain/hq/oath';
+import { decisionOf, type Decision } from '../../domain/hq/scales';
 import type { FeelingId, Quote } from '../../domain/hq/quotes';
 import { pairId } from '../../data/logActions';
 import { saveRecord } from '../../data/records';
@@ -53,6 +57,27 @@ export interface HqState {
   experiments: Experiment[];
   notes: Note[];
   ownQuotes: Quote[];
+  oaths: Oath[];
+  decisions: Decision[];
+  diary: DiaryEntry[];
+  closes: CloseDay[];
+  urges: UrgeDay[];
+  mocks: MockResult[];
+}
+
+/** A finished mock paper. */
+export interface MockResult {
+  id: string;
+  name: string;
+  date: string;
+  minutes: number;
+  count: number;
+  unit: string;
+  done: number;
+  score: number | null;
+  outOf: number | null;
+  slowest: number | null;
+  slowestSec: number | null;
 }
 
 let lastMap: DataState['lt_records'] | null = null;
@@ -78,6 +103,12 @@ export function hqOf(st: DataState): HqState {
     }),
     notes: parsed(st, 'hq_note', noteOf).sort((a, b) => b.writtenOn.localeCompare(a.writtenOn)),
     ownQuotes: parsed(st, 'hq_quote', ownQuoteOf),
+    oaths: parsed(st, 'hq_oath', oathOf).sort((a, b) => b.from.localeCompare(a.from)),
+    decisions: parsed(st, 'hq_scale', decisionOf),
+    diary: parsed(st, 'hq_diary', diaryOf).sort((a, b) => b.date.localeCompare(a.date)),
+    closes: parsed(st, 'hq_close', closeDayOf),
+    urges: rows(st, 'hq_urge_day').map((r) => ({ date: String(r.data.date), held: Number(r.data.held) || 0, gave: Number(r.data.gave) || 0 })),
+    mocks: rows(st, 'hq_mock').map((r) => ({ id: r.id, ...(r.data as Omit<MockResult, 'id'>) })).sort((a, b) => b.date.localeCompare(a.date)),
   };
   return last;
 }
@@ -245,6 +276,26 @@ export function toggleSavedQuote(id: string) {
   const list = savedQuoteIds(data.get());
   setPref(SAVED_KEY, list.includes(id) ? list.filter((x) => x !== id) : [...list, id]);
 }
+
+// ─── oath, scales, diary, closing the day, urges ────────────────────────────
+
+export const saveOath = (o: Omit<Oath, 'id' | 'paidOn'>) => saveRecord(HQ_SECTION, 'hq_oath', { ...o, stake: o.stake.trim().slice(0, 200), paidOn: null });
+export const payOath = (id: string, today: string | null) => merge(id, { paidOn: today });
+
+export function saveDecision(d: Omit<Decision, 'id'>, id?: string) {
+  return saveRecord(HQ_SECTION, 'hq_scale', { title: d.title.trim().slice(0, 100), options: d.options, criteria: d.criteria, scores: d.scores, chose: d.chose }, id);
+}
+
+export const saveDiary = (date: string, text: string) => saveDay('hq_diary', date, { date, text: text.trim().slice(0, 1000) });
+
+export const saveClose = (date: string, first: string, at: string | null) => saveDay('hq_close', date, { date, first: first.trim().slice(0, 200), at });
+
+export function countUrge(date: string, held: boolean) {
+  const day = hqOf(data.get()).urges.find((u) => u.date === date);
+  saveDay('hq_urge_day', date, { date, held: (day?.held ?? 0) + (held ? 1 : 0), gave: (day?.gave ?? 0) + (held ? 0 : 1) });
+}
+
+export const saveMock = (m: Omit<MockResult, 'id'>) => saveRecord(HQ_SECTION, 'hq_mock', { ...m });
 
 // ─── war room ───────────────────────────────────────────────────────────────
 

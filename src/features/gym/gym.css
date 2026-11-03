@@ -1,3 +1,14 @@
+.bt-bar {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+.bt-load {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+  text-align: center;
+}
 .g-title {
   font-family: var(--f-label);
   font-weight: var(--w-label);

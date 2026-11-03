@@ -18,6 +18,9 @@ import { bests, isSportDetail, paceOf, SPORTS, sportInfo, type SportDetail, type
 import { SportsArt } from './Art';
 import { MarathonPanel } from '../plans/MarathonPanel';
 import { RunWindowPanel } from './RunWindow';
+import { RaceKit } from './RaceKit';
+import { RoadCard, TokaidoPage } from './Tokaido';
+import { navigate, useRoute } from '../../app/router';
 import './theme.css';
 
 const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
@@ -113,6 +116,13 @@ function SportSheet({ spec }: { spec: SheetSpec }) {
 registerSheet('sports', SportSheet);
 
 export function SportsChannel() {
+  const route = useRoute();
+  if (route.rest[0] === 'road') return <TokaidoPage />;
+  if (route.rest[0] === 'race') return <RaceKit />;
+  return <SportsMain />;
+}
+
+function SportsMain() {
   const today = useToday();
   const targets = useTargets();
   const st = useStore(data, (s) => s);
@@ -134,6 +144,10 @@ export function SportsChannel() {
     <div style={accent('sports')}>
       <ChannelHead id="sports" art={<SportsArt />} />
       <MarathonPanel />
+      <RoadCard />
+      <button type="button" className="i-btn i-btn--block" style={{ marginTop: 8 }} onClick={() => navigate('sports', ['race'])}>
+        Race kit: pace band, fuel, race week
+      </button>
       <RunWindowPanel minutes={45} />
       <H2>Training log</H2>
       <Chips label="Sport" value={sport} onChange={setSport} options={[{ id: 'all' as const, label: 'All' }, ...SPORTS.map((s) => ({ id: s.id, label: s.name }))]} />
