@@ -11,6 +11,7 @@ test('hideout: every room opens from the base and shows its lamp state', async (
   await page.goto('/base');
   await expect(page.getByRole('heading', { name: 'Hideout', level: 1 })).toBeVisible();
   for (const [room, heading] of [
+    ['Lighthouse', 'Lighthouse'],
     ['War room', 'War room'],
     ['Dojo', 'Dojo'],
     ['Lab', 'Lab'],
@@ -26,6 +27,71 @@ test('hideout: every room opens from the base and shows its lamp state', async (
     await expect(page.getByRole('heading', { name: heading, level: 1 })).toBeVisible();
     await page.locator('.hq-rh .i-home').click();
   }
+});
+
+test('lighthouse: a message left on a good day comes back on a bad one, then words, then one small thing', async ({ page }) => {
+  await page.goto('/base/lighthouse');
+  await page.getByRole('button', { name: '+ Write a message to yourself' }).click();
+  const sheet = dialog(page, 'A message to yourself');
+  await sheet.getByLabel('Your message').fill('You always feel better ten minutes in. Start.');
+  await sheet.getByRole('group', { name: 'Read this when' }).getByRole('button', { name: 'No motivation' }).click();
+  await sheet.getByRole('button', { name: 'Keep it for that day' }).click();
+  await expect(page.getByText('You always feel better ten minutes in.')).toBeVisible();
+
+  // One tap from Home on the day it's needed.
+  await page.goto('/');
+  await page.getByRole('region', { name: 'Lighthouse' }).getByRole('button', { name: /Struggling/ }).click();
+  await expect(page.getByRole('heading', { name: 'What’s going on?', level: 1 })).toBeVisible();
+  await page.getByRole('button', { name: 'I can’t be bothered' }).click();
+  await expect(page.locator('.lh-letter')).toContainText('You always feel better ten minutes in.');
+  await expect(page.locator('.lh-letter')).toContainText('You, today');
+  await page.getByRole('button', { name: 'Keep going' }).click();
+  await expect(page.getByRole('heading', { name: 'From someone who’s been there', level: 1 })).toBeVisible();
+  const first = await page.locator('.lh-q blockquote').innerText();
+  await page.getByRole('button', { name: 'Another' }).click();
+  await expect(page.locator('.lh-q blockquote')).not.toHaveText(first);
+  await page.getByRole('button', { name: 'Keep going' }).click();
+  await expect(page.getByRole('heading', { name: 'One small thing', level: 1 })).toBeVisible();
+  await expect(page.getByText('please tell someone')).toBeVisible();
+
+  // Reading it was counted, and a message for a different feeling stays out of the way.
+  await page.goto('/base/lighthouse');
+  await expect(page.locator('.lh-note')).toContainText('read once');
+  await page.goto('/base/lighthouse/read');
+  await page.getByRole('button', { name: 'Something went wrong' }).click();
+  await expect(page.getByRole('heading', { name: 'From someone who’s been there', level: 1 })).toBeVisible();
+  await expect(page.getByText('You haven’t left yourself a message yet')).toBeVisible();
+});
+
+test('lighthouse: rough weather brightens the way in on Home', async ({ page }) => {
+  await page.goto('/');
+  await page.getByRole('region', { name: 'Inner weather' }).getByRole('button', { name: /Storm/ }).click();
+  await expect(page.getByRole('region', { name: 'Lighthouse' }).getByRole('button', { name: /Rough weather today/ })).toBeVisible();
+});
+
+test('lighthouse: the shelf filters, saves, and takes your own words', async ({ page }) => {
+  await page.goto('/base/lighthouse/words');
+  const show = page.getByRole('group', { name: 'Show' });
+  await show.getByRole('button', { name: 'Music' }).click();
+  await expect(page.locator('.lh-shelf')).toContainText('Beethoven');
+  await expect(page.locator('.lh-shelf')).not.toContainText('Kipchoge');
+  await show.getByRole('button', { name: '日本語' }).click();
+  await expect(page.locator('.lh-shelf')).toContainText('七転び八起き');
+  await page.locator('.lh-shelf').getByRole('button', { name: /^Save: Japanese proverb/ }).first().click();
+  await show.getByRole('button', { name: /Saved 1/ }).click();
+  await expect(page.locator('.lh-shelf .lh-q')).toHaveCount(1);
+
+  await page.getByRole('button', { name: '+ Add words you love' }).click();
+  const sheet = dialog(page, 'Add words you love');
+  await sheet.getByLabel('The words').fill('Slow practice is fast progress.');
+  await sheet.getByLabel('Who said it').fill('My violin teacher');
+  await sheet.getByRole('button', { name: 'Save' }).click();
+  await show.getByRole('button', { name: 'Added by me' }).click();
+  await expect(page.locator('.lh-shelf')).toContainText('My violin teacher');
+  // The labels about sources are on the page.
+  await show.getByRole('button', { name: /^All/ }).click();
+  await expect(page.getByText('Wording varies').first()).toBeVisible();
+  await expect(page.getByText('Attributed; no firm source').first()).toBeVisible();
 });
 
 test('scroll: a typed line logs everything in it, once, and says what it did not understand', async ({ page }) => {

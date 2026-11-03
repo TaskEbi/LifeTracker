@@ -3,7 +3,9 @@
  * kinds) under the cabinet section, which nothing else reads by section. Day-keyed rows get their id
  * from the date, so two devices write the same row. Nothing here earns XP.
  */
-import { progressInput, progressOf, sectionRecords } from '../../data/lt';
+import { prefValue, progressInput, progressOf, sectionRecords, setPref } from '../../data/lt';
+import { noteOf, ownQuoteOf, type Note } from '../../domain/hq/beacon';
+import type { FeelingId, Quote } from '../../domain/hq/quotes';
 import { pairId } from '../../data/logActions';
 import { saveRecord } from '../../data/records';
 import { commit, data, type DataState } from '../../data/store';
@@ -49,6 +51,8 @@ export interface HqState {
   capsules: Capsule[];
   reviews: Review[];
   experiments: Experiment[];
+  notes: Note[];
+  ownQuotes: Quote[];
 }
 
 let lastMap: DataState['lt_records'] | null = null;
@@ -72,6 +76,8 @@ export function hqOf(st: DataState): HqState {
       const d = r.data;
       return typeof d.title === 'string' && typeof d.start === 'string' ? [{ id: r.id, title: d.title, start: d.start, days: Number(d.days) || 14, metric: (d.metric as Metric) ?? 'sleep' }] : [];
     }),
+    notes: parsed(st, 'hq_note', noteOf).sort((a, b) => b.writtenOn.localeCompare(a.writtenOn)),
+    ownQuotes: parsed(st, 'hq_quote', ownQuoteOf),
   };
   return last;
 }
@@ -197,6 +203,48 @@ export function sealCapsule(f: { title: string; letter: string; opensOn: string;
 }
 export const markCapsuleOpened = (id: string, today: string) => merge(id, { openedOn: today });
 export const replyToCapsule = (id: string, reply: string) => merge(id, { reply: reply.trim().slice(0, CAPSULE_REPLY_MAX) });
+
+// ─── lighthouse ─────────────────────────────────────────────────────────────
+
+export const NOTE_MAX = 6000;
+
+export function saveNote(f: { text: string; feelings: FeelingId[] }, today: string, id?: string) {
+  const st = data.get();
+  const prev = id ? hqOf(st).notes.find((n) => n.id === id) : undefined;
+  saveRecord(
+    HQ_SECTION,
+    'hq_note',
+    {
+      text: f.text.trim().slice(0, NOTE_MAX),
+      feelings: f.feelings,
+      writtenOn: prev?.writtenOn ?? today,
+      mood: prev ? prev.mood : (hqOf(st).checkIns.find((c) => c.date === today)?.mood ?? null),
+      reads: prev?.reads ?? 0,
+      lastRead: prev?.lastRead ?? null,
+    },
+    id,
+  );
+}
+
+/** Counted each time it's opened in the struggling flow, so every message gets its turn. */
+export function markNoteRead(id: string, today: string) {
+  const n = hqOf(data.get()).notes.find((x) => x.id === id);
+  if (n) merge(id, { reads: n.reads + 1, lastRead: today });
+}
+
+export function saveOwnQuote(f: { text: string; by: string; source: string; feelings: FeelingId[] }, id?: string) {
+  saveRecord(HQ_SECTION, 'hq_quote', { text: f.text.trim().slice(0, 1000), by: f.by.trim().slice(0, 80), source: f.source.trim().slice(0, 120), feelings: f.feelings }, id);
+}
+
+const SAVED_KEY = 'lh_saved';
+export const savedQuoteIds = (st: DataState): string[] => {
+  const v = prefValue(st, SAVED_KEY);
+  return Array.isArray(v) ? (v as string[]) : [];
+};
+export function toggleSavedQuote(id: string) {
+  const list = savedQuoteIds(data.get());
+  setPref(SAVED_KEY, list.includes(id) ? list.filter((x) => x !== id) : [...list, id]);
+}
 
 // ─── war room ───────────────────────────────────────────────────────────────
 

@@ -7,6 +7,7 @@ import { ChannelBar } from '../../app/Shell';
 import { navigate, useRoute } from '../../app/router';
 import { progressInput, progressOf, useToday } from '../../data/lt';
 import { data } from '../../data/store';
+import { roughToday } from '../../domain/hq/beacon';
 import { activeNiggles } from '../../domain/hq/body';
 import { canOpen, daysUntil } from '../../domain/hq/capsule';
 import { nextMilestones, xpRate } from '../../domain/hq/forecast';
@@ -28,6 +29,7 @@ import { DojoRoom } from './rooms/Dojo';
 import { HallRoom } from './rooms/Hall';
 import { InfirmaryRoom } from './rooms/Infirmary';
 import { LabRoom } from './rooms/Lab';
+import { LighthouseRoom } from './rooms/Lighthouse';
 import { ObservatoryRoom } from './rooms/Observatory';
 import { OracleRoom } from './rooms/Oracle';
 import { RitualsRoom } from './rooms/Rituals';
@@ -36,6 +38,7 @@ import { WarRoom } from './rooms/War';
 import './hq.css';
 
 export const ROOMS = {
+  lighthouse: { kanji: '灯台', name: 'Lighthouse', c: '#fff1c9', blurb: 'For when you don’t feel like it' },
   war: { kanji: '作戦', name: 'War room', c: '#ff6a3d', blurb: 'Review the week, choose what matters' },
   dojo: { kanji: '道場', name: 'Dojo', c: '#7ddc6f', blurb: 'Spaced recall and a mistake notebook' },
   lab: { kanji: '研究', name: 'Lab', c: '#4fd6e8', blurb: 'What your own data says about you' },
@@ -107,8 +110,10 @@ function Hub() {
     const next = nextMilestones(p.total, p.overall.level, xpRate(p.events, today), today, 1)[0];
     const records = hallOfRecords(input);
     const checkedIn = hq.checkIns.some((c) => c.date === today);
+    const rough = roughToday(hq.checkIns, today);
     return {
-      war: reviewDue ? { text: 'Weekly review is due', alert: true } : review?.theme ? { text: `This week: ${review.theme}`, on: true } : { text: review ? `${review.big.filter((b) => b.done).length}/${review.big.length} of the Big Three` : 'Next review at the weekend' },
+      lighthouse: rough ? { text: hq.notes.length ? 'Rough weather today. You left yourself something.' : 'Rough weather today. There’s light in here.', alert: true } : hq.notes.length ? { text: `${hq.notes.length} ${hq.notes.length === 1 ? 'message' : 'messages'} from you · words to keep going`, on: true } : { text: 'Leave yourself a message · words to keep going', on: true },
+      war: reviewDue ? { text: 'Weekly review is due', alert: true } : review?.theme ? { text: `This week: ${review.theme}`, on: true } : { text: review?.big.length ? `${review.big.filter((b) => b.done).length}/${review.big.length} of the Big Three` : 'Next review at the weekend' },
       dojo: due ? { text: `${due} ${due === 1 ? 'card' : 'cards'} waiting`, alert: true } : hq.cards.length ? { text: `All clear · ${hq.cards.length} cards`, on: true } : { text: 'No cards yet' },
       lab: checkedIn ? { text: `${hq.checkIns.length} ${hq.checkIns.length === 1 ? 'day' : 'days'} of weather`, on: true } : { text: 'No weather logged today', alert: false },
       observatory: next?.date ? { text: `${next.name} around ${shortDay(next.date, today)}`, on: true } : { text: 'Log some time to see ahead' },
@@ -140,7 +145,7 @@ function Hub() {
           const r = ROOMS[id];
           const s = status[id];
           return (
-            <button key={id} type="button" className={`hq-room${s.alert ? ' is-alert' : s.on ? ' is-on' : ''}`} style={{ '--rc': r.c } as CSSProperties} onClick={() => navigate('base', [id])} aria-label={`${r.name}: ${s.text}`}>
+            <button key={id} type="button" className={`hq-room${id === 'lighthouse' ? ' hq-room--wide' : ''}${s.alert ? ' is-alert' : s.on ? ' is-on' : ''}`} style={{ '--rc': r.c } as CSSProperties} onClick={() => navigate('base', [id])} aria-label={`${r.name}: ${s.text}`}>
               <RoomScene room={id} />
               <span className="hq-room__lamp" aria-hidden="true" />
               <span className="hq-room__sign" aria-hidden="true">
@@ -159,6 +164,8 @@ function Hub() {
 export function HqView() {
   const route = useRoute();
   switch (route.rest[0] as RoomId | undefined) {
+    case 'lighthouse':
+      return <LighthouseRoom />;
     case 'war':
       return <WarRoom />;
     case 'dojo':

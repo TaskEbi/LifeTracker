@@ -37,6 +37,8 @@ const CMDS: Cmd[] = [
   { id: 'task', label: 'new task', hint: 'shared task list', sheet: 'task', route: 'tasks' },
   { id: 'event', label: 'new event', hint: 'shared calendar', sheet: 'event', route: 'calendar' },
   { id: 'bucket', label: 'bucket list', hint: 'add · cross off', route: 'bucket' },
+  { id: 'struggling', label: 'i’m struggling', hint: 'the lighthouse · your own messages · motivation', route: 'base', rest: ['lighthouse', 'read'] },
+  { id: 'quotes', label: 'motivating quotes', hint: 'the lighthouse · words to keep going', route: 'base', rest: ['lighthouse', 'words'] },
   { id: 'hideout', label: 'hideout', hint: 'review · recall · lab · oracle · vault', route: 'base' },
   { id: 'recall', label: 'recall cards', hint: 'the dojo · spaced repetition', route: 'base', rest: ['dojo'] },
   { id: 'review', label: 'weekly review', hint: 'the war room · Big Three', route: 'base', rest: ['war'] },

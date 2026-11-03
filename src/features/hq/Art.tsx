@@ -43,6 +43,17 @@ const F = { fill: 'var(--rc)' };
 const D = { fill: 'var(--rc)', opacity: 0.22 };
 
 const SCENES: Record<RoomId, ReactElement> = {
+  lighthouse: (
+    <>
+      <path d="M0 54 q15 -5 30 0 t30 0 t30 0 t30 0" {...L} />
+      <path d="M52 50 l3 -30 h10 l3 30z" {...D} />
+      <path d="M52 50 l3 -30 h10 l3 30z M54 38 h12 M55 29 h10" {...L} />
+      <rect x="54" y="13" width="12" height="7" {...F} />
+      <path d="M53 13 l7 -6 7 6z" {...L} />
+      <path className="hq-beam" d="M66 15 L120 4 V28Z" fill="var(--rc)" opacity="0.28" />
+      <path className="hq-beam" d="M54 15 L0 4 V28Z" fill="var(--rc)" opacity="0.14" />
+    </>
+  ),
   war: (
     <>
       <rect x="20" y="14" width="46" height="26" rx="1" {...D} />

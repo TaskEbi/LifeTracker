@@ -173,7 +173,7 @@ describe('shapes', () => {
   });
 
   it('takes every Hideout record as it is, with no migration', async () => {
-    for (const kind of ['hq_checkin', 'hq_ritual', 'hq_ritual_day', 'hq_card', 'hq_recall_day', 'hq_niggle', 'hq_gear', 'hq_prediction', 'hq_capsule', 'hq_review', 'hq_experiment']) {
+    for (const kind of ['hq_checkin', 'hq_ritual', 'hq_ritual_day', 'hq_card', 'hq_recall_day', 'hq_niggle', 'hq_gear', 'hq_prediction', 'hq_capsule', 'hq_review', 'hq_experiment', 'hq_note', 'hq_quote']) {
       await as(member, `insert into public.lt_records (id, section, kind, data) values (gen_random_uuid(), 'cabinet', $1, '{"x": 1}')`, [kind]);
     }
     await as(member, `insert into public.lt_records (id, section, kind) values (gen_random_uuid(), 'violin', 'tempo_ladder')`);
@@ -181,6 +181,9 @@ describe('shapes', () => {
     // The longest letter and reply the vault allows, in three-byte characters, plus a snapshot.
     const data = JSON.stringify({ letter: 'あ'.repeat(7000), reply: 'あ'.repeat(2000), snapshot: { level: 100, hours: { violin: 1000.5, coding: 1000.5, study: 1000.5, sports: 1000.5 } } });
     await as(member, `insert into public.lt_records (id, section, kind, data) values (gen_random_uuid(), 'cabinet', 'hq_capsule', $1::jsonb)`, [data]);
+    // The longest message, in three-byte characters.
+    await as(member, `insert into public.lt_records (id, section, kind, data) values (gen_random_uuid(), 'cabinet', 'hq_note', $1::jsonb)`, [JSON.stringify({ text: 'あ'.repeat(6000), feelings: ['flat', 'tired', 'failed', 'swamped', 'doubt', 'afraid'], writtenOn: '2026-11-03', mood: 5, reads: 100, lastRead: '2026-11-03' })]);
+    await as(member, `insert into public.lt_prefs (id, value) values ('lh_saved', '["king", "rilke"]')`);
   });
 
   it('takes the Future section in every table that has a section, and still refuses unknown ones', async () => {

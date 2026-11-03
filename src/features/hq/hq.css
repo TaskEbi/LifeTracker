@@ -181,6 +181,31 @@
 .hq-room:active {
   transform: translateY(2px);
 }
+.hq-room--wide {
+  grid-column: 1 / -1;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  align-items: center;
+  min-height: 96px;
+  column-gap: 12px;
+}
+.hq-room--wide .hq-room__art {
+  grid-row: 1 / span 2;
+}
+.hq-room--wide .hq-room__sign {
+  align-self: end;
+  font-size: 15px;
+}
+.hq-room--wide .hq-room__status {
+  align-self: start;
+}
+.hq-beam {
+  animation: hq-sweep 5s ease-in-out infinite;
+}
+@keyframes hq-sweep {
+  50% {
+    opacity: 0.08;
+  }
+}
 .hq-room__art {
   display: block;
   width: 100%;
@@ -1203,6 +1228,7 @@
 @media (prefers-reduced-motion: reduce) {
   .hq-star,
   .hq-drone,
+  .hq-beam,
   .hq-bub,
   .hq-room.is-alert .hq-room__lamp,
   .hq-spot.is-3 .hq-spot__dot,

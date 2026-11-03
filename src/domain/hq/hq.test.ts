@@ -3,6 +3,8 @@ import type { LogDayMetric, LogEntry, LtDetail, SectionId } from '../../data/typ
 import { DEFAULT_SLEEP, DEFAULT_TARGETS } from '../prefs';
 import type { ProgressInput } from '../progress/engine';
 import { dayFacts } from '../progress/quests';
+import { comebacks, goodDayToWrite, notesFor, proofLines, roughSpells, roughToday, type Note } from './beacon';
+import { FEELINGS, QUOTES, quotesFor, shuffled, wordsOfDay } from './quotes';
 import { activeNiggles, legsHurt, loadGuard, recurring, type Niggle } from './body';
 import { capsulePresets, compareSnapshots, onThisDay, type Snapshot } from './capsule';
 import { scout, type ScoutGame } from './chessScout';
@@ -762,6 +764,109 @@ describe('the practice room', () => {
 
   it('keeps one mark a day', () => {
     expect(logTempo([{ date: T, bpm: 80 }], T, 84)).toEqual([{ date: T, bpm: 84 }]);
+  });
+});
+
+describe('the words', () => {
+  it('has unique ids, says who said each, and leaves out the famous fakes', () => {
+    expect(new Set(QUOTES.map((q) => q.id)).size).toBe(QUOTES.length);
+    for (const q of QUOTES) {
+      expect(q.by, q.id).toBeTruthy();
+      expect(q.feelings.length, q.id).toBeGreaterThan(0);
+    }
+    const all = QUOTES.map((q) => q.text.toLowerCase()).join(' | ');
+    expect(all).not.toContain('going through hell');
+    expect(all).not.toContain('seems impossible');
+    expect(all).not.toContain('success is not final');
+  });
+
+  it('has something for every feeling', () => {
+    for (const f of FEELINGS) expect(quotesFor(f.id, 'x').length, f.id).toBeGreaterThanOrEqual(5);
+  });
+
+  it('draws today’s words by date, the same on every device, and short enough for Home', () => {
+    expect(wordsOfDay(T)).toEqual(wordsOfDay(T));
+    expect(wordsOfDay(T).text.length).toBeLessThanOrEqual(110);
+    expect(wordsOfDay(addDays(T, 1)).id).not.toBe(wordsOfDay(T).id);
+  });
+
+  it('goes round the whole shelf before repeating', () => {
+    const pool = QUOTES.filter((q) => q.text.length <= 110).length;
+    // Start on a round boundary, so the whole window falls in one shuffled round.
+    const dayNo = Math.floor(Date.UTC(2026, 10, 4) / 86_400_000);
+    const start = addDays(T, pool - (dayNo % pool));
+    const seen = new Set(Array.from({ length: pool }, (_, i) => wordsOfDay(addDays(start, i)).id));
+    expect(seen.size).toBe(pool);
+  });
+
+  it('shuffles the same way for the same seed, and only what fits', () => {
+    expect(quotesFor('failed', 'a').map((q) => q.id)).toEqual(quotesFor('failed', 'a').map((q) => q.id));
+    expect(quotesFor('failed', 'a').every((q) => q.feelings.includes('failed'))).toBe(true);
+    expect(quotesFor(null, 'a').length).toBe(QUOTES.length);
+    expect(shuffled([1, 2, 3], 'z').sort()).toEqual([1, 2, 3]);
+  });
+});
+
+describe('the lighthouse', () => {
+  const note = (p: Partial<Note>): Note => ({ id: 'n', text: 'x', feelings: [], writtenOn: '2026-10-01', mood: null, reads: 0, lastRead: null, ...p });
+  const c = (date: string, mood: number, energy: number | null = null) => ({ date, mood, energy, note: '' });
+  const ctx = { checkIns: [], reviews: [], books: 0, wishes: 0 };
+
+  it('reads messages meant for this feeling first, then ones for any day, and leaves out the rest', () => {
+    const notes = [note({ id: 'any' }), note({ id: 'failed', feelings: ['failed'] }), note({ id: 'tired', feelings: ['tired'] })];
+    expect(notesFor(notes, 'failed').map((n) => n.id)).toEqual(['failed', 'any']);
+    expect(notesFor(notes, null).map((n) => n.id).sort()).toEqual(['any', 'failed', 'tired']);
+  });
+
+  it('gives every message its turn: the one unread longest comes first', () => {
+    const notes = [note({ id: 'recent', lastRead: '2026-11-01' }), note({ id: 'older', lastRead: '2026-10-01' }), note({ id: 'never' })];
+    expect(notesFor(notes, 'flat').map((n) => n.id)).toEqual(['never', 'older', 'recent']);
+  });
+
+  it('counts comebacks only after a real stop', () => {
+    const d = (...x: string[]) => new Set(x);
+    expect(comebacks(d('2026-10-01', '2026-10-07', '2026-10-09'), T)).toBe(1);
+    expect(comebacks(d('2026-10-01', '2026-10-04'), T)).toBe(0);
+    expect(comebacks(d(), T)).toBe(0);
+  });
+
+  it('counts rough spells that ended, not one still going', () => {
+    const list = [c('2026-10-01', 1), c('2026-10-02', 2), c('2026-10-03', 4), c('2026-10-10', 2), c('2026-10-11', 3), c('2026-10-20', 1)];
+    expect(roughSpells(list)).toEqual({ cleared: 2, avgDays: 1.5 });
+    expect(roughSpells([c('2026-10-20', 1)])).toEqual({ cleared: 0, avgDays: 0 });
+  });
+
+  it('says nothing it can’t back up', () => {
+    expect(proofLines(input(), ctx, 'flat')).toEqual([]);
+  });
+
+  it('builds proof from real records, the most useful for this feeling first', () => {
+    const entries = [entry('2026-09-01', 600), entry('2026-09-20', 60), entry('2026-10-20', 60)];
+    const checkIns = [c('2026-09-01', 1), c('2026-09-02', 4), c('2026-09-20', 2), c('2026-09-21', 3)];
+    const lines = proofLines(input({ entries }), { ...ctx, checkIns, books: 2, wishes: 1 }, 'failed', 8);
+    expect(lines[0]).toMatchObject({ id: 'comebacks', big: '2×' });
+    expect(lines.find((l) => l.id === 'hours')!.big).toBe('12 h');
+    expect(lines.find((l) => l.id === 'weather')).toMatchObject({ big: '2/2' });
+    expect(proofLines(input({ entries }), { ...ctx, checkIns }, 'doubt')[0].id).toBe('hours');
+    expect(lines.find((l) => l.id === 'books')!.text).toBe('books finished.');
+  });
+
+  it('quotes your own win back at you', () => {
+    const reviews = [{ id: 'r', week: '2026-10-26', win: 'Ran further than ever', stuck: '', change: '', theme: '', rating: null, big: [], sealedOn: T }];
+    expect(proofLines(input(), { ...ctx, reviews }, 'failed')[0].text).toContain('Ran further than ever');
+  });
+
+  it('counts low-energy days that still got done', () => {
+    const lines = proofLines(input({ entries: [entry('2026-10-01', 30), entry('2026-10-02', 30)] }), { ...ctx, checkIns: [c('2026-10-01', 3, 1), c('2026-10-02', 3, 2), c('2026-10-03', 3, 1)] }, 'flat');
+    expect(lines[0]).toMatchObject({ id: 'low-days', big: '2' });
+  });
+
+  it('knows a rough day from a good one', () => {
+    expect(roughToday([c(T, 2)], T)).toBe(true);
+    expect(roughToday([c(T, 3)], T)).toBe(false);
+    expect(roughToday([], T)).toBe(false);
+    expect(goodDayToWrite([c(T, 4)], T)).toBe(true);
+    expect(goodDayToWrite([c(T, 3)], T)).toBe(false);
   });
 });
 

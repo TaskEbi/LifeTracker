@@ -5,6 +5,8 @@ import { openSheet } from '../../app/sheets';
 import { progressInput, useBoss, usePlans, useQuests, useToday } from '../../data/lt';
 import { data } from '../../data/store';
 import { legsHurt } from '../../domain/hq/body';
+import { roughToday } from '../../domain/hq/beacon';
+import { wordsOfDay } from '../../domain/hq/quotes';
 import { weatherOf, WEATHER } from '../../domain/hq/checkin';
 import { nextMoves, type Energy, type Move } from '../../domain/hq/nextMove';
 import { currentReview, reviewIsDue } from '../../domain/hq/review';
@@ -33,7 +35,7 @@ const minutesNow = (tz: string, d = new Date()) => {
   }
 };
 
-function runMove(m: Move) {
+export function runMove(m: Move) {
   const a = m.action;
   if (a.type === 'focus') {
     startFocus(a.section, a.goal);
@@ -55,25 +57,15 @@ const readChoice = (): { minutes: string; energy: Energy } => {
   return { minutes: '30', energy: 'ok' };
 };
 
-/** 次の一手: how long, how you feel, and the best thing to do with that. */
-export function NextMoveCard() {
+/** The best moves for this much time and energy, from the records. */
+export function useMoves(minutes: number, energy: Energy): Move[] {
   const today = useToday();
   const st = useStore(data, (s) => s);
   const hq = useHq();
   const boss = useBoss();
   const quests = useQuests();
   const plans = usePlans();
-  const [choice, setChoice] = useState(readChoice);
-  const put = (patch: Partial<typeof choice>) => {
-    const next = { ...choice, ...patch };
-    setChoice(next);
-    try {
-      localStorage.setItem(TIME_KEY, JSON.stringify(next));
-    } catch {
-      /* remembered for this visit only */
-    }
-  };
-  const moves = useMemo(() => {
+  return useMemo(() => {
     const input = progressInput(st, today);
     const m = marathonOf(input, plans);
     const week = m && m.current >= 1 ? m.weeks[m.current - 1] : null;
@@ -81,8 +73,8 @@ export function NextMoveCard() {
     const big = currentReview(hq.reviews, today)?.big.filter((b) => !b.done).map((b) => ({ text: b.text, section: b.section })) ?? [];
     return nextMoves(input, {
       nowMin: minutesNow(st.settings.log_timezone),
-      minutes: Number(choice.minutes),
-      energy: choice.energy,
+      minutes,
+      energy,
       deadlines: deadlinesOf(st, today, 45),
       cardsDue: reviewQueue(hq.cards, today).length,
       bigThree: big,
@@ -93,7 +85,22 @@ export function NextMoveCard() {
       overdueTasks: input.todos.filter((t) => !t.done_at && t.due && t.due < today).length,
       sleepLogged: input.metrics.some((x) => x.metric === 'sleep' && x.date === today),
     });
-  }, [st, today, hq, boss, quests, plans, choice]);
+  }, [st, today, hq, boss, quests, plans, minutes, energy]);
+}
+
+/** 次の一手: how long, how you feel, and the best thing to do with that. */
+export function NextMoveCard() {
+  const [choice, setChoice] = useState(readChoice);
+  const put = (patch: Partial<typeof choice>) => {
+    const next = { ...choice, ...patch };
+    setChoice(next);
+    try {
+      localStorage.setItem(TIME_KEY, JSON.stringify(next));
+    } catch {
+      /* remembered for this visit only */
+    }
+  };
+  const moves = useMoves(Number(choice.minutes), choice.energy);
   const [first, ...rest] = moves;
   return (
     <section className="hc" aria-label="Next move">
@@ -141,6 +148,30 @@ export function NextMoveCard() {
           </div>
         )}
       </div>
+    </section>
+  );
+}
+
+/** 灯: today's words, and the way in on a hard day. Brighter when today's weather is rough. */
+export function BeaconCard() {
+  const today = useToday();
+  const hq = useHq();
+  const words = useMemo(() => wordsOfDay(today), [today]);
+  const rough = roughToday(hq.checkIns, today);
+  const n = hq.notes.length;
+  return (
+    <section className={`hc-beacon${rough ? ' is-rough' : ''}`} aria-label="Lighthouse">
+      <button type="button" className="hc-beacon__words" onClick={() => navigate('base', ['lighthouse', 'words'])} aria-label={`Today’s words, from ${words.by}. Open all the words`}>
+        <span className="hc-beacon__q">{words.text}</span>
+        <small>{words.by}</small>
+      </button>
+      <button type="button" className="hc-beacon__sos" onClick={() => navigate('base', ['lighthouse', 'read'])}>
+        <b aria-hidden="true">灯</b>
+        <span>
+          {rough ? 'Rough weather today' : 'Struggling?'}
+          {rough && n > 0 && <small>You left yourself {n === 1 ? 'a message' : `${n} messages`}</small>}
+        </span>
+      </button>
     </section>
   );
 }
