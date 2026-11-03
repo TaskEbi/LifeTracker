@@ -21,12 +21,13 @@ export function Doors({ name }: { name: RouteName }) {
     if (prev.current === name) return;
     prev.current = name;
     const isSection = (SECTION_IDS as readonly string[]).includes(name);
-    if ((!isSection && name !== 'bucket') || fxStore.get().mode !== 'full' || !fxPrefs.get().doors || playStyle() !== 'full') {
+    if ((!isSection && name !== 'bucket' && name !== 'base') || fxStore.get().mode !== 'full' || !fxPrefs.get().doors || playStyle() !== 'full') {
       setDoor(null);
       return;
     }
     const info = isSection ? sectionInfo(name as SectionId) : null;
-    setDoor({ key: ++n.current, kanji: info?.kanji ?? SYSTEM_KANJI.bucket, label: info?.full ?? 'Bucket list', color: isSection ? `var(--c-${name})` : '#ffc94d' });
+    const hideout = name === 'base';
+    setDoor({ key: ++n.current, kanji: info?.kanji ?? (hideout ? SYSTEM_KANJI.base : SYSTEM_KANJI.bucket), label: info?.full ?? (hideout ? 'Hideout' : 'Bucket list'), color: isSection ? `var(--c-${name})` : hideout ? '#ffb02e' : '#ffc94d' });
     const t = window.setTimeout(() => setDoor(null), DOOR_MS);
     return () => window.clearTimeout(t);
   }, [name]);

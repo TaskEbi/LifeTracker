@@ -25,6 +25,9 @@ import { Recap } from '../progress/LookBack';
 import { useFxPrefs } from '../../ui/i/fx/celebrate';
 import { QuestCard } from '../progress/QuestsPanel';
 import { PlanToday } from '../plans/PlanToday';
+import { BigThreeCard, CheckInCard, NextMoveCard, RitualsCard, ShadowCard } from '../hq/HomeCards';
+import { useHq } from '../hq/store';
+import { reviewQueue } from '../../domain/hq/srs';
 import './home.css';
 
 const pad2 = (n: number) => String(n).padStart(2, '0');
@@ -127,6 +130,8 @@ export function Home() {
     const { open, done } = bucketItems(st);
     return { total: open.length + done.length, done: done.length, next: open[0]?.title };
   }, [st]);
+  const hq = useHq();
+  const dueCards = useMemo(() => reviewQueue(hq.cards, today).length, [hq.cards, today]);
   const stage = STAGES[p.overall.stage];
   const next = STAGES[p.overall.stage + 1];
   const daily = quests.daily.quests;
@@ -235,6 +240,16 @@ export function Home() {
             </span>
           </button>
 
+          <NextMoveCard />
+
+          <BigThreeCard />
+
+          <CheckInCard />
+
+          <RitualsCard />
+
+          <ShadowCard />
+
           <OmikujiCard />
 
           <PlanToday />
@@ -319,6 +334,11 @@ export function Home() {
           </section>
 
           <nav className="h-sys" aria-label="More">
+            <button type="button" className="h-sys__btn h-sys__btn--wide" onClick={() => navigate('base')}>
+              <span aria-hidden="true">{SYSTEM_KANJI.base}</span>
+              <b>Hideout</b>
+              <small>{dueCards ? `${dueCards} recall ${dueCards === 1 ? 'card' : 'cards'} waiting` : 'War room · dojo · lab · vault · oracle…'}</small>
+            </button>
             {nowReading && (
               <button type="button" className="h-sys__btn h-sys__btn--wide" onClick={() => navigate('reading')}>
                 <span aria-hidden="true">{sectionInfo('reading').kanji}</span>

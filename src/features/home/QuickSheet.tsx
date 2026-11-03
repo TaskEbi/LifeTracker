@@ -4,8 +4,11 @@ import { registerSheet, sheetRegistry } from '../../app/sheetRegistry';
 import { closeSheet, openSheet } from '../../app/sheets';
 import { sectionInfo } from '../../domain/sections';
 import type { SectionId } from '../../data/types';
+import { toast } from '../../data/ui';
+import { describeIntent, hasIntents, parseScroll, type Intent } from '../../domain/hq/scroll';
 import { accent } from '../../ui/i/bits';
 import { Sheet } from '../../ui/i/Sheet';
+import { saveScroll, scrollContext } from '../hq/scrollActions';
 
 interface Cmd {
   id: string;
@@ -15,6 +18,7 @@ interface Cmd {
   /** A sheet type to open, or a route to go to when that sheet doesn't exist (yet). */
   sheet?: string;
   route: RouteName;
+  rest?: string[];
 }
 
 const CMDS: Cmd[] = [
@@ -33,19 +37,44 @@ const CMDS: Cmd[] = [
   { id: 'task', label: 'new task', hint: 'shared task list', sheet: 'task', route: 'tasks' },
   { id: 'event', label: 'new event', hint: 'shared calendar', sheet: 'event', route: 'calendar' },
   { id: 'bucket', label: 'bucket list', hint: 'add · cross off', route: 'bucket' },
+  { id: 'hideout', label: 'hideout', hint: 'review · recall · lab · oracle · vault', route: 'base' },
+  { id: 'recall', label: 'recall cards', hint: 'the dojo · spaced repetition', route: 'base', rest: ['dojo'] },
+  { id: 'review', label: 'weekly review', hint: 'the war room · Big Three', route: 'base', rest: ['war'] },
+  { id: 'metronome', label: 'metronome', hint: 'practice room · tuner · drone', section: 'violin', route: 'violin', rest: ['room'] },
 ];
+
+const EXAMPLES = ['violin 45 bach partita', 'ran 8k in 44', 'physics 40 past paper', 'read 30 dune', 'slept 23:30-7:10', 'screen 2h15', 'task buy rosin fri', 'wish see the aurora', 'yesterday: gym 60, chess 30'];
+
+const SECTION_OF = (i: Intent): SectionId | null => (i.kind === 'session' ? i.section : i.kind === 'night' ? 'sleep' : i.kind === 'screen' ? 'screen' : null);
 
 function QuickSheet() {
   const [q, setQ] = useState('');
+  const [error, setError] = useState<string | null>(null);
+  const [help, setHelp] = useState(false);
   const list = useMemo(() => {
     const s = q.trim().toLowerCase();
     return CMDS.filter((c) => !s || c.label.includes(s) || c.hint.includes(s) || c.id.startsWith(s));
   }, [q]);
+  const ctx = useMemo(() => scrollContext(), []);
+  const intents = useMemo(() => (q.trim() ? parseScroll(q, ctx) : []), [q, ctx]);
+  const understood = hasIntents(intents);
   const run = (c: Cmd) => {
     if (c.sheet && sheetRegistry.has(c.sheet)) openSheet({ type: c.sheet });
     else {
       closeSheet();
-      navigate(c.route);
+      navigate(c.route, c.rest ?? []);
+    }
+  };
+  const saveAll = () => {
+    const { saved, errors } = saveScroll(intents);
+    if (errors.length) {
+      setError(errors.join(' '));
+      if (!saved) return;
+    }
+    if (saved) {
+      toast(`Logged ${saved} ${saved === 1 ? 'thing' : 'things'}`);
+      if (!errors.length) closeSheet();
+      else setQ(intents.filter((i) => i.kind === 'unknown').map((i) => (i as { text: string }).text).join(', '));
     }
   };
   return (
@@ -56,18 +85,64 @@ function QuickSheet() {
           data-autofocus
           className="q-in__input"
           value={q}
-          onChange={(e) => setQ(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' && list[0]) {
-              e.preventDefault();
-              run(list[0]);
-            }
+          onChange={(e) => {
+            setQ(e.target.value);
+            setError(null);
           }}
-          placeholder="type: violin, gym, sleep…"
-          aria-label="Filter commands"
+          onKeyDown={(e) => {
+            if (e.key !== 'Enter') return;
+            e.preventDefault();
+            if (understood) saveAll();
+            else if (list[0]) run(list[0]);
+          }}
+          placeholder="violin 45, ran 8k in 44, slept 7h30…"
+          aria-label="Type what you did, or filter commands"
           autoComplete="off"
         />
       </label>
+      {understood && (
+        <section className="q-scroll" aria-label="What this will log">
+          <span className="q-scroll__k" aria-hidden="true">
+            巻物
+          </span>
+          <ul>
+            {intents.map((i, k) => (
+              <li key={k} className={i.kind === 'unknown' ? 'is-unknown' : ''} style={accent(SECTION_OF(i))}>
+                {i.kind === 'unknown' ? (
+                  <>
+                    <b>Not sure about “{i.text}”</b>
+                    {i.hint ? ` ${i.hint}` : ' Left out.'}
+                  </>
+                ) : (
+                  describeIntent(i, ctx.today)
+                )}
+              </li>
+            ))}
+          </ul>
+          <button type="button" className="i-btn i-btn--sig i-btn--block" onClick={saveAll}>
+            Log {intents.filter((i) => i.kind !== 'unknown').length === 1 ? 'it' : `all ${intents.filter((i) => i.kind !== 'unknown').length}`}
+          </button>
+        </section>
+      )}
+      {error && (
+        <p className="i-error" role="alert">
+          {error}
+        </p>
+      )}
+      {!q && (
+        <button type="button" className="i-link" onClick={() => setHelp(!help)} aria-expanded={help}>
+          巻物 You can also just type what you did {help ? '▲' : '▼'}
+        </button>
+      )}
+      {help && !q && (
+        <div className="i-chips i-chips--wrap" aria-label="Examples">
+          {EXAMPLES.map((x) => (
+            <button key={x} type="button" className="i-chip" onClick={() => setQ(x)}>
+              {x}
+            </button>
+          ))}
+        </div>
+      )}
       <div className="q-list" role="list">
         {list.map((c) => (
           <button key={c.id} type="button" className="q-item" style={accent(c.section ?? null)} onClick={() => run(c)} role="listitem">
@@ -81,7 +156,7 @@ function QuickSheet() {
             </span>
           </button>
         ))}
-        {!list.length && <p className="i-note">No matching command.</p>}
+        {!list.length && !understood && <p className="i-note">No matching command.</p>}
       </div>
     </Sheet>
   );

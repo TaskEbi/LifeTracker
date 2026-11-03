@@ -14,6 +14,7 @@ import { Icon } from '../../ui/i/Icon';
 import { RelatedTasks } from '../../ui/i/RelatedTasks';
 import { Sheet } from '../../ui/i/Sheet';
 import { chess, loadChess, timeByDay, type Game, type TimeClass } from './api';
+import { ScoutPanel } from './ScoutPanel';
 import './chess.css';
 import { ChessArt } from './Art';
 import './theme.css';
@@ -217,6 +218,7 @@ function OnlinePanel({ username }: { username: string }) {
         ))}
         {!s.games.length && <p className="i-note" style={{ padding: '12px 0' }}>No games in the last two months.</p>}
       </div>
+      <ScoutPanel games={s.games} />
     </>
   );
 }

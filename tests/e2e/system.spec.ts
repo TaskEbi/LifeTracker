@@ -74,10 +74,10 @@ test('game: Progress is one tap away on a phone, with quests and achievements', 
   await expect(page.getByText('Nothing unlocked yet.')).toBeVisible();
 });
 
-const ROUTES = ['/', '/violin', '/coding', '/sports', '/gym', '/study', '/chess', '/sleep', '/screen', '/calendar', '/tasks', '/progress', '/progress/quests', '/progress/boss', '/progress/achievements', '/bucket', '/future', '/future/unis', '/future/tests', '/future/profile', '/future/essays', '/future/roadmap', '/reading', '/reading/shelf', '/reading/lines', '/reading/year', '/settings', '/log'];
+const ROUTES = ['/', '/violin', '/coding', '/sports', '/gym', '/study', '/chess', '/sleep', '/screen', '/calendar', '/tasks', '/progress', '/progress/quests', '/progress/boss', '/progress/achievements', '/bucket', '/future', '/future/unis', '/future/tests', '/future/profile', '/future/essays', '/future/roadmap', '/reading', '/reading/shelf', '/reading/lines', '/reading/year', '/settings', '/log', '/violin/room', '/base', '/base/war', '/base/dojo', '/base/lab', '/base/observatory', '/base/infirmary', '/base/armoury', '/base/oracle', '/base/vault', '/base/rituals', '/base/hall'];
 
 test('every screen: one h1, every control named, no sideways scroll', async ({ page }) => {
-  test.setTimeout(75_000); // many screens
+  test.setTimeout(120_000); // many screens
   await page.route('https://api.chess.com/**', (r) => r.fulfill({ status: 404, body: '{}' }));
   for (const path of ROUTES) {
     await page.goto(path);

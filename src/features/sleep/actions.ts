@@ -30,19 +30,26 @@ function setTimes(date: string, bed: string | null, wake: string | null) {
   } else if (existing && !existing.deleted_at) commit('lt_nights', [{ ...existing, deleted_at: t, updated_at: t }]);
 }
 
-/** Save (or replace) a night. Returns an error message or null. */
-export function saveNight(d: NightDraft): string | null {
+/** Write a night without showing a reward (for a caller that shows one itself). Returns an error message or null. */
+export function writeNight(d: NightDraft): string | null {
   if (d.date > ltToday()) return "That morning hasn't happened yet.";
   const minutes = d.bed && d.wake ? durationOf(d.bed, d.wake) : d.minutes;
   if (minutes < 30 || minutes > 1200) return 'That is outside 30 minutes to 20 hours. Check the times.';
   if (d.score != null && (d.score < 0 || d.score > 100)) return 'A sleep score is 0 to 100.';
+  const error = setMetric('sleep', d.date, minutes);
+  if (error) return error;
+  setTimes(d.date, d.bed, d.wake);
+  setMetric('sleep_score', d.date, d.score);
+  return null;
+}
+
+/** Save (or replace) a night. Returns an error message or null. */
+export function saveNight(d: NightDraft): string | null {
   let error: string | null = null;
+  // The checks come first, so a rejected night doesn't go through the reward at all.
   withReward(() => {
-    error = setMetric('sleep', d.date, minutes);
-    if (error) return false;
-    setTimes(d.date, d.bed, d.wake);
-    setMetric('sleep_score', d.date, d.score);
-    return true;
+    error = writeNight(d);
+    return !error;
   });
   return error;
 }

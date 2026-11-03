@@ -1,5 +1,37 @@
 /* ── 集中 Focus mode ──────────────────────────────────────────────────────────── */
 
+.fo-jar {
+  display: grid;
+  gap: 8px;
+}
+.fo-jar__add {
+  display: flex;
+  gap: 6px;
+}
+.fo-jar__add .i-input {
+  flex: 1;
+  min-width: 0;
+}
+.fo-jar__list {
+  display: grid;
+  gap: 4px;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+.fo-jar__list li {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 0 4px 10px;
+  font-size: 14px;
+  border-left: 3px solid var(--c, var(--sig));
+}
+.fo-jar__list span {
+  flex: 1;
+  min-width: 0;
+}
+
 .fo-ring {
   position: relative;
   width: min(240px, 70vw);

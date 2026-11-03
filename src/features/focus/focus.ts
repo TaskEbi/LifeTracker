@@ -22,6 +22,8 @@ export interface Focus {
   /** When it was finished (ms): the minutes now wait to be logged. */
   finishedAt: number | null;
   minutes: number;
+  /** Stray thoughts parked during the session, to deal with afterwards. */
+  jar?: string[];
 }
 
 const KEY = 'lifetracker-focus';
@@ -75,3 +77,15 @@ export function finishFocus(): Focus | null {
 }
 
 export const discardFocus = () => put(null);
+
+/** Park a stray thought so it stops taking up room while you work. */
+export function parkThought(text: string) {
+  const f = focusStore.get().focus;
+  const t = text.trim().slice(0, 200);
+  if (f && t) put({ ...f, jar: [...(f.jar ?? []), t] });
+}
+
+export function dropThought(i: number) {
+  const f = focusStore.get().focus;
+  if (f?.jar) put({ ...f, jar: f.jar.filter((_, k) => k !== i) });
+}

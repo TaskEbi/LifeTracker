@@ -1,5 +1,7 @@
 import { useMemo, useState } from 'react';
+import { navigate, useRoute } from '../../app/router';
 import { openSheet } from '../../app/sheets';
+import { PracticeRoom } from './PracticeRoom';
 import { sectionEntries, sectionRecords, setTargets, useTargets, useToday } from '../../data/lt';
 import { deleteSession } from '../../data/sessions';
 import { data } from '../../data/store';
@@ -42,6 +44,12 @@ function SessionRow({ s, names }: { s: Session; names: Map<string, string> }) {
 }
 
 export function ViolinChannel() {
+  const route = useRoute();
+  if (route.rest[0] === 'room') return <PracticeRoom />;
+  return <Journal />;
+}
+
+function Journal() {
   const today = useToday();
   const targets = useTargets();
   const st = useStore(data, (s) => s);
@@ -81,6 +89,9 @@ export function ViolinChannel() {
         )}
         <button type="button" className="i-btn i-btn--sig i-btn--block" onClick={() => openSheet({ type: 'violin' })}>
           <Icon name="plus" /> Log practice
+        </button>
+        <button type="button" className="i-btn i-btn--block" onClick={() => navigate('violin', ['room'])}>
+          Practice room: metronome · tuner · drone
         </button>
       </div>
 

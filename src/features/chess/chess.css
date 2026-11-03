@@ -1,3 +1,51 @@
+.c-scout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr) 38px 26px;
+  align-items: center;
+  gap: 8px;
+  min-height: 30px;
+  font-size: 13.5px;
+}
+.c-scout__l {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.c-scout__bar {
+  display: flex;
+  height: 10px;
+  overflow: hidden;
+  box-shadow: inset 0 0 0 1px var(--fg-3);
+}
+.c-scout__bar i {
+  flex-basis: 0;
+}
+.c-scout__bar .is-w {
+  background: var(--fg);
+}
+.c-scout__bar .is-d {
+  background: var(--fg-3);
+}
+.c-scout__bar .is-l {
+  background: transparent;
+}
+.c-scout__p {
+  font-family: var(--f-mono);
+  font-weight: 700;
+  text-align: right;
+}
+.c-scout__n {
+  font-family: var(--f-mono);
+  font-size: 11px;
+  color: var(--fg-3);
+  text-align: right;
+}
+.c-tilt {
+  padding: 8px 10px;
+  font-weight: 700;
+  color: var(--sig-fg);
+  background: var(--sig);
+}
 .c-res {
   flex: none;
   width: 26px;

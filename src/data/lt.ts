@@ -321,14 +321,19 @@ export function withReward(save: () => boolean | void, extra: Partial<RewardView
 /** One mark per kind per day, named by the pair so two devices write the same row. */
 export const markId = (kind: string, date: string) => pairId(`mark:${kind}`, date);
 
-/** Mark today a planned rest day: it keeps the streak and earns no XP. */
-export function takeRestDay() {
+/** The mark itself, without showing a reward (for a caller that shows one itself). */
+export function markRestDay() {
   const date = ltToday();
   const id = markId('rest', date);
   const existing = data.get().lt_day_marks.get(id);
   const t = now();
   const row: LtDayMark = existing ? { ...existing, deleted_at: null, updated_at: t } : { id, date, kind: 'rest', created_at: t, updated_at: t, deleted_at: null };
-  withReward(() => commit('lt_day_marks', [row]), { rest: true });
+  commit('lt_day_marks', [row]);
+}
+
+/** Mark today a planned rest day: it keeps the streak and earns no XP. */
+export function takeRestDay() {
+  withReward(() => markRestDay(), { rest: true });
 }
 
 // ─── section records ────────────────────────────────────────────────────────

@@ -1,7 +1,8 @@
 import { useMemo, useState } from 'react';
 import { registerSheet } from '../../app/sheetRegistry';
 import { closeSheet, openSheet, type SheetSpec } from '../../app/sheets';
-import { ltToday, setTargets, useTargets, useToday } from '../../data/lt';
+import { ltToday, progressInput, setTargets, useTargets, useToday } from '../../data/lt';
+import { exchange } from '../../domain/hq/exchange';
 import { data } from '../../data/store';
 import { addDays, shortDay, weekStart } from '../../domain/log/dates';
 import { formatMinutes } from '../../domain/log/duration';
@@ -107,6 +108,28 @@ function ScreenSheet({ spec }: { spec: SheetSpec }) {
 }
 registerSheet('screen', ScreenSheet);
 
+/** 為替: this week's screen time, in the currency of your own sessions. */
+function ExchangeRate({ minutes, days }: { minutes: number; days: number }) {
+  const today = useToday();
+  const st = useStore(data, (s) => s);
+  const lines = useMemo(() => exchange(minutes, progressInput(st, today)), [minutes, st, today]);
+  if (!lines.length) return null;
+  return (
+    <>
+      <H2 aside={`${days} ${days === 1 ? 'day' : 'days'} this week`}>Exchange rate</H2>
+      <div className="i-pnl i-stack">
+        <p className="i-note">{formatMinutes(minutes)} on a screen so far this week is worth:</p>
+        <ul className="sc-rate">
+          {lines.map((l) => (
+            <li key={l.section}>{l.text}</li>
+          ))}
+        </ul>
+        <p className="i-note">At your own rates from the last three months. Not every screen minute is wasted; this is just what it costs.</p>
+      </div>
+    </>
+  );
+}
+
 export function ScreenChannel() {
   const today = useToday();
   const days = useScreenDays();
@@ -144,6 +167,7 @@ export function ScreenChannel() {
         <Meter value={tw != null ? formatMinutes(tw) : '—'} label="Daily average · this week" />
         <Meter value={tw != null && lw != null ? <span style={{ color: tw <= lw ? 'var(--ok)' : 'var(--warn)' }}>{tw <= lw ? '−' : '+'}{Math.abs(tw - lw)}m</span> : '—'} label={`vs last week${lw != null ? ` (${formatMinutes(lw)})` : ''}`} />
       </div>
+      <ExchangeRate minutes={thisWeek.reduce((n, d) => n + (days.get(d) ?? 0), 0)} days={thisWeek.filter((d) => days.has(d)).length} />
       <H2 aside="hours a day">Last 14 days</H2>
       <div className="i-pnl">
         <Bars values={last14.map((d) => days.get(d) ?? 0)} labels={last14.map((d) => shortDay(d).slice(0, 1))} long={last14.map((d) => `${shortDay(d)}${days.has(d) ? '' : ' (not entered)'}`)} target={target} hi={[13]} fmt={(v) => `${Math.round((v / 60) * 10) / 10}h`} caption="Screen time per day, last 14 days" />

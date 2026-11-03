@@ -172,6 +172,17 @@ describe('shapes', () => {
     await expect(as(member, `insert into public.lt_prefs (id, value) values ('Has Spaces', '1')`)).rejects.toThrow(/check/);
   });
 
+  it('takes every Hideout record as it is, with no migration', async () => {
+    for (const kind of ['hq_checkin', 'hq_ritual', 'hq_ritual_day', 'hq_card', 'hq_recall_day', 'hq_niggle', 'hq_gear', 'hq_prediction', 'hq_capsule', 'hq_review', 'hq_experiment']) {
+      await as(member, `insert into public.lt_records (id, section, kind, data) values (gen_random_uuid(), 'cabinet', $1, '{"x": 1}')`, [kind]);
+    }
+    await as(member, `insert into public.lt_records (id, section, kind) values (gen_random_uuid(), 'violin', 'tempo_ladder')`);
+    await as(member, `insert into public.lt_prefs (id, value) values ('run_place', '{"name": "Singapore"}'), ('violin_a4', '442')`);
+    // The longest letter and reply the vault allows, in three-byte characters, plus a snapshot.
+    const data = JSON.stringify({ letter: 'あ'.repeat(7000), reply: 'あ'.repeat(2000), snapshot: { level: 100, hours: { violin: 1000.5, coding: 1000.5, study: 1000.5, sports: 1000.5 } } });
+    await as(member, `insert into public.lt_records (id, section, kind, data) values (gen_random_uuid(), 'cabinet', 'hq_capsule', $1::jsonb)`, [data]);
+  });
+
   it('takes the Future section in every table that has a section, and still refuses unknown ones', async () => {
     await as(member, `insert into public.lt_records (id, section, kind, data) values (gen_random_uuid(), 'future', 'uni', '{"name": "MIT"}')`);
     await as(member, `insert into public.lt_details (id, section) values (gen_random_uuid(), 'future')`);

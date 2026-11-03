@@ -5,9 +5,12 @@ import { sectionEntries } from '../../data/lt';
 import { data } from '../../data/store';
 import { sectionInfo } from '../../domain/sections';
 import { useStore } from '../../lib/createStore';
+import { addTodo } from '../../data/todoActions';
+import { toast } from '../../data/ui';
 import { accent, Chips } from '../../ui/i/bits';
 import { Sheet } from '../../ui/i/Sheet';
-import { discardFocus, elapsedSec, finishFocus, FOCUS_GOALS, FOCUS_SECTIONS, pauseFocus, resumeFocus, startFocus, useFocus, type Focus, type FocusSection } from './focus';
+import { discardFocus, dropThought, elapsedSec, finishFocus, FOCUS_GOALS, FOCUS_SECTIONS, focusStore, parkThought, pauseFocus, resumeFocus, startFocus, useFocus, type Focus, type FocusSection } from './focus';
+import { currentSound, savedSound, setSound, SOUNDS, stopSound, type SoundId } from './sound';
 import './focus.css';
 
 const pad2 = (n: number) => String(n).padStart(2, '0');
@@ -70,6 +73,69 @@ function Ring({ f, sec, hit }: { f: Focus; sec: number; hit: boolean }) {
   );
 }
 
+// Sound only runs while the clock does, whichever sheet or page stopped it.
+focusStore.subscribe(() => {
+  if (!focusStore.get().focus?.startedAt && currentSound() !== 'off') stopSound();
+});
+
+/** Sound for the session. */
+function SoundChips() {
+  const [sound, setChoice] = useState<SoundId>(() => currentSound());
+  const choose = (id: SoundId) => {
+    setSound(id);
+    setChoice(id);
+  };
+  return <Chips label="Sound" value={sound} onChange={choose} options={SOUNDS.map((s) => ({ id: s.id, label: s.label }))} />;
+}
+
+/** Thoughts that turn up mid-session go in the jar, and become tasks when the session ends. */
+function ThoughtJar({ f }: { f: Focus }) {
+  const [text, setText] = useState('');
+  const jar = f.jar ?? [];
+  const add = () => {
+    parkThought(text);
+    setText('');
+  };
+  return (
+    <div className="fo-jar">
+      <form
+        className="fo-jar__add"
+        onSubmit={(e) => {
+          e.preventDefault();
+          add();
+        }}
+      >
+        <input className="i-input" value={text} onChange={(e) => setText(e.target.value)} placeholder="Stray thought? Park it here" aria-label="Park a stray thought" maxLength={200} />
+        <button type="submit" className="i-btn i-btn--sm" disabled={!text.trim()}>
+          Park
+        </button>
+      </form>
+      {jar.length > 0 && (
+        <ul className="fo-jar__list" aria-label="Parked thoughts">
+          {jar.map((t, i) => (
+            <li key={`${i}${t}`}>
+              <span>{t}</span>
+              <button type="button" className="i-btn i-btn--sm" onClick={() => dropThought(i)} aria-label={`Remove: ${t}`}>
+                ✕
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+      {jar.length > 0 && <p className="i-note">They become tasks when the session ends.</p>}
+    </div>
+  );
+}
+
+/** The session is over: what was parked becomes tasks, so nothing gets lost with the timer. */
+function emptyJar(f: Focus) {
+  const jar = f.jar ?? [];
+  if (!jar.length) return;
+  const made = jar.filter((title) => !('error' in addTodo({ title, priority: 'normal', due: null, section: f.section })));
+  jar.forEach(() => dropThought(0));
+  if (made.length) toast(`${made.length} parked ${made.length === 1 ? 'thought is' : 'thoughts are'} now in your tasks`);
+}
+
 function FocusSheet() {
   const f = useFocus();
   const [section, setSection] = useState<FocusSection>('study');
@@ -86,7 +152,15 @@ function FocusSheet() {
         onClose={closeSheet}
         accent={section}
         footer={
-          <button type="button" className="i-btn i-btn--sig i-btn--block" onClick={() => startFocus(section, goal === 'open' ? null : Number(goal))}>
+          <button
+            type="button"
+            className="i-btn i-btn--sig i-btn--block"
+            onClick={() => {
+              startFocus(section, goal === 'open' ? null : Number(goal));
+              // The start button is a tap, so the browser lets last time's sound begin.
+              setSound(savedSound(), false);
+            }}
+          >
             Start focus
           </button>
         }
@@ -94,6 +168,7 @@ function FocusSheet() {
         <p className="i-note">A timer for one session. It keeps running if you close this or lock the phone; when you finish, the minutes go into that section's log sheet for you to save.</p>
         <Chips label="Section" value={section} onChange={setSection} options={FOCUS_SECTIONS.map((s) => ({ id: s, label: sectionInfo(s).name, c: s }))} />
         <Chips label="Goal" value={goal} onChange={setGoal} options={[...FOCUS_GOALS.map((g) => ({ id: String(g), label: `${g} min` })), { id: 'open', label: 'Open' }]} />
+        <p className="i-note">Sound and a thought jar are on the timer once it’s going.</p>
       </Sheet>
     );
   }
@@ -116,7 +191,14 @@ function FocusSheet() {
                 Pause
               </button>
             ) : (
-              <button type="button" className="i-btn" onClick={resumeFocus}>
+              <button
+                type="button"
+                className="i-btn"
+                onClick={() => {
+                  resumeFocus();
+                  setSound(savedSound(), false);
+                }}
+              >
                 Resume
               </button>
             )}
@@ -124,6 +206,7 @@ function FocusSheet() {
               type="button"
               className="i-btn i-btn--sig i-btn--block"
               onClick={() => {
+                emptyJar(f);
                 const done = finishFocus();
                 if (done) logIt(done);
               }}
@@ -139,6 +222,8 @@ function FocusSheet() {
       </div>
       {f.finishedAt && <p className="i-note">Nothing is saved until you save the session. It waits here until then.</p>}
       {!f.finishedAt && hit && <p className="i-note fo-hit">Goal cleared. Keep going or finish now — every minute counts.</p>}
+      {f.startedAt && <SoundChips />}
+      {!f.finishedAt && <ThoughtJar f={f} />}
       <div className="fo-discard">
         {asking ? (
           <>
@@ -147,6 +232,7 @@ function FocusSheet() {
               type="button"
               className="i-btn i-btn--sm i-btn--danger"
               onClick={() => {
+                emptyJar(f);
                 discardFocus();
                 setAsking(false);
               }}

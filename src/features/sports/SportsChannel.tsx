@@ -17,6 +17,7 @@ import { Sheet } from '../../ui/i/Sheet';
 import { bests, isSportDetail, paceOf, SPORTS, sportInfo, type SportDetail, type SportId, type SportSession } from './model';
 import { SportsArt } from './Art';
 import { MarathonPanel } from '../plans/MarathonPanel';
+import { RunWindowPanel } from './RunWindow';
 import './theme.css';
 
 const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
@@ -133,6 +134,7 @@ export function SportsChannel() {
     <div style={accent('sports')}>
       <ChannelHead id="sports" art={<SportsArt />} />
       <MarathonPanel />
+      <RunWindowPanel minutes={45} />
       <H2>Training log</H2>
       <Chips label="Sport" value={sport} onChange={setSport} options={[{ id: 'all' as const, label: 'All' }, ...SPORTS.map((s) => ({ id: s.id, label: s.name }))]} />
       <button type="button" className="i-btn i-btn--sig i-btn--block" onClick={() => openSheet({ type: 'sports', sport: sport === 'all' ? 'running' : sport })}>

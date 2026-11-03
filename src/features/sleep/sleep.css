@@ -1,3 +1,17 @@
+.s-tonight__row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+.s-tonight__row > div {
+  display: grid;
+  gap: 2px;
+}
+.s-tonight__row b {
+  font-size: 24px;
+  font-weight: 400;
+  letter-spacing: -0.02em;
+}
 .s-night {
   background: var(--night);
   color: var(--night-fg);

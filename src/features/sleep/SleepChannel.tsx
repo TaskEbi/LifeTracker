@@ -12,6 +12,7 @@ import { Line } from '../../ui/i/charts';
 import { ChannelHead } from '../../ui/i/ChannelHead';
 import { Icon } from '../../ui/i/Icon';
 import { fromMin, nightsFrom, plannedFor, sleepStats, toMin, windDownAt, type Night } from './model';
+import { TonightPanel } from './TonightPanel';
 import './SleepSheet';
 import './sleep.css';
 import { SleepArt } from './Art';
@@ -135,6 +136,8 @@ export function SleepChannel() {
         <Meter value={week.withBed ? `${week.inWindow}/${week.withBed}` : '—'} label={`Within ${RULES.bedtimeWindow} min of plan`} />
         <Meter value={week.avgBed ?? '—'} label={week.avgScore != null ? `Average bedtime · score ${week.avgScore}` : 'Average bedtime'} />
       </div>
+
+      <TonightPanel />
 
       <div className="i-cols">
         <div>
