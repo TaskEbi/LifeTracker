@@ -240,7 +240,7 @@ describe('the ledger', () => {
     expect(normaliseRanking(null)).toHaveLength(TIMED_SECTIONS.length);
     const r = normaliseRanking(['chess', 'nope', 'chess']);
     expect(r[0]).toBe('chess');
-    expect(new Set(r).size).toBe(8);
+    expect(new Set(r).size).toBe(TIMED_SECTIONS.length);
   });
 });
 

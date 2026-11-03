@@ -234,7 +234,7 @@ An eleventh Hideout room (灯台, `/base/lighthouse`), for the days you don't fe
 - I'm struggling (`/base/lighthouse/read`, one tap from Home, brighter on a storm or rain day, also in the command sheet): say what's going on; your own message for that feeling (the one unread longest first); words that fit; what your records say you've already got through (comebacks after a stop, rough spells that cleared, low-energy days that still got done, your own wins, all counted and left out when there's nothing to count); then one small thing that fits: a rest day, the mistake notebook, a number on the fear in the Oracle, the Hall of records, or fifteen minutes of the next move. Ends with a plain line to tell someone if it's heavier than a bad day.
 - Home: today's words and a Struggling? button under Focus. Also fixed: the Hideout said "0/0 of the Big Three" for a review with none chosen.
 
-## M24 · Maths (CH12) (built on branch `maths-section`; needs the migration first)
+## M24 · Maths (CH12) (done)
 A twelfth section, Maths · 数, for competitions: UKMT (SMC, BMO1, BMO2) and MAA (AMC 12, AIME, USAMO). Its own space (`data-sect='maths'`): a page of Oliver Byrne's 1847 Euclid, with Proposition I.47 in red, blue and yellow on cream. The square on the hypotenuse counts down to the next contest, a tombstone is added for each real contest sat, and tapping the page swings the dividers and writes Q.E.D. IM Fell English for the big words, EB Garamond for anything holding a number (Fell's old-style 1 reads as I).
 - First visit: this season ready to add in one tap (SMC 7 Oct, 112/125; AMC 12B Sat 14 Nov; BMO1 Thu 19 Nov at school).
 - Desk: countdown to the next contest, what follows it, the brief, a practice paper against the clock; asks for a result once the day has passed; problems due another go; this week against the target (default 2 h, stepper); 4-week matrix; emblems; sessions.
@@ -249,7 +249,7 @@ A twelfth section, Maths · 数, for competitions: UKMT (SMC, BMO1, BMO2) and MA
 - Scroll: contest words log here ("bmo 60 geometry", "amc 12 45 past paper"); plain "maths 40" stays the school subject in Study.
 - Data: lt_records kinds sitting, problem; lt_details section maths; targets.mathsWeek. Migration `20261103120000_lifetracker_maths.sql` widens the section checks (lt_records, lt_details, lt_events, todos.section) to allow 'maths'. Additive; Curio Cabinet unaffected.
 - Dates: the AMC 12B and BMO1 dates are the ones the user sits them on, which differ by a day from the published 13 and 18 Nov. The SMC date is from UKMT's calendar.
-- Release order: apply the migration (`npx supabase db push`), then merge `maths-section` to main (deploys). Writing 'maths' rows before the migration would be refused by the server's checks.
+- Migration on production by 3 Nov 2026 (`supabase migration list --linked` shows it on both sides). Merged to main and deployed.
 
 ## M25 · Twenty more: new rooms and section tools (done)
 (M24 is Maths, on its own branch.) The Hideout now has 21 rooms on four floors (B1 Plan, B2 Train, B3 Think, B4 Keep). No migration: new `lt_records` kinds `hq_oath`, `hq_scale`, `hq_diary`, `hq_close`, `hq_urge_day`, `hq_mock`; lt_prefs `tech_tree`, `hq_priorities`, `ear_stats`, `chess_vision`, `race_checks`, `rev_subjects`. Nothing earns XP. Logic in `src/domain/hq/` (`forge`, `arena`, `oath`, `scales`, `ledger`, `diary`, `body2`, `music`, `tokaido`, `techTree`, `drills`, `wrapped`, `decks`), screens in `src/features/hq/rooms/` and the sections.
