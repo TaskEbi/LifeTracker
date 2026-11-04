@@ -18,11 +18,13 @@ import { useStore } from '../../lib/createStore';
 import { accent } from '../../ui/i/bits';
 import { CheckInCard } from '../hq/HomeCards';
 import { DiaryLine } from '../hq/rooms/Diary';
-import { useHq } from '../hq/store';
+import { useHq, type HqState } from '../hq/store';
+import { playNight } from '../../app/specialMoments';
+import type { DataState } from '../../data/store';
 
-type RowId = 'mood' | 'question' | 'activity' | 'sleep' | 'rituals' | 'tasks' | 'screen' | 'close';
+export type RowId = 'mood' | 'question' | 'activity' | 'sleep' | 'rituals' | 'tasks' | 'screen' | 'close';
 
-interface Row {
+export interface Row {
   id: RowId;
   label: string;
   /** What's recorded, or what's still to do. */
@@ -36,125 +38,133 @@ interface Row {
   c?: string;
 }
 
-interface Logged {
+export interface Logged {
   section: SectionId | null;
   name: string;
   minutes: number;
   count: number;
 }
 
-export function TodayChecklist() {
+/** Everything in the Daily Log today, by section (topics no section uses are listed by name). */
+export function loggedToday(st: DataState, today: string): Logged[] {
+  const input = progressInput(st, today);
+  const by = new Map<string, Logged>();
+  for (const e of input.entries) {
+    if (e.date !== today) continue;
+    const section = input.topicSection.get(e.topic_id) ?? null;
+    const key = section ?? `topic:${e.topic_id}`;
+    const name = section ? sectionInfo(section).name : (st.log_topics.get(e.topic_id)?.name ?? 'Other');
+    const cur = by.get(key) ?? { section, name, minutes: 0, count: 0 };
+    cur.minutes += e.minutes;
+    cur.count += 1;
+    by.set(key, cur);
+  }
+  return [...by.values()].sort((a, b) => b.minutes - a.minutes);
+}
+
+/** The checklist's rows, worked out from the records. */
+export function checklistRows(st: DataState, hq: HqState, today: string, hour: number, logged: Logged[]): Row[] {
+  const evening = isClosingTime(hour);
+  const metric = (m: string) => [...st.log_metrics.values()].find((x) => !x.deleted_at && x.metric === m && x.date === today);
+  const sleep = metric('sleep');
+  const screen = metric('screen');
+  const mood = hq.checkIns.find((c) => c.date === today);
+  const diary = hq.diary.find((e) => e.date === today);
+  const rituals = hq.rituals.filter((r) => !r.archived && appliesOn(r, today));
+  const ritualsDone = rituals.filter((r) => hq.ritualDays.get(today)?.has(r.id)).length;
+  const todos = [...st.todos.values()].filter((t) => !t.deleted_at);
+  const late = todos.filter((t) => !t.done_at && t.due && t.due <= today).length;
+  const dueDone = todos.filter((t) => t.done_at && t.due === today).length;
+  const closeDate = closingDate(today, hour);
+  const closed = hq.closes.some((c) => c.date === closeDate && c.at);
+  const minutes = logged.reduce((s, l) => s + l.minutes, 0);
+  const w = mood ? weatherOf(mood.mood) : null;
+
+  const out: Row[] = [
+    {
+      id: 'mood',
+      label: 'Mood',
+      detail: w ? `${w.name}${mood?.energy ? ` · energy ${mood.energy}/5` : ''}` : 'How’s the weather in there?',
+      done: !!mood,
+      inline: true,
+      c: w?.c,
+    },
+    {
+      id: 'question',
+      label: 'Today’s question',
+      detail: diary ? diary.text : questionFor(today),
+      done: !!diary,
+      inline: true,
+    },
+    {
+      id: 'activity',
+      label: 'Activity',
+      detail: logged.length ? `${shortMinutes(minutes)} · ${logged.map((l) => l.name).join(', ')}` : 'Nothing logged yet',
+      done: logged.length > 0,
+      inline: true,
+    },
+    {
+      id: 'sleep',
+      label: 'Sleep last night',
+      detail: sleep ? shortMinutes(sleep.minutes) : 'Not logged',
+      done: !!sleep,
+      go: () => openSheet({ type: 'sleep', date: today }),
+      c: 'var(--c-sleep)',
+    },
+  ];
+  if (rituals.length)
+    out.push({
+      id: 'rituals',
+      label: 'Rituals',
+      detail: `${ritualsDone} of ${rituals.length} done`,
+      done: ritualsDone === rituals.length,
+      go: () => navigate('base', ['rituals']),
+    });
+  if (late || dueDone)
+    out.push({
+      id: 'tasks',
+      label: 'Tasks due',
+      detail: late ? `${late} still open` : `${dueDone} done`,
+      done: !late,
+      go: () => navigate('tasks'),
+    });
+  out.push({
+    id: 'screen',
+    label: 'Screen time',
+    detail: screen ? shortMinutes(screen.minutes) : evening ? 'Not logged' : 'Log it tonight',
+    done: !!screen,
+    later: !screen && !evening,
+    go: () => openSheet({ type: 'screen', date: today }),
+    c: 'var(--c-screen)',
+  });
+  if (evening)
+    out.push({
+      id: 'close',
+      label: 'Close the day',
+      detail: closed ? 'Closed' : 'Clear what’s left, then stop',
+      done: closed,
+      go: () => navigate('base', ['close']),
+    });
+  return out;
+}
+
+/** Today's checklist with its tally; also read by the shell for the "day complete" scene. */
+export function useChecklist() {
   const today = useToday();
   const st = useStore(data, (s) => s);
   const hq = useHq();
-  const [open, setOpen] = useState<RowId | null>(null);
-  const [showAll, setShowAll] = useState(false);
   const hour = hourIn(st.settings.log_timezone);
-  const evening = isClosingTime(hour);
-
-  const logged = useMemo<Logged[]>(() => {
-    const input = progressInput(st, today);
-    const by = new Map<string, Logged>();
-    for (const e of input.entries) {
-      if (e.date !== today) continue;
-      const section = input.topicSection.get(e.topic_id) ?? null;
-      const key = section ?? `topic:${e.topic_id}`;
-      const name = section ? sectionInfo(section).name : (st.log_topics.get(e.topic_id)?.name ?? 'Other');
-      const cur = by.get(key) ?? { section, name, minutes: 0, count: 0 };
-      cur.minutes += e.minutes;
-      cur.count += 1;
-      by.set(key, cur);
-    }
-    return [...by.values()].sort((a, b) => b.minutes - a.minutes);
-  }, [st, today]);
-
-  const rows = useMemo<Row[]>(() => {
-    const metric = (m: string) => [...st.log_metrics.values()].find((x) => !x.deleted_at && x.metric === m && x.date === today);
-    const sleep = metric('sleep');
-    const screen = metric('screen');
-    const mood = hq.checkIns.find((c) => c.date === today);
-    const diary = hq.diary.find((e) => e.date === today);
-    const rituals = hq.rituals.filter((r) => !r.archived && appliesOn(r, today));
-    const ritualsDone = rituals.filter((r) => hq.ritualDays.get(today)?.has(r.id)).length;
-    const todos = [...st.todos.values()].filter((t) => !t.deleted_at);
-    const late = todos.filter((t) => !t.done_at && t.due && t.due <= today).length;
-    const dueDone = todos.filter((t) => t.done_at && t.due === today).length;
-    const closeDate = closingDate(today, hour);
-    const closed = hq.closes.some((c) => c.date === closeDate && c.at);
-    const minutes = logged.reduce((s, l) => s + l.minutes, 0);
-    const w = mood ? weatherOf(mood.mood) : null;
-
-    const out: Row[] = [
-      {
-        id: 'mood',
-        label: 'Mood',
-        detail: w ? `${w.name}${mood?.energy ? ` · energy ${mood.energy}/5` : ''}` : 'How’s the weather in there?',
-        done: !!mood,
-        inline: true,
-        c: w?.c,
-      },
-      {
-        id: 'question',
-        label: 'Today’s question',
-        detail: diary ? diary.text : questionFor(today),
-        done: !!diary,
-        inline: true,
-      },
-      {
-        id: 'activity',
-        label: 'Activity',
-        detail: logged.length ? `${shortMinutes(minutes)} · ${logged.map((l) => l.name).join(', ')}` : 'Nothing logged yet',
-        done: logged.length > 0,
-        inline: true,
-      },
-      {
-        id: 'sleep',
-        label: 'Sleep last night',
-        detail: sleep ? shortMinutes(sleep.minutes) : 'Not logged',
-        done: !!sleep,
-        go: () => openSheet({ type: 'sleep', date: today }),
-        c: 'var(--c-sleep)',
-      },
-    ];
-    if (rituals.length)
-      out.push({
-        id: 'rituals',
-        label: 'Rituals',
-        detail: `${ritualsDone} of ${rituals.length} done`,
-        done: ritualsDone === rituals.length,
-        go: () => navigate('base', ['rituals']),
-      });
-    if (late || dueDone)
-      out.push({
-        id: 'tasks',
-        label: 'Tasks due',
-        detail: late ? `${late} still open` : `${dueDone} done`,
-        done: !late,
-        go: () => navigate('tasks'),
-      });
-    out.push({
-      id: 'screen',
-      label: 'Screen time',
-      detail: screen ? shortMinutes(screen.minutes) : evening ? 'Not logged' : 'Log it tonight',
-      done: !!screen,
-      later: !screen && !evening,
-      go: () => openSheet({ type: 'screen', date: today }),
-      c: 'var(--c-screen)',
-    });
-    if (evening)
-      out.push({
-        id: 'close',
-        label: 'Close the day',
-        detail: closed ? 'Closed' : 'Clear what’s left, then stop',
-        done: closed,
-        go: () => navigate('base', ['close']),
-      });
-    return out;
-  }, [st, hq, today, hour, evening, logged]);
-
+  const logged = useMemo(() => loggedToday(st, today), [st, today]);
+  const rows = useMemo(() => checklistRows(st, hq, today, hour, logged), [st, hq, today, hour, logged]);
   const counted = rows.filter((r) => !r.later);
   const done = counted.filter((r) => r.done).length;
-  const allDone = done === counted.length;
+  return { today, hour, evening: isClosingTime(hour), logged, rows, counted: counted.length, done, allDone: done === counted.length, ready: st.ready };
+}
+
+export function TodayChecklist() {
+  const { today, logged, rows, counted, done, allDone, evening } = useChecklist();
+  const [open, setOpen] = useState<RowId | null>(null);
+  const [showAll, setShowAll] = useState(false);
   // When everything's in, fold down to one line until asked.
   const visible = allDone && !showAll ? [] : rows;
 
@@ -194,12 +204,12 @@ export function TodayChecklist() {
         <h2 className="h-h2">
           <span aria-hidden="true">今日</span> Today’s checklist
         </h2>
-        <span className="h-tdl__count" aria-label={`${done} of ${counted.length} recorded`}>
-          {done}/{counted.length}
+        <span className="h-tdl__count" aria-label={`${done} of ${counted} recorded`}>
+          {done}/{counted}
         </span>
       </div>
       <span className="h-tdl__bar" aria-hidden="true">
-        <i style={{ width: `${counted.length ? Math.round((done / counted.length) * 100) : 0}%` }} />
+        <i style={{ width: `${counted ? Math.round((done / counted) * 100) : 0}%` }} />
       </span>
       {allDone && (
         <button type="button" className="h-tdl__all" onClick={() => setShowAll(!showAll)} aria-expanded={showAll}>
@@ -237,6 +247,11 @@ export function TodayChecklist() {
             );
           })}
         </ul>
+      )}
+      {evening && (
+        <button type="button" className="h-tdl__bed" onClick={playNight}>
+          <span aria-hidden="true">☾</span> Going to bed
+        </button>
       )}
     </section>
   );

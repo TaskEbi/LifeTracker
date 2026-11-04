@@ -17,6 +17,7 @@ import { FocusPill } from '../features/focus/FocusSheet';
 import { sectionViews } from './views';
 import { loadSectionFonts, type LookId } from './sectionLook';
 import { resolveTheme } from './theme';
+import { useSpecialMoments } from './specialMoments';
 
 const Cabinet = lazy(() => import('../features/cabinet/CabinetChannel'));
 
@@ -209,6 +210,7 @@ function useSectionLook(sect: LookId | null) {
 }
 
 export function Shell() {
+  useSpecialMoments();
   const route = useRoute();
   const dir = useRouteDir();
   const View: ComponentType | undefined = route.name === 'home' ? Home : sectionViews[route.name];

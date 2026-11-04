@@ -757,3 +757,20 @@
     flex-wrap: wrap;
   }
 }
+.h-tdl__bed {
+  width: 100%;
+  min-height: 44px;
+  margin-top: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 13.5px;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  color: #c9b6ff;
+  border-top: 1px solid var(--rule);
+}
+.h-tdl__bed span {
+  font-size: 18px;
+}
