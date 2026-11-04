@@ -21,13 +21,14 @@ export function Doors({ name }: { name: RouteName }) {
     if (prev.current === name) return;
     prev.current = name;
     const isSection = (SECTION_IDS as readonly string[]).includes(name);
-    if ((!isSection && name !== 'bucket' && name !== 'base') || fxStore.get().mode !== 'full' || !fxPrefs.get().doors || playStyle() !== 'full') {
+    if ((!isSection && name !== 'bucket' && name !== 'base' && name !== 'album') || fxStore.get().mode !== 'full' || !fxPrefs.get().doors || playStyle() !== 'full') {
       setDoor(null);
       return;
     }
     const info = isSection ? sectionInfo(name as SectionId) : null;
-    const hideout = name === 'base';
-    setDoor({ key: ++n.current, kanji: info?.kanji ?? (hideout ? SYSTEM_KANJI.base : SYSTEM_KANJI.bucket), label: info?.full ?? (hideout ? 'Hideout' : 'Bucket list'), color: isSection ? `var(--c-${name})` : hideout ? '#ffb02e' : '#ffc94d' });
+    const other = { base: { kanji: SYSTEM_KANJI.base, label: 'Hideout', color: '#ffb02e' }, bucket: { kanji: SYSTEM_KANJI.bucket, label: 'Bucket list', color: '#ffc94d' }, album: { kanji: SYSTEM_KANJI.album, label: 'Album', color: '#ff4a2a' } } as const;
+    const o = isSection ? null : other[name as keyof typeof other];
+    setDoor({ key: ++n.current, kanji: info?.kanji ?? o!.kanji, label: info?.full ?? o!.label, color: isSection ? `var(--c-${name})` : o!.color });
     const t = window.setTimeout(() => setDoor(null), DOOR_MS);
     return () => window.clearTimeout(t);
   }, [name]);

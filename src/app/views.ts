@@ -21,6 +21,7 @@ import { FutureChannel } from '../features/future/FutureChannel';
 import { ReadingChannel } from '../features/reading/ReadingChannel';
 import { MathsChannel } from '../features/maths/MathsChannel';
 import { HqView } from '../features/hq/HqView';
+import { AlbumView } from '../features/album/AlbumView';
 
 export const sectionViews: Partial<Record<RouteName, ComponentType>> = {
   violin: ViolinChannel,
@@ -41,4 +42,5 @@ export const sectionViews: Partial<Record<RouteName, ComponentType>> = {
   reading: ReadingChannel,
   maths: MathsChannel,
   base: HqView,
+  album: AlbumView,
 };

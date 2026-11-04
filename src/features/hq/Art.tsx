@@ -1,6 +1,6 @@
 /** The Hideout's drawings: the hillside above it and a little scene inside each room. Decorative only. */
 import type { ReactElement } from 'react';
-import type { RoomId } from './HqView';
+import type { RoomId } from './rooms';
 
 /** Above ground: a dark hill, a pine, a hatch left ajar with light coming out, and the drone on watch. */
 export function HideoutTop() {

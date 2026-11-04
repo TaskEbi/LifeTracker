@@ -15,6 +15,7 @@ LifeTracker is a personal tracker (React 19 + Vite + TypeScript PWA) that shares
 - Tasks → `todos` (+ `section`). Cabinet → `items` / `rooms` / `connections`. Bucket list → `lt_bucket` (done when `done_at` is set).
 - Maths → `lt_records` kinds `sitting` (a paper, real or practice) and `problem`; a real contest with a date also has an `lt_events` row tagged `data.maths`.
 - Hideout (review, cards, check-ins, niggles, gear, predictions, capsules, rituals) → `lt_records` with `hq_*` kinds under the cabinet section (`src/features/hq/store.ts`). A row holds 32 KB at most, so long text needs a limit.
+- Album (a face and memories per day) → one `lt_records` row per photo, kind `album_shot`, under the cabinet section (`src/features/album/store.ts`). The image is a blob on the device until sync uploads it to Curio Cabinet's private `photos` bucket (`src/lib/photos.ts`); the row keeps the path and a small inline thumbnail.
 - XP, levels, streaks and achievements are **derived** (`src/domain/progress`). Never store XP.
 
 ## Code
