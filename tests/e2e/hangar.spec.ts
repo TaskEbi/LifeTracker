@@ -32,7 +32,7 @@ test('hangar: a fresh start has nothing to spend and says how to earn', async ({
   await expect(page.getByRole('heading', { name: 'Hangar', level: 1 })).toBeVisible();
   await expect(page.getByRole('group', { name: 'Your wallet' })).toContainText('0');
   await expect(page.getByText(/None waiting/)).toBeVisible();
-  await page.getByRole('navigation', { name: 'Hangar' }).getByRole('button', { name: 'Shop' }).click();
+  await page.getByRole('navigation', { name: 'Hangar' }).getByRole('button', { name: 'Shop', exact: true }).click();
   await expect(page.getByRole('heading', { name: "This week's shelf" })).toBeVisible();
   for (const b of await page.locator('.gm-shop .i-btn').all()) await expect(b).toBeDisabled();
 });
