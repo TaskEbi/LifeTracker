@@ -469,7 +469,7 @@ const Magma: Art = ({ c, c2, uid, still, happy }) => {
 
 // ─── 28 Glacier ─────────────────────────────────────────────────────────────
 
-const Glacier: Art = ({ c, c2, uid, still, happy }) => {
+const Glacier: Art = ({ c, c2, still, happy }) => {
   const light = mix(c2, 88, '#fff');
   const mid = mix(c, 40, c2);
   /** A crystal with a lit and a shaded face. */

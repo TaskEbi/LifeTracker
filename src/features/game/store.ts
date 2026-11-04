@@ -48,7 +48,7 @@ function earnInputOf(st: DataState, today: string): EarnInput {
     if (r.kind === 'gm_tx') {
       const t = txOf(r);
       if (t) txs.push(t);
-    } else if (r.kind.startsWith('hq_') || r.kind === 'highlight') {
+    } else if (r.kind.startsWith('hq_') || r.kind === 'highlight' || r.kind === 'album_shot') {
       rows.push({ id: r.id, kind: r.kind, day: input.dayOf(r.created_at), data: r.data });
     }
   }

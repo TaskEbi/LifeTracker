@@ -187,6 +187,12 @@ describe('shapes', () => {
     await as(member, `insert into public.lt_prefs (id, value) values ('tech_tree', '{}'), ('hq_priorities', '[]'), ('ear_stats', '{}'), ('chess_vision', '{}'), ('race_checks', '[]'), ('rev_subjects', '{}')`);
   });
 
+  it('takes an Album photo row as it is, with no migration: the largest thumbnail and caption fit', async () => {
+    // THUMB_MAX characters of base64 thumbnail plus a 140-character caption in three-byte characters
+    const data = JSON.stringify({ date: '2026-11-04', role: 'memory', path: 'album/0b6e4d1c-1111-4c1a-9e8a-2f5b8c3d4e5f.webp', thumb: `data:image/webp;base64,${'A'.repeat(20_000)}`, caption: 'あ'.repeat(140), star: true, at: '2026-11-04T09:00:00.000Z' });
+    await as(member, `insert into public.lt_records (id, section, kind, data) values (gen_random_uuid(), 'cabinet', 'album_shot', $1::jsonb)`, [data]);
+  });
+
   it('takes the Future section in every table that has a section, and still refuses unknown ones', async () => {
     await as(member, `insert into public.lt_records (id, section, kind, data) values (gen_random_uuid(), 'future', 'uni', '{"name": "MIT"}')`);
     await as(member, `insert into public.lt_details (id, section) values (gen_random_uuid(), 'future')`);

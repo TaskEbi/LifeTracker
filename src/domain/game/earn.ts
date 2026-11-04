@@ -375,7 +375,14 @@ export function grantsFor(input: EarnInput): Grant[] {
 
   // Hideout rooms and highlights.
   const lines = new Map<string, number>();
+  const faces = new Set<string>();
   for (const r of input.rows) {
+    if (r.kind === 'album_shot') {
+      // The Album's face of the day: once a day, however many were taken.
+      const d = r.data.date;
+      if (r.data.role === 'face' && typeof d === 'string' && d >= GAME_FROM && d <= today) faces.add(d);
+      continue;
+    }
     if (r.kind === 'highlight') {
       if (r.day >= GAME_FROM) lines.set(r.day, (lines.get(r.day) ?? 0) + 1);
       continue;
@@ -386,6 +393,7 @@ export function grantsFor(input: EarnInput): Grant[] {
     push({ key: `hq:${r.id}`, date: pay.date, source: 'hideout', label: pay.label, gain: { coins: pay.coins * wired(pay.date), ...(pay.gems ? { gems: pay.gems } : {}) } });
     if (pay.extra) push({ key: `hq:${r.id}:${pay.extra.tag}`, date: pay.extra.date, source: 'hideout', label: pay.extra.label, gain: { coins: pay.extra.coins * wired(pay.extra.date), ...(pay.extra.gems ? { gems: pay.extra.gems } : {}) } });
   }
+  for (const date of faces) push({ key: `face:${date}`, date, source: 'album', label: 'Photo of the day', gain: { coins: 10 } });
   for (const [date, n] of lines) push({ key: `lines:${date}`, date, source: 'reading', label: `${n} highlight${n === 1 ? '' : 's'}`, gain: { coins: Math.min(n, 20) } });
 
   // Seasonal tokens: a share of the day's XP, plus a little for turning up at all.

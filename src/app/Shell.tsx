@@ -17,6 +17,7 @@ import { FocusPill } from '../features/focus/FocusSheet';
 import { sectionViews } from './views';
 import { loadSectionFonts, type LookId } from './sectionLook';
 import { resolveTheme } from './theme';
+import { useSpecialMoments } from './specialMoments';
 
 const Cabinet = lazy(() => import('../features/cabinet/CabinetChannel'));
 
@@ -78,6 +79,7 @@ function Rail({ current, rest }: { current: RouteName; rest: string[] }) {
         <Icon name="plus" /> Log
       </button>
       {item('home', 'Home', SYSTEM_KANJI.home)}
+      {item('base', 'Hideout', SYSTEM_KANJI.base)}
       {SECTIONS.map((s) => item(s.id, s.full, s.kanji, `LV ${pad2(p.sections[s.id].level)}`))}
       <div className="i-rail__sep" />
       {item('progress', 'Progress', SYSTEM_KANJI.progress)}
@@ -85,7 +87,7 @@ function Rail({ current, rest }: { current: RouteName; rest: string[] }) {
       {item('progress', 'Achievements', '紋', undefined, ['achievements'])}
       {item('bucket', 'Bucket list', SYSTEM_KANJI.bucket)}
       {item('hangar', 'Hangar', SYSTEM_KANJI.hangar)}
-      {item('base', 'Hideout', SYSTEM_KANJI.base)}
+      {item('album', 'Album', SYSTEM_KANJI.album)}
       <div className="i-rail__sep" />
       {item('calendar', 'Calendar', SYSTEM_KANJI.calendar)}
       {item('tasks', 'Tasks', SYSTEM_KANJI.tasks)}
@@ -138,8 +140,8 @@ function CommandBar({ current }: { current: RouteName }) {
 const SYSTEM: { id: keyof typeof SYSTEM_KANJI; label: string }[] = [
   { id: 'progress', label: 'Progress' },
   { id: 'hangar', label: 'Hangar' },
-  { id: 'base', label: 'Hideout' },
   { id: 'bucket', label: 'Bucket' },
+  { id: 'album', label: 'Album' },
   { id: 'log', label: 'Activity' },
   { id: 'settings', label: 'Settings' },
 ];
@@ -153,6 +155,13 @@ export function ChannelBar({ current }: { current: RouteName }) {
           {SYSTEM_KANJI.home}
         </span>
         <b>Home</b>
+      </button>
+      {/* the hideout is used most days, so it sits next to Home rather than at the far end */}
+      <button type="button" className="i-chbar__btn" aria-current={current === 'base' ? 'page' : undefined} onClick={() => navigate('base')} style={{ '--c': 'var(--sig)' } as React.CSSProperties}>
+        <span className="i-chbar__k" aria-hidden="true">
+          {SYSTEM_KANJI.base}
+        </span>
+        <b>Hideout</b>
       </button>
       {SECTIONS.map((s) => (
         <button key={s.id} type="button" className="i-chbar__btn" aria-current={current === s.id ? 'page' : undefined} onClick={() => navigate(s.id)} style={accent(s.id)}>
@@ -177,8 +186,7 @@ export function ChannelBar({ current }: { current: RouteName }) {
 
 export function StatusBar() {
   return (
-    <div className="i-status">
-      <span>LIFETRACKER</span>
+    <div className="i-status i-status--end">
       <SyncState />
     </div>
   );
@@ -206,13 +214,14 @@ function useSectionLook(sect: LookId | null) {
 }
 
 export function Shell() {
+  useSpecialMoments();
   const route = useRoute();
   const dir = useRouteDir();
   const View: ComponentType | undefined = route.name === 'home' ? Home : sectionViews[route.name];
   const isCabinet = route.name === 'cabinet';
   const sect = (SECTION_IDS as readonly string[]).includes(route.name) ? (route.name as SectionId) : null;
-  // the bucket list and the hideout aren't sections but have their own spaces too
-  const look: LookId | null = sect ?? (route.name === 'bucket' ? 'bucket' : route.name === 'base' ? 'base' : route.name === 'hangar' ? 'hangar' : null);
+  // the bucket list, the hideout, the hangar and the album aren't sections but have their own spaces too
+  const look: LookId | null = sect ?? (route.name === 'bucket' || route.name === 'base' || route.name === 'album' || route.name === 'hangar' ? route.name : null);
   const ref = useSectionLook(look);
   return (
     <div className="i-shell" ref={ref} data-sect={look ?? undefined}>

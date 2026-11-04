@@ -4,7 +4,7 @@
    the shared chrome (channel strip, command bar, rail) in the cabinet's tokens. */
 
 .cabinet-top {
-  padding: 10px max(16px, env(safe-area-inset-right, 0px)) 0 max(16px, env(safe-area-inset-left, 0px));
+  padding: calc(10px + env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px)) 0 max(16px, env(safe-area-inset-left, 0px));
 }
 .cabinet-top .i-chbar {
   margin-top: -10px;

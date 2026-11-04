@@ -97,9 +97,15 @@ body.lt::before {
   min-height: 100dvh;
 }
 .i-main {
+  /* slanted plates and art may poke past the edge; never let them widen the page.
+     clip (not hidden) keeps the sticky channel strip working */
+  overflow-x: clip;
+  width: 100%;
+  min-width: 0;
   max-width: 600px;
   margin: 0 auto;
-  padding: 10px var(--gutter-r) calc(var(--cmd-h) + 28px + env(safe-area-inset-bottom, 0px)) var(--gutter);
+  /* the status bar sits over the page in the installed app (viewport-fit=cover), so clear it */
+  padding: calc(10px + env(safe-area-inset-top, 0px)) var(--gutter-r) calc(var(--cmd-h) + 28px + env(safe-area-inset-bottom, 0px)) var(--gutter);
 }
 .i-view {
   animation: i-slide 0.22s var(--ease);
@@ -129,6 +135,10 @@ body.lt::before {
   font-family: var(--f-mono);
   font-size: 12px;
   color: var(--fg-2);
+}
+.i-status--end {
+  justify-content: flex-end;
+  min-height: 28px;
 }
 .i-status b {
   color: var(--fg);
@@ -323,6 +333,8 @@ body.lt::before {
     font-size: 11px;
     letter-spacing: 0;
     padding: 2px 8px;
+    flex: none;
+    white-space: nowrap;
     color: var(--acc2-fg);
     background: var(--acc2);
     clip-path: polygon(10% 0, 100% 0, 90% 100%, 0 100%);
@@ -347,7 +359,7 @@ body.lt::before {
   gap: 6px;
   overflow-x: auto;
   scrollbar-width: none;
-  margin: -10px calc(-1 * var(--gutter-r)) 12px calc(-1 * var(--gutter));
+  margin: -10px calc(-1 * var(--gutter-r)) 14px calc(-1 * var(--gutter));
   padding: 8px var(--gutter-r) 8px var(--gutter);
   background: color-mix(in srgb, var(--bg) 92%, transparent);
   backdrop-filter: blur(10px);
@@ -479,6 +491,12 @@ body.lt::before {
 .i-chhead > * {
   position: relative;
 }
+/* two or more actions beside the title squeeze it into fragments on a phone: give them their own row */
+@media (max-width: 479px) {
+  .i-chhead > .i-btns:has(> :nth-child(2)) {
+    grid-column: 1 / -1;
+  }
+}
 .i-chhead__kanji {
   position: absolute !important;
   right: 60px;
@@ -503,7 +521,7 @@ body.lt::before {
   font-family: var(--f-label);
   font-weight: var(--w-label);
   font-size: clamp(22px, 7vw, 30px);
-  overflow-wrap: anywhere;
+  overflow-wrap: break-word;
   letter-spacing: 0.01em;
   text-transform: var(--tt-label);
   line-height: 1.02;
@@ -598,6 +616,7 @@ body.lt::before {
 }
 .i-stack {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 10px;
 }
 .i-h2 {
@@ -644,15 +663,16 @@ body.lt::before {
 }
 .i-cols {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 0 24px;
 }
 @media (min-width: 900px) {
   .i-cols {
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     align-items: start;
   }
   .i-cols--3 {
-    grid-template-columns: 1fr 1fr 1fr;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
 
@@ -798,6 +818,14 @@ button.i-row:active {
 }
 .i-btn--block {
   width: 100%;
+}
+/* long labels wrap instead of running off the screen */
+.i-btn--block,
+.i-btns > .i-btn {
+  max-width: 100%;
+  white-space: normal;
+  text-align: center;
+  text-wrap: balance;
 }
 .i-btn--sm {
   min-height: 38px;

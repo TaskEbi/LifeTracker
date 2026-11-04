@@ -16,11 +16,14 @@ import { bossOf, Burst, cap, Caption, Coin, Extruded, Flap, Hanko, Ink, pad2, ra
 import { MOMENT_FX } from './scenes/moments';
 import { SECTION_FX } from './scenes/sections';
 import { MonthlyScene, SecretScene } from './scenes/special';
-import type { AnyMomentFx } from './scenes/types';
+import type { AnyMomentFx, AnySpecialFx } from './scenes/types';
+import { SPECIAL_FX } from './scenes/specials';
+import type { SpecialType } from '../../../domain/fun/special';
 
 export { bossOf, type Told } from './kit';
 
 const momentFx = (type: MomentType) => MOMENT_FX[type] as unknown as AnyMomentFx;
+const specialFx = (type: SpecialType) => SPECIAL_FX[type] as unknown as AnySpecialFx;
 const sectionFx = (id: string) => (Object.prototype.hasOwnProperty.call(SECTION_FX, id) ? SECTION_FX[id as keyof typeof SECTION_FX] : undefined);
 const isMonthly = (c: Extract<Celebration, { kind: 'quest' }>) => c.period === 'monthly' && !c.sweep;
 
@@ -59,6 +62,8 @@ export function tell(c: Celebration): Told {
     }
     case 'moment':
       return momentFx(c.moment.type).tell(c.moment);
+    case 'special':
+      return specialFx(c.special.type).tell(c.special);
   }
 }
 
@@ -79,6 +84,8 @@ export function timing(c: Celebration): Timing {
       return { dur: 2800, hit: 1150 };
     case 'moment':
       return momentFx(c.moment.type).time(c.moment);
+    case 'special':
+      return specialFx(c.special.type).time(c.special);
   }
 }
 
@@ -384,6 +391,10 @@ export function Scene({ c }: { c: Celebration }) {
       const fx = momentFx(c.moment.type);
       return <fx.Scene m={c.moment} />;
     }
+    case 'special': {
+      const fx = specialFx(c.special.type);
+      return <fx.Scene m={c.special} />;
+    }
   }
 }
 
@@ -411,6 +422,8 @@ function calmArt(c: Celebration) {
       return <span className="fx-calm__k">昇</span>;
     case 'moment':
       return momentFx(c.moment.type).calm(c.moment);
+    case 'special':
+      return specialFx(c.special.type).calm(c.special);
   }
 }
 

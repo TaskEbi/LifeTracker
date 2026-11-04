@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import type { Moment, MomentType } from '../../../../domain/progress/moments';
+import type { Special, SpecialType } from '../../../../domain/fun/special';
 import type { Timing, Told } from '../kit';
 
 export type MomentOf<T extends MomentType> = Extract<Moment, { type: T }>;
@@ -28,4 +29,21 @@ export interface SectionFx {
   time: Timing;
   /** Calm-card art. */
   calm: ReactNode;
+}
+
+export type SpecialOf<T extends SpecialType> = Extract<Special, { type: T }>;
+
+/** One special moment's long scene: same shape as a moment's. */
+export interface SpecialFx<T extends SpecialType> {
+  tell(m: SpecialOf<T>): Told;
+  time(m: SpecialOf<T>): Timing;
+  Scene(p: { m: SpecialOf<T> }): ReactNode;
+  calm(m: SpecialOf<T>): ReactNode;
+}
+export type SpecialFxMap = { [T in SpecialType]: SpecialFx<T> };
+export interface AnySpecialFx {
+  tell(m: Special): Told;
+  time(m: Special): Timing;
+  Scene(p: { m: Special }): ReactNode;
+  calm(m: Special): ReactNode;
 }

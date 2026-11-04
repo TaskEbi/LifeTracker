@@ -433,3 +433,14 @@ describe('shop', () => {
     expect(CONSUMABLES.length).toBeGreaterThan(4);
   });
 });
+
+describe('album', () => {
+  it('pays for the face of the day once a day, and nothing for memories', () => {
+    const d = GAME_FROM > '2026-11-01' ? GAME_FROM : '2026-11-01';
+    const shot = (id: string, role: string, date: string) => ({ id, kind: 'album_shot', day: date, data: { role, date, path: 'x' } });
+    const gs = grantsFor(base({ rows: [shot('a', 'face', d), shot('b', 'face', d), shot('c', 'memory', d), shot('d', 'face', '2099-01-01')] }));
+    const album = gs.filter((g) => g.source === 'album');
+    expect(album).toHaveLength(1);
+    expect(album[0].gain.coins).toBe(10);
+  });
+});
