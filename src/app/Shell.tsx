@@ -175,8 +175,7 @@ export function ChannelBar({ current }: { current: RouteName }) {
 
 export function StatusBar() {
   return (
-    <div className="i-status">
-      <span>LIFETRACKER</span>
+    <div className="i-status i-status--end">
       <SyncState />
     </div>
   );

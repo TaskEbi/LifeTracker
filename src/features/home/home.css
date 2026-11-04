@@ -327,7 +327,7 @@
   font-family: var(--f-label);
   font-size: 46px;
   line-height: 1;
-  color: color-mix(in srgb, var(--c) 22%, transparent);
+  color: color-mix(in srgb, var(--c) 12%, transparent);
   pointer-events: none;
 }
 .h-tech__name {
