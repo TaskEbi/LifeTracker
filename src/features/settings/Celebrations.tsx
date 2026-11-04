@@ -12,6 +12,10 @@ import { Toggle } from '../../ui/i/bits';
 import { celebrate, setFxMode, setFxPrefs, useFxMode, useFxPrefs, type Celebration, type FxMode } from '../../ui/i/fx/celebrate';
 import { bucketItems } from '../bucket/actions';
 import { STARTER_TEMPLATES, templateOf } from '../gym/model';
+import { specialFor } from '../../app/specialMoments';
+import { hqOf } from '../hq/store';
+import { hourIn } from '../../domain/fun/season';
+import type { Special, SpecialType } from '../../domain/fun/special';
 
 const MODES: { id: FxMode; label: string; hint: string }[] = [
   { id: 'full', label: 'Full', hint: '3D sequences (calm cards if the phone asks for less motion)' },
@@ -75,7 +79,32 @@ export function Celebrations() {
     const bucketDone = bucket.done.length;
     const bucketTotal = bucket.open.length + bucket.done.length;
 
+    // the long scenes, filled from your own records where they can be
+    const special = (s: Special): Celebration => ({ kind: 'special', special: s, preview: true });
+    const real = (t: SpecialType) => specialFor(t, st, today, hourIn(st.settings.log_timezone));
+    const hq = hqOf(st);
+    const review = hq.reviews[0];
+    const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+    const specials: Preview[] = [
+      { label: 'Good morning', c: real('morning') && special(real('morning')!) },
+      { label: 'Good night', c: real('night') && special(real('night')!) },
+      { label: 'New week', c: real('new-week') && special(real('new-week')!) },
+      { label: `New month · ${MONTHS[Number(today.slice(5, 7)) - 1]}`, c: real('new-month') && special(real('new-month')!) },
+      { label: 'New season', c: real('new-season') && special(real('new-season')!) },
+      { label: `New year · ${Number(today.slice(0, 4)) + 1}`, sample: true, c: special({ type: 'new-year', year: Number(today.slice(0, 4)) + 1, lastYearHours: 412 }) },
+      { label: 'Day complete', sample: true, c: special({ type: 'day-complete', items: 5, minutes: 95 }) },
+      { label: 'Stormy mood', c: special({ type: 'storm', notes: hq.notes.length }) },
+      { label: 'Close the day', sample: true, c: special({ type: 'close-day', first: 'Physics past paper', bed }) },
+      review
+        ? { label: 'Weekly review sealed', c: special({ type: 'war-council', theme: review.theme, big: review.big.map((b) => b.text).slice(0, 3) }) }
+        : { label: 'Weekly review sealed', sample: true, c: special({ type: 'war-council', theme: 'Exam week', big: ['Finish the TMUA paper', 'Bach gigue clean', 'Run three times'] }) },
+    ];
+
     const out: { name: string; items: Preview[] }[] = [
+      {
+        name: 'Special moments · longer scenes',
+        items: specials,
+      },
       {
         name: 'Core',
         items: [
@@ -190,6 +219,16 @@ export function Celebrations() {
       <div style={{ marginTop: 8 }}>
         <Toggle on={prefs.sky} label="Seasons and time of day on Home" hint="snow, sakura, rain, fireflies, autumn leaves" onChange={(sky) => setFxPrefs({ sky })} />
       </div>
+      {mode !== 'off' && (
+        <div style={{ marginTop: 8 }}>
+          <Toggle
+            on={prefs.moments}
+            label="Special moments"
+            hint="6–7 second comic scenes: good morning on the first open of the day, good night from your wind-down, a new week, month, season or year, today’s checklist done, a stormy mood, closing the day, the weekly review. Tap to skip any of them."
+            onChange={(moments) => setFxPrefs({ moments })}
+          />
+        </div>
+      )}
 
       <div className="i-pnl" style={{ marginTop: 10 }}>
         <p className="i-note" style={{ margin: '0 0 8px' }}>

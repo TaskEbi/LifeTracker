@@ -68,7 +68,7 @@ function CodingSheet({ spec }: { spec: SheetSpec }) {
             </button>
           )}
           <button type="button" className="i-btn i-btn--sig i-btn--block" onClick={save}>
-            Save · raise a gate
+            Save{'\u00a0'}· raise a gate
           </button>
         </>
       }
@@ -306,7 +306,7 @@ function Road() {
               </>
             )}
             <button type="button" className="i-btn i-btn--sig i-btn--block" onClick={() => openSheet({ type: 'coding', low })}>
-              Log a session · raise a gate
+              Log a session{'\u00a0'}· raise a gate
             </button>
             <button type="button" className="i-link" aria-pressed={low} onClick={() => setLow(!low)}>
               {low ? 'Back to the full day' : 'Tired? Ten minutes still raises a gate.'}

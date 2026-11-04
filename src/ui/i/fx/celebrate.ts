@@ -7,6 +7,7 @@ import { createStore, useStore } from '../../../lib/createStore';
 import type { Achievement } from '../../../domain/progress/achievements';
 import type { SectionId } from '../../../data/types';
 import type { Moment } from '../../../domain/progress/moments';
+import type { Special } from '../../../domain/fun/special';
 
 export type QuestPeriodName = 'daily' | 'weekly' | 'monthly';
 
@@ -19,7 +20,9 @@ export type Celebration =
   | { kind: 'boss'; name: string; bossId?: string; xp?: number; preview?: boolean }
   | { kind: 'evolve'; from: number; to: number; level?: number; preview?: boolean }
   /** Records, streaks, combos, plan progress… (see domain/progress/moments.ts). */
-  | { kind: 'moment'; moment: Moment; preview?: boolean };
+  | { kind: 'moment'; moment: Moment; preview?: boolean }
+  /** The long comic scenes for the shape of a day and of the calendar (see domain/fun/special.ts). */
+  | { kind: 'special'; special: Special; preview?: boolean };
 
 export const celebrationStore = createStore<{ queue: Celebration[]; playing: boolean }>({ queue: [], playing: false });
 
@@ -81,16 +84,19 @@ export interface FxPrefs {
   chapter: boolean;
   doors: boolean;
   sky: boolean;
+  /** The long special-moment scenes: good morning and night, a new week/month/season/year, the day complete… */
+  moments: boolean;
 }
 const CHAPTER_KEY = 'lifetracker-fx-chapter';
+const MOMENTS_KEY = 'lifetracker-fx-moments';
 const DOORS_KEY = 'lifetracker-fx-doors';
 const SKY_KEY = 'lifetracker-fx-sky';
 
 function readPrefs(): FxPrefs {
   try {
-    return { chapter: localStorage.getItem(CHAPTER_KEY) !== 'off', doors: localStorage.getItem(DOORS_KEY) !== 'off', sky: localStorage.getItem(SKY_KEY) !== 'off' };
+    return { chapter: localStorage.getItem(CHAPTER_KEY) !== 'off', doors: localStorage.getItem(DOORS_KEY) !== 'off', sky: localStorage.getItem(SKY_KEY) !== 'off', moments: localStorage.getItem(MOMENTS_KEY) !== 'off' };
   } catch {
-    return { chapter: true, doors: true, sky: true };
+    return { chapter: true, doors: true, sky: true, moments: true };
   }
 }
 
@@ -103,6 +109,7 @@ export function setFxPrefs(patch: Partial<FxPrefs>) {
     localStorage.setItem(CHAPTER_KEY, next.chapter ? 'on' : 'off');
     localStorage.setItem(DOORS_KEY, next.doors ? 'on' : 'off');
     localStorage.setItem(SKY_KEY, next.sky ? 'on' : 'off');
+    localStorage.setItem(MOMENTS_KEY, next.moments ? 'on' : 'off');
   } catch {
     /* private mode: kept for this visit only */
   }
