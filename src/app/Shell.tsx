@@ -78,13 +78,13 @@ function Rail({ current, rest }: { current: RouteName; rest: string[] }) {
         <Icon name="plus" /> Log
       </button>
       {item('home', 'Home', SYSTEM_KANJI.home)}
+      {item('base', 'Hideout', SYSTEM_KANJI.base)}
       {SECTIONS.map((s) => item(s.id, s.full, s.kanji, `LV ${pad2(p.sections[s.id].level)}`))}
       <div className="i-rail__sep" />
       {item('progress', 'Progress', SYSTEM_KANJI.progress)}
       {item('progress', 'Quests', '任', open ? <span className="i-cmd__badge i-cmd__badge--inline">{open}</span> : undefined, ['quests'])}
       {item('progress', 'Achievements', '紋', undefined, ['achievements'])}
       {item('bucket', 'Bucket list', SYSTEM_KANJI.bucket)}
-      {item('base', 'Hideout', SYSTEM_KANJI.base)}
       <div className="i-rail__sep" />
       {item('calendar', 'Calendar', SYSTEM_KANJI.calendar)}
       {item('tasks', 'Tasks', SYSTEM_KANJI.tasks)}
@@ -136,7 +136,6 @@ function CommandBar({ current }: { current: RouteName }) {
 
 const SYSTEM: { id: keyof typeof SYSTEM_KANJI; label: string }[] = [
   { id: 'progress', label: 'Progress' },
-  { id: 'base', label: 'Hideout' },
   { id: 'bucket', label: 'Bucket' },
   { id: 'log', label: 'Activity' },
   { id: 'settings', label: 'Settings' },
@@ -151,6 +150,13 @@ export function ChannelBar({ current }: { current: RouteName }) {
           {SYSTEM_KANJI.home}
         </span>
         <b>Home</b>
+      </button>
+      {/* the hideout is used most days, so it sits next to Home rather than at the far end */}
+      <button type="button" className="i-chbar__btn" aria-current={current === 'base' ? 'page' : undefined} onClick={() => navigate('base')} style={{ '--c': 'var(--sig)' } as React.CSSProperties}>
+        <span className="i-chbar__k" aria-hidden="true">
+          {SYSTEM_KANJI.base}
+        </span>
+        <b>Hideout</b>
       </button>
       {SECTIONS.map((s) => (
         <button key={s.id} type="button" className="i-chbar__btn" aria-current={current === s.id ? 'page' : undefined} onClick={() => navigate(s.id)} style={accent(s.id)}>

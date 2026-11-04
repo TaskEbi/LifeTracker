@@ -543,3 +543,217 @@
   font-size: 14px;
   color: var(--acc2);
 }
+
+/* 今日 today's checklist: what's recorded and what isn't yet */
+.h-tdl {
+  margin: 12px 0 14px;
+  padding: 12px 12px 6px;
+  background: var(--surf);
+  box-shadow: 0 0 0 1px var(--rule);
+  border-left: 3px solid var(--sig);
+}
+.h-tdl.is-all {
+  border-left-color: var(--ok);
+  padding-bottom: 10px;
+}
+.h-tdl__head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+.h-tdl__head .h-h2 {
+  margin: 0;
+}
+.h-tdl__count {
+  font-family: var(--f-label);
+  font-size: 18px;
+  line-height: 1;
+  color: var(--fg);
+}
+.h-tdl__bar {
+  display: block;
+  height: 3px;
+  margin: 8px 0 4px;
+  background: var(--surf-3);
+}
+.h-tdl__bar i {
+  display: block;
+  height: 100%;
+  background: var(--sig);
+  transition: width 0.3s var(--ease);
+}
+.h-tdl.is-all .h-tdl__bar i {
+  background: var(--ok);
+}
+.h-tdl__all {
+  min-height: 36px;
+  margin-top: 4px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ok);
+}
+.h-tdl__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.h-tdl__row + .h-tdl__row {
+  border-top: 1px solid var(--rule);
+}
+.h-tdl__btn {
+  width: 100%;
+  min-height: 52px;
+  display: grid;
+  grid-template-columns: 24px minmax(0, 1fr) 14px;
+  gap: 10px;
+  align-items: center;
+  padding: 6px 0;
+  text-align: left;
+}
+.h-tdl__ck {
+  width: 22px;
+  height: 22px;
+  display: grid;
+  place-items: center;
+  font-size: 13px;
+  font-weight: 900;
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 2px var(--c, var(--sig));
+  color: var(--bg);
+}
+.h-tdl__row.is-done .h-tdl__ck {
+  background: var(--ok);
+  box-shadow: none;
+}
+.h-tdl__row.is-later .h-tdl__ck {
+  box-shadow: inset 0 0 0 2px var(--fg-3);
+  opacity: 0.6;
+}
+.h-tdl__t {
+  display: grid;
+  min-width: 0;
+}
+.h-tdl__t b {
+  font-size: 14px;
+  font-weight: 900;
+}
+.h-tdl__t small {
+  font-size: 12.5px;
+  color: var(--fg-2);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.h-tdl__row.is-done .h-tdl__t b {
+  color: var(--fg-2);
+}
+.h-tdl__row:not(.is-done):not(.is-later) .h-tdl__t small {
+  color: var(--fg-3);
+}
+.h-tdl__go {
+  font-size: 12px;
+  color: var(--fg-3);
+}
+.h-tdl__body {
+  padding: 0 0 12px;
+}
+/* the mood card sits inside the list here, so it drops its own frame */
+.h-tdl__body .hc {
+  margin: 0;
+}
+.h-tdl__log {
+  display: grid;
+  gap: 6px;
+}
+.h-tdl__logrow {
+  display: grid;
+  grid-template-columns: 22px minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: center;
+  min-height: 40px;
+  padding: 0 10px;
+  text-align: left;
+  background: var(--surf-2);
+  border-left: 3px solid var(--c, var(--fg-3));
+}
+.h-tdl__logrow span {
+  font-family: var(--f-label);
+  color: var(--c, var(--fg-3));
+}
+.h-tdl__logrow b {
+  font-size: 13.5px;
+}
+.h-tdl__logrow small {
+  font-family: var(--f-mono);
+  font-size: 12px;
+  color: var(--fg-2);
+}
+.h-tdl__logrow:disabled {
+  cursor: default;
+}
+.h-tdl__acts {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 16px;
+  margin-top: 4px;
+}
+
+/* 基 hideout rooms, one tap from home */
+.h-dock__row {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  margin: 0 calc(-1 * var(--gutter-r)) 0 calc(-1 * var(--gutter));
+  padding: 2px var(--gutter-r) 4px var(--gutter);
+  scroll-snap-type: x proximity;
+}
+.h-dock__row::-webkit-scrollbar {
+  display: none;
+}
+.h-dock__room {
+  flex: none;
+  width: 128px;
+  min-height: 84px;
+  display: grid;
+  align-content: start;
+  gap: 2px;
+  padding: 10px 12px;
+  text-align: left;
+  scroll-snap-align: start;
+  background: var(--surf);
+  box-shadow: 0 0 0 1px var(--rule);
+  border-top: 3px solid var(--rc);
+}
+.h-dock__room.is-alert {
+  background: color-mix(in srgb, var(--rc) 14%, var(--surf));
+}
+.h-dock__k {
+  font-family: var(--f-label);
+  font-size: 15px;
+  line-height: 1.1;
+  color: var(--rc);
+}
+.h-dock__room b {
+  font-size: 13px;
+  font-weight: 900;
+}
+.h-dock__room small {
+  font-size: 11.5px;
+  line-height: 1.3;
+  color: var(--fg-2);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+@media (min-width: 900px) {
+  .h-dock__row {
+    margin: 0;
+    padding: 2px 0 4px;
+    flex-wrap: wrap;
+  }
+}

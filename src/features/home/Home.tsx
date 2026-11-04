@@ -27,7 +27,9 @@ import { Recap } from '../progress/LookBack';
 import { useFxPrefs } from '../../ui/i/fx/celebrate';
 import { QuestCard } from '../progress/QuestsPanel';
 import { PlanToday } from '../plans/PlanToday';
-import { BeaconCard, BigThreeCard, BookendCard, CheckInCard, NextMoveCard, RitualsCard, ShadowCard } from '../hq/HomeCards';
+import { BeaconCard, BigThreeCard, BookendCard, NextMoveCard, RitualsCard, ShadowCard } from '../hq/HomeCards';
+import { HideoutDock } from '../hq/HideoutDock';
+import { TodayChecklist } from './TodayChecklist';
 import { useHq } from '../hq/store';
 import { reviewQueue } from '../../domain/hq/srs';
 import './home.css';
@@ -185,6 +187,8 @@ export function Home() {
         </div>
       </header>
 
+      <TodayChecklist />
+
       <div className="h-grid">
         <div>
           <section className="h-hero" style={{ '--c': stage.c, '--c2': stage.c2 } as CSSProperties} aria-label="Your character">
@@ -243,6 +247,8 @@ export function Home() {
             </span>
           </button>
 
+          <HideoutDock />
+
           <BookendCard />
 
           <BeaconCard />
@@ -250,8 +256,6 @@ export function Home() {
           <NextMoveCard />
 
           <BigThreeCard />
-
-          <CheckInCard />
 
           <RitualsCard />
 
