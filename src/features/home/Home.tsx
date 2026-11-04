@@ -29,6 +29,8 @@ import { QuestCard } from '../progress/QuestsPanel';
 import { PlanToday } from '../plans/PlanToday';
 import { BeaconCard, BigThreeCard, BookendCard, CheckInCard, NextMoveCard, RitualsCard, ShadowCard } from '../hq/HomeCards';
 import { useHq } from '../hq/store';
+import { useAlbum } from '../album/store';
+import { albumStreak, daysToReel, reelOpen } from '../../domain/album/album';
 import { reviewQueue } from '../../domain/hq/srs';
 import './home.css';
 
@@ -129,6 +131,16 @@ export function Home() {
     return book ? { title: book.title, pct: bookProgress(book, sessions).pct } : null;
   }, [st]);
   const nextContest = useMemo(() => upcoming(sittingsIn(st), today)[0] ?? null, [st, today]);
+  const album = useAlbum();
+  const albumLine = useMemo(() => {
+    const day = album.days.get(today);
+    const run = albumStreak(album.days.keys(), today).current;
+    const y = Number(today.slice(0, 4));
+    const reel = reelOpen(y, today) ? `the ${y} reel is ready` : daysToReel(y, today) <= 31 ? `the reel opens in ${daysToReel(y, today)} days` : null;
+    const parts = [day?.face ? 'today’s face is on film' : 'today’s face: not yet', day?.memories.length ? `${day.memories.length} ${day.memories.length === 1 ? 'memory' : 'memories'}` : null, run > 1 ? `${run} days in a row` : null, reel];
+    const t = parts.filter(Boolean).join(' · ');
+    return t.charAt(0).toUpperCase() + t.slice(1);
+  }, [album, today]);
   const bucket = useMemo(() => {
     const { open, done } = bucketItems(st);
     return { total: open.length + done.length, done: done.length, next: open[0]?.title };
@@ -363,6 +375,11 @@ export function Home() {
                 </small>
               </button>
             )}
+            <button type="button" className="h-sys__btn h-sys__btn--wide" onClick={() => navigate('album')}>
+              <span aria-hidden="true">{SYSTEM_KANJI.album}</span>
+              <b>Album</b>
+              <small>{albumLine}</small>
+            </button>
             <button type="button" className="h-sys__btn h-sys__btn--wide" onClick={() => navigate('bucket')}>
               <span aria-hidden="true">{SYSTEM_KANJI.bucket}</span>
               <b>Bucket list</b>
