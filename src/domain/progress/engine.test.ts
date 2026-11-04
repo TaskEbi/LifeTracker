@@ -116,22 +116,33 @@ describe('XP from records', () => {
 
 describe('levels', () => {
   it('follows the illustrative curves', () => {
-    expect(sectionLevel(1214).level).toBe(9);
-    expect(sectionLevel(1215).level).toBe(10);
-    expect(overallLevel(4304).level).toBe(14);
-    expect(overallLevel(4305).level).toBe(15);
-    expect(xpForLevel(15)).toBe(4305);
+    // 48 + 56 + … + 112 XP to level 10
+    expect(sectionLevel(719).level).toBe(9);
+    expect(sectionLevel(720).level).toBe(10);
+    // 45 + 50 + … + 110 XP to level 15
+    expect(xpForLevel(15)).toBe(1085);
+    expect(overallLevel(1084).level).toBe(14);
+    expect(overallLevel(1085).level).toBe(15);
+  });
+
+  it('levels stop getting longer once a level is 400 XP', () => {
+    expect(xpForLevel(100) - xpForLevel(99)).toBe(400);
+    expect(xpForLevel(200) - xpForLevel(199)).toBe(400);
+    // far quicker than the old curve, which took 51,330 XP to reach level 60
+    expect(xpForLevel(60)).toBe(11210);
   });
 
   it('gives ranks and forms by level', () => {
     expect(rankFor(1)).toBe('Rookie');
     expect(rankFor(12)).toBe('Apprentice');
-    expect(STAGES).toHaveLength(20);
+    expect(STAGES).toHaveLength(40);
     expect(STAGES.every((s, i) => i === 0 || s.level > STAGES[i - 1].level)).toBe(true);
     expect(stageFor(1)).toBe(0);
     expect(stageFor(STAGES[4].level)).toBe(4);
     expect(stageFor(STAGES[4].level - 1)).toBe(3);
-    expect(stageFor(500)).toBe(19);
+    expect(stageFor(500)).toBe(39);
+    expect(STAGES.map((s) => s.name)).toHaveLength(new Set(STAGES.map((s) => s.name)).size);
+    expect(rankFor(300)).toBe('Origin');
   });
 });
 

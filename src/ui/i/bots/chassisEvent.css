@@ -1,0 +1,441 @@
+/* The event chassis: seasonal particles and each design's one signature motion. */
+.bce-fall,
+.bce-snow,
+.bce-storm,
+.bce-rain,
+.bce-twinkle,
+.bce-burst,
+.bce-flame,
+.bce-flit,
+.bce-spark {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+.bce-fall {
+  animation: bce-fall 6s linear infinite;
+}
+@keyframes bce-fall {
+  0% {
+    transform: translate(-6px, -34px) rotate(0deg);
+    opacity: 0;
+  }
+  15%,
+  80% {
+    opacity: 1;
+  }
+  50% {
+    transform: translate(8px, 0) rotate(160deg);
+  }
+  100% {
+    transform: translate(-4px, 40px) rotate(330deg);
+    opacity: 0;
+  }
+}
+.bce-snow {
+  animation: bce-snow 3s linear infinite;
+}
+@keyframes bce-snow {
+  0% {
+    transform: translate(24px, -26px) rotate(0deg);
+    opacity: 0;
+  }
+  20%,
+  80% {
+    opacity: 1;
+  }
+  100% {
+    transform: translate(-24px, 30px) rotate(180deg);
+    opacity: 0;
+  }
+}
+.bce-wind {
+  animation: bce-wind 2.2s ease-in-out infinite;
+}
+@keyframes bce-wind {
+  0% {
+    transform: translateX(26px);
+    opacity: 0;
+  }
+  40% {
+    opacity: 0.9;
+  }
+  100% {
+    transform: translateX(-30px);
+    opacity: 0;
+  }
+}
+.bce-storm {
+  animation: bce-storm 4s ease-in-out infinite;
+}
+@keyframes bce-storm {
+  0% {
+    transform: translate(-30px, -22px) rotate(0deg);
+    opacity: 0;
+  }
+  20%,
+  80% {
+    opacity: 1;
+  }
+  100% {
+    transform: translate(32px, 26px) rotate(300deg);
+    opacity: 0;
+  }
+}
+.bce-rain {
+  animation: bce-rain 1.1s linear infinite;
+}
+@keyframes bce-rain {
+  0% {
+    transform: translate(3px, -24px);
+    opacity: 0;
+  }
+  25%,
+  75% {
+    opacity: 1;
+  }
+  100% {
+    transform: translate(-3px, 26px);
+    opacity: 0;
+  }
+}
+.bce-twinkle {
+  animation: bce-twinkle 2.4s ease-in-out infinite;
+}
+@keyframes bce-twinkle {
+  50% {
+    transform: scale(0.45) rotate(45deg);
+    opacity: 0.35;
+  }
+}
+.bce-burst {
+  animation: bce-burst 2.8s ease-out infinite;
+}
+@keyframes bce-burst {
+  0% {
+    transform: scale(0.15);
+    opacity: 0;
+  }
+  15% {
+    opacity: 1;
+  }
+  60% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1.12);
+    opacity: 0;
+  }
+}
+.bce-flame {
+  animation: bce-flame 1.1s ease-in-out infinite;
+  transform-origin: center bottom;
+}
+@keyframes bce-flame {
+  50% {
+    transform: translateY(-4px) scale(0.88, 1.14);
+    opacity: 0.8;
+  }
+}
+.bce-flit {
+  animation: bce-flit 3.2s ease-in-out infinite;
+}
+@keyframes bce-flit {
+  25% {
+    transform: translate(6px, -7px) scale(1, 0.7);
+  }
+  50% {
+    transform: translate(-3px, -2px);
+  }
+  75% {
+    transform: translate(-7px, 5px) scale(1, 0.7);
+  }
+}
+.bce-spark {
+  animation: bce-spark 2.6s steps(1) infinite;
+}
+@keyframes bce-spark {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  12%,
+  22% {
+    opacity: 0.1;
+  }
+  17% {
+    opacity: 1;
+  }
+  30%,
+  90% {
+    opacity: 0;
+  }
+}
+
+/* Kodama: the head rattles in short bursts. */
+.bce-rattle {
+  animation: bce-rattle 3.4s ease-in-out infinite;
+  transform-origin: 100px 116px;
+}
+@keyframes bce-rattle {
+  0%,
+  62%,
+  100% {
+    transform: rotate(0deg);
+  }
+  66% {
+    transform: rotate(-5deg);
+  }
+  71% {
+    transform: rotate(5deg);
+  }
+  76% {
+    transform: rotate(-4deg);
+  }
+  81% {
+    transform: rotate(4deg);
+  }
+  86% {
+    transform: rotate(-2deg);
+  }
+  91% {
+    transform: rotate(1deg);
+  }
+}
+.bce-ring {
+  animation: bce-ring 3.4s ease-in-out infinite;
+  transform-origin: 100px 124px;
+}
+@keyframes bce-ring {
+  0%,
+  62%,
+  100% {
+    transform: rotate(0deg);
+  }
+  68% {
+    transform: rotate(14deg);
+  }
+  76% {
+    transform: rotate(-12deg);
+  }
+  84% {
+    transform: rotate(8deg);
+  }
+  92% {
+    transform: rotate(-4deg);
+  }
+}
+
+/* Yuki-daruma: the bucket lifts, politely, and drops. */
+.bce-tip {
+  animation: bce-tip 5s ease-in-out infinite;
+  transform-origin: 76px 62px;
+}
+@keyframes bce-tip {
+  0%,
+  70%,
+  100% {
+    transform: rotate(0deg);
+  }
+  80% {
+    transform: rotate(7deg);
+  }
+  86% {
+    transform: rotate(7deg);
+  }
+  92% {
+    transform: rotate(-1deg);
+  }
+}
+
+/* Oni: a bean flies in and pings off. */
+.bce-bean {
+  animation: bce-bean 3s ease-in infinite;
+}
+@keyframes bce-bean {
+  0% {
+    transform: translate(-30px, -6px);
+    opacity: 0;
+  }
+  8% {
+    opacity: 1;
+  }
+  34% {
+    transform: translate(14px, 2px);
+    opacity: 1;
+  }
+  60% {
+    transform: translate(-18px, -20px);
+    opacity: 1;
+  }
+  80%,
+  100% {
+    transform: translate(-38px, 30px);
+    opacity: 0;
+  }
+}
+.bce-beat {
+  animation: bce-beat 1.2s ease-in-out infinite;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+@keyframes bce-beat {
+  10% {
+    transform: scale(1.14);
+  }
+  30% {
+    transform: scale(1);
+  }
+}
+
+/* Sakura spirit: paper sleeves lift on the wind. */
+.bce-flap {
+  animation: bce-flap 3.6s ease-in-out infinite;
+}
+@keyframes bce-flap {
+  50% {
+    transform: rotate(var(--bce-a, 6deg));
+  }
+}
+.bce-pin {
+  animation: bce-pin 2.6s ease-in-out infinite;
+}
+@keyframes bce-pin {
+  25% {
+    transform: rotate(5deg);
+  }
+  75% {
+    transform: rotate(-5deg);
+  }
+}
+.bce-halo {
+  animation: i-spin 40s linear infinite;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+/* Teru-teru: swings on its string. */
+.bce-swing {
+  animation: bce-swing 3.8s ease-in-out infinite;
+  transform-origin: 100px -6px;
+}
+@keyframes bce-swing {
+  0%,
+  100% {
+    transform: rotate(-4deg);
+  }
+  50% {
+    transform: rotate(4deg);
+  }
+}
+
+/* Star weaver: the shuttle runs back and forth. */
+.bce-weave {
+  animation: bce-weave 2.2s ease-in-out infinite;
+}
+@keyframes bce-weave {
+  0%,
+  100% {
+    transform: translateX(-13px);
+  }
+  50% {
+    transform: translateX(13px);
+  }
+}
+.bce-warp {
+  animation: bce-warp 3s ease-in-out infinite;
+}
+@keyframes bce-warp {
+  50% {
+    opacity: 0.35;
+  }
+}
+
+/* Kingyo: swims about in the bag. */
+.bce-swim {
+  animation: bce-swim 4.4s ease-in-out infinite;
+  transform-origin: 100px 100px;
+}
+@keyframes bce-swim {
+  0%,
+  100% {
+    transform: translate(-5px, 0) rotate(-3deg);
+  }
+  50% {
+    transform: translate(5px, -3px) rotate(3deg);
+  }
+}
+.bce-water {
+  animation: bce-water 2.4s ease-in-out infinite;
+}
+@keyframes bce-water {
+  50% {
+    transform: translate(6px, 2px);
+  }
+}
+
+/* Night parade: the lantern swings and the carved face flickers. */
+.bce-sway {
+  animation: bce-sway 3s ease-in-out infinite;
+  transform-origin: 174px 50px;
+}
+@keyframes bce-sway {
+  0%,
+  100% {
+    transform: rotate(-7deg);
+  }
+  50% {
+    transform: rotate(7deg);
+  }
+}
+.bce-flicker {
+  animation: bce-flicker 2.3s linear infinite;
+}
+@keyframes bce-flicker {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  20% {
+    opacity: 0.72;
+  }
+  28% {
+    opacity: 0.95;
+  }
+  55% {
+    opacity: 0.6;
+  }
+  70% {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bce-fall,
+  .bce-snow,
+  .bce-wind,
+  .bce-storm,
+  .bce-rain,
+  .bce-twinkle,
+  .bce-burst,
+  .bce-flame,
+  .bce-flit,
+  .bce-spark,
+  .bce-rattle,
+  .bce-ring,
+  .bce-tip,
+  .bce-bean,
+  .bce-beat,
+  .bce-flap,
+  .bce-pin,
+  .bce-halo,
+  .bce-swing,
+  .bce-weave,
+  .bce-warp,
+  .bce-swim,
+  .bce-water,
+  .bce-sway,
+  .bce-flicker {
+    animation: none !important;
+  }
+}

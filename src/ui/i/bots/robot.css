@@ -1,0 +1,88 @@
+/* The dressed robot: paint effects over the whole drawing, and the companion's drift. */
+.rb {
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+
+.rb--neon {
+  filter: saturate(1.35) drop-shadow(0 0 5px var(--rb-glow, #ff2bd6));
+}
+.rb--chrome {
+  filter: contrast(1.2) saturate(0.55) brightness(1.08);
+}
+.rb--gold {
+  filter: sepia(0.35) saturate(1.5) brightness(1.05) drop-shadow(0 0 4px #ffcf5a);
+}
+.rb--ink {
+  filter: grayscale(1) contrast(1.35);
+}
+.rb--void {
+  filter: saturate(1.2) brightness(0.8) drop-shadow(0 0 7px #7c5cff);
+}
+.rb--holo:not(.rb--still) {
+  animation: rb-holo 7s linear infinite;
+}
+.rb--holo.rb--still {
+  filter: hue-rotate(40deg) saturate(1.4);
+}
+.rb--glitch:not(.rb--still) {
+  animation: rb-glitch 3.4s steps(1) infinite;
+}
+@keyframes rb-holo {
+  to {
+    filter: hue-rotate(360deg) saturate(1.4);
+  }
+  from {
+    filter: hue-rotate(0deg) saturate(1.4);
+  }
+}
+@keyframes rb-glitch {
+  0%,
+  88%,
+  100% {
+    transform: none;
+    filter: none;
+  }
+  90% {
+    transform: translateX(-3px) skewX(6deg);
+    filter: hue-rotate(90deg);
+  }
+  93% {
+    transform: translateX(4px) skewX(-8deg);
+    filter: hue-rotate(-60deg) saturate(2);
+  }
+  96% {
+    transform: translateX(-1px);
+  }
+}
+
+.rb__pet {
+  animation: rb-pet 6s ease-in-out infinite;
+}
+.rb--still .rb__pet {
+  animation: none;
+}
+@keyframes rb-pet {
+  0%,
+  100% {
+    transform: translate(0, 0);
+  }
+  25% {
+    transform: translate(-6px, -9px);
+  }
+  50% {
+    transform: translate(-14px, 2px);
+  }
+  75% {
+    transform: translate(-4px, 8px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rb--holo:not(.rb--still),
+  .rb--glitch:not(.rb--still),
+  .rb__pet {
+    animation: none !important;
+  }
+}

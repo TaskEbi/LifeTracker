@@ -1,0 +1,192 @@
+/*
+ * Forms 21-40. Two kinds of motion:
+ *  - bf-rot, bf-sway and bf-ping turn or scale about the local origin, so the art wraps them in a
+ *    `transform="translate(x y)"` group and draws around 0,0. That stays exact whatever the shape's box is.
+ *  - the rest work on the shape's own box (fill-box).
+ */
+.bf-rot,
+.bf-sway,
+.bf-ping {
+  transform-box: view-box;
+  transform-origin: 0 0;
+}
+.bf-rot {
+  animation: bf-rot 24s linear infinite;
+}
+.bf-rev {
+  animation-direction: reverse;
+}
+@keyframes bf-rot {
+  to {
+    transform: rotate(360deg);
+  }
+}
+.bf-sway {
+  animation: bf-sway 4.5s ease-in-out infinite;
+}
+@keyframes bf-sway {
+  50% {
+    transform: rotate(var(--bf-sway, 5deg));
+  }
+}
+.bf-ping {
+  animation: bf-ping 4s ease-out infinite;
+}
+@keyframes bf-ping {
+  0% {
+    transform: scale(0.35);
+    opacity: 0;
+  }
+  15% {
+    opacity: 0.8;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 0;
+  }
+}
+
+.bf-fade {
+  animation: bf-fade 2.6s ease-in-out infinite;
+}
+@keyframes bf-fade {
+  50% {
+    opacity: 0.42;
+  }
+}
+.bf-flash {
+  animation: bf-flash 2.8s steps(1) infinite;
+}
+@keyframes bf-flash {
+  0%,
+  62%,
+  70%,
+  100% {
+    opacity: 1;
+  }
+  58%,
+  66%,
+  74% {
+    opacity: 0.25;
+  }
+}
+.bf-flick {
+  transform-box: fill-box;
+  transform-origin: top center;
+  animation: bf-flick 0.22s ease-in-out infinite alternate;
+}
+@keyframes bf-flick {
+  to {
+    transform: scaleY(0.78) scaleX(0.92);
+    opacity: 0.85;
+  }
+}
+.bf-bob {
+  animation: bf-bob 3.6s ease-in-out infinite;
+}
+@keyframes bf-bob {
+  50% {
+    transform: translateY(var(--bf-bob, -5px));
+  }
+}
+.bf-wave {
+  animation: bf-wave 5s ease-in-out infinite;
+}
+@keyframes bf-wave {
+  50% {
+    transform: translateX(var(--bf-wave, 6px));
+  }
+}
+.bf-twinkle {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: bf-twinkle 2.4s ease-in-out infinite;
+}
+@keyframes bf-twinkle {
+  50% {
+    transform: scale(0.45);
+    opacity: 0.35;
+  }
+}
+.bf-rise {
+  animation: bf-rise 3s ease-in infinite;
+}
+@keyframes bf-rise {
+  0% {
+    transform: translateY(6px);
+    opacity: 0;
+  }
+  20% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(-30px);
+    opacity: 0;
+  }
+}
+.bf-drift {
+  animation: bf-drift 3.4s ease-out infinite;
+}
+@keyframes bf-drift {
+  0% {
+    transform: translate(10px, -3px);
+    opacity: 0;
+  }
+  25% {
+    opacity: 1;
+  }
+  100% {
+    transform: translate(-16px, 5px);
+    opacity: 0;
+  }
+}
+.bf-glitch {
+  animation: bf-glitch 3.2s steps(1) infinite;
+}
+@keyframes bf-glitch {
+  0%,
+  100% {
+    transform: none;
+  }
+  40% {
+    transform: translateX(var(--bf-g, 5px));
+  }
+  46% {
+    transform: translateX(calc(var(--bf-g, 5px) * -1.6));
+  }
+  52% {
+    transform: none;
+  }
+  78% {
+    transform: translateX(calc(var(--bf-g, 5px) * 0.7));
+  }
+  82% {
+    transform: none;
+  }
+}
+.bf-sand {
+  animation: bf-sand 0.5s linear infinite;
+}
+@keyframes bf-sand {
+  to {
+    transform: translateY(5px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bf-rot,
+  .bf-sway,
+  .bf-ping,
+  .bf-fade,
+  .bf-flash,
+  .bf-flick,
+  .bf-bob,
+  .bf-wave,
+  .bf-twinkle,
+  .bf-rise,
+  .bf-drift,
+  .bf-glitch,
+  .bf-sand {
+    animation: none !important;
+  }
+}

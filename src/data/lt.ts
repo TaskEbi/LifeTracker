@@ -206,6 +206,7 @@ export function progressInput(st: DataState, today: string): ProgressInput {
     reading: live(st.lt_records).filter((r) => r.section === 'reading'),
     readingGoal: yearGoalOf(st.lt_prefs),
     maths: live(st.lt_records).filter((r) => r.section === 'maths'),
+    usedItems: live(st.lt_records).flatMap((r) => (r.kind === 'gm_tx' && r.data.type === 'use' ? [{ id: r.id, item: String(r.data.ref), date: String(r.data.at) }] : [])),
   };
   lastState = st;
   lastToday = today;
@@ -236,10 +237,18 @@ export function useSectionStreaks(): Partial<Record<SectionId, SectionStreak>> {
   return useMemo(() => sectionStreaks(progressInput(st, today)), [st, today]);
 }
 
+const achMemo: { st: DataState; today: string; list: Achievement[] }[] = [];
+
 /** Achievements for a state, reusing the XP events already worked out for it. */
-function achievementsOf(st: DataState, today: string): Achievement[] {
+export function achievementsOf(st: DataState, today: string): Achievement[] {
+  const hit = achMemo.find((m) => m.st === st && m.today === today);
+  if (hit) return hit.list;
   const input = progressInput(st, today);
-  return achievements(input, { events: progressOf(st, today).events, quests: questHistory(input), bosses: bossHistory(input) });
+  const list = achievements(input, { events: progressOf(st, today).events, quests: questHistory(input), bosses: bossHistory(input) });
+  // A save compares two states, so remember the last two.
+  achMemo.push({ st, today, list });
+  if (achMemo.length > 2) achMemo.shift();
+  return list;
 }
 
 export function useAchievements(): Achievement[] {
@@ -289,7 +298,12 @@ export interface RewardView extends Reward {
   unlocked: Achievement[];
   /** Records, streak milestones, combos… that this save made happen (domain/progress/moments). */
   moments: Moment[];
+  /** What this save paid into the Hangar, as words to list. */
+  earned?: string[];
 }
+
+/** Set by the Hangar: what a save paid, from the state before and after. */
+export const rewardEarnings: { of: ((before: DataState, after: DataState, today: string) => string[]) | null } = { of: null };
 export const rewardStore = createStore<{ reward: RewardView | null }>({ reward: null });
 
 /**
@@ -314,7 +328,8 @@ export function withReward(save: () => boolean | void, extra: Partial<RewardView
   const unlocked = afterAch.filter((a) => a.unlockedOn && !beforeAch.find((b) => b.id === a.id)?.unlockedOn);
   const found = st1 === st0 ? [] : moments(beforeInput, progressInput(st1, today), { levels: [before.overall.level, after.overall.level], focus });
   const r = rewardBetween(before, after);
-  if (r.total > 0 || r.sectionUps.length || r.overallUp || unlocked.length || found.length || extra.rest) rewardStore.set({ reward: { ...r, unlocked, moments: found, ...extra } });
+  const earned = st1 === st0 ? [] : (rewardEarnings.of?.(st0, st1, today) ?? []);
+  if (r.total > 0 || r.sectionUps.length || r.overallUp || unlocked.length || found.length || extra.rest) rewardStore.set({ reward: { ...r, unlocked, moments: found, earned, ...extra } });
   return true;
 }
 

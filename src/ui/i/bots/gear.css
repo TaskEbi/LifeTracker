@@ -1,0 +1,349 @@
+/* Robot cosmetics. Everything here moves with transform and opacity only. */
+.bg-drift,
+.bg-twinkle,
+.bg-glint,
+.bg-shine,
+.bg-zap,
+.bg-float,
+.bg-squish,
+.bg-prop,
+.bg-rev,
+.bg-spin,
+.bg-sway,
+.bg-hang,
+.bg-flick,
+.bg-flag,
+.bg-wag,
+.bg-flap-l,
+.bg-flap-r,
+.bg-twitch,
+.bg-ripple {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation-iteration-count: infinite;
+}
+
+/* A particle passing through where it is drawn at rest: from -½ to +½ of its journey. */
+.bg-drift {
+  animation-name: bg-drift;
+  animation-duration: 7s;
+  animation-timing-function: linear;
+}
+@keyframes bg-drift {
+  0% {
+    transform: translate(calc(var(--bg-dx, 0px) * -0.5), calc(var(--bg-dy, 0px) * -0.5)) rotate(0deg);
+    opacity: 0;
+  }
+  14% {
+    opacity: 1;
+  }
+  84% {
+    opacity: 1;
+  }
+  100% {
+    transform: translate(calc(var(--bg-dx, 0px) * 0.5), calc(var(--bg-dy, 0px) * 0.5)) rotate(var(--bg-r, 0deg));
+    opacity: 0;
+  }
+}
+
+.bg-twinkle {
+  animation-name: bg-twinkle;
+  animation-duration: 2.6s;
+  animation-timing-function: ease-in-out;
+}
+@keyframes bg-twinkle {
+  0%,
+  100% {
+    transform: scale(0.65);
+    opacity: 0.3;
+  }
+  50% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* The sparkle on something expensive: nothing, nothing, then a flash. */
+.bg-glint {
+  animation-name: bg-glint;
+  animation-duration: 3.4s;
+  animation-timing-function: ease-in-out;
+}
+@keyframes bg-glint {
+  0%,
+  62%,
+  100% {
+    transform: scale(0.55) rotate(0deg);
+    opacity: 0.35;
+  }
+  78% {
+    transform: scale(1.25) rotate(45deg);
+    opacity: 1;
+  }
+}
+
+.bg-shine {
+  animation-name: bg-shine;
+  animation-duration: 3s;
+  animation-timing-function: ease-in-out;
+}
+@keyframes bg-shine {
+  0%,
+  100% {
+    opacity: 0.45;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+.bg-zap {
+  animation-name: bg-zap;
+  animation-duration: 1.7s;
+  animation-timing-function: steps(1);
+}
+@keyframes bg-zap {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  8% {
+    opacity: 0.15;
+  }
+  16% {
+    opacity: 0.9;
+  }
+  30% {
+    opacity: 0;
+  }
+  64% {
+    opacity: 0;
+  }
+  70% {
+    opacity: 1;
+  }
+  78% {
+    opacity: 0.3;
+  }
+}
+
+.bg-float {
+  animation-name: bg-float;
+  animation-duration: 4s;
+  animation-timing-function: ease-in-out;
+}
+@keyframes bg-float {
+  0%,
+  100% {
+    transform: translate(calc(var(--bg-dx, 0px) * -1), calc(var(--bg-dy, 3px) * -1));
+  }
+  50% {
+    transform: translate(var(--bg-dx, 0px), var(--bg-dy, 3px));
+  }
+}
+
+.bg-squish {
+  animation-name: bg-squish;
+  animation-duration: 2.4s;
+  animation-timing-function: ease-in-out;
+  transform-origin: 50% 100%;
+}
+@keyframes bg-squish {
+  0%,
+  100% {
+    transform: scale(1.07, 0.92);
+  }
+  50% {
+    transform: scale(0.95, 1.06);
+  }
+}
+
+.bg-prop {
+  animation-name: bg-prop;
+  animation-duration: 0.28s;
+  animation-timing-function: linear;
+}
+@keyframes bg-prop {
+  0%,
+  100% {
+    transform: scaleX(1);
+  }
+  50% {
+    transform: scaleX(0.08);
+  }
+}
+
+.bg-spin {
+  animation-name: bg-spin;
+  animation-duration: 18s;
+  animation-timing-function: linear;
+}
+.bg-rev {
+  animation-name: bg-rev;
+  animation-duration: 18s;
+  animation-timing-function: linear;
+}
+@keyframes bg-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@keyframes bg-rev {
+  to {
+    transform: rotate(-360deg);
+  }
+}
+
+/* Rocks about its middle. */
+.bg-sway {
+  animation-name: bg-sway;
+  animation-duration: 3s;
+  animation-timing-function: ease-in-out;
+}
+/* Rocks from a point at the top: a lantern, a tassel, a strip of paper. */
+.bg-hang {
+  animation-name: bg-sway;
+  animation-duration: 3s;
+  animation-timing-function: ease-in-out;
+  transform-origin: 50% 0;
+}
+@keyframes bg-sway {
+  0%,
+  100% {
+    transform: rotate(calc(var(--bg-r, 6deg) * -1));
+  }
+  50% {
+    transform: rotate(var(--bg-r, 6deg));
+  }
+}
+
+.bg-flick {
+  animation-name: bg-flick;
+  animation-duration: 1.1s;
+  animation-timing-function: ease-in-out;
+  transform-origin: 50% 100%;
+}
+@keyframes bg-flick {
+  0%,
+  100% {
+    transform: scale(1, 1);
+  }
+  30% {
+    transform: scale(0.9, 1.12);
+  }
+  60% {
+    transform: scale(1.06, 0.94);
+  }
+  80% {
+    transform: scale(0.96, 1.08);
+  }
+}
+
+/* A cloth tail or fin, held at its left edge. */
+.bg-flag {
+  animation-name: bg-flag;
+  animation-duration: 1.5s;
+  animation-timing-function: ease-in-out;
+  transform-origin: 0 40%;
+}
+.bg-wag {
+  animation-name: bg-flag;
+  animation-duration: 0.7s;
+  animation-timing-function: ease-in-out;
+  transform-origin: 0 50%;
+}
+@keyframes bg-flag {
+  0%,
+  100% {
+    transform: rotate(-7deg) scaleX(1);
+  }
+  50% {
+    transform: rotate(8deg) scaleX(0.92);
+  }
+}
+
+.bg-flap-l,
+.bg-flap-r {
+  animation-name: bg-flap;
+  animation-duration: 0.42s;
+  animation-timing-function: ease-in-out;
+}
+.bg-flap-l {
+  transform-origin: 100% 40%;
+}
+.bg-flap-r {
+  transform-origin: 0 40%;
+}
+@keyframes bg-flap {
+  0%,
+  100% {
+    transform: scale(1, 1);
+  }
+  50% {
+    transform: scale(0.72, 0.8);
+  }
+}
+
+/* An ear that notices something, every so often. */
+.bg-twitch {
+  animation-name: bg-twitch;
+  animation-duration: 5s;
+  animation-timing-function: ease-in-out;
+  transform-origin: 50% 100%;
+}
+@keyframes bg-twitch {
+  0%,
+  88%,
+  100% {
+    transform: rotate(0deg);
+  }
+  91% {
+    transform: rotate(-14deg);
+  }
+  94% {
+    transform: rotate(4deg);
+  }
+  97% {
+    transform: rotate(-8deg);
+  }
+}
+
+.bg-ripple {
+  animation-name: bg-ripple;
+  animation-duration: 2.2s;
+  animation-timing-function: ease-out;
+}
+@keyframes bg-ripple {
+  0% {
+    transform: scale(0.25);
+    opacity: 0.9;
+  }
+  100% {
+    transform: scale(1.1);
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bg-drift,
+  .bg-twinkle,
+  .bg-glint,
+  .bg-shine,
+  .bg-zap,
+  .bg-float,
+  .bg-squish,
+  .bg-prop,
+  .bg-rev,
+  .bg-spin,
+  .bg-sway,
+  .bg-hang,
+  .bg-flick,
+  .bg-flag,
+  .bg-wag,
+  .bg-flap-l,
+  .bg-flap-r,
+  .bg-twitch,
+  .bg-ripple {
+    animation: none !important;
+  }
+}

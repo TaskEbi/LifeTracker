@@ -7,7 +7,7 @@
 import type { SectionId } from '../data/types';
 
 /** A section, or another page with a space of its own. */
-export type LookId = SectionId | 'bucket' | 'base';
+export type LookId = SectionId | 'bucket' | 'base' | 'hangar';
 
 // Variable families are asked for as weight ranges: given single weights, Google serves the same
 // variable file per weight and WebKit draws its default (often hairline) instance.
@@ -25,6 +25,7 @@ const FONTS: Record<LookId, string> = {
   maths: 'family=IM+Fell+English:ital@0;1&family=IM+Fell+English+SC&family=EB+Garamond:ital,wght@0,400..800;1,400..800',
   bucket: 'family=Shippori+Mincho:wght@500;700;800&family=Yuji+Syuku',
   base: 'family=DotGothic16&family=Space+Grotesk:wght@300..700&family=Space+Mono:wght@400;700&family=Literata:ital,opsz,wght@0,7..72,200..900;1,7..72,200..900&family=Shippori+Mincho:wght@500;700',
+  hangar: 'family=Bungee&family=RocknRoll+One&family=Chakra+Petch:wght@400;500;600;700',
   cabinet: 'family=Kalam:wght@400;700&family=Literata:ital,opsz,wght@0,7..72,200..900;1,7..72,200..900&family=Courier+Prime:wght@400;700',
 };
 

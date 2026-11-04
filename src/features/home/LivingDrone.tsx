@@ -5,7 +5,9 @@
  */
 import { useEffect, useRef, useState, type PointerEvent as RPointerEvent } from 'react';
 import type { DroneMood } from '../../domain/fun/season';
-import { Drone } from '../../ui/i/Drone';
+import { useGame, useLoadout } from '../game/store';
+import { chassisMk } from '../../domain/game/wallet';
+import { Robot } from '../../ui/i/bots/Robot';
 import './living.css';
 
 type Reaction = 'boing' | 'pet' | 'dizzy' | null;
@@ -18,6 +20,8 @@ const MAX_Y = 3.5;
 
 export function LivingDrone({ stage, mood, onTalk, onSay }: { stage: number; mood: DroneMood; onTalk: () => void; onSay: (line: string) => void }) {
   const ref = useRef<HTMLButtonElement>(null);
+  const look = useLoadout();
+  const wallet = useGame().wallet;
   const [reaction, setReaction] = useState<Reaction>(null);
   /** Woken by a tap: it stays up for a while, even at 2 a.m. */
   const [awake, setAwake] = useState(false);
@@ -116,10 +120,10 @@ export function LivingDrone({ stage, mood, onTalk, onSay }: { stage: number; moo
       onPointerLeave={up}
       onPointerCancel={up}
       onContextMenu={(e) => e.preventDefault()}
-      aria-label="Talk to your drone"
+      aria-label="Talk to your robot"
     >
       <span className="ld__body">
-        <Drone stage={stage} label={false} />
+        <Robot stage={stage} look={look} label={false} mk={look.chassis === 'drone' ? undefined : chassisMk(wallet, look.chassis) || 1} />
       </span>
       {shown === 'asleep' && (
         <span className="ld__zz" aria-hidden="true">

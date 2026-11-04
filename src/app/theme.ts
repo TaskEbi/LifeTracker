@@ -45,7 +45,16 @@ export const THEMES: Theme[] = [
   { id: 'sakura', name: 'Sakura', kanji: '桜', mode: 'light', bg: '#fff4f6', surf: '#ffffff', surf2: '#fde6ec', surf3: '#f6cfda', fg: '#2b1220', fg2: '#5c3a4b', fg3: '#84606f', rule: '#f0cdd8', sig: '#d62a66', sigFg: '#ffffff', acc2: '#7a3cff', acc2Fg: '#ffffff' },
   { id: 'ice', name: 'Ice', kanji: '氷', mode: 'light', bg: '#eef5fb', surf: '#ffffff', surf2: '#e1ecf6', surf3: '#cfdfee', fg: '#0b1b2b', fg2: '#34495e', fg3: '#5d7186', rule: '#c9d9e8', sig: '#1f6fe0', sigFg: '#ffffff', acc2: '#00877c', acc2Fg: '#ffffff' },
   { id: 'matcha', name: 'Matcha', kanji: '茶', mode: 'light', bg: '#f3f1e4', surf: '#fffdf4', surf2: '#e8e5d2', surf3: '#d9d5bd', fg: '#1d2a1a', fg2: '#44523f', fg3: '#66735f', rule: '#d3cfb5', sig: '#4a7f28', sigFg: '#ffffff', acc2: '#b4442d', acc2Fg: '#ffffff' },
+  // Sold in the Hangar's shop (domain/game/catalog SHOP_THEMES).
+  { id: 'arcade', name: 'Arcade Night', kanji: '遊', mode: 'dark', bg: '#0c0916', surf: '#171228', surf2: '#211a38', surf3: '#2d2449', fg: '#f6f1ff', fg2: '#c9bfe6', fg3: '#9a8fbd', rule: '#342a55', sig: '#ff2e93', sigFg: '#ffffff', acc2: '#21e6ff', acc2Fg: '#04161c' },
+  { id: 'gilded', name: 'Gilded', kanji: '金', mode: 'dark', bg: '#0e0b05', surf: '#1a150a', surf2: '#241d0f', surf3: '#302715', fg: '#fbf4dd', fg2: '#d8ca9f', fg3: '#a89a70', rule: '#3b3019', sig: '#d4a017', sigFg: '#0e0b05', acc2: '#fff1a8', acc2Fg: '#0e0b05' },
+  { id: 'deepsea', name: 'Abyss', kanji: '淵', mode: 'dark', bg: '#020d14', surf: '#071822', surf2: '#0c2230', surf3: '#122d3e', fg: '#e3fbf6', fg2: '#a2d0c8', fg3: '#74a39b', rule: '#143244', sig: '#06d6a0', sigFg: '#02140f', acc2: '#ff5ca8', acc2Fg: '#20020f' },
+  { id: 'momiji', name: 'Momiji', kanji: '紅', mode: 'dark', bg: '#150705', surf: '#220d09', surf2: '#2e140e', surf3: '#3b1b13', fg: '#fff1e6', fg2: '#dfbba5', fg3: '#ad8a75', rule: '#42200f', sig: '#e11d1d', sigFg: '#ffffff', acc2: '#ffba08', acc2Fg: '#150705' },
+  { id: 'gameboy', name: 'DMG-01', kanji: '携', mode: 'light', bg: '#9bbc0f', surf: '#a9c934', surf2: '#8bac0f', surf3: '#7a9a0d', fg: '#0f380f', fg2: '#1f4a1f', fg3: '#2c5a2c', rule: '#6d8c0c', sig: '#306230', sigFg: '#d6e88a', acc2: '#0f380f', acc2Fg: '#c4d96a' },
 ];
+
+/** Themes you have to buy first. A theme already chosen on this device keeps working. */
+export const SHOP_THEME_IDS: readonly string[] = ['arcade', 'gilded', 'deepsea', 'momiji', 'gameboy'];
 
 /** A theme id, or 'auto': Manga paper by day, Shōnen at night (follows the device). */
 export type ThemeChoice = string;

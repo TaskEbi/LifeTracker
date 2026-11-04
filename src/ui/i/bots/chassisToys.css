@@ -1,0 +1,262 @@
+/* Signature motions for the toy chassis. Transform and opacity only. */
+.bct-key,
+.bct-pump,
+.bct-rock,
+.bct-stick,
+.bct-waddle,
+.bct-step,
+.bct-step2,
+.bct-flame,
+.bct-spark,
+.bct-eq,
+.bct-orbit,
+.bct-block,
+.bct-can,
+.bct-frame,
+.bct-chase,
+.bct-float {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+/* The wind-up key turns about its own shaft. */
+.bct-key {
+  animation: bct-key 1.6s linear infinite;
+}
+@keyframes bct-key {
+  0%,
+  100% {
+    transform: scaleY(1);
+  }
+  50% {
+    transform: scaleY(-1);
+  }
+}
+
+.bct-spark {
+  animation: bct-spark 0.5s steps(1) infinite;
+}
+@keyframes bct-spark {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  33% {
+    opacity: 0.45;
+    transform: scale(0.7) rotate(25deg);
+  }
+  66% {
+    opacity: 0.9;
+    transform: scale(1.15) rotate(-20deg);
+  }
+}
+
+.bct-flame {
+  transform-origin: 50% 0;
+  animation: bct-flame 0.28s ease-in-out infinite alternate;
+}
+@keyframes bct-flame {
+  to {
+    transform: scaleY(1.3) scaleX(0.82);
+  }
+}
+
+/* The Tetris block drops one row at a time. */
+.bct-block {
+  animation: bct-block 3.2s steps(8) infinite;
+}
+@keyframes bct-block {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(32px);
+  }
+}
+
+.bct-float {
+  animation: bct-float 2.4s ease-in-out infinite alternate;
+}
+@keyframes bct-float {
+  to {
+    transform: translateY(-8px);
+    opacity: 0.45;
+  }
+}
+
+/* The capsule rocks on its round bottom. */
+.bct-rock {
+  transform-origin: 50% 100%;
+  animation: bct-rock 2.6s ease-in-out infinite;
+}
+@keyframes bct-rock {
+  0%,
+  100% {
+    transform: rotate(-4deg);
+  }
+  50% {
+    transform: rotate(4deg);
+  }
+}
+
+/* Orbit of the spare capsules: pivot is the group's own origin. */
+.bct-orbit {
+  transform-box: view-box;
+  transform-origin: 0 0;
+  animation: bct-orbit 14s linear infinite;
+}
+@keyframes bct-orbit {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.bct-pump {
+  animation: bct-pump 0.52s cubic-bezier(0.2, 0.8, 0.4, 1) infinite;
+}
+@keyframes bct-pump {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  30% {
+    transform: scale(1.16);
+  }
+}
+
+.bct-eq {
+  transform-origin: 50% 100%;
+  animation: bct-eq 0.7s ease-in-out infinite alternate;
+}
+@keyframes bct-eq {
+  from {
+    transform: scaleY(0.35);
+  }
+  to {
+    transform: scaleY(1);
+  }
+}
+
+/* Jihanki, out for a walk. */
+.bct-waddle {
+  transform-origin: 50% 100%;
+  animation: bct-waddle 1s ease-in-out infinite;
+}
+@keyframes bct-waddle {
+  0%,
+  100% {
+    transform: rotate(-1.6deg);
+  }
+  50% {
+    transform: rotate(1.6deg);
+  }
+}
+.bct-step {
+  animation: bct-step 1s ease-in-out infinite;
+}
+.bct-step2 {
+  animation: bct-step 1s ease-in-out -0.5s infinite;
+}
+@keyframes bct-step {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  25% {
+    transform: translateY(-6px);
+  }
+  50% {
+    transform: translateY(0);
+  }
+}
+.bct-can {
+  animation: bct-can 2.4s cubic-bezier(0.5, 0, 0.9, 0.6) infinite;
+}
+@keyframes bct-can {
+  0%,
+  30% {
+    transform: translateY(0);
+    opacity: 0;
+  }
+  34% {
+    opacity: 1;
+  }
+  62%,
+  88% {
+    transform: translateY(26px);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(26px);
+    opacity: 0;
+  }
+}
+
+/* The 8-bit knight only ever has two frames. */
+.bct-frame {
+  animation: bct-frame 1s steps(1) infinite;
+}
+@keyframes bct-frame {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(7px);
+  }
+}
+
+/* Joystick waggle, pivoting on the panel. */
+.bct-stick {
+  transform-origin: 50% 100%;
+  animation: bct-stick 1.5s ease-in-out infinite;
+}
+@keyframes bct-stick {
+  0%,
+  100% {
+    transform: rotate(-11deg);
+  }
+  25% {
+    transform: rotate(11deg);
+  }
+  50% {
+    transform: rotate(-4deg);
+  }
+  70% {
+    transform: rotate(14deg);
+  }
+}
+.bct-chase {
+  animation: bct-chase 0.9s steps(1) infinite;
+}
+@keyframes bct-chase {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.2;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bct-key,
+  .bct-pump,
+  .bct-rock,
+  .bct-stick,
+  .bct-waddle,
+  .bct-step,
+  .bct-step2,
+  .bct-flame,
+  .bct-spark,
+  .bct-eq,
+  .bct-orbit,
+  .bct-block,
+  .bct-can,
+  .bct-frame,
+  .bct-chase,
+  .bct-float {
+    animation: none !important;
+  }
+}

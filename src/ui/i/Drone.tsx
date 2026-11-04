@@ -1,27 +1,45 @@
 import { useId } from 'react';
-import { STAGES } from '../../domain/progress/engine';
+import { DRONE_FORMS, STAGES } from '../../domain/progress/engine';
+import { BodyArt } from './bots/Robot';
+
+const RADIUS = [30, 33, 35, 37, 38, 39, 39, 40, 40, 40, 41, 41, 41, 42, 42, 42, 43, 43, 43, 44];
+
+/** Where headgear sits on the drone, form by form. */
+export const droneHead = (s: number) => ({ x: 100, y: 96 - RADIUS[Math.min(s, RADIUS.length - 1)], s: (RADIUS[Math.min(s, RADIUS.length - 1)] * 1.5) / 60 });
 
 /**
- * The character: a drone that gains hardware, armour and colour as the overall level grows.
- * Twenty forms; each keeps the parts of the ones before (a few are replaced by a stronger
- * version, like the flame wings) and adds its own.
+ * The character in one of its forms, by itself. From form 21 on it has outgrown this drawing, and
+ * each form is its own (ui/i/bots/forms).
  */
 export function Drone({ stage, still, happy, label = true }: { stage: number; still?: boolean; happy?: boolean; label?: boolean }) {
   const s = Math.max(0, Math.min(STAGES.length - 1, stage));
   const { c, c2 } = STAGES[s];
   const uid = useId().replace(/:/g, '');
+  return (
+    <svg viewBox="0 0 200 200" role={label ? 'img' : undefined} aria-label={label ? `${STAGES[s].name} form, your character` : undefined} aria-hidden={label ? undefined : true}>
+      {s < DRONE_FORMS ? <DroneArt s={s} c={c} c2={c2} uid={uid} still={!!still} happy={!!happy} /> : <BodyArt stage={s} chassis="drone" mk={3} c={c} c2={c2} uid={uid} still={!!still} happy={!!happy} />}
+    </svg>
+  );
+}
+
+/**
+ * The drone drawing: it gains hardware, armour and colour as the overall level grows. Twenty forms;
+ * each keeps the parts of the ones before (a few are replaced by a stronger version, like the flame
+ * wings) and adds its own.
+ */
+export function DroneArt({ s, c, c2, uid, still, happy }: { s: number; c: string; c2: string; uid: string; still: boolean; happy: boolean }) {
   const body = `db-${uid}`;
   const wing = `dw-${uid}`;
   const glow = `dg-${uid}`;
   const flame = `df-${uid}`;
-  const r = [30, 33, 35, 37, 38, 39, 39, 40, 40, 40, 41, 41, 41, 42, 42, 42, 43, 43, 43, 44][s];
+  const r = RADIUS[s];
   const spin = still ? undefined : 'i-spin';
   const slow = still ? undefined : 'i-spin i-spin--slow';
   const dark = s >= 17;
   const band = s >= 16 ? c2 : c;
   const top = 96 - r;
   return (
-    <svg viewBox="0 0 200 200" role={label ? 'img' : undefined} aria-label={label ? `${STAGES[s].name} drone, your character` : undefined} aria-hidden={label ? undefined : true}>
+    <>
       <defs>
         <radialGradient id={body} cx="38%" cy="30%" r="80%">
           <stop offset="0" stopColor={dark ? '#2a1f4d' : 'var(--surf)'} />
@@ -216,6 +234,6 @@ export function Drone({ stage, still, happy, label = true }: { stage: number; st
           </g>
         )}
       </g>
-    </svg>
+    </>
   );
 }
