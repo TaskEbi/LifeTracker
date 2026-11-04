@@ -405,12 +405,12 @@ const newSeason: SpecialFx<'new-season'> = {
             <i className="sp-sea__hill sp-sea__hill--back" />
             <i className="sp-sea__hill sp-sea__hill--front" />
             <i className="sp-sea__tree" />
-            <Fall n={18} seed={3} kind={FALL_OF[m.season]} from={1900} span={1500} />
+            <Fall n={12} seed={3} kind={FALL_OF[m.season]} from={1900} span={1500} />
             <Sfx text={SOUND_OF[m.season]} at={2300} step={90} className="sp-sea__sfx" color="#fff" />
           </Panel>
         </Stage>
         <Splash className="sp-sea__splash" />
-        <Fall n={26} seed={8} kind={FALL_OF[m.season]} from={3400} span={2000} />
+        <Fall n={18} seed={8} kind={FALL_OF[m.season]} from={3400} span={2000} />
         <Big text={s.kanji} back={`color-mix(in srgb, ${s.c} 50%, #000)`} className="sp-sea__big" />
         <Caption chip={`a new season · ${s.kanji}`} title={`${s.name} is here`} line={`${LINE_OF[m.season]} · ${s.name} ${m.year}`} />
         <i className="fx-flash" />

@@ -214,9 +214,9 @@
 .sp-speed {
   left: 50%;
   top: 50%;
-  width: 900px;
-  height: 900px;
-  margin: -450px 0 0 -450px;
+  width: 680px;
+  height: 680px;
+  margin: -340px 0 0 -340px;
   background: repeating-conic-gradient(rgb(255 255 255 / 0.18) 0 1.1deg, transparent 1.1deg 6deg);
   -webkit-mask-image: radial-gradient(circle, transparent 16%, #000 62%);
   mask-image: radial-gradient(circle, transparent 16%, #000 62%);
@@ -1058,7 +1058,7 @@
 .sp-week__shadow {
   position: relative;
   z-index: 1;
-  filter: brightness(0) drop-shadow(0 0 2px #c9a7ff) drop-shadow(0 0 14px rgb(201 167 255 / 0.55));
+  filter: brightness(0);
 }
 .sp-week__shadow svg {
   display: block;
@@ -1067,9 +1067,9 @@
 }
 .sp-week__eyes {
   position: absolute;
-  left: -30%;
-  right: -30%;
-  top: -20%;
+  left: -40%;
+  right: -40%;
+  top: -30%;
   bottom: -10%;
   background: radial-gradient(closest-side, color-mix(in srgb, var(--bc2) 85%, transparent), transparent);
   opacity: 0;
@@ -1471,7 +1471,6 @@
     radial-gradient(circle at 26% 54%, var(--s4) 0 26%, transparent 27%),
     radial-gradient(circle at 74% 54%, var(--s4) 0 26%, transparent 27%),
     linear-gradient(90deg, transparent 46%, #4a2d1d 46% 54%, transparent 54%) 0 100% / 100% 50% no-repeat;
-  filter: drop-shadow(3px 0 0 var(--ink)) drop-shadow(-3px 0 0 var(--ink));
 }
 .sp-sea__sfx {
   left: 5%;
