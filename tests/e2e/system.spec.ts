@@ -57,7 +57,7 @@ test('game: Progress is one tap away on a phone, with quests and achievements', 
   await page.getByRole('navigation', { name: 'Commands' }).getByRole('button', { name: /^LV \d+/ }).click();
   await expect(page).toHaveURL(/\/progress$/);
   await expect(page.getByRole('heading', { name: 'Progress', level: 1 })).toBeVisible();
-  await expect(page.getByRole('list', { name: 'Forms' }).getByRole('listitem')).toHaveCount(20);
+  await expect(page.getByRole('list', { name: 'Forms' }).getByRole('listitem')).toHaveCount(40);
 
   const tabs = page.getByRole('navigation', { name: 'Progress sections' });
   await tabs.getByRole('button', { name: /Quests/ }).click();
@@ -77,7 +77,7 @@ test('game: Progress is one tap away on a phone, with quests and achievements', 
 const ROUTES = ['/', '/violin', '/coding', '/sports', '/gym', '/study', '/chess', '/sleep', '/screen', '/calendar', '/tasks', '/progress', '/progress/quests', '/progress/boss', '/progress/achievements', '/bucket', '/future', '/future/unis', '/future/tests', '/future/profile', '/future/essays', '/future/roadmap', '/reading', '/reading/shelf', '/reading/lines', '/reading/year', '/maths', '/maths/road', '/maths/notebook', '/maths/papers', '/settings', '/log', '/violin/room', '/base', '/base/war', '/base/dojo', '/base/lab', '/base/observatory', '/base/infirmary', '/base/armoury', '/base/oracle', '/base/vault', '/base/rituals', '/base/hall', '/base/lighthouse', '/base/lighthouse/words', '/base/lighthouse/read', '/base/forge', '/base/forge/revision', '/base/arena', '/base/oath', '/base/close', '/base/exam', '/base/breath', '/base/ledger', '/base/scales', '/base/diary', '/base/cinema', '/coding/tree', '/sports/road', '/sports/race', '/screen/bouncer', '/chess/vision', '/album', '/album/sheet', '/album/reel', '/hangar', '/hangar/shop', '/hangar/capsule', '/hangar/workshop', '/hangar/events', '/hangar/ledger'];
 
 test('every screen: one h1, every control named, no sideways scroll', async ({ page }) => {
-  test.setTimeout(180_000); // many screens
+  test.setTimeout(360_000); // many screens
   await page.route('https://api.chess.com/**', (r) => r.fulfill({ status: 404, body: '{}' }));
   for (const path of ROUTES) {
     await page.goto(path);

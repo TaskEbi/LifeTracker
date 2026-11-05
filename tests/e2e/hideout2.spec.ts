@@ -127,7 +127,7 @@ test('close the day: clears leftovers, and last night’s decision is there in t
   await page.clock.install({ time: new Date('2026-11-04T21:00:00+08:00') });
   await page.goto('/');
   await task(page, 'Buy rosin today');
-  await page.getByRole('button', { name: /^Close the day/ }).click();
+  await page.getByRole('region', { name: 'Hideout rooms' }).getByRole('button', { name: /^Close the day: / }).click();
   await page.getByRole('group', { name: 'What to do with: Buy rosin' }).getByRole('button', { name: 'Tomorrow' }).click();
   await expect(page.getByText('Nothing. Clean slate.')).toBeVisible();
   await page.getByLabel('Tomorrow’s first thing').fill('Two past papers');
