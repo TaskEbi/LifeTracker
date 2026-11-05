@@ -297,7 +297,7 @@ describe('the observatory', () => {
     const events = [{ key: 'a', date: T, section: 'violin' as const, xp: 280, reason: '' }, { key: 'b', date: addDays(T, -40), section: 'violin' as const, xp: 9999, reason: '' }];
     expect(xpRate(events, T)).toBe(10);
     const m = nextMilestones(0, 1, 10, T, 2);
-    expect(m[0]).toMatchObject({ kind: 'form', name: 'Ring', level: 3, days: Math.ceil(m[0].xpLeft / 10) });
+    expect(m[0]).toMatchObject({ kind: 'form', name: 'Ring', level: 2, days: Math.ceil(m[0].xpLeft / 10) });
     expect(m[0].date).toBe(addDays(T, m[0].days!));
     expect(nextMilestones(0, 1, 0, T)[0].date).toBeNull();
   });

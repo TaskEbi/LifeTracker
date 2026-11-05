@@ -5,6 +5,7 @@ import { STAGES } from '../../domain/progress/engine';
 import { momentLine } from '../../domain/progress/moments';
 import { sectionInfo } from '../../domain/sections';
 import { useStore } from '../../lib/createStore';
+import { WornRobot } from '../../features/game/Purse';
 import { Drone } from './Drone';
 import { fxStore, playStyle, useCelebrating } from './fx/celebrate';
 import { flyXp } from './fx/orbs';
@@ -102,7 +103,7 @@ export function RewardOverlay() {
           </>
         ) : (
           <div style={{ width: 96, margin: '0 auto' }} className="i-drone">
-            <Drone stage={stage} still happy />
+            <WornRobot stage={stage} still happy />
           </div>
         )}
         {r.rest ? (
@@ -137,6 +138,7 @@ export function RewardOverlay() {
               ))}
           </>
         ) : null}
+        {!!r.earned?.length && <p className="i-reward__earned">{r.earned.join(' · ')}</p>}
         {lines.map((text, i) => (
           <div key={`m${i}`} className="i-reward__up i-reward__up--moment">
             {text}

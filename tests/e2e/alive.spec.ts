@@ -38,7 +38,7 @@ test('episode: last week plays from real numbers, then next time on…', async (
 
 test('drone: a tap talks, five fast pokes make it dizzy, and the settings turn the sky off', async ({ page }) => {
   await page.goto('/');
-  const drone = page.getByRole('button', { name: 'Talk to your drone' });
+  const drone = page.getByRole('button', { name: 'Talk to your robot' });
   await drone.click();
   await expect(page.getByRole('status').filter({ hasText: /XP|Wha/ }).first()).toBeVisible();
   await drone.evaluate((el: HTMLElement) => { for (let i = 0; i < 5; i++) el.click(); });
@@ -78,7 +78,7 @@ test('a section picture answers a tap, and the header buttons still work', async
 test('the kanji cut plays going into a section, without holding anything up', async ({ page }) => {
   await page.addInitScript(() => localStorage.setItem('lifetracker-fx', 'full'));
   await page.goto('/');
-  await page.getByRole('link', { name: /Reading/ }).or(page.getByRole('button', { name: /^Reading/ })).first().click();
+  await page.getByRole('region', { name: 'Techniques: your sections' }).getByRole('button', { name: /Reading/ }).first().click();
   await expect(page.locator('.dr')).toHaveCount(1);
   await expect(page.getByRole('heading', { level: 1, name: 'Reading' })).toBeVisible();
   await expect(page.locator('.dr')).toHaveCount(0);

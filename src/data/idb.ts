@@ -7,6 +7,12 @@ const VERSION = 2;
 
 type RecordStore = TableName;
 
+/** A photo kept as bytes where the browser can't store a Blob. */
+interface StoredBytes {
+  bytes: ArrayBuffer;
+  type: string;
+}
+
 export interface LocalDb {
   getAll<T>(store: RecordStore): Promise<T[]>;
   putMany(store: RecordStore, records: { id: string }[]): Promise<void>;
@@ -67,12 +73,21 @@ export async function openLocalDb(name: string): Promise<LocalDb> {
       await done(tx);
     },
     async getBlob(key) {
-      return (await req(db.transaction('blobs').objectStore('blobs').get(key))) as Blob | undefined;
+      const v = (await req(db.transaction('blobs').objectStore('blobs').get(key))) as Blob | StoredBytes | undefined;
+      return v && !(v instanceof Blob) && v.bytes instanceof ArrayBuffer ? new Blob([v.bytes], { type: v.type }) : (v as Blob | undefined);
     },
     async putBlob(key, blob) {
-      const tx = db.transaction('blobs', 'readwrite');
-      tx.objectStore('blobs').put(blob, key);
-      await done(tx);
+      try {
+        const tx = db.transaction('blobs', 'readwrite');
+        tx.objectStore('blobs').put(blob, key);
+        await done(tx);
+      } catch {
+        // Safari's private windows (and WebKit test browsers) refuse Blobs in IndexedDB; plain bytes work.
+        const bytes = await blob.arrayBuffer();
+        const tx = db.transaction('blobs', 'readwrite');
+        tx.objectStore('blobs').put({ bytes, type: blob.type } satisfies StoredBytes, key);
+        await done(tx);
+      }
     },
     close: () => db.close(),
   };

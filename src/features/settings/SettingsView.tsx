@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { ChannelBar } from '../../app/Shell';
-import { setTheme, THEMES, themeChoice, type ThemeChoice } from '../../app/theme';
+import { SHOP_THEME_IDS, setTheme, THEMES, themeChoice, type ThemeChoice } from '../../app/theme';
+import { useGame } from '../game/store';
 import { flushSync, syncNow } from '../../app/syncHandle';
 import { navigate } from '../../app/router';
 import { exportCollection, download, importCollection } from '../../data/backup';
@@ -172,6 +173,7 @@ function Backup() {
 /** Colour themes, each shown as a swatch: its background, both accents and its kanji. */
 function ThemePicker() {
   const [choice, setChoice] = useState<ThemeChoice>(themeChoice);
+  const items = useGame().wallet.items;
   const pick = (id: ThemeChoice) => {
     setTheme(id);
     setChoice(id);
@@ -186,7 +188,7 @@ function ThemePicker() {
         <b>{auto.name}</b>
         <small>{auto.mode}</small>
       </button>
-      {THEMES.map((t) => (
+      {THEMES.filter((t) => !SHOP_THEME_IDS.includes(t.id) || items.has(`theme:${t.id}`) || choice === t.id).map((t) => (
         <button
           key={t.id}
           type="button"

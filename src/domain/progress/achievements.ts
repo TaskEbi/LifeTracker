@@ -1159,6 +1159,9 @@ function compute(input: ProgressInput, extras: AchievementExtras): Achievement[]
     ['lv50', 50, 'Half Century', 'platinum', 'crown'],
     ['lv75', 75, 'Grandmaster', 'platinum', 'gem'],
     ['lv100', 100, 'Legend', 'platinum', 'gem'],
+    ['lv150', 150, 'Immortal', 'platinum', 'gem'],
+    ['lv200', 200, 'Celestial', 'platinum', 'gem'],
+    ['lv300', 300, 'Origin Point', 'platinum', 'gem'],
   ] as const) {
     const on = overall.reach(xpForLevel(lv));
     add(id, tier, glyph, title, `Reach overall level ${lv}`, lv, on ? lv : levelOf(overall.total), on);
@@ -1171,6 +1174,11 @@ function compute(input: ProgressInput, extras: AchievementExtras): Achievement[]
     ['form10', 9, 'Ten Forms', 'gold', 'drone'],
     ['form15', 14, 'Dragon Rising', 'platinum', 'dragon'],
     ['form20', 19, 'Ascension', 'platinum', 'wing'],
+    ['form21', 20, 'Beyond Kami', 'gold', 'drone'],
+    ['form25', 24, 'Variable Geometry', 'gold', 'drone'],
+    ['form30', 29, 'Be Not Afraid', 'platinum', 'wing'],
+    ['form35', 34, 'Out of Time', 'platinum', 'drone'],
+    ['form40', 39, 'Where It All Began', 'platinum', 'gem'],
   ] as const) {
     const on = overall.reach(xpForLevel(STAGES[form].level));
     add(id, tier, glyph, title, `Transform into form ${form + 1}, ${STAGES[form].name}`, 1, on ? 1 : 0, on);

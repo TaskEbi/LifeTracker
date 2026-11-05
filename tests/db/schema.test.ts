@@ -173,7 +173,7 @@ describe('shapes', () => {
   });
 
   it('takes every Hideout record as it is, with no migration', async () => {
-    for (const kind of ['hq_checkin', 'hq_ritual', 'hq_ritual_day', 'hq_card', 'hq_recall_day', 'hq_niggle', 'hq_gear', 'hq_prediction', 'hq_capsule', 'hq_review', 'hq_experiment', 'hq_note', 'hq_quote', 'hq_oath', 'hq_scale', 'hq_diary', 'hq_close', 'hq_urge_day', 'hq_mock']) {
+    for (const kind of ['hq_checkin', 'hq_ritual', 'hq_ritual_day', 'hq_card', 'hq_recall_day', 'hq_niggle', 'hq_gear', 'hq_prediction', 'hq_capsule', 'hq_review', 'hq_experiment', 'hq_note', 'hq_quote', 'hq_oath', 'hq_scale', 'hq_diary', 'hq_close', 'hq_urge_day', 'hq_mock', 'gm_tx']) {
       await as(member, `insert into public.lt_records (id, section, kind, data) values (gen_random_uuid(), 'cabinet', $1, '{"x": 1}')`, [kind]);
     }
     await as(member, `insert into public.lt_records (id, section, kind) values (gen_random_uuid(), 'violin', 'tempo_ladder')`);

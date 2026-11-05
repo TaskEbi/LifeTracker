@@ -9,9 +9,9 @@ import { BossArt } from './BossArt';
 import './boss.css';
 
 const DAY = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-const srcName = (h: Hit) => (h.source === 'tasks' ? 'Tasks' : h.source === 'general' ? 'Other' : sectionInfo(h.source).name);
-const srcKanji = (h: Hit) => (h.source === 'tasks' ? '務' : h.source === 'general' ? '・' : sectionInfo(h.source).kanji);
-const srcColour = (h: Hit) => `var(--c-${h.source === 'tasks' ? 'general' : h.source})`;
+const srcName = (h: Hit) => (h.source === 'tasks' ? 'Tasks' : h.source === 'general' ? 'Other' : h.source === 'item' ? 'Hangar' : sectionInfo(h.source).name);
+const srcKanji = (h: Hit) => (h.source === 'tasks' ? '務' : h.source === 'general' ? '・' : h.source === 'item' ? '爆' : sectionInfo(h.source).kanji);
+const srcColour = (h: Hit) => `var(--c-${h.source === 'tasks' || h.source === 'item' ? 'general' : h.source})`;
 
 function HitRow({ h }: { h: Hit }) {
   return (

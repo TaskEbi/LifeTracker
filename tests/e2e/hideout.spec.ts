@@ -75,6 +75,7 @@ test('lighthouse: a message left on a good day comes back on a bad one, then wor
 
 test('lighthouse: rough weather brightens the way in on Home', async ({ page }) => {
   await page.goto('/');
+  await page.getByRole('region', { name: 'Today’s checklist' }).getByRole('button', { name: /^Mood/ }).click();
   await page.getByRole('region', { name: 'Inner weather' }).getByRole('button', { name: /Storm/ }).click();
   await expect(page.getByRole('region', { name: 'Lighthouse' }).getByRole('button', { name: /Rough weather today/ })).toBeVisible();
 });
@@ -158,12 +159,14 @@ test('next move: suggests something with a reason and starts it', async ({ page 
 
 test('inner weather: a check-in from Home shows in the Lab', async ({ page }) => {
   await page.goto('/');
+  const list = page.getByRole('region', { name: 'Today’s checklist' });
+  await list.getByRole('button', { name: /^Mood/ }).click();
   const card = page.getByRole('region', { name: 'Inner weather' });
   await card.getByRole('button', { name: /Clear/ }).click();
   await card.getByRole('button', { name: 'Energy 4 of 5' }).click();
   await card.getByLabel('One line about today').fill('A good day');
-  await card.getByRole('button', { name: 'Done' }).click();
-  await expect(page.getByRole('button', { name: /Inner weather today: Clear/ })).toBeVisible();
+  await card.getByLabel('One line about today').blur();
+  await expect(list.getByRole('button', { name: /^Mood\s*, recorded/ })).toContainText('Clear · energy 4/5');
   await page.goto('/base/lab');
   await expect(page.getByRole('img', { name: /Inner weather, \d+: 1 days logged/ })).toBeVisible();
 });
@@ -221,7 +224,7 @@ test('dojo: a mistake with a cause shows up in where marks leak', async ({ page 
 test('war room: review, seal, and the Big Three lands on Home', async ({ page }) => {
   await page.clock.install({ time: new Date('2026-11-09T09:00:00+08:00') }); // a Monday
   await page.goto('/');
-  await page.getByRole('button', { name: /Weekly review/ }).click();
+  await page.getByRole('region', { name: 'Hideout rooms' }).getByRole('button', { name: /^War room: Weekly review/ }).click();
   await expect(page.getByRole('heading', { name: 'War room', level: 1 })).toBeVisible();
   const flow = page.getByRole('region', { name: 'Weekly review' });
   await flow.getByRole('button', { name: 'Next' }).click();

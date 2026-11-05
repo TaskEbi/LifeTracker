@@ -1,0 +1,240 @@
+/* Folklore chassis motion. Transform and opacity only; origins are in the art's 200 x 200 box. */
+.bcf-drum-l,
+.bcf-drum-r,
+.bcf-rock,
+.bcf-slosh,
+.bcf-beckon,
+.bcf-hop,
+.bcf-flap,
+.bcf-sway,
+.bcf-nod,
+.bcf-tail,
+.bcf-jaw,
+.bcf-fan {
+  transform-box: view-box;
+}
+
+/* tanuki: two tools on one belly */
+.bcf-drum-l {
+  animation: bcf-drum-l 0.9s ease-in infinite;
+}
+.bcf-drum-r {
+  animation: bcf-drum-r 0.9s ease-in infinite;
+}
+@keyframes bcf-drum-l {
+  0%, 100% { transform: rotate(0); }
+  25% { transform: rotate(16deg); }
+  50% { transform: rotate(0); }
+}
+@keyframes bcf-drum-r {
+  0%, 50%, 100% { transform: rotate(0); }
+  75% { transform: rotate(-16deg); }
+}
+
+/* daruma: knocked over, gets back up */
+.bcf-rock {
+  transform-origin: 100px 124px;
+  animation: bcf-rock 4.2s ease-in-out infinite;
+}
+@keyframes bcf-rock {
+  0%, 46%, 100% { transform: rotate(0); }
+  54% { transform: rotate(-17deg); }
+  64% { transform: rotate(11deg); }
+  73% { transform: rotate(-6deg); }
+  82% { transform: rotate(3deg); }
+  90% { transform: rotate(-1deg); }
+}
+
+/* kappa: mind the dish */
+.bcf-slosh {
+  transform-origin: 100px 24px;
+  animation: bcf-slosh 2.4s ease-in-out infinite;
+}
+@keyframes bcf-slosh {
+  0%, 100% { transform: rotate(-7deg); }
+  50% { transform: rotate(7deg); }
+}
+.bcf-bubble {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: bcf-bubble 2.6s ease-out infinite;
+}
+@keyframes bcf-bubble {
+  0% { transform: translateY(16px) scale(0.6); opacity: 0; }
+  20% { opacity: 1; }
+  100% { transform: translateY(-20px) scale(1.1); opacity: 0; }
+}
+
+/* maneki: the paw never stops */
+.bcf-beckon {
+  animation: bcf-beckon 1.1s ease-in-out infinite;
+}
+@keyframes bcf-beckon {
+  0%, 100% { transform: rotate(10deg); }
+  50% { transform: rotate(-22deg); }
+}
+
+/* kasa: one leg, so it hops */
+.bcf-hop {
+  transform-origin: 100px 180px;
+  animation: bcf-hop 1.3s ease-in-out infinite;
+}
+@keyframes bcf-hop {
+  0%, 100% { transform: translateY(0) scale(1.05, 0.93); }
+  14% { transform: translateY(0) scale(1, 1); }
+  45% { transform: translateY(-16px) scale(0.98, 1.03); }
+  76% { transform: translateY(0) scale(1, 1); }
+  86% { transform: translateY(0) scale(1.05, 0.93); }
+}
+.bcf-flap {
+  animation: bcf-flap 1.3s ease-in-out infinite;
+}
+@keyframes bcf-flap {
+  0%, 100% { transform: rotate(-7deg); }
+  45% { transform: rotate(9deg); }
+}
+.bcf-bob {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: bcf-bob 3.2s ease-in-out infinite;
+}
+@keyframes bcf-bob {
+  50% { transform: translateY(-5px); }
+}
+.bcf-rain {
+  animation: bcf-rain 0.9s linear infinite;
+}
+@keyframes bcf-rain {
+  0% { transform: translateY(-3px); opacity: 0; }
+  30% { opacity: 1; }
+  100% { transform: translateY(6px); opacity: 0; }
+}
+
+/* chochin: swings on nothing, burns unevenly */
+.bcf-sway {
+  transform-origin: 100px 20px;
+  animation: bcf-sway 3.6s ease-in-out infinite;
+}
+@keyframes bcf-sway {
+  0%, 100% { transform: rotate(-3deg); }
+  50% { transform: rotate(3deg); }
+}
+.bcf-flicker {
+  animation: bcf-flicker 1.7s steps(1) infinite;
+}
+@keyframes bcf-flicker {
+  0%, 100% { opacity: 1; }
+  18% { opacity: 0.72; }
+  24% { opacity: 1; }
+  52% { opacity: 0.84; }
+  58% { opacity: 0.6; }
+  64% { opacity: 1; }
+}
+.bcf-flame {
+  transform-box: fill-box;
+  transform-origin: 50% 100%;
+  animation: bcf-flame 0.7s ease-in-out infinite;
+}
+@keyframes bcf-flame {
+  0%, 100% { transform: scale(1, 1); }
+  50% { transform: scale(0.88, 1.14); }
+}
+
+/* karakuri: a clockwork bow */
+.bcf-nod {
+  transform-origin: 100px 90px;
+  animation: bcf-nod 3.4s steps(4) infinite;
+}
+@keyframes bcf-nod {
+  0%, 44%, 100% { transform: rotate(0) translateY(0); }
+  60%, 78% { transform: rotate(0) translateY(5px) scale(1, 0.93); }
+}
+.bcf-gear-r {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: bcf-gear-r 5s linear infinite;
+}
+@keyframes bcf-gear-r {
+  to { transform: rotate(-360deg); }
+}
+.bcf-steam {
+  animation: bcf-steam 2.4s ease-out infinite;
+}
+@keyframes bcf-steam {
+  0% { transform: translateY(5px); opacity: 0; }
+  35% { opacity: 0.9; }
+  100% { transform: translateY(-10px); opacity: 0; }
+}
+
+/* koi: tail, then bubbles */
+.bcf-tail {
+  transform-origin: 158px 96px;
+  animation: bcf-tail 1.4s ease-in-out infinite;
+}
+@keyframes bcf-tail {
+  0%, 100% { transform: rotate(-8deg); }
+  50% { transform: rotate(8deg); }
+}
+.bcf-rise {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: bcf-rise 3s linear infinite;
+}
+@keyframes bcf-rise {
+  0% { transform: translateY(14px); opacity: 0; }
+  20%, 75% { opacity: 1; }
+  100% { transform: translateY(-14px); opacity: 0; }
+}
+
+/* tengu: afterburn and a lazy fan */
+.bcf-jet {
+  transform-box: fill-box;
+  transform-origin: 50% 0;
+  animation: bcf-jet 0.28s ease-in-out infinite alternate;
+}
+@keyframes bcf-jet {
+  from { transform: scaleY(0.84); opacity: 0.85; }
+  to { transform: scaleY(1.1); opacity: 1; }
+}
+.bcf-fan {
+  animation: bcf-fan 2.2s ease-in-out infinite;
+}
+@keyframes bcf-fan {
+  0%, 100% { transform: rotate(-9deg); }
+  50% { transform: rotate(9deg); }
+}
+
+/* komainu: A, then Un */
+.bcf-jaw {
+  animation: bcf-jaw 4.8s ease-in-out infinite;
+}
+@keyframes bcf-jaw {
+  0%, 44%, 100% { transform: translateY(0); }
+  54%, 88% { transform: translateY(-11px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bcf-drum-l,
+  .bcf-drum-r,
+  .bcf-rock,
+  .bcf-slosh,
+  .bcf-bubble,
+  .bcf-beckon,
+  .bcf-hop,
+  .bcf-flap,
+  .bcf-bob,
+  .bcf-rain,
+  .bcf-sway,
+  .bcf-flicker,
+  .bcf-flame,
+  .bcf-nod,
+  .bcf-gear-r,
+  .bcf-steam,
+  .bcf-tail,
+  .bcf-rise,
+  .bcf-jet,
+  .bcf-fan,
+  .bcf-jaw {
+    animation: none !important;
+  }
+}

@@ -86,6 +86,7 @@ function Rail({ current, rest }: { current: RouteName; rest: string[] }) {
       {item('progress', 'Quests', '任', open ? <span className="i-cmd__badge i-cmd__badge--inline">{open}</span> : undefined, ['quests'])}
       {item('progress', 'Achievements', '紋', undefined, ['achievements'])}
       {item('bucket', 'Bucket list', SYSTEM_KANJI.bucket)}
+      {item('hangar', 'Hangar', SYSTEM_KANJI.hangar)}
       {item('album', 'Album', SYSTEM_KANJI.album)}
       <div className="i-rail__sep" />
       {item('calendar', 'Calendar', SYSTEM_KANJI.calendar)}
@@ -138,6 +139,7 @@ function CommandBar({ current }: { current: RouteName }) {
 
 const SYSTEM: { id: keyof typeof SYSTEM_KANJI; label: string }[] = [
   { id: 'progress', label: 'Progress' },
+  { id: 'hangar', label: 'Hangar' },
   { id: 'bucket', label: 'Bucket' },
   { id: 'album', label: 'Album' },
   { id: 'log', label: 'Activity' },
@@ -218,8 +220,8 @@ export function Shell() {
   const View: ComponentType | undefined = route.name === 'home' ? Home : sectionViews[route.name];
   const isCabinet = route.name === 'cabinet';
   const sect = (SECTION_IDS as readonly string[]).includes(route.name) ? (route.name as SectionId) : null;
-  // the bucket list, the hideout and the album aren't sections but have their own spaces too
-  const look: LookId | null = sect ?? (route.name === 'bucket' || route.name === 'base' || route.name === 'album' ? route.name : null);
+  // the bucket list, the hideout, the hangar and the album aren't sections but have their own spaces too
+  const look: LookId | null = sect ?? (route.name === 'bucket' || route.name === 'base' || route.name === 'album' || route.name === 'hangar' ? route.name : null);
   const ref = useSectionLook(look);
   return (
     <div className="i-shell" ref={ref} data-sect={look ?? undefined}>

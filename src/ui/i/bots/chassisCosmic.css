@@ -1,0 +1,237 @@
+/* Signature motions for the cosmic chassis. Transform and opacity only. */
+.bcc-flap,
+.bcc-flapr,
+.bcc-sway,
+.bcc-petal,
+.bcc-bell,
+.bcc-trail,
+.bcc-spore,
+.bcc-chase,
+.bcc-cow,
+.bcc-shard,
+.bcc-glint,
+.bcc-fa,
+.bcc-fb,
+.bcc-ball {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+/* Paper wings hinge on the body. */
+.bcc-flap {
+  transform-origin: 100% 100%;
+  animation: bcc-flap 2.4s ease-in-out infinite;
+}
+.bcc-flapr {
+  transform-origin: 0 100%;
+  animation: bcc-flapr 2.4s ease-in-out infinite;
+}
+@keyframes bcc-flap {
+  50% {
+    transform: rotate(-7deg);
+  }
+}
+@keyframes bcc-flapr {
+  50% {
+    transform: rotate(7deg);
+  }
+}
+
+/* Very old trees move very little. */
+.bcc-sway {
+  transform-box: view-box;
+  transform-origin: 100px 112px;
+  animation: bcc-sway 6s ease-in-out infinite;
+}
+@keyframes bcc-sway {
+  0%,
+  100% {
+    transform: rotate(-1.3deg);
+  }
+  50% {
+    transform: rotate(1.3deg);
+  }
+}
+.bcc-petal {
+  animation: bcc-petal 5s linear infinite;
+}
+@keyframes bcc-petal {
+  0% {
+    transform: translate(0, 0) rotate(0);
+    opacity: 0;
+  }
+  15% {
+    opacity: 1;
+  }
+  85% {
+    opacity: 1;
+  }
+  100% {
+    transform: translate(-16px, 62px) rotate(220deg);
+    opacity: 0;
+  }
+}
+
+/* The bell draws in and lets go. */
+.bcc-bell {
+  transform-origin: 50% 20%;
+  animation: bcc-bell 2.6s ease-in-out infinite;
+}
+@keyframes bcc-bell {
+  50% {
+    transform: scale(0.93, 1.05);
+  }
+}
+.bcc-trail {
+  transform-origin: 50% 0;
+  animation: bcc-trail 2.6s ease-in-out infinite;
+}
+@keyframes bcc-trail {
+  50% {
+    transform: scale(1.06, 0.95);
+  }
+}
+.bcc-spore {
+  animation: bcc-spore 4.5s ease-in-out infinite;
+}
+@keyframes bcc-spore {
+  0% {
+    transform: translateY(14px);
+    opacity: 0;
+  }
+  40% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(-20px);
+    opacity: 0;
+  }
+}
+
+/* Running lights go round the rim. */
+.bcc-chase {
+  animation: bcc-chase 1.4s linear infinite;
+}
+@keyframes bcc-chase {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.2;
+  }
+}
+.bcc-cow {
+  animation: bcc-cow 3.4s ease-in-out infinite;
+}
+@keyframes bcc-cow {
+  0%,
+  100% {
+    transform: translateY(8px) rotate(-14deg);
+  }
+  50% {
+    transform: translateY(-8px) rotate(10deg);
+  }
+}
+
+.bcc-shard {
+  animation: bcc-shard 3.2s ease-in-out infinite;
+}
+@keyframes bcc-shard {
+  50% {
+    transform: translateY(-7px) rotate(9deg);
+  }
+}
+.bcc-glint {
+  animation: bcc-glint 2.6s ease-in-out infinite;
+}
+@keyframes bcc-glint {
+  0%,
+  100% {
+    opacity: 0.25;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+/* Clockwork: pivot is the group's own origin, placed with a parent translate. */
+.bcc-orbit {
+  transform-box: view-box;
+  transform-origin: 0 0;
+  animation: bcc-orbit 40s linear infinite;
+}
+.bcc-orbit--back {
+  animation-direction: reverse;
+}
+.bcc-tick {
+  transform-box: view-box;
+  transform-origin: 0 0;
+  animation: bcc-orbit 60s steps(60) infinite;
+}
+@keyframes bcc-orbit {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* The arc never holds one shape. */
+.bcc-fa {
+  animation: bcc-fa 0.42s steps(1) infinite;
+}
+.bcc-fb {
+  animation: bcc-fb 0.42s steps(1) infinite;
+}
+@keyframes bcc-fa {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  40% {
+    opacity: 0;
+  }
+  70% {
+    opacity: 0.5;
+  }
+}
+@keyframes bcc-fb {
+  0%,
+  100% {
+    opacity: 0;
+  }
+  40% {
+    opacity: 1;
+  }
+  70% {
+    opacity: 0;
+  }
+}
+.bcc-ball {
+  animation: bcc-ball 3s ease-in-out infinite;
+}
+@keyframes bcc-ball {
+  50% {
+    transform: translateY(-9px) scale(1.15);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bcc-flap,
+  .bcc-flapr,
+  .bcc-sway,
+  .bcc-petal,
+  .bcc-bell,
+  .bcc-trail,
+  .bcc-spore,
+  .bcc-chase,
+  .bcc-cow,
+  .bcc-shard,
+  .bcc-glint,
+  .bcc-orbit,
+  .bcc-tick,
+  .bcc-fa,
+  .bcc-fb,
+  .bcc-ball {
+    animation: none !important;
+  }
+}

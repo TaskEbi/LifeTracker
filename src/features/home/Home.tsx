@@ -14,6 +14,7 @@ import { useStore } from '../../lib/createStore';
 import { accent } from '../../ui/i/bits';
 import { droneMood, hourIn, seasonOf, timeOfDay, TOD_LABEL } from '../../domain/fun/season';
 import { LivingDrone } from './LivingDrone';
+import { Purse } from '../game/Purse';
 import { OmikujiCard } from './Omikuji';
 import { Sky } from './Sky';
 import { bucketItems } from '../bucket/actions';
@@ -246,6 +247,8 @@ export function Home() {
             </div>
           </section>
 
+          <Purse />
+
           <button type="button" className="h-focus" onClick={() => openSheet({ type: 'focus' })}>
             <span className="h-focus__k" aria-hidden="true">
               集中
@@ -388,6 +391,11 @@ export function Home() {
               <span aria-hidden="true">{SYSTEM_KANJI.bucket}</span>
               <b>Bucket list</b>
               <small>{bucket.total ? `${bucket.done} of ${bucket.total} crossed off${bucket.next ? ` · next: ${bucket.next}` : ''}` : 'Everything you want to do someday'}</small>
+            </button>
+            <button type="button" className="h-sys__btn" onClick={() => navigate('hangar')}>
+              <span aria-hidden="true">{SYSTEM_KANJI.hangar}</span>
+              <b>Hangar</b>
+              <small>Shop · capsules · events</small>
             </button>
             <button type="button" className="h-sys__btn" onClick={() => navigate('progress')}>
               <span aria-hidden="true">{SYSTEM_KANJI.progress}</span>

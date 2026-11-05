@@ -90,7 +90,7 @@ export function FaceCamera({ date, ghost, onShot, onClose }: Props) {
     try {
       await onShot(blob);
     } catch (e) {
-      setError(`Not saved: ${(e as Error).message || 'something went wrong'}`);
+      setError(`Not saved: ${(e as Error | null)?.message || 'something went wrong'}`);
       setBusy(false);
     }
   };

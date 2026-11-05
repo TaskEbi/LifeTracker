@@ -12,6 +12,7 @@ import { SECTIONS, sectionInfo } from '../../domain/sections';
 import { useStore } from '../../lib/createStore';
 import { accent, Chips, H2, Meter, Seg } from '../../ui/i/bits';
 import { Drone } from '../../ui/i/Drone';
+import { WornRobot } from '../game/Purse';
 import { Icon } from '../../ui/i/Icon';
 import { AchievementsPanel } from './AchievementsPanel';
 import { BossPanel } from './BossPanel';
@@ -34,6 +35,7 @@ const RULE_LINES: [string, string][] = [
   ['Cabinet', `${RULES.cabinetItem} XP per item saved, up to ${RULES.cabinetPerDay} a day`],
   ['Quests', `daily ${QUEST_XP.daily}, weekly ${QUEST_XP.weekly}, monthly ${QUEST_XP.monthly} XP each; clearing all three adds ${SWEEP_XP.daily} / ${SWEEP_XP.weekly} / ${SWEEP_XP.monthly}`],
   ['Weekly boss', `${BOSS_XP} XP for defeating the week's boss (Progress → Raid)`],
+  ['Hangar items', 'Training Scrolls and Spirit Tonics, bought with what you earn, add XP. Everything else in the Hangar is for the robot'],
   ['Rest day', 'No XP; keeps the streak going'],
 ];
 
@@ -108,7 +110,7 @@ function Overview() {
     <>
       <section className="pg-hero" style={stageStyle} aria-label="Your character">
         <div className="pg-hero__drone i-drone">
-          <Drone stage={p.overall.stage} />
+          <WornRobot stage={p.overall.stage} />
         </div>
         <div className="pg-hero__txt">
           <span className="pg-hero__form">
@@ -126,6 +128,11 @@ function Overview() {
             <li>
               <Icon name="bolt" size={14} />
               {next ? `${next.name} form at LV ${next.level}` : 'Final form reached'}
+            </li>
+            <li>
+              <button type="button" className="i-link" onClick={() => navigate('hangar')}>
+                Change its look in the Hangar ▶
+              </button>
             </li>
             {nextRank && (
               <li>

@@ -6,6 +6,7 @@
  */
 import { addDays, dayCount, weekStart } from '../log/dates';
 import { SECTION_IDS, TIMED_SECTIONS, type SectionId } from '../../data/types';
+import { BOMB_DMG } from '../game/catalog';
 import type { ProgressInput, XpEvent, XpSection } from './engine';
 import { dayFacts, hash, type Facts } from './quests';
 
@@ -89,8 +90,8 @@ export function bossFor(monday: string): BossDef {
 
 export interface Hit {
   date: string;
-  /** A section, or 'tasks' / 'general'. */
-  source: SectionId | 'tasks' | 'general';
+  /** A section, 'tasks' / 'general', or a Hangar item. */
+  source: SectionId | 'tasks' | 'general' | 'item';
   label: string;
   dmg: number;
   weak: boolean;
@@ -171,8 +172,10 @@ export function bossFight(input: ProgressInput, monday: string, days = dayFacts(
     const d = addDays(monday, i);
     if (d > input.today) break;
     const f = days.get(d);
-    if (!f) continue;
-    for (const h of dayHits(d, f, boss.weak, seen)) {
+    const found = f ? dayHits(d, f, boss.weak, seen) : [];
+    // Raid Bombs from the Hangar. Only this week's fight: bossHp reads plainDamage, so next week's HP doesn't grow.
+    for (const u of input.usedItems ?? []) if (u.item === 'bomb' && u.date === d) found.push({ date: d, source: 'item', label: 'Raid Bomb', dmg: BOMB_DMG, weak: false });
+    for (const h of found) {
       hits.push(h);
       damage += h.dmg;
     }

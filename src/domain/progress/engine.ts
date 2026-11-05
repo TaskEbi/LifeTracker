@@ -11,6 +11,7 @@ import type { PlansState } from '../plans/types';
 import { futureXp } from '../future/plan';
 import { readingXp } from '../reading/model';
 import { mathsXp } from '../maths/model';
+import { SCROLL_XP, TONIC } from '../game/catalog';
 import { bossEvents } from './boss';
 import { questEvents } from './quests';
 
@@ -60,6 +61,15 @@ export interface ProgressInput {
   readingGoal?: number;
   /** Live Maths records (contests, papers, problems); absent in old fixtures. */
   maths?: LtRecord[];
+  /** Hangar items used up (scrolls, tonics, bombs); absent in old fixtures. */
+  usedItems?: UsedItem[];
+}
+
+/** A Hangar consumable that was used. Its XP is derived from this, like any other record. */
+export interface UsedItem {
+  id: string;
+  item: string;
+  date: string;
 }
 
 const targetsFor = (input: ProgressInput, date: string) => (input.targetsAt ? input.targetsAt(weekStart(date)) : input.targets);
@@ -100,8 +110,8 @@ export const RULES = {
 } as const;
 
 /** XP to go from level n to n + 1. Small steps early, so the first levels come quickly. */
-const SECTION_STEP = (n: number) => 60 + 15 * n;
-const OVERALL_STEP = (n: number) => 120 + 25 * n;
+const SECTION_STEP = (n: number) => Math.min(40 + 8 * n, 400);
+const OVERALL_STEP = (n: number) => Math.min(40 + 5 * n, 400);
 
 /**
  * The character's forms and the overall level each one starts at. Each form adds hardware and a
@@ -109,26 +119,50 @@ const OVERALL_STEP = (n: number) => 120 + 25 * n;
  */
 export const STAGES = [
   { level: 1, name: 'Core', c: '#f2541b', c2: '#ffb347' },
-  { level: 3, name: 'Ring', c: '#0ea5a4', c2: '#5eead4' },
-  { level: 6, name: 'Rotor', c: '#2563eb', c2: '#7dd3fc' },
-  { level: 10, name: 'Array', c: '#7c3aed', c2: '#c4b5fd' },
-  { level: 15, name: 'Halo', c: '#e0a100', c2: '#fde68a' },
-  { level: 20, name: 'Prism', c: '#db2777', c2: '#67e8f9' },
-  { level: 25, name: 'Ronin', c: '#dc2626', c2: '#f5f5f4' },
-  { level: 30, name: 'Nova', c: '#ef4444', c2: '#fbbf24' },
-  { level: 36, name: 'Blade', c: '#64748b', c2: '#38bdf8' },
-  { level: 42, name: 'Aurora', c: '#10b981', c2: '#a78bfa' },
-  { level: 48, name: 'Oni', c: '#b91c1c', c2: '#fb923c' },
-  { level: 55, name: 'Titan', c: '#475569', c2: '#f59e0b' },
-  { level: 62, name: 'Kitsune', c: '#f97316', c2: '#fef3c7' },
-  { level: 70, name: 'Raijin', c: '#6366f1', c2: '#facc15' },
-  { level: 78, name: 'Ryu', c: '#059669', c2: '#fde047' },
-  { level: 86, name: 'Phoenix', c: '#ea580c', c2: '#fde047' },
-  { level: 95, name: 'Shogun', c: '#1e293b', c2: '#eab308' },
-  { level: 105, name: 'Eclipse', c: '#be123c', c2: '#fda4af' },
-  { level: 115, name: 'Singularity', c: '#8b5cf6', c2: '#f472b6' },
-  { level: 125, name: 'Kami', c: '#d4a017', c2: '#fffbea' },
+  { level: 2, name: 'Ring', c: '#0ea5a4', c2: '#5eead4' },
+  { level: 4, name: 'Rotor', c: '#2563eb', c2: '#7dd3fc' },
+  { level: 6, name: 'Array', c: '#7c3aed', c2: '#c4b5fd' },
+  { level: 8, name: 'Halo', c: '#e0a100', c2: '#fde68a' },
+  { level: 10, name: 'Prism', c: '#db2777', c2: '#67e8f9' },
+  { level: 13, name: 'Ronin', c: '#dc2626', c2: '#f5f5f4' },
+  { level: 16, name: 'Nova', c: '#ef4444', c2: '#fbbf24' },
+  { level: 19, name: 'Blade', c: '#64748b', c2: '#38bdf8' },
+  { level: 22, name: 'Aurora', c: '#10b981', c2: '#a78bfa' },
+  { level: 25, name: 'Oni', c: '#b91c1c', c2: '#fb923c' },
+  { level: 28, name: 'Titan', c: '#475569', c2: '#f59e0b' },
+  { level: 32, name: 'Kitsune', c: '#f97316', c2: '#fef3c7' },
+  { level: 36, name: 'Raijin', c: '#6366f1', c2: '#facc15' },
+  { level: 40, name: 'Ryu', c: '#059669', c2: '#fde047' },
+  { level: 45, name: 'Phoenix', c: '#ea580c', c2: '#fde047' },
+  { level: 50, name: 'Shogun', c: '#1e293b', c2: '#eab308' },
+  { level: 55, name: 'Eclipse', c: '#be123c', c2: '#fda4af' },
+  { level: 60, name: 'Singularity', c: '#8b5cf6', c2: '#f472b6' },
+  { level: 65, name: 'Kami', c: '#d4a017', c2: '#fffbea' },
+  // Beyond Kami: the drone stops being a drone. Each of these is its own drawing (ui/i/bots/forms).
+  { level: 70, name: 'Vanguard', c: '#2563eb', c2: '#f8fafc' },
+  { level: 76, name: 'Musha', c: '#991b1b', c2: '#fbbf24' },
+  { level: 82, name: 'Kaiju', c: '#166534', c2: '#67e8f9' },
+  { level: 88, name: 'Leviathan', c: '#0e7490', c2: '#a5f3fc' },
+  { level: 94, name: 'Valkyrie', c: '#475569', c2: '#f43f5e' },
+  { level: 100, name: 'Stormbringer', c: '#4338ca', c2: '#fde047' },
+  { level: 107, name: 'Magma', c: '#7c2d12', c2: '#fb923c' },
+  { level: 114, name: 'Glacier', c: '#0369a1', c2: '#e0f2fe' },
+  { level: 121, name: 'Verdant', c: '#3f6212', c2: '#bef264' },
+  { level: 128, name: 'Ophanim', c: '#b45309', c2: '#fef08a' },
+  { level: 136, name: 'Seraph', c: '#f59e0b', c2: '#fff7ed' },
+  { level: 144, name: 'Nebula', c: '#7e22ce', c2: '#f9a8d4' },
+  { level: 152, name: 'Pulsar', c: '#0891b2', c2: '#f0abfc' },
+  { level: 160, name: 'Quasar', c: '#1d4ed8', c2: '#fdba74' },
+  { level: 170, name: 'Chronos', c: '#92400e', c2: '#e5e7eb' },
+  { level: 180, name: 'Paradox', c: '#111827', c2: '#a3e635' },
+  { level: 190, name: 'Cipher', c: '#052e16', c2: '#4ade80' },
+  { level: 200, name: 'Void Emperor', c: '#1e1b4b', c2: '#c084fc' },
+  { level: 225, name: 'Genesis', c: '#db2777', c2: '#fef08a' },
+  { level: 250, name: 'Origin', c: '#fbbf24', c2: '#ffffff' },
 ] as const;
+
+/** Forms the original drone drawing covers; the rest are drawn one by one. */
+export const DRONE_FORMS = 20;
 
 /** Overall rank titles by level. */
 export const RANKS = [
@@ -143,6 +177,12 @@ export const RANKS = [
   { level: 65, name: 'Master' },
   { level: 80, name: 'Grandmaster' },
   { level: 100, name: 'Legend' },
+  { level: 125, name: 'Mythic' },
+  { level: 150, name: 'Immortal' },
+  { level: 175, name: 'Ascendant' },
+  { level: 200, name: 'Celestial' },
+  { level: 250, name: 'Eternal' },
+  { level: 300, name: 'Origin' },
 ] as const;
 
 /** Section rank titles by section level. */
@@ -154,6 +194,8 @@ export const SECTION_RANKS = [
   { level: 25, name: 'Master' },
   { level: 40, name: 'Grandmaster' },
   { level: 60, name: 'Legend' },
+  { level: 80, name: 'Mythic' },
+  { level: 100, name: 'Immortal' },
 ] as const;
 
 const byLevel = <T extends { level: number }>(list: readonly T[], level: number): T => list.reduce((r, x) => (level >= x.level ? x : r), list[0]);
@@ -282,6 +324,17 @@ export function xpEvents(input: ProgressInput): XpEvent[] {
   for (const x of futureXp(input.future ?? [])) if (x.date <= input.today) out.push({ ...x, section: 'future' });
   for (const x of readingXp(input.reading ?? [], input.readingGoal ?? 12)) if (x.date <= input.today) out.push({ ...x, section: 'reading' });
   for (const x of mathsXp(input.maths ?? [])) if (x.date <= input.today) out.push({ ...x, section: 'maths' });
+  // Hangar items: a scroll is a flat award, a tonic tops up what the day's records earned.
+  for (const u of input.usedItems ?? []) {
+    if (u.date > input.today) continue;
+    if (u.item === 'scroll' || u.item === 'bigscroll') {
+      out.push({ key: `item:${u.id}`, date: u.date, section: 'quests', xp: SCROLL_XP[u.item], reason: u.item === 'scroll' ? 'Training Scroll read' : 'Secret Technique read' });
+    } else if (u.item === 'tonic') {
+      const day = out.reduce((n, e) => (e.date === u.date && !e.key.startsWith('item:') ? n + e.xp : n), 0);
+      const xp = Math.min(TONIC.cap, Math.round(day * TONIC.pct));
+      if (xp) out.push({ key: `item:${u.id}`, date: u.date, section: 'quests', xp, reason: 'Spirit Tonic' });
+    }
+  }
   // One award per key, whatever reaches us: a record that arrives twice still counts once.
   return [...new Map(out.map((e) => [e.key, e])).values()];
 }
