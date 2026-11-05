@@ -1192,7 +1192,7 @@
   position: absolute;
   inset: 0;
   border-radius: 50%;
-  background: conic-gradient(rgb(255 255 255 / 0.28) var(--a, 0deg), transparent 0);
+  background: conic-gradient(rgb(255 255 255 / 0.28) var(--al-sweep, 0deg), transparent 0);
   animation: al-sweep 0.7s linear 3;
 }
 .al-rl__leader::after {
@@ -1203,14 +1203,14 @@
   background: #fbeee2;
   box-shadow: 0 0 0 0 transparent;
 }
-@property --a {
+@property --al-sweep {
   syntax: '<angle>';
   inherits: false;
   initial-value: 0deg;
 }
 @keyframes al-sweep {
   to {
-    --a: 360deg;
+    --al-sweep: 360deg;
   }
 }
 .al-rl__leader span {
