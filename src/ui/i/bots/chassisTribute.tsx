@@ -362,7 +362,7 @@ function Pacer({ c, c2, uid, still, happy, mk }: BotArtProps) {
           ),
         )}
       </Eyes>
-      <g className={an(still, 'bcs-sweep')} style={at(100, 51)} transform={still ? 'rotate(36 100 51)' : undefined}>
+      <g className={an(still, 'bcs-sweep')} style={still ? undefined : at(100, 51)} transform={still ? 'rotate(36 100 51)' : undefined}>
         <path d="M100 58 V29" stroke={c} strokeWidth="2.6" strokeLinecap="round" />
       </g>
       <circle cx="100" cy="51" r="2.5" fill={c} stroke={INK} strokeWidth="1" />
@@ -470,15 +470,15 @@ function Ironclad({ c, c2, uid, still, happy, mk }: BotArtProps) {
           )}
         </Eyes>
         {[58, 142].map((x) => [68, 104].map((y) => <Bolt key={`${x}${y}`} x={x} y={y} r={2.2} f={mix(c, 60, '#ccc')} />))}
-        <text x="100" y={mk === 3 ? 121 : 128} textAnchor="middle" fontFamily={HEAVY} fontWeight="900" fontSize={mk === 3 ? 21 : 27} letterSpacing="1" fill={c2}>
+        <text x="100" y={mk === 3 ? 117 : 128} textAnchor="middle" fontFamily={HEAVY} fontWeight="900" fontSize={mk === 3 ? 20 : 27} letterSpacing="1" fill={c2}>
           32
         </text>
         {mk === 3 && (
           <>
-            <path d="M54 118 Q100 134 146 118 L140 139 Q100 152 60 139 Z" fill="#6d3f1f" stroke={FG} strokeWidth="3" strokeLinejoin="round" />
-            <rect x="84" y="122" width="32" height="24" rx="3" fill={c2} stroke={FG} strokeWidth="3" />
-            <rect x="91" y="128" width="18" height="12" fill="#6d3f1f" stroke={INK} strokeWidth="1.5" />
-            <path d="M100 134 H112" stroke={INK} strokeWidth="2.5" />
+            <path d="M57 124 Q100 138 143 124 L138 141 Q100 152 62 141 Z" fill="#6d3f1f" stroke={FG} strokeWidth="3" strokeLinejoin="round" />
+            <rect x="86" y="127" width="28" height="19" rx="3" fill={c2} stroke={FG} strokeWidth="3" />
+            <rect x="92" y="131" width="16" height="11" fill="#6d3f1f" stroke={INK} strokeWidth="1.5" />
+            <path d="M100 136.5 H110" stroke={INK} strokeWidth="2.5" />
           </>
         )}
       </g>
