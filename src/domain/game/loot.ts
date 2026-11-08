@@ -84,6 +84,28 @@ export function rollChest(key: string, tier: ChestTier, owned: Set<string>, cat 
   return gain;
 }
 
+/**
+ * A lucky bag, rolled from its row id when it's bought: Ryō, three handfuls of materials and one
+ * headline prize (new gear, tickets, two of an item, or a gold chest), sometimes Tama on top.
+ */
+export function rollLuckyBag(seed: string, owned: Set<string>): Bag {
+  const r = stream(`bag:${seed}`);
+  const gain: Bag = { coins: between(r, [700, 1400]), mats: {} };
+  for (let i = 0; i < 3; i++) {
+    const s: SectionId = MAT_IDS[Math.floor(r() * MAT_IDS.length)];
+    gain.mats![s] = (gain.mats![s] ?? 0) + between(r, [6, 14]);
+  }
+  const roll = r();
+  if (roll < 0.45) {
+    const rarity = rarityRoll(r, 'rare');
+    resolve(poolPick(r, rarity), rarity, new Set(owned), gain);
+  } else if (roll < 0.7) gain.tickets = 2;
+  else if (roll < 0.9) gain.stock = { [CONSUMABLES[Math.floor(r() * CONSUMABLES.length)].id]: 2 };
+  else gain.chests = ['gold'];
+  if (r() < 0.5) gain.gems = between(r, [5, 20]);
+  return gain;
+}
+
 export interface SpinResult {
   gain: Bag;
   rolled: Rarity[];

@@ -3,7 +3,7 @@
  * same and nothing is stored. Also the full catalogue's prices.
  */
 import type { SectionId } from '../../data/types';
-import { CHASSIS, chassisCost, CONSUMABLES, cosmeticLists, cosmeticPrice, MAT_IDS, MATS, RARITY, SHOP_THEMES, type Bag, type Chassis, type CosmeticKind, type Gear, type Rarity, type Title } from './catalog';
+import { CHASSIS, chassisCost, CONSUMABLES, cosmeticLists, cosmeticPrice, MAT_IDS, MATS, RARITY, sellable, SHOP_THEMES, type Bag, type Chassis, type CosmeticKind, type Gear, type Rarity, type Title } from './catalog';
 import { hash32 } from './loot';
 import { eventById } from './events';
 
@@ -25,7 +25,7 @@ export interface ShopItem {
   stock?: boolean;
 }
 
-function gearItem(kind: CosmeticKind, g: Gear, off?: number): ShopItem {
+export function gearItem(kind: CosmeticKind, g: Gear, off?: number): ShopItem {
   const base = cosmeticPrice(g.rarity);
   return { item: `${kind}:${g.id}`, name: g.name, kind, rarity: g.rarity, cost: off ? discounted(base, off) : base, off };
 }
@@ -33,7 +33,7 @@ function gearItem(kind: CosmeticKind, g: Gear, off?: number): ShopItem {
 /** All cosmetics that can be bought outright (event ones only from the event; earned titles never). */
 export function catalogue(kind: CosmeticKind): ShopItem[] {
   return (cosmeticLists[kind] as (Gear & Title)[])
-    .filter((g) => !g.event && !g.section && !g.level)
+    .filter(sellable)
     .map((g) => gearItem(kind, g))
     .sort((a, b) => RARITY[a.rarity].order - RARITY[b.rarity].order);
 }
@@ -60,7 +60,7 @@ export function weeklyStock(monday: string): ShopItem[] {
   out.push({ item: `chassis:${ch.id}:1`, name: ch.name, kind: 'chassis', rarity: ch.rarity, cost: discounted(chassisCost(ch, 1), 30), off: 30 });
   const kinds: CosmeticKind[] = ['paint', 'hat', 'pet', 'aura', 'title'];
   for (const k of kinds) {
-    const list = (cosmeticLists[k] as (Gear & Title)[]).filter((g) => !g.event && !g.section && !g.level);
+    const list = (cosmeticLists[k] as (Gear & Title)[]).filter(sellable);
     const [g] = pick(list, `week:${monday}:${k}`, 1);
     out.push(gearItem(k, g, 25));
   }

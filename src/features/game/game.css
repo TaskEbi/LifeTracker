@@ -1384,3 +1384,610 @@
   font-size: 11px;
   line-height: 1.1;
 }
+
+/* ─── the shopping street: Mameda's counter ─── */
+.gm-counter {
+  position: relative;
+  display: grid;
+  grid-template-columns: 92px minmax(0, 1fr);
+  gap: 10px 12px;
+  padding: 26px 12px 12px;
+  overflow: hidden;
+  border: 1px solid #5b3a1f;
+  border-radius: var(--r-2);
+  background: linear-gradient(180deg, rgb(255 194 61 / 0.1), transparent 60%), var(--surf);
+}
+.gm-counter__awning {
+  position: absolute;
+  inset: 0 0 auto;
+  height: 16px;
+  background: repeating-linear-gradient(90deg, #d7263d 0 22px, #fff4d6 22px 44px);
+  mask: radial-gradient(circle at 11px 16px, transparent 0 10px, #000 10.5px) 0 0 / 22px 16px;
+}
+.gm-counter__keeper {
+  width: 92px;
+  align-self: end;
+}
+.gm-counter__talk {
+  position: relative;
+  align-self: center;
+  display: grid;
+  gap: 4px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: #fff4d6;
+  color: #2a1a0c;
+}
+.gm-counter__talk::before {
+  content: '';
+  position: absolute;
+  left: -8px;
+  bottom: 14px;
+  border: 8px solid transparent;
+  border-right-color: #fff4d6;
+  border-left: 0;
+}
+.gm-counter__talk b {
+  font: 400 15px/1.1 'Bungee', var(--f-label);
+  color: #a4161a;
+}
+.gm-counter__talk b small {
+  display: block;
+  margin-top: 2px;
+  font: 600 11px var(--f-body);
+  color: #7a5a3a;
+}
+.gm-counter__talk p {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.35;
+}
+.gm-regular,
+.gm-stamps,
+.gm-guide {
+  grid-column: 1 / -1;
+}
+.gm-regular {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 10px;
+  align-items: center;
+  padding: 10px 12px;
+  border: 1px solid #ffc23d;
+  border-radius: 10px;
+  background: linear-gradient(115deg, rgb(255 194 61 / 0.16), rgb(255 46 147 / 0.08));
+}
+.gm-regular__k {
+  display: grid;
+  place-items: center;
+  min-width: 48px;
+  height: 48px;
+  padding: 0 4px;
+  border: 2px solid #ffc23d;
+  border-radius: 50%;
+  color: #ffc23d;
+  font: 400 15px/1 'RocknRoll One', var(--f-body);
+  transform: rotate(-8deg);
+}
+.gm-regular__t {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+.gm-regular__t small,
+.gm-stamps small {
+  color: var(--fg-2);
+  font-size: 12px;
+}
+.gm-stamps {
+  display: grid;
+  gap: 8px;
+  padding: 10px 12px;
+  border: 1px dashed var(--rule);
+  border-radius: 10px;
+}
+.gm-stamps__t {
+  display: grid;
+  gap: 2px;
+}
+.gm-stamps__row {
+  display: grid;
+  grid-template-columns: repeat(8, minmax(0, 1fr));
+  gap: 5px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.gm-stamps__row li {
+  display: grid;
+  place-items: center;
+  aspect-ratio: 1;
+  border: 1.5px dashed var(--fg-3);
+  border-radius: 50%;
+  color: var(--fg-3);
+  font-size: 11px;
+}
+.gm-stamps__row li.is-on {
+  border: 2px solid #ff2e93;
+  color: #ff2e93;
+  font: 400 15px/1 'RocknRoll One', var(--f-body);
+  transform: rotate(-12deg);
+  background: rgb(255 46 147 / 0.12);
+}
+.gm-stamps__now {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+}
+.gm-guide summary {
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  color: #21e6ff;
+  font-weight: 700;
+  cursor: pointer;
+}
+.gm-guide ul {
+  display: grid;
+  gap: 6px;
+  margin: 0 0 10px;
+  padding-left: 18px;
+  color: var(--fg-2);
+  font-size: 13px;
+  line-height: 1.4;
+}
+.gm-guide__ranks {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.gm-guide__ranks li {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr);
+  gap: 0 8px;
+  opacity: 0.55;
+}
+.gm-guide__ranks li.is-on {
+  opacity: 1;
+}
+.gm-guide__ranks span {
+  grid-row: span 2;
+  color: #ffc23d;
+  font: 400 14px/1.6 'RocknRoll One', var(--f-body);
+}
+.gm-guide__ranks small {
+  color: var(--fg-3);
+  font-size: 12px;
+}
+
+/* stalls */
+.gm-stalls {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.gm-stalls .gm-slot[aria-current='page'] {
+  border-color: #ffc23d;
+  background: rgb(255 194 61 / 0.16);
+  color: #fff;
+}
+.gm-stalls__dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  margin-left: 4px;
+  border-radius: 50%;
+  background: #ff7b00;
+  box-shadow: 0 0 8px #ff7b00;
+  vertical-align: middle;
+}
+
+/* the time sale */
+.gm-sale {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  border-radius: var(--r-2);
+}
+.gm-sale.is-soon {
+  border: 1px dashed #21e6ff;
+  background: rgb(33 230 255 / 0.06);
+}
+.gm-sale.is-on {
+  flex-wrap: wrap;
+  padding-top: 30px;
+  border: 2px solid var(--a);
+  background: radial-gradient(circle at 15% 50%, color-mix(in srgb, var(--a) 26%, transparent), transparent 60%), var(--surf);
+  box-shadow: 0 0 18px color-mix(in srgb, var(--a) 40%, transparent);
+}
+.gm-sale__flag {
+  position: absolute;
+  top: 0;
+  left: 12px;
+  padding: 3px 10px;
+  border-radius: 0 0 6px 6px;
+  background: #ff2e93;
+  color: #fff;
+  font: 400 13px/1.2 'Bungee', var(--f-label);
+  animation: gm-flick 4s steps(1) infinite;
+}
+.gm-sale__k {
+  font: 400 30px/1 'RocknRoll One', var(--f-body);
+  color: #21e6ff;
+}
+.gm-sale__t {
+  display: grid;
+  flex: 1;
+  gap: 3px;
+  min-width: 140px;
+}
+.gm-sale__t small {
+  color: var(--fg-2);
+  font-size: 13px;
+}
+.gm-sale__q {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 52px;
+  height: 52px;
+  border-radius: 10px;
+  background: var(--surf-3);
+  color: #21e6ff;
+  font: 400 28px/1 'Bungee', var(--f-label);
+}
+.gm-sale .gm-thumb {
+  width: 76px;
+}
+
+/* haggle */
+.gm-haggle {
+  min-height: 32px;
+  padding: 0 10px;
+  border: 1px dashed #ffc23d;
+  border-radius: 16px;
+  background: transparent;
+  color: #ffc23d;
+  font: 700 12px var(--f-body);
+  cursor: pointer;
+}
+.gm-hag {
+  width: min(92vw, 380px);
+}
+.gm-hag__bar {
+  position: relative;
+  width: 100%;
+  height: 34px;
+  border-radius: 17px;
+  background: #3a2448;
+  overflow: hidden;
+}
+.gm-hag__z {
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  border-radius: 17px;
+}
+.gm-hag__z--6 {
+  width: 60%;
+  background: #6b3f7a;
+}
+.gm-hag__z--12 {
+  width: 38%;
+  background: #b05f9a;
+}
+.gm-hag__z--20 {
+  width: 20%;
+  background: #ffc23d;
+}
+.gm-hag__z--30 {
+  width: 7%;
+  background: #7dffb0;
+}
+.gm-hag__needle {
+  position: absolute;
+  top: -2px;
+  bottom: -2px;
+  left: 0;
+  width: 4px;
+  margin-left: -2px;
+  background: #fff;
+  box-shadow: 0 0 8px #fff;
+}
+.gm-hag__stop {
+  min-width: 160px;
+  min-height: 52px;
+  font-size: 18px;
+}
+.gm-hag__res {
+  font-weight: 700;
+}
+.gm-hag__res.is-good {
+  color: #7dffb0;
+}
+
+/* the lucky bag */
+.gm-bag {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  border: 1px solid #d7263d;
+  border-radius: var(--r-2);
+  background: linear-gradient(120deg, rgb(215 38 61 / 0.18), transparent 70%), var(--surf);
+}
+.gm-bag.is-taken {
+  opacity: 0.6;
+}
+.gm-bag__art {
+  flex: none;
+  width: 56px;
+}
+.gm-bag__t {
+  display: grid;
+  flex: 1;
+  gap: 3px;
+  min-width: 0;
+}
+.gm-bag__t small {
+  color: var(--fg-2);
+  font-size: 13px;
+}
+.gm-item.is-taken {
+  opacity: 0.6;
+}
+
+/* requests */
+.gm-reqs {
+  display: grid;
+  gap: 8px;
+}
+.gm-req {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 8px 10px;
+  padding: 12px;
+  border: 1px solid var(--rule);
+  border-radius: var(--r-2);
+  background: var(--surf);
+}
+.gm-req > .i-btn {
+  grid-column: 2;
+  justify-self: start;
+}
+.gm-req.is-done {
+  border-color: #7dffb0;
+  opacity: 0.7;
+}
+.gm-req__k {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: #fff4d6;
+  color: #a4161a;
+  font: 400 21px/1 'RocknRoll One', var(--f-body);
+}
+.gm-req.is-done .gm-req__k {
+  background: #7dffb0;
+  color: #06281a;
+}
+.gm-req__t {
+  display: grid;
+  gap: 5px;
+  min-width: 0;
+}
+.gm-req__t q {
+  color: var(--fg-2);
+  font-size: 14px;
+  font-style: italic;
+  line-height: 1.35;
+}
+.gm-req__deal {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  color: var(--fg-3);
+}
+
+/* the night market */
+.gm-night {
+  position: relative;
+  display: grid;
+  gap: 6px;
+  padding: 44px 14px 14px;
+  overflow: hidden;
+  border: 1px solid #3a2448;
+  border-radius: var(--r-2);
+  background: linear-gradient(180deg, #0b0620, #1a0b2e);
+}
+.gm-night h2 {
+  margin: 0;
+  font: 400 24px/1.1 'Bungee', var(--f-label);
+  color: #ff9e40;
+}
+.gm-night p {
+  margin: 0;
+  color: var(--fg-2);
+  font-size: 14px;
+}
+.gm-night__lanterns {
+  position: absolute;
+  inset: 0 0 auto;
+  height: 40px;
+  display: flex;
+  justify-content: space-around;
+  border-top: 2px solid #3a2448;
+}
+.gm-night__lanterns i {
+  width: 16px;
+  height: 22px;
+  margin-top: 6px;
+  border-radius: 7px;
+  background: #4a3550;
+  transform-origin: 50% 0;
+}
+.gm-night.is-open .gm-night__lanterns i {
+  background: radial-gradient(circle at 50% 40%, #ffe08a, #ff7b00 60%, #b33c00);
+  box-shadow: 0 0 14px #ff7b00;
+  animation: gm-sway 3s ease-in-out infinite alternate;
+  animation-delay: calc(var(--i) * -0.4s);
+}
+@keyframes gm-sway {
+  from {
+    transform: rotate(-6deg);
+  }
+  to {
+    transform: rotate(6deg);
+  }
+}
+.gm-night__lanterns i:nth-child(even) {
+  margin-top: 12px;
+}
+.gm-shop--night {
+  background: linear-gradient(180deg, rgb(157 78 221 / 0.12), transparent), var(--surf);
+}
+
+/* wishlist */
+.gm-wish {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 40px;
+  height: 40px;
+  border: 0;
+  background: transparent;
+  color: #ffc23d;
+  font-size: 22px;
+  cursor: pointer;
+}
+.gm-wishcard {
+  display: grid;
+  grid-template-columns: 64px minmax(0, 1fr);
+  gap: 8px 12px;
+  align-items: center;
+  padding: 10px 12px;
+  border: 1px solid color-mix(in srgb, var(--a) 60%, var(--rule));
+  border-radius: var(--r-2);
+  background: var(--surf);
+}
+.gm-wishcard.is-ready {
+  box-shadow: 0 0 16px color-mix(in srgb, var(--a) 45%, transparent);
+}
+.gm-wishcard .gm-thumb {
+  width: 64px;
+}
+.gm-wishcard__t {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+.gm-wishcard__t small {
+  color: var(--fg-3);
+  font-size: 12px;
+}
+.gm-wishcard__do {
+  grid-column: 2;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* gear sets */
+.gm-sets {
+  display: grid;
+  gap: 8px;
+}
+.gm-set {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 6px 10px;
+  align-items: center;
+  padding: 10px 12px;
+  border: 1px solid var(--rule);
+  border-left: 4px solid var(--a);
+  border-radius: var(--r-2);
+  background: var(--surf);
+}
+.gm-set.is-ready {
+  box-shadow: 0 0 14px color-mix(in srgb, var(--a) 45%, transparent);
+}
+.gm-set.is-done {
+  opacity: 0.75;
+}
+.gm-set__k {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--a) 22%, transparent);
+  color: var(--a);
+  font: 400 20px/1 'RocknRoll One', var(--f-body);
+}
+.gm-set__t {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+.gm-set__t b small,
+.gm-set__t > small {
+  color: var(--fg-3);
+  font-size: 12px;
+  font-weight: 600;
+}
+.gm-set__pieces {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 6px;
+}
+.gm-set__pieces > span {
+  opacity: 0.3;
+  filter: grayscale(1);
+}
+.gm-set__pieces > span.is-on {
+  opacity: 1;
+  filter: none;
+}
+.gm-set__do {
+  grid-row: 1;
+  grid-column: 3;
+}
+
+/* reveal: bag, stamp card, set */
+.gm-rv__seal {
+  display: grid;
+  place-items: center;
+  width: 96px;
+  height: 96px;
+  margin: auto;
+  border: 4px solid var(--a);
+  border-radius: 50%;
+  color: var(--a);
+  font: 400 46px/1 'RocknRoll One', var(--f-body);
+  transform: rotate(-10deg);
+  animation: gm-stamp 0.5s cubic-bezier(0.2, 1.6, 0.4, 1) both;
+}
+@keyframes gm-stamp {
+  from {
+    transform: rotate(-30deg) scale(2.4);
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gm-night.is-open .gm-night__lanterns i,
+  .gm-sale__flag,
+  .gm-rv__seal {
+    animation: none;
+  }
+}

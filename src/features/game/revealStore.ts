@@ -8,7 +8,8 @@ export type Reveal =
   | { kind: 'item'; item: string }
   | { kind: 'chest'; tier: ChestTier; gain: Bag }
   | { kind: 'chests'; count: number; gain: Bag }
-  | { kind: 'spin'; res: SpinResult };
+  | { kind: 'spin'; res: SpinResult }
+  | { kind: 'loot'; art: 'bag' | 'stamp' | 'set'; title: string; line?: string; gain: Bag };
 
 export const revealStore = createStore<{ reveal: Reveal | null }>({ reveal: null });
 export const showReveal = (reveal: Reveal) => revealStore.set({ reveal });

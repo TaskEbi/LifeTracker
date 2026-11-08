@@ -8,21 +8,23 @@ import { navigate, useRoute } from '../../app/router';
 import { useProgress } from '../../data/lt';
 import { CHASSIS, chassisCost, COIN, cosmeticLists, COSMETIC_NAME, DUST, GEM, RARITY, TICKET, TITLES, TRIBUTE_LEVEL, type Chassis, type ChassisGroup, type CosmeticKind, type Gear, type Title } from '../../domain/game/catalog';
 import { daysLeft, eventOn, nextEvent, type EventRun } from '../../domain/game/events';
-import { chassisMk, DEFAULT_LOADOUT, type Loadout } from '../../domain/game/wallet';
+import { canAfford, chassisMk, DEFAULT_LOADOUT, itemName, type Loadout } from '../../domain/game/wallet';
 import { sectionInfo } from '../../domain/sections';
 import { rankFor, STAGES } from '../../domain/progress/engine';
 import { useStore } from '../../lib/createStore';
 import { H2 } from '../../ui/i/bits';
 import { HomeLink } from '../../ui/i/ChannelHead';
 import { Robot } from '../../ui/i/bots/Robot';
-import { Amt, daysWord, num, Price, Rar, Thumb } from './bits';
+import { Amt, daysWord, ItemThumb, num, Price, Rar, Thumb } from './bits';
 import { CapsuleTab } from './Capsule';
 import { EventsTab } from './Events';
 import { LedgerTab } from './Ledger';
 import { RevealLayer, playChest, playAllChests } from './Reveal';
-import { closeReveal, revealStore } from './revealStore';
+import { closeReveal, revealStore, showReveal } from './revealStore';
 import { ShopTab } from './Shop';
-import { buyMk, setLoadout, useGame, useLoadout, type GameState } from './store';
+import { buyItem, buyMk, claimSet, setLoadout, setWish, standingNow, useGame, useLoadout, useWish, type GameState } from './store';
+import { listPrice, saved, withRank } from '../../domain/game/market';
+import { setPrize, setRarity, setsProgress, setTitleName } from '../../domain/game/sets';
 import { WorkshopTab } from './Workshop';
 import './game.css';
 
@@ -81,13 +83,14 @@ export function GameView() {
 
 // ─── the bay ────────────────────────────────────────────────────────────────
 
-const SLOTS: { id: 'body' | CosmeticKind; label: string }[] = [
+const SLOTS: { id: 'body' | 'sets' | CosmeticKind; label: string }[] = [
   { id: 'body', label: 'Body' },
   { id: 'paint', label: 'Paint' },
   { id: 'hat', label: 'Headgear' },
   { id: 'pet', label: 'Companion' },
   { id: 'aura', label: 'Aura' },
   { id: 'title', label: 'Title' },
+  { id: 'sets', label: 'Sets' },
 ];
 
 /** What's your own of a kind (a title you've earned counts as yours). */
@@ -101,7 +104,7 @@ function Bay({ g, run }: { g: GameState; run: EventRun | null }) {
   const p = useProgress();
   const look = useLoadout();
   const w = g.wallet;
-  const [slot, setSlot] = useState<'body' | CosmeticKind>('body');
+  const [slot, setSlot] = useState<'body' | 'sets' | CosmeticKind>('body');
   const ch = CHASSIS.find((x) => x.id === look.chassis);
   const mk = ch ? chassisMk(w, ch.id) || 1 : undefined;
   const stage = p.overall.stage;
@@ -133,6 +136,8 @@ function Bay({ g, run }: { g: GameState; run: EventRun | null }) {
           <b>Today</b> {g.bonus.lines.join(' · ')}
         </p>
       )}
+
+      <WishCard g={g} stage={stage} />
 
       {run ? (
         <button type="button" className="gm-ev" style={{ '--c': run.def.c, '--c2': run.def.c2 } as CSSProperties} onClick={() => navigate('hangar', ['events'], { replace: true })}>
@@ -210,7 +215,7 @@ function Bay({ g, run }: { g: GameState; run: EventRun | null }) {
           </button>
         ))}
       </div>
-      {slot === 'body' ? <Garage g={g} look={look} stage={stage} /> : <Wardrobe kind={slot} g={g} look={look} stage={stage} />}
+      {slot === 'body' ? <Garage g={g} look={look} stage={stage} /> : slot === 'sets' ? <SetsPanel g={g} stage={stage} /> : <Wardrobe kind={slot} g={g} look={look} stage={stage} />}
     </>
   );
 }
@@ -379,6 +384,98 @@ function Wardrobe({ kind, g, look, stage }: { kind: CosmeticKind; g: GameState; 
           To the shop ▶
         </button>
       )}
+    </>
+  );
+}
+
+// ─── saving up ──────────────────────────────────────────────────────────────
+
+/** The one thing you've starred in the shop, and how close you are. */
+function WishCard({ g, stage }: { g: GameState; stage: number }) {
+  const wish = useWish();
+  const lp = wish ? listPrice(wish) : null;
+  if (!wish || !lp) return null;
+  const owned = g.wallet.items.has(wish);
+  const price = withRank(lp.cost, standingNow(g).rank);
+  const p = owned ? 1 : saved(g.wallet, price);
+  const ready = !owned && canAfford(g.wallet, price);
+  return (
+    <section className={`gm-wishcard${ready ? ' is-ready' : ''}`} aria-label="Saving up" style={{ '--a': RARITY[lp.rarity].color } as CSSProperties}>
+      <ItemThumb item={wish} stage={stage} />
+      <span className="gm-wishcard__t">
+        <small>{owned ? 'Got it!' : ready ? 'You can buy it now' : 'Saving up for'}</small>
+        <b>{lp.name}</b>
+        <span className="gm-bar" role="progressbar" aria-label={`Saved towards ${lp.name}`} aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(p * 100)}>
+          <i style={{ width: `${p * 100}%` }} />
+        </span>
+        {!owned && <Price cost={price} w={g.wallet} />}
+      </span>
+      <span className="gm-wishcard__do">
+        {ready && (
+          <button type="button" className="i-btn i-btn--sm i-btn--sig" onClick={() => buyItem(wish, price) && (setWish(null), showReveal({ kind: 'item', item: wish }))}>
+            Buy
+          </button>
+        )}
+        <button type="button" className="i-link" onClick={() => setWish(null)}>
+          {owned ? 'Done' : 'Forget it'}
+        </button>
+      </span>
+    </section>
+  );
+}
+
+// ─── gear sets ──────────────────────────────────────────────────────────────
+
+function SetsPanel({ g, stage }: { g: GameState; stage: number }) {
+  const list = setsProgress(g.wallet.items, g.txs);
+  const done = list.filter((x) => x.claimed).length;
+  return (
+    <>
+      <p className="i-note">
+        {done} of {list.length} sets complete. Own all four pieces (from the shop, chests, capsules, festivals or the night market) to claim the set's title and a prize.
+      </p>
+      <div className="gm-sets">
+        {list.map(({ set, have, complete, claimed }) => {
+          const r = setRarity(set);
+          const claim = () => {
+            const gain = claimSet(set.id);
+            if (gain) showReveal({ kind: 'loot', art: 'set', title: `${set.name} set`, line: `New title: “${setTitleName(set)}”`, gain });
+          };
+          return (
+            <div key={set.id} className={`gm-set${claimed ? ' is-done' : complete ? ' is-ready' : ''}`} style={{ '--a': RARITY[r].color } as CSSProperties}>
+              <span className="gm-set__k" aria-hidden="true">
+                {set.kanji}
+              </span>
+              <span className="gm-set__t">
+                <b>
+                  {set.name} <small>{set.festival ? 'Festival' : RARITY[r].name}</small>
+                </b>
+                <small>
+                  {have.length} / {set.items.length} · title “{setTitleName(set)}”
+                </small>
+              </span>
+              <span className="gm-set__pieces">
+                {set.items.map((it) => (
+                  <span key={it} className={g.wallet.items.has(it) ? 'is-on' : ''} title={itemName(it)}>
+                    <ItemThumb item={it} stage={stage} />
+                  </span>
+                ))}
+              </span>
+              <span className="gm-set__do">
+                {claimed ? (
+                  <small className="gm-shop__own">Claimed</small>
+                ) : complete ? (
+                  <button type="button" className="i-btn i-btn--sm i-btn--sig" onClick={claim}>
+                    Claim
+                  </button>
+                ) : (
+                  <Price cost={setPrize(set)} />
+                )}
+              </span>
+            </div>
+          );
+        })}
+      </div>
     </>
   );
 }

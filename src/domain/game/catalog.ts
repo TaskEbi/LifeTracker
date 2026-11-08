@@ -304,6 +304,8 @@ export interface Title extends Gear {
   section?: SectionId;
   sectionLevel?: number;
   level?: number;
+  /** Earned by completing a gear set (sets.ts), never sold. */
+  set?: string;
 }
 
 export const TITLES: Title[] = [
@@ -331,7 +333,28 @@ export const TITLES: Title[] = [
   { id: 'qed', name: 'Q.E.D.', rarity: 'epic', section: 'maths', sectionLevel: 15 },
   { id: 'centurion', name: 'Centurion', rarity: 'legendary', level: 100 },
   { id: 'twohundred', name: 'Two Hundred Not Out', rarity: 'mythic', level: 200 },
+  { id: 'set_ninja', name: 'Shadow of the Arcade', rarity: 'epic', set: 'ninja' },
+  { id: 'set_shrine', name: 'Keeper of the Gate', rarity: 'epic', set: 'shrine' },
+  { id: 'set_arcade', name: 'High Score', rarity: 'epic', set: 'arcade' },
+  { id: 'set_farm', name: 'Salt of the Earth', rarity: 'rare', set: 'farm' },
+  { id: 'set_storm', name: 'Eye of the Storm', rarity: 'epic', set: 'storm' },
+  { id: 'set_space', name: 'Spacefarer', rarity: 'legendary', set: 'space' },
+  { id: 'set_royal', name: 'Long May They Reign', rarity: 'legendary', set: 'royal' },
+  { id: 'set_void', name: 'Beyond the Veil', rarity: 'mythic', set: 'void' },
+  { id: 'set_cosy', name: 'Softest Robot Alive', rarity: 'rare', set: 'cosy' },
+  { id: 'set_class', name: 'Top of the Class', rarity: 'rare', set: 'class' },
+  { id: 'set_setsubun', name: 'Oni wa Soto', rarity: 'epic', set: 'setsubun' },
+  { id: 'set_hanami', name: 'Under the Blossom', rarity: 'epic', set: 'hanami' },
+  { id: 'set_tsuyu', name: 'Rain Walker', rarity: 'epic', set: 'tsuyu' },
+  { id: 'set_tanabata', name: 'Wish Upon a Strip', rarity: 'epic', set: 'tanabata' },
+  { id: 'set_natsu', name: 'Summer Never Ends', rarity: 'epic', set: 'natsu' },
+  { id: 'set_hyakki', name: 'Head of the Parade', rarity: 'epic', set: 'hyakki' },
+  { id: 'set_momiji', name: 'Autumn Spirit', rarity: 'epic', set: 'momiji' },
+  { id: 'set_yuki', name: 'Snow Festival Royalty', rarity: 'epic', set: 'yuki' },
 ];
+
+/** Things the shop and the capsule machine may hand out: not event-only, earned or set titles. */
+export const sellable = (g: Gear & Partial<Title>) => !g.event && !g.section && !g.level && !g.set;
 
 export type CosmeticKind = 'paint' | 'hat' | 'pet' | 'aura' | 'title';
 export const cosmeticLists: Record<CosmeticKind, readonly (Gear | Paint | Title)[]> = { paint: PAINTS, hat: HATS, pet: PETS, aura: AURAS, title: TITLES };
@@ -547,7 +570,7 @@ export function capsulePool(): { item: string; rarity: Rarity }[] {
   const out: { item: string; rarity: Rarity }[] = [];
   for (const kind of ['paint', 'hat', 'pet', 'aura', 'title'] as CosmeticKind[]) {
     for (const e of cosmeticLists[kind] as (Gear & Title)[]) {
-      if (e.event || e.section || e.level) continue;
+      if (!sellable(e)) continue;
       out.push({ item: `${kind}:${e.id}`, rarity: e.rarity });
     }
   }

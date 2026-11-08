@@ -3,7 +3,7 @@
  * in `gm_tx` rows under the cabinet section with the Hideout's, so no migration is needed. The look
  * you've chosen is a synced preference.
  */
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { achievementsOf, ltToday, prefValue, progressInput, progressOf, rewardEarnings, setPref, useToday, withReward, markId } from '../../data/lt';
 import { pairId } from '../../data/logActions';
 import { commit, data, type DataState } from '../../data/store';
@@ -17,10 +17,12 @@ import { questHistory } from '../../domain/progress/quests';
 import { bountyBoard, dayBonus, grantsFor, type BountyProgress, type DayBonus, type EarnInput, type EarnRow } from '../../domain/game/earn';
 import { chassisById, chassisCost, consumableById, MATS, pityFor, SPIN10_COST, SPIN_COST, upgradeById, type Bag, type ChestTier } from '../../domain/game/catalog';
 import { eventOn } from '../../domain/game/events';
-import { rollChest, rollSpin, type SpinResult } from '../../domain/game/loot';
-import { dailyDeal, DUST_TICKET, GEM_EXCHANGE, MAT_EXCHANGE } from '../../domain/game/shop';
+import { rollChest, rollLuckyBag, rollSpin, type SpinResult } from '../../domain/game/loot';
+import { bagsThisWeek, LUCKY_BAG, NIGHT_EXTRAS, nightOf, nightOpen, perks, saleState, stampCard, stampPrize, standingOf, thanksLine, timeSale, withRank, type Request, type Standing } from '../../domain/game/market';
+import { setPrize, setsProgress } from '../../domain/game/sets';
+import { dailyDeal, discounted, DUST_TICKET, GEM_EXCHANGE, MAT_EXCHANGE, type ShopItem } from '../../domain/game/shop';
 import { canAfford, normaliseLoadout, shortfall, spinsSinceEpic, txOf, upgradeLevel, walletOf, type Grant, type Loadout, type Tx, type TxType, type Wallet } from '../../domain/game/wallet';
-import { useStore } from '../../lib/createStore';
+import { createStore, useStore } from '../../lib/createStore';
 import { uuid } from '../../lib/random';
 import { evolveBot } from './revealStore';
 import type { SectionId } from '../../data/types';
@@ -152,11 +154,12 @@ function pay(type: TxType, ref: string, cost: Bag, gain: Bag, id?: string): bool
     return false;
   }
   write({ type, ref, cost, gain }, id);
+  if (type === 'buy' || type === 'deliver') talkStore.set({ line: thanksLine(getGame().txs.length), at: Date.now() });
   return true;
 }
 
-/** Buy a one-off thing or a consumable. */
-export function buyItem(item: string, cost: Bag, opts: { stock?: boolean; event?: string } = {}): boolean {
+/** Buy a one-off thing or a consumable. `id` makes it a once-only purchase (a sale, a haggle). */
+export function buyItem(item: string, cost: Bag, opts: { stock?: boolean; event?: string; id?: string } = {}): boolean {
   const g = getGame();
   if (opts.stock) {
     const c = consumableById(item);
@@ -164,10 +167,10 @@ export function buyItem(item: string, cost: Bag, opts: { stock?: boolean; event?
       toast(`That's all the ${c.name}s this week. More on Monday.`);
       return false;
     }
-    return pay('buy', item, cost, { stock: { [item]: 1 } });
+    return pay('buy', item, cost, { stock: { [item]: 1 } }, opts.id);
   }
   if (g.wallet.items.has(item)) return false;
-  return pay('buy', item, cost, { items: [item] });
+  return pay('buy', item, cost, { items: [item] }, opts.id);
 }
 
 export const boughtThisWeek = (g: GameState, ref: string) => {
@@ -176,7 +179,7 @@ export const boughtThisWeek = (g: GameState, ref: string) => {
 };
 
 /** Buy Mk 1 of a chassis, or upgrade to the next. */
-export function buyMk(id: string, mk: 1 | 2 | 3, cost?: Bag): boolean {
+export function buyMk(id: string, mk: 1 | 2 | 3, cost?: Bag, rowId?: string): boolean {
   const ch = chassisById(id);
   if (!ch) return false;
   const run = ch.event ? eventOn(ltToday()) : null;
@@ -186,7 +189,7 @@ export function buyMk(id: string, mk: 1 | 2 | 3, cost?: Bag): boolean {
   }
   const item = `chassis:${id}:${mk}`;
   if (getGame().wallet.items.has(item)) return false;
-  const ok = pay('mk', item, cost ?? chassisCost(ch, mk, run?.key), { items: [item] });
+  const ok = pay('mk', item, cost ?? chassisCost(ch, mk, run?.key), { items: [item] }, rowId);
   if (ok) {
     setLoadout({ chassis: id });
     evolveBot({ chassis: id, mk });
@@ -311,3 +314,160 @@ export function exchangeGems(n: number): boolean {
 
 export const exchangeMats = (from: SectionId, to: SectionId, units = 1) => pay('trade', `mat:${from}:${to}`, { mats: { [from]: MAT_EXCHANGE * units } }, { mats: { [to]: units } });
 export const exchangeDust = () => pay('trade', 'dust', { dust: DUST_TICKET }, { tickets: 1 });
+
+// ─── the shopping street (market.ts) ────────────────────────────────────────
+
+/** The hour on the Daily Log clock. */
+export function ltHour(at: Date = new Date()): number {
+  const f = (timeZone?: string) => Number(new Intl.DateTimeFormat('en-GB', { timeZone, hour: 'numeric', hourCycle: 'h23' }).format(at)) % 24;
+  try {
+    return f(data.get().settings.log_timezone);
+  } catch {
+    return f();
+  }
+}
+
+/** The hour and minute, ticking: the time sale and the night market open and shut by it. */
+export function useClock(): { hour: number; minute: number } {
+  const read = () => {
+    const d = new Date();
+    return { hour: ltHour(d), minute: d.getMinutes() };
+  };
+  const [t, setT] = useState(read);
+  useEffect(() => {
+    const i = window.setInterval(() => setT(read()), 20_000);
+    return () => window.clearInterval(i);
+  }, []);
+  return t;
+}
+
+/** What Mameda said last (after you buy something). */
+export const talkStore = createStore<{ line: string | null; at: number }>({ line: null, at: 0 });
+
+export const standingNow = (g: GameState): Standing => standingOf(g.txs);
+
+const rowLive = (st: DataState, id: string) => {
+  const r = st.lt_records.get(id);
+  return !!r && !r.deleted_at;
+};
+
+export const haggleId = (today: string) => pairId('gm', `haggle:${today}`);
+export const saleId = (today: string) => pairId('gm', `sale:${today}`);
+export const requestRowId = (reqId: string) => pairId('gm', reqId);
+export const nightRowId = (night: string, extra: string) => pairId('gm', `night:${night}:${extra}`);
+export const isDone = (st: DataState, id: string) => rowLive(st, id);
+
+/** Buy a shelf item at a haggled price. Once a day, from the Familiar-face rank. */
+export function buyHaggled(s: ShopItem, off: number): boolean {
+  const g = getGame();
+  const { rank } = standingOf(g.txs);
+  if (!perks(rank).haggle) return false;
+  const id = haggleId(g.today);
+  if (rowLive(data.get(), id)) {
+    toast('One haggle a day. Mameda needs to recover.');
+    return false;
+  }
+  const cost = withRank(discounted(s.cost, off), rank);
+  if (s.item.startsWith('chassis:')) {
+    const [, cid, mk] = s.item.split(':');
+    return buyMk(cid, Number(mk) as 1, cost, id);
+  }
+  return buyItem(s.item, cost, { id });
+}
+
+/** The time sale: only while it's on, once a day. */
+export function buySale(): boolean {
+  const g = getGame();
+  const sale = timeSale(g.today, standingOf(g.txs).rank);
+  if (saleState(sale, ltHour()) !== 'on') {
+    toast("The sale isn't on right now.");
+    return false;
+  }
+  if (rowLive(data.get(), saleId(g.today))) return false;
+  return buyItem(sale.item.item, sale.item.cost, { id: saleId(g.today) });
+}
+
+/** A lucky bag: its contents are rolled from the new row's id, so they're fixed the moment you pay. */
+export function buyLuckyBag(): Bag | null {
+  const g = getGame();
+  const { rank } = standingOf(g.txs);
+  const limit = perks(rank).bags;
+  if (bagsThisWeek(g.txs, weekStart(g.today)) >= limit) {
+    toast(limit === 1 ? "That's this week's lucky bag. More on Monday." : "That's both lucky bags this week. More on Monday.");
+    return null;
+  }
+  const id = uuid();
+  const gain = rollLuckyBag(id, g.wallet.items);
+  return pay('buy', LUCKY_BAG.id, withRank(LUCKY_BAG.cost, rank), gain, id) ? gain : null;
+}
+
+/** Hand materials over for a request. Once per request. */
+export function deliver(r: Request): boolean {
+  const id = requestRowId(r.id);
+  if (rowLive(data.get(), id)) return false;
+  return pay('deliver', r.id, { mats: r.want }, r.gain, id);
+}
+
+/** Sections you've earned XP in over the last four weeks: the requests ask for their materials. */
+export function recentSections(g: GameState): SectionId[] {
+  const from = addDays(g.today, -27);
+  const out = new Set<SectionId>();
+  for (const e of g.earnInput.xp) {
+    if (e.date < from || e.date > g.today || e.key.startsWith('item:') || e.section === 'general' || e.section === 'quests') continue;
+    out.add(e.section);
+  }
+  return [...out];
+}
+
+function nightCheck(): string | null {
+  const hour = ltHour();
+  if (nightOpen(hour)) return nightOf(ltToday(), hour);
+  toast('The night market opens at 19:00.');
+  return null;
+}
+
+export function buyNight(item: string, cost: Bag): boolean {
+  if (!nightCheck()) return false;
+  return buyItem(item, cost);
+}
+
+export function buyNightExtra(extra: (typeof NIGHT_EXTRAS)[number]['id']): boolean {
+  const night = nightCheck();
+  const x = NIGHT_EXTRAS.find((e) => e.id === extra);
+  if (!night || !x) return false;
+  const id = nightRowId(night, extra);
+  if (rowLive(data.get(), id)) {
+    toast('Sold out tonight. Come back tomorrow night.');
+    return false;
+  }
+  return pay('buy', `night:${extra}`, x.cost, x.gain, id);
+}
+
+function claimOnce(ref: string, gain: Bag): boolean {
+  const id = pairId('gm:claim', ref);
+  if (rowLive(data.get(), id)) return false;
+  write({ type: 'claim', ref, cost: {}, gain }, id);
+  return true;
+}
+
+/** Hand in a full stamp card. */
+export function claimStamp(card: number): boolean {
+  const g = getGame();
+  if (!stampCard(g.txs, g.today).toClaim.includes(card)) return false;
+  return claimOnce(`stamp:${card}`, stampPrize(card));
+}
+
+/** Claim a finished gear set's title and prize. */
+export function claimSet(id: string): Bag | null {
+  const g = getGame();
+  const p = setsProgress(g.wallet.items, g.txs).find((x) => x.set.id === id);
+  if (!p?.complete || p.claimed) return null;
+  const gain = setPrize(p.set);
+  return claimOnce(`set:${id}`, gain) ? gain : null;
+}
+
+// ─── the wishlist ───────────────────────────────────────────────────────────
+
+const wishOf = (v: unknown) => (typeof v === 'string' && v ? v : null);
+export const useWish = (): string | null => useStore(data, (s) => wishOf(prefValue(s, 'game_wish')));
+export const setWish = (item: string | null) => setPref('game_wish', item);

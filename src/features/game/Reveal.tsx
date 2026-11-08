@@ -32,7 +32,7 @@ export function RevealLayer({ reveal, onClose }: { reveal: Reveal; onClose: () =
     document.addEventListener('keydown', onKey);
     return () => document.removeEventListener('keydown', onKey);
   }, [onClose]);
-  const label = reveal.kind === 'bot' ? 'New body' : reveal.kind === 'item' ? 'New item' : reveal.kind === 'spin' ? 'Capsules' : 'Chest opened';
+  const label = reveal.kind === 'bot' ? 'New body' : reveal.kind === 'item' ? 'New item' : reveal.kind === 'spin' ? 'Capsules' : reveal.kind === 'loot' ? reveal.title : 'Chest opened';
   return (
     <div className="gm-rv" role="dialog" aria-modal="true" aria-label={label}>
       <div className="gm-rv__box">
@@ -41,6 +41,7 @@ export function RevealLayer({ reveal, onClose }: { reveal: Reveal; onClose: () =
         {reveal.kind === 'chest' && <ChestReveal tier={reveal.tier} gain={reveal.gain} okRef={ok} />}
         {reveal.kind === 'chests' && <AllReveal count={reveal.count} gain={reveal.gain} />}
         {reveal.kind === 'spin' && <SpinReveal res={reveal.res} />}
+        {reveal.kind === 'loot' && <LootReveal art={reveal.art} title={reveal.title} line={reveal.line} gain={reveal.gain} okRef={ok} />}
         <button ref={ok} type="button" className="i-btn i-btn--sig" onClick={onClose}>
           OK
         </button>
@@ -175,5 +176,43 @@ function SpinReveal({ res }: { res: Extract<Reveal, { kind: 'spin' }>['res'] }) 
       </div>
       {shown >= res.capsules.length && !!res.gain.dust && <p className="i-note">{res.gain.dust} Stardust from duplicates.</p>}
     </div>
+  );
+}
+
+const LOOT_COLOR = { bag: '#ff4d6d', stamp: '#ffc23d', set: '#21e6ff' } as const;
+
+/** A lucky bag tearing open, a stamp card handed in, a set completed. */
+function LootReveal({ art, title, line, gain, okRef }: { art: 'bag' | 'stamp' | 'set'; title: string; line?: string; gain: Bag; okRef: React.RefObject<HTMLButtonElement | null> }) {
+  const full = playStyle() === 'full';
+  const [open, setOpen] = useState(!full);
+  useEffect(() => {
+    if (open) {
+      okRef.current?.focus();
+      return;
+    }
+    const t = window.setTimeout(() => setOpen(true), 950);
+    return () => window.clearTimeout(t);
+  }, [open, okRef]);
+  return (
+    <div className={`gm-rv__chest gm-rv__chest--${art}${open ? ' is-open' : ''}`} style={{ '--a': LOOT_COLOR[art] } as CSSProperties} onClick={() => setOpen(true)}>
+      <span className="gm-rv__rays" aria-hidden="true" />
+      <div className="gm-rv__box-art">{art === 'bag' ? <BagArt /> : <span className="gm-rv__seal" aria-hidden="true">{art === 'stamp' ? '満' : '揃'}</span>}</div>
+      <h2>{title}</h2>
+      {line && <p>{line}</p>}
+      {open && <Lines gain={gain} />}
+    </div>
+  );
+}
+
+/** A fukubukuro: a red paper bag, tied with a gold cord. */
+export function BagArt() {
+  return (
+    <svg viewBox="0 0 64 64" className="gm-chestart" aria-hidden="true">
+      <path d="M14 22 L50 22 L56 58 L8 58 Z" fill="#d7263d" stroke="#14101e" strokeWidth="3" strokeLinejoin="round" />
+      <path d="M20 22 Q20 8 32 8 Q44 8 44 22" fill="none" stroke="#14101e" strokeWidth="3" />
+      <path d="M12 30 H52" stroke="#ffd166" strokeWidth="4" />
+      <circle cx="32" cy="44" r="10" fill="#fff4d6" stroke="#14101e" strokeWidth="2.5" />
+      <text x="32" y="49" textAnchor="middle" fontSize="13" fontWeight="700" fill="#d7263d">福</text>
+    </svg>
   );
 }

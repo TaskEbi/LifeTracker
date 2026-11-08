@@ -3,6 +3,8 @@ import { useMemo, useState } from 'react';
 import { shortDay, addDays } from '../../domain/log/dates';
 import { SOURCE_INFO, itemName, upgradeName, type GrantSource, type Tx } from '../../domain/game/wallet';
 import { consumableById } from '../../domain/game/catalog';
+import { LUCKY_BAG, NIGHT_EXTRAS } from '../../domain/game/market';
+import { SETS } from '../../domain/game/sets';
 import { H2 } from '../../ui/i/bits';
 import { lootLines, num, Price } from './bits';
 import { useGame } from './store';
@@ -11,7 +13,10 @@ const txLine = (t: Tx): string => {
   switch (t.type) {
     case 'mk':
     case 'buy':
-      return t.ref.startsWith('deal:') ? "Today's deal" : consumableById(t.ref)?.name ?? itemName(t.ref);
+      if (t.ref.startsWith('deal:')) return "Today's deal";
+      if (t.ref === LUCKY_BAG.id) return 'Lucky bag';
+      if (t.ref.startsWith('night:')) return `Night market: ${NIGHT_EXTRAS.find((x) => `night:${x.id}` === t.ref)?.name ?? 'a stall'}`;
+      return consumableById(t.ref)?.name ?? itemName(t.ref);
     case 'upgrade':
       return `${upgradeName(t.ref)}, level ${t.ref.split(':')[1]}`;
     case 'open':
@@ -19,11 +24,15 @@ const txLine = (t: Tx): string => {
     case 'spin':
       return `Capsule machine ×${t.ref.split(':')[1]}`;
     case 'claim':
+      if (t.ref.startsWith('stamp:')) return `Stamp card ${t.ref.slice(6)} handed in`;
+      if (t.ref.startsWith('set:')) return `Set complete: ${SETS.find((x) => x.id === t.ref.slice(4))?.name ?? t.ref.slice(4)}`;
       return 'Festival prize';
     case 'use':
       return `Used: ${consumableById(t.ref)?.name ?? t.ref}`;
     case 'trade':
       return 'Exchange';
+    case 'deliver':
+      return 'Delivered a request';
   }
 };
 

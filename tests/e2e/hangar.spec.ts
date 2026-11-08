@@ -13,8 +13,17 @@ async function seed(page: Page) {
       const topic = lt.ensureSectionTopic(s);
       for (let d = 0; d < 34; d++) log.addEntry({ topic_id: topic, date: dates.addDays(today, -d), minutes: 45, note: '' });
     }
+    // 170 sessions take a while to reach IndexedDB: wait for them before anything reloads the page.
+    const store = await import('/src/data/store.ts' as string);
+    for (let i = 0; i < 100; i++) {
+      const db = store.currentSession()?.db;
+      if (!db) break;
+      const [entries, topics] = await Promise.all([db.getAll('log_entries'), db.getAll('log_topics')]);
+      if (entries.length >= store.data.get().log_entries.size && topics.length >= store.data.get().log_topics.size) break;
+      await new Promise((r) => setTimeout(r, 100));
+    }
   });
-  await page.waitForTimeout(400);
+  await page.waitForTimeout(200);
 }
 
 const walletNumber = async (page: Page, name: string) => {
@@ -113,9 +122,70 @@ test('hangar: the festival pays tokens and its prizes can be claimed once', asyn
   await expect(first.getByRole('button', { name: 'Claim' })).toHaveCount(0);
 });
 
+test('hangar: the shop street stamps, ranks, haggles, delivers and opens after dark', async ({ page }) => {
+  // 20:00 in Singapore (the default Daily Log zone): the night market is open.
+  await seed(page);
+  await page.goto('/hangar/shop');
+  const counter = page.getByRole('region', { name: "Mameda's counter" });
+  await expect(counter.locator('.gm-counter__talk p')).not.toBeEmpty();
+  await expect(counter).toContainText('First-timer');
+  await expect(page.locator('.gm-stamps__row li.is-on')).toHaveCount(0);
+  await expect(page.locator('.gm-haggle')).toHaveCount(0);
+
+  // a purchase stamps the card and Mameda says thanks
+  const before = await counter.locator('.gm-counter__talk p').textContent();
+  await page.locator('.gm-item').filter({ hasText: 'Training Scroll' }).getByRole('button', { name: 'Buy' }).click();
+  await expect(page.locator('.gm-stamps__row li.is-on')).toHaveCount(1);
+  await expect(counter).toContainText('Stamped today');
+  await expect(counter.locator('.gm-counter__talk p')).not.toHaveText(before ?? '');
+
+  // a lucky bag: paid once, opened at once, sold out for the week
+  await page.locator('.gm-bag').getByRole('button', { name: 'Buy' }).click();
+  const bag = page.getByRole('dialog', { name: 'Fukubukuro' });
+  await expect(bag.locator('.gm-rv__loot li').first()).toBeVisible();
+  await bag.getByRole('button', { name: 'OK' }).click();
+  await expect(page.locator('.gm-bag')).toContainText('Sold out');
+  await expect(page.locator('.gm-stamps__row li.is-on')).toHaveCount(1);
+
+  // 200 trust: a familiar face, who may haggle once a day
+  await expect(counter).toContainText('Familiar face');
+  await page.locator('.gm-haggle').first().click();
+  const hag = page.getByRole('dialog', { name: 'Haggle' });
+  await hag.getByRole('button', { name: 'Stop!' }).click();
+  await expect(hag.locator('.gm-hag__res')).toContainText(/off|Full price/);
+  await hag.getByRole('button', { name: 'Walk away' }).click();
+  await expect(hag).toHaveCount(0);
+
+  // requests take materials and pay
+  await page.getByRole('navigation', { name: 'Shop' }).getByRole('button', { name: /Requests/ }).click();
+  await expect(page.getByRole('heading', { name: "Today's requests" })).toBeVisible();
+  const coins = await walletNumber(page, 'Ryō');
+  const req = page.locator('.gm-req').filter({ has: page.locator('button:not([disabled])', { hasText: 'Deliver' }) }).first();
+  await req.getByRole('button', { name: 'Deliver' }).click();
+  await expect(page.locator('.gm-req.is-done')).toHaveCount(1);
+  expect(await walletNumber(page, 'Ryō')).toBeGreaterThan(coins);
+
+  // the night market: a strongbox, once a night, lands in the Hangar
+  await page.getByRole('navigation', { name: 'Shop' }).getByRole('button', { name: /Night market/ }).click();
+  await expect(page.getByText(/Open till 05:00/)).toBeVisible();
+  const box = page.locator('.gm-item').filter({ hasText: 'Shady strongbox' });
+  await box.getByRole('button', { name: 'Buy' }).click();
+  await expect(box.getByRole('button', { name: 'Sold out' })).toBeDisabled();
+
+  // the wishlist shows on the bay
+  await page.getByRole('navigation', { name: 'Shop' }).getByRole('button', { name: /Catalogue/ }).click();
+  await page.getByRole('button', { name: /^Save up for/ }).first().click();
+  await page.waitForTimeout(300);
+  await page.reload();
+  await page.getByRole('navigation', { name: 'Hangar' }).getByRole('button', { name: 'Hangar' }).click();
+  await expect(page.getByRole('region', { name: 'Saving up' })).toBeVisible();
+  await page.getByRole('group', { name: 'What to change' }).getByRole('button', { name: 'Sets' }).click();
+  await expect(page.locator('.gm-set')).toHaveCount(18);
+});
+
 test('hangar: every tab has one heading, named controls and no sideways scroll', async ({ page }) => {
   await seed(page);
-  for (const path of ['/hangar', '/hangar/shop', '/hangar/capsule', '/hangar/workshop', '/hangar/events', '/hangar/ledger']) {
+  for (const path of ['/hangar', '/hangar/shop', '/hangar/shop/requests', '/hangar/shop/night', '/hangar/shop/catalogue', '/hangar/capsule', '/hangar/workshop', '/hangar/events', '/hangar/ledger']) {
     await page.goto(path);
     await expect(page.locator('h1')).toHaveCount(1);
     const bad = await page.evaluate(() => {
