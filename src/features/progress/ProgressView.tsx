@@ -6,7 +6,7 @@ import { takeRestDay, useAchievements, useProgress, useQuests, useToday } from '
 import { data } from '../../data/store';
 import { shortDay } from '../../domain/log/dates';
 import { rankFor, RANKS, RULES, sectionRankFor, STAGES, type XpSection } from '../../domain/progress/engine';
-import { BOSS_XP } from '../../domain/progress/boss';
+import { TIERS } from '../../domain/progress/boss';
 import { QUEST_XP, QUESTS_FROM, SWEEP_XP } from '../../domain/progress/quests';
 import { SECTIONS, sectionInfo } from '../../domain/sections';
 import { useStore } from '../../lib/createStore';
@@ -34,7 +34,7 @@ const RULE_LINES: [string, string][] = [
   ['Tasks', `${RULES.taskDone} XP per task completed`],
   ['Cabinet', `${RULES.cabinetItem} XP per item saved, up to ${RULES.cabinetPerDay} a day`],
   ['Quests', `daily ${QUEST_XP.daily}, weekly ${QUEST_XP.weekly}, monthly ${QUEST_XP.monthly} XP each; clearing all three adds ${SWEEP_XP.daily} / ${SWEEP_XP.weekly} / ${SWEEP_XP.monthly}`],
-  ['Weekly boss', `${BOSS_XP} XP for defeating the week's boss (Progress → Raid)`],
+  ['Weekly boss', `${TIERS[1].xp}–${TIERS[3].xp} XP for defeating the week's boss, by its rank (Progress → Raid)`],
   ['Hangar items', 'Training Scrolls and Spirit Tonics, bought with what you earn, add XP. Everything else in the Hangar is for the robot'],
   ['Rest day', 'No XP; keeps the streak going'],
 ];

@@ -328,7 +328,8 @@ export function grantsFor(input: EarnInput): Grant[] {
 
   // Boss.
   for (const b of input.bosses) {
-    if (b.defeatedOn) push({ key: `bossgem:${b.start}`, date: b.defeatedOn, source: 'boss', label: `${b.boss.name} defeated`, gain: { gems: 20 + up('prospector', b.defeatedOn) * 5, chests: ['iron'] } });
+    // Era-two ranks pay more: a Warlord 15 more gems, an Overlord 30 more and a gold chest.
+    if (b.defeatedOn) push({ key: `bossgem:${b.start}`, date: b.defeatedOn, source: 'boss', label: `${b.boss.name} defeated`, gain: { gems: 20 + (b.tier - 1) * 15 + up('prospector', b.defeatedOn) * 5, chests: [b.tier === 3 ? 'gold' : 'iron'] } });
   }
 
   // Emblems.

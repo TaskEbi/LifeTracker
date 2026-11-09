@@ -203,3 +203,38 @@ test('epq: the research plan’s dates fill the milestones', async ({ page }) =>
   await expect(page.locator('.epq-ms')).toHaveCount(11);
   await expect(page.getByRole('checkbox', { name: /Gate 1: an AI renderer outputs MIDI/ })).toBeVisible();
 });
+
+test('epq plan: to-dos tick and stay ticked, leads go to the library', async ({ page }) => {
+  await page.goto('/study/epq');
+  await page.getByRole('button', { name: 'Set up your EPQ' }).click();
+  await dialog(page, 'Set up your EPQ').getByRole('button', { name: 'Save' }).click();
+  await page.getByRole('navigation', { name: 'EPQ pages' }).getByRole('button', { name: 'Plan' }).click();
+  await expect(page).toHaveURL(/\/study\/epq\/plan$/);
+  await expect(page.getByRole('note', { name: 'Rules for the EPQ' })).toContainText('American spelling');
+
+  const todo = page.getByLabel('EPQ to-do list');
+  await todo.getByRole('checkbox', { name: 'Submit the Part A Candidate Proposal' }).click();
+  await expect(todo.getByRole('checkbox', { name: 'Submit the Part A Candidate Proposal' })).toHaveAttribute('aria-checked', 'true');
+  await expect(page.getByRole('article', { name: 'Gate 1: does an AI renderer run?' })).toContainText('D-21');
+
+  await page.getByRole('button', { name: 'Add to library: SyMuPe / PianoFlow' }).click();
+  const src = dialog(page, 'Add a source');
+  await expect(src.getByLabel('Title')).toHaveValue('SyMuPe / PianoFlow');
+  await expect(src.getByRole('switch', { name: /In the reference list/ })).toHaveAttribute('aria-checked', 'false');
+  await src.getByRole('button', { name: 'Save source' }).click();
+  await expect(page.getByLabel('Reading leads')).toContainText('In library');
+
+  await page.waitForTimeout(300);
+  await page.reload();
+  await expect(page.getByLabel('EPQ to-do list').getByRole('checkbox', { name: 'Submit the Part A Candidate Proposal' })).toHaveAttribute('aria-checked', 'true');
+});
+
+test('bosses: the stronger roster shows its rank, trait and second weakness', async ({ page }) => {
+  await page.clock.setFixedTime(new Date('2026-11-21T10:00:00+00:00'));
+  await page.goto('/progress/boss');
+  const card = page.getByRole('region', { name: /^Weekly boss/ });
+  await expect(card).toContainText(/Demon|Warlord|Overlord/);
+  await expect(card).toContainText(/Regenerates|Enrages|Resists/);
+  await expect(card).toContainText('At half HP its mask cracks');
+  await expect(page.locator('.b-beast')).toHaveCount(24);
+});

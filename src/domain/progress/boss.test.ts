@@ -4,7 +4,8 @@ import { TIMED_SECTIONS } from '../../data/types';
 import { addDays } from '../log/dates';
 import { DEFAULT_SLEEP, DEFAULT_TARGETS } from '../prefs';
 import { achievements } from './achievements';
-import { BOSS_FROM, BOSS_XP, bossEvents, bossFor, bossFight, bossHistory, BOSSES, currentBoss, DMG, HP_MIN } from './boss';
+import { BOSS_ERA2, BOSS_FROM, BOSS_XP, bossEvents, bossFor, bossFight, bossHistory, bossHp, BOSSES, COMBO, currentBoss, DMG, HP2, HP_MIN, REGEN, TIERS } from './boss';
+import { dayFacts } from './quests';
 import { computeProgress, type ProgressInput } from './engine';
 import { heatmap, lastWeekRecap, weekRecap } from './recap';
 
@@ -35,15 +36,29 @@ describe('boss draw', () => {
     expect(seen.size).toBeGreaterThan(5);
   });
 
-  it('brings every boss once in each round of eight weeks', () => {
-    for (const r of [0, 1, 5]) {
-      const ids = Array.from({ length: BOSSES.length }, (_, i) => bossFor(addDays(BOSS_FROM, 7 * (r * BOSSES.length + i))).id);
+  it('keeps the first era to the first eight, and brings all of them once a round after', () => {
+    expect(BOSSES.length).toBe(24);
+    for (let w = BOSS_FROM; w < BOSS_ERA2; w = addDays(w, 7)) expect(BOSSES.indexOf(bossFor(w))).toBeLessThan(8);
+    for (const r of [0, 1, 3]) {
+      const ids = Array.from({ length: BOSSES.length }, (_, i) => bossFor(addDays(BOSS_ERA2, 7 * (r * BOSSES.length + i))).id);
       expect(new Set(ids).size).toBe(BOSSES.length);
     }
+    expect(bossFor(BOSS_ERA2).id).not.toBe(bossFor(addDays(BOSS_ERA2, -7)).id);
+  });
+
+  it('gives every boss a real second weakness, a trait, and a resisted section when it resists', () => {
+    const real = new Set<string>([...TIMED_SECTIONS, 'sleep', 'screen']);
+    for (const b of BOSSES) {
+      expect(real.has(b.weak2)).toBe(true);
+      expect(b.weak2).not.toBe(b.weak);
+      if (b.trait === 'resist') expect(b.resist && b.resist !== b.weak && b.resist !== b.weak2).toBeTruthy();
+    }
+    expect(new Set(BOSSES.map((b) => b.id)).size).toBe(BOSSES.length);
+    expect(BOSSES.filter((b) => b.tier === 3).length).toBeGreaterThanOrEqual(4);
   });
 
   it('has a weakness in a real section for every boss', () => {
-    for (const b of BOSSES) expect(TOPICS.map(([, s]) => s).concat(['sleep', 'screen'])).toContain(b.weak);
+    for (const b of BOSSES) expect([...TIMED_SECTIONS, 'sleep', 'screen']).toContain(b.weak);
   });
 });
 
@@ -91,6 +106,79 @@ describe('boss damage', () => {
     const sleep = (DMG.night + DMG.bedtime) * (weak === 'sleep' ? 2 : 1);
     const screen = DMG.screen * (weak === 'screen' ? 2 : 1) + (DEFAULT_TARGETS.screenDay != null && 60 <= DEFAULT_TARGETS.screenDay ? DMG.screenUnder * (weak === 'screen' ? 2 : 1) : 0);
     expect(f.damage).toBe(sleep + screen + 2 * DMG.newSection);
+  });
+});
+
+/** The first era-two week whose boss has a trait, for the rules below. */
+const weekWith = (pred: (b: (typeof BOSSES)[number]) => boolean) => {
+  for (let w = BOSS_ERA2, i = 0; i < 48; i++, w = addDays(w, 7)) if (pred(bossFor(w))) return w;
+  throw new Error('none');
+};
+const ERA_TOPICS: [string, SectionId][] = [...TOPICS, ['topic-reading', 'reading'], ['topic-maths', 'maths'], ['topic-future', 'future']];
+
+describe('era two', () => {
+  it('is stronger: a higher floor scaled by rank, and more growth', () => {
+    const w = BOSS_ERA2;
+    const f = bossFight(input({ today: addDays(w, 6), topicSection: new Map(ERA_TOPICS) }), w);
+    expect(f.era2).toBe(true);
+    expect(f.hp).toBe(Math.round((HP2.min * TIERS[f.tier].hp) / 10) * 10);
+    expect(f.xp).toBe(TIERS[f.tier].xp);
+    const past = [1, 2, 3, 4].map((k) => entry(addDays(w, -7 * k), 1500, 'topic-study'));
+    const inp = input({ today: addDays(w, 6), entries: past, topicSection: new Map(ERA_TOPICS) });
+    expect(bossHp(w, dayFacts(inp), inp.today)).toBe(Math.min(HP2.max, Math.round(((1500 + DMG.newSection) * HP2.growth * TIERS[bossFor(w).tier].hp) / 10) * 10));
+  });
+
+  it('pays its rank in XP', () => {
+    const w = weekWith((b) => b.tier === 3);
+    const entries = [entry(w, 1400, 'topic-violin'), entry(w, 1400, 'topic-coding')];
+    const ev = bossEvents(input({ today: addDays(w, 6), entries }));
+    expect(ev.find((e) => e.key === `boss:${w}`)?.xp).toBe(TIERS[3].xp);
+  });
+
+  it('adds combos for three and five sections in a day', () => {
+    const w = BOSS_ERA2;
+    const three = bossFight(input({ today: w, topicSection: new Map(ERA_TOPICS), entries: ['violin', 'chess', 'coding'].map((s) => entry(w, 5, topicOf(s as SectionId))) }), w);
+    expect(three.hits.find((h) => h.source === 'combo')?.dmg).toBe(COMBO.three);
+    const five = bossFight(input({ today: w, topicSection: new Map(ERA_TOPICS), entries: ['violin', 'chess', 'coding', 'gym', 'sports'].map((s) => entry(w, 5, topicOf(s as SectionId))) }), w);
+    expect(five.hits.find((h) => h.source === 'combo')?.dmg).toBe(COMBO.five);
+  });
+
+  it('cracks at half HP, and the weakness switches the next day', () => {
+    const w = BOSS_ERA2;
+    const b = bossFor(w);
+    const hp = Math.round((HP2.min * TIERS[b.tier].hp) / 10) * 10;
+    const filler = (['violin', 'coding', 'chess', 'study'] as SectionId[]).find((s) => s !== b.weak && s !== b.weak2 && s !== b.resist)!;
+    const entries = [entry(w, Math.ceil(hp / 2), topicOf(filler))];
+    const f = bossFight(input({ today: addDays(w, 1), topicSection: new Map(ERA_TOPICS), entries }), w);
+    expect(f.crackedOn).toBe(w);
+    expect(f.weakNow).toBe(b.weak2);
+  });
+
+  it('regenerates after a whole day with no hits', () => {
+    const w = weekWith((b) => b.trait === 'regen');
+    const b = bossFor(w);
+    const filler = (['violin', 'coding', 'chess', 'study'] as SectionId[]).find((s) => s !== b.weak && s !== b.weak2 && s !== b.resist)!;
+    const f = bossFight(input({ today: addDays(w, 2), topicSection: new Map(ERA_TOPICS), entries: [entry(w, 100, topicOf(filler))] }), w);
+    const heal = Math.round((f.hp * REGEN) / 10) * 10;
+    expect(f.healed).toBe(heal);
+    expect(f.damage).toBe(100 + DMG.newSection - heal);
+    expect(f.hits.filter((h) => h.source === 'boss')).toHaveLength(1);
+  });
+
+  it('enrages on Saturday when more than half its HP is left', () => {
+    const w = weekWith((b) => b.trait === 'enrage');
+    const f = bossFight(input({ today: addDays(w, 6), topicSection: new Map(ERA_TOPICS) }), w);
+    expect(f.enragedOn).toBe(addDays(w, 5));
+    expect(f.hp).toBe(bossFight(input({ today: addDays(w, 4), topicSection: new Map(ERA_TOPICS) }), w).hp * 1.2);
+  });
+
+  it('resists its section by half', () => {
+    const w = weekWith((b) => b.trait === 'resist' && TIMED_SECTIONS.includes(b.resist as never));
+    const b = bossFor(w);
+    const f = bossFight(input({ today: w, topicSection: new Map(ERA_TOPICS), entries: [entry(w, 41, topicOf(b.resist!))] }), w);
+    const h = f.hits.find((x) => x.source === b.resist && !x.flat)!;
+    expect(h.resisted).toBe(true);
+    expect(h.dmg).toBe(21);
   });
 });
 

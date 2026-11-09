@@ -253,7 +253,7 @@ function Hero({ rows }: { rows: TodayRow[] }) {
       open ? `Next training: ${open.title.toLowerCase()} (${open.progress}/${open.goal}).` : 'All three of today’s training done!',
       `Violin this week: ${violinWeek} of ${input.targets.violinWeek} min.`,
       rows[0] ? `Coming up: ${rows[0].title} at ${rows[0].when}.` : 'Nothing planned. Clear skies.',
-      boss.defeatedOn ? `${boss.boss.name} is down. Rest easy… until Monday.` : `${boss.boss.name} has ${Math.max(0, boss.hp - boss.damage)} HP left. It hates ${sectionInfo(boss.boss.weak).name.toLowerCase()}.`,
+      boss.defeatedOn ? `${boss.boss.name} is down. Rest easy… until Monday.` : `${boss.boss.name} has ${Math.max(0, boss.hp - boss.damage)} HP left. It hates ${sectionInfo(boss.weakNow).name.toLowerCase()}.`,
     ];
     setBubble(lines[n % lines.length]);
     setN(n + 1);

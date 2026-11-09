@@ -14,12 +14,14 @@ import { logAsText, milestoneState, minutesByWeek, paceOf, quietDays, referenceL
 import { useStore } from '../../lib/createStore';
 import { H2, Meter } from '../../ui/i/bits';
 import { addPlanMilestones, addUsualMilestones, epqIn, setSourceUsed, toggleMilestone, type EpqState } from './actions';
+import { PlanTab } from './PlanTab';
 import './sheets';
 import './epq.css';
 
 export const EPQ_KANJI = '探';
 const TABS = [
   { id: '', label: 'Project' },
+  { id: 'plan', label: 'Plan' },
   { id: 'log', label: 'Production log' },
   { id: 'sources', label: 'Sources' },
 ] as const;
@@ -69,7 +71,7 @@ export function EpqPage() {
           ))}
         </nav>
       )}
-      {!s.project ? <Welcome /> : tab === 'log' ? <LogTab s={s} /> : tab === 'sources' ? <SourcesTab s={s} /> : <ProjectTab s={s} />}
+      {!s.project ? <Welcome /> : tab === 'plan' ? <PlanTab s={s} /> : tab === 'log' ? <LogTab s={s} /> : tab === 'sources' ? <SourcesTab s={s} /> : <ProjectTab s={s} />}
     </div>
   );
 }

@@ -39,6 +39,8 @@ export interface EpqState {
   words: WordDay[];
   /** Study sessions on the project's subject, newest first. */
   sessions: { id: string; date: string; minutes: number; kind?: string; note: string }[];
+  /** Plan items ticked off: key → the day. */
+  checks: Map<string, string>;
 }
 
 const parsed = <T,>(st: DataState, kind: string, fn: (r: LtRecord) => T | null): T[] => sectionRecords(st, SECTION, kind).map(fn).filter((x): x is T => x != null);
@@ -58,6 +60,9 @@ export function epqIn(st: DataState): EpqState {
     sources: parsed(st, 'epq_source', sourceOf),
     words: wordHistory(parsed(st, 'epq_words', wordsOf)),
     sessions,
+    checks: new Map(
+      sectionRecords(st, SECTION, 'epq_check').flatMap((r) => (typeof r.data.key === 'string' && typeof r.data.done === 'string' ? [[r.data.key, r.data.done] as [string, string]] : [])),
+    ),
   };
 }
 
@@ -109,6 +114,19 @@ export function saveSource(s: Omit<Source, 'id'>, id?: string) {
 export function setSourceUsed(s: Source, used: boolean) {
   const { id, ...rest } = s;
   saveSource({ ...rest, used }, id);
+}
+
+/** Ticks a plan item (to-do, decision logged, question asked), or unticks it. One row per item. */
+export function toggleCheck(key: string, today: string) {
+  const id = pairId('epq:check', key);
+  const prev = data.get().lt_records.get(id);
+  const t = now();
+  const done = prev && !prev.deleted_at && typeof prev.data.done === 'string' ? null : today;
+  const value = { key, done };
+  const row: LtRecord = prev
+    ? { ...prev, data: value, deleted_at: null, updated_at: t }
+    : { id, section: SECTION, kind: 'epq_check', data: value, sort_order: 0, archived_at: null, created_at: t, updated_at: t, deleted_at: null };
+  commit('lt_records', [row]);
 }
 
 /** Today's count replaces any earlier count for the same day. */

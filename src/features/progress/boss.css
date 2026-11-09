@@ -343,3 +343,141 @@
     grid-template-columns: repeat(8, minmax(0, 1fr));
   }
 }
+
+/* ── era two: ranks, traits, cracks and rage ─────────────────────────────────── */
+.b-card__rank {
+  display: inline-block;
+  margin-right: 6px;
+  padding: 1px 6px;
+  color: #111;
+  background: var(--b2);
+  letter-spacing: 0.08em;
+}
+.b-card.t-3 .b-card__rank {
+  background: linear-gradient(90deg, #fbbf24, #f97316);
+}
+.b-card.t-3 {
+  box-shadow: 0 0 0 1px #fbbf24, inset 4px 0 0 #fbbf24, 0 0 22px -6px #f97316;
+}
+.b-card.t-2 {
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--b2) 60%, var(--rule)), inset 4px 0 0 var(--b);
+}
+.b-card__trait {
+  justify-self: start;
+  padding: 2px 8px;
+  font-size: 10.5px;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  color: var(--b2);
+  box-shadow: inset 0 0 0 1.5px var(--b2);
+  clip-path: polygon(5px 0, 100% 0, calc(100% - 5px) 100%, 0 100%);
+}
+.b-card.is-enraged .b-card__trait {
+  color: #fff;
+  background: #dc2626;
+  box-shadow: none;
+}
+.b-card__how {
+  margin: 8px 0 0;
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--fg-2);
+}
+.b-card__bar {
+  position: relative;
+}
+.b-card__half {
+  position: absolute;
+  top: -2px;
+  bottom: -2px;
+  left: 50%;
+  width: 2px;
+  background: var(--fg);
+  opacity: 0.6;
+}
+.b-card.is-cracked .b-card__bar i {
+  background: repeating-linear-gradient(-45deg, #dc2626 0 6px, #991b1b 6px 12px);
+}
+.b-card.is-enraged {
+  animation: b-rage 1.6s ease-in-out infinite;
+}
+.b-hit.is-boss .b-hit__n {
+  color: #f87171;
+}
+.b-hit.is-combo .b-hit__n {
+  color: #fbbf24;
+}
+.b-hit__n em.is-resist {
+  background: var(--fg-3);
+}
+.b-beast.t-3 {
+  box-shadow: 0 0 0 1px #fbbf24;
+}
+.b-beast.t-3.is-down {
+  box-shadow: 0 0 0 1px #fbbf24, inset 0 -3px 0 var(--b);
+}
+.b-art__flames {
+  transform-origin: 60px 66px;
+  animation: b-flames 1.1s ease-in-out infinite alternate;
+}
+.b-art__ring {
+  transform-origin: 60px 66px;
+  animation: b-spin 14s linear infinite;
+}
+.b-art__halo {
+  animation: b-aura 2.4s ease-in-out infinite;
+}
+.b-art.is-enraged .b-art__body {
+  animation: b-shake 0.5s linear infinite;
+}
+.b-art.is-enraged {
+  filter: drop-shadow(0 0 6px #ef4444) saturate(1.3);
+}
+.b-art.is-down .b-art__flames,
+.b-art.is-down .b-art__ring {
+  display: none;
+}
+@keyframes b-flames {
+  from {
+    transform: scale(0.96);
+    opacity: 0.75;
+  }
+  to {
+    transform: scale(1.05);
+    opacity: 1;
+  }
+}
+@keyframes b-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@keyframes b-shake {
+  0%,
+  100% {
+    transform: translate(0, 0);
+  }
+  25% {
+    transform: translate(-1.5px, 1px);
+  }
+  75% {
+    transform: translate(1.5px, -1px);
+  }
+}
+@keyframes b-rage {
+  0%,
+  100% {
+    box-shadow: 0 0 0 1px var(--rule), inset 4px 0 0 #dc2626;
+  }
+  50% {
+    box-shadow: 0 0 0 1px #dc2626, inset 4px 0 0 #dc2626, 0 0 18px -4px #dc2626;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .b-art__flames,
+  .b-art__ring,
+  .b-art.is-enraged .b-art__body,
+  .b-card.is-enraged {
+    animation: none;
+  }
+}

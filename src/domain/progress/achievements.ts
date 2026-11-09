@@ -1282,6 +1282,9 @@ function compute(input: ProgressInput, extras: AchievementExtras): Achievement[]
   const weakFirst = new Map<string, string>();
   for (const f of exploited) if (!weakFirst.has(f.boss.id)) weakFirst.set(f.boss.id, f.defeatedOn!);
   add('weak8', 'gold', 'mask', 'Know Thy Enemy', `Defeat each of the ${BOSSES.length} bosses after hitting its weak section`, BOSSES.length, weakFirst.size, weakFirst.size === BOSSES.length ? [...weakFirst.values()].sort().at(-1)! : null);
+  once('overlord', 'gold', 'dragon', 'Overlord Slayer', 'Defeat an Overlord-rank boss', won.filter((f) => f.tier === 3).map((f) => f.defeatedOn!).sort());
+  once('supercombo', 'silver', 'fist', 'Super Combo', 'Hit a boss with five sections in one day', fights.flatMap((f) => f.hits.filter((h) => h.source === 'combo' && h.dmg >= 80).map((h) => h.date)).sort());
+  once('calmstorm', 'gold', 'shield', 'Calm the Storm', 'Defeat a boss after it enraged', won.filter((f) => f.enragedOn).map((f) => f.defeatedOn!).sort());
   once('swift', 'gold', 'sword', 'Swift Blade', 'Defeat a weekly boss by Wednesday', won.filter((f) => f.defeatedOn! <= addDays(f.start, 2)).map((f) => f.defeatedOn!).sort());
   const overkill = fights
     .map((f) => {

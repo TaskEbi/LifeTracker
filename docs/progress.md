@@ -343,3 +343,31 @@ The rest of the six areas, each a page of its own with an address, built on a sh
 - **EPQ**: setup is pre-filled from the plan (title, research question, an assumed 30 April 2027 hand-in, started 7 October 2026), and "Use my research plan's dates" adds its eleven dated stages (rationale, supervisor sign-off, Part A, Gate 1, Planning Review, Gate 2, ethics and pilot, listening test and Mid-Project Review, draft, hand-in, presentation).
 - New dependencies: `world-atlas` 2.0.2, `topojson-client` 3.1.0.
 - Verified: 682 unit/DB tests (28 new), typecheck, all 100 e2e tests in WebKit at iPhone size (new `life.spec.ts`: one flow per area plus the EPQ plan; the fourteen new addresses in the every-screen sweep). Screens checked at phone width.
+
+## M34 · Stronger bosses, and the EPQ plan in the app (done)
+**Bosses.** The roster grows from 8 to 24, and from the week of 16 November the rules are harder. Weeks before that keep the first era's draw and rules exactly, so no past win or XP changes (checked against the old code for every first-era week). All in `src/domain/progress/boss.ts` (tested).
+- Sixteen new bosses, each with a section it's weak to and a taunt. Among them: Shiori-kui the bookmark devourer (Reading), Keisan-nue (Maths), Mirai-nashi (Future), Tsūchi-nezumi the rat king of notifications, Nullpo-oni, Tsumi-gitsune, Onchi-dako, and four Overlords: Shimekiri-gami the god of deadlines, Akirame-yūrei, Daidara-bocchi and Yami-ryūō, dragon king of the dark screen.
+- Ranks: Demon 鬼, Warlord 将 (HP ×1.2, 150 XP, +15 gems) and Overlord 王 (HP ×1.45, 220 XP, +30 gems and a gold chest).
+- HP: the last four weeks' average +25% (was +10%), floor 500 × rank, cap 3,200.
+- Traits:
+  - Regenerates: heals 6% after a whole day with no hits.
+  - Enrages: +20% HP on Saturday if more than half is left.
+  - Resists: one section deals half.
+- Second phase: at half HP the mask cracks, and from the next day the boss is weak to a different section, with a new line.
+- Combos: +30 damage for a day that hits three sections, +80 for five.
+- Art: the masks now take five face shapes, five kinds of eyes, seven mouths and thirteen extras (ears, wings, mane, tentacles, antlers, halo, blindfold, tengu nose, tusks and more). Warlords wear a turning spiked ring and Overlords a crown and flames. Cracked masks get red eyes and a split; enraged bosses shake and glow.
+- The raid page shows rank, trait, the crack rule and the ranks and traits table; the bestiary shows all 24 with their ranks. Home's line and Next move follow the current weakness.
+- Three new achievements: Overlord Slayer, Super Combo and Calm the Storm.
+
+**EPQ plan.** A Plan tab (`/study/epq/plan`) holds the handover of 9 November in note form (`src/domain/epq/plan.ts`):
+- House rules: American spelling, your own words and code, cite only what you've read, log AI help.
+- The research question, the three experiments and the violin case study.
+- A to-do list to tick (some with a + Log button that opens the production log).
+- Gates 1 and 2 with countdowns and fallbacks.
+- The nine planned-hours blocks against hours actually logged in each.
+- Nine decisions to tick once they're on ProjectQ, and seven questions for Emma.
+- Twelve reading leads, each with its facts and limits. "+ Library" opens the source sheet pre-filled but not marked as cited, and you add your own notes.
+- Success criteria, risks and the cut order.
+
+Ticks are `epq_check` rows with ids from their key. No migration.
+- Verified: 690 unit/DB tests (8 new boss tests), typecheck, all 102 e2e tests (new: the plan's ticks persist and leads reach the library; the stronger boss card and the 24-boss bestiary).

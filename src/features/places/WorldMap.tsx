@@ -36,6 +36,10 @@ function loadShapes(): Promise<Shape[]> {
       return { name: f.properties.name, d: polys.map((p) => p.map((r) => ringPath(r as number[][])).join('')).join('') };
     });
   });
+  // A failed load (offline, say) can be tried again next time.
+  shapes.catch(() => {
+    shapes = null;
+  });
   return shapes;
 }
 

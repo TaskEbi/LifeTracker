@@ -81,7 +81,7 @@ export function useMoves(minutes: number, energy: Energy, limit = 3): Move[] {
       bigThree: big,
       legsHurt: legsHurt(hq.niggles),
       planRun: run ? { title: run.title, km: run.km } : null,
-      bossWeak: boss.defeatedOn ? null : boss.boss.weak,
+      bossWeak: boss.defeatedOn ? null : boss.weakNow,
       quests: quests.daily.quests.filter((q) => !q.doneOn && q.section).map((q) => ({ title: q.title, section: q.section! })),
       overdueTasks: input.todos.filter((t) => !t.done_at && t.due && t.due < today).length,
       sleepLogged: input.metrics.some((x) => x.metric === 'sleep' && x.date === today),

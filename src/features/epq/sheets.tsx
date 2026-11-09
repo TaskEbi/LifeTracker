@@ -159,15 +159,17 @@ function SourceSheet({ spec }: { spec: SheetSpec }) {
   const today = ltToday();
   const rec = spec.editId ? data.get().lt_records.get(spec.editId as string) : undefined;
   const s = rec ? sourceOf(rec) : null;
-  const [title, setTitle] = useState(s?.title ?? '');
-  const [author, setAuthor] = useState(s?.author ?? '');
-  const [year, setYear] = useState(s?.year ?? '');
-  const [type, setType] = useState<SourceType>(s?.type ?? 'Book');
-  const [publisher, setPublisher] = useState(s?.publisher ?? '');
-  const [url, setUrl] = useState(s?.url ?? '');
+  // A lead from the plan fills in the facts; the notes and the trust are yours to add.
+  const pre = (spec.prefill ?? {}) as Partial<Record<'title' | 'author' | 'year' | 'publisher' | 'url' | 'type', string>>;
+  const [title, setTitle] = useState(s?.title ?? pre.title ?? '');
+  const [author, setAuthor] = useState(s?.author ?? pre.author ?? '');
+  const [year, setYear] = useState(s?.year ?? pre.year ?? '');
+  const [type, setType] = useState<SourceType>(s?.type ?? (pre.type as SourceType) ?? 'Book');
+  const [publisher, setPublisher] = useState(s?.publisher ?? pre.publisher ?? '');
+  const [url, setUrl] = useState(s?.url ?? pre.url ?? '');
   const [notes, setNotes] = useState(s?.notes ?? '');
   const [trust, setTrust] = useState<Trust>(s?.trust ?? 2);
-  const [used, setUsed] = useState(s?.used ?? true);
+  const [used, setUsed] = useState(s?.used ?? !spec.prefill);
   const save = () => {
     saveSource({ title: title.trim(), author: author.trim(), year: year.trim(), type, publisher: publisher.trim(), url: url.trim(), accessed: url.trim() ? (s?.url === url.trim() ? s.accessed : today) : null, notes: notes.trim(), trust, used }, rec?.id);
     closeSheet();
@@ -190,6 +192,7 @@ function SourceSheet({ spec }: { spec: SheetSpec }) {
         </>
       }
     >
+      {!!spec.prefill && <p className="i-note">Filled in from your plan’s reading list. Open it, check the full title and authors, then add your own notes.</p>}
       <Picks label="Type" value={type} onChange={setType} options={SOURCE_TYPES.map((t) => ({ id: t, label: t }))} />
       <Field label="Title">
         <input className="i-input" data-autofocus value={title} onChange={(e) => setTitle(e.target.value)} maxLength={300} />
