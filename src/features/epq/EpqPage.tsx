@@ -13,7 +13,7 @@ import { formatMinutes } from '../../domain/log/duration';
 import { logAsText, milestoneState, minutesByWeek, paceOf, quietDays, referenceList, TRUST, type EpqProject, type Milestone } from '../../domain/epq/model';
 import { useStore } from '../../lib/createStore';
 import { H2, Meter } from '../../ui/i/bits';
-import { addUsualMilestones, epqIn, setSourceUsed, toggleMilestone, type EpqState } from './actions';
+import { addPlanMilestones, addUsualMilestones, epqIn, setSourceUsed, toggleMilestone, type EpqState } from './actions';
 import './sheets';
 import './epq.css';
 
@@ -203,9 +203,12 @@ function ProjectTab({ s }: { s: EpqState }) {
           s.milestones.map((m) => <MilestoneRow key={m.id} m={m} today={today} next={m === next} />)
         ) : (
           <div className="epq-empty">
-            <p className="i-note">Add your school’s dates, or start from the usual stages of an essay EPQ spread up to your hand-in date and edit them.</p>
+            <p className="i-note">Add your school’s dates, use the gates and reviews from your research plan, or start from the usual stages of an essay EPQ spread up to your hand-in date and edit them.</p>
             <button type="button" className="i-btn i-btn--block" onClick={() => (addUsualMilestones(today, p.deadline, s.milestones), toast(p.deadline ? 'Eight milestones added up to hand-in' : 'Eight milestones added over six months: set a hand-in date to fit them'))}>
               Add the usual milestones
+            </button>
+            <button type="button" className="i-btn i-btn--block" onClick={() => (addPlanMilestones(s.milestones), toast('Your plan’s 11 dates added: move them once the real ones are confirmed'))}>
+              Use my research plan’s dates
             </button>
           </div>
         )}

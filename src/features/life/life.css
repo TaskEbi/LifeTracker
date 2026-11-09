@@ -1,0 +1,259 @@
+/* The life pages (Mood, Money, People, Media, Places). Each sets --lc, its own colour. */
+.lf {
+  --lc: var(--sig);
+}
+.lf-back {
+  margin: 4px 0 6px;
+}
+.lf-head {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: center;
+  padding: 14px 14px 14px 12px;
+  border-radius: 10px;
+  background: linear-gradient(120deg, color-mix(in srgb, var(--lc) 16%, var(--surf)), var(--surf) 60%);
+  box-shadow: inset 0 0 0 1px var(--rule);
+}
+.lf-head__k {
+  font-size: 40px;
+  line-height: 1;
+  color: var(--lc);
+}
+.lf-head__t h1 {
+  margin: 0;
+  font-size: 22px;
+  line-height: 1.15;
+}
+.lf-head__t p {
+  margin: 4px 0 0;
+  font-size: 13px;
+  color: var(--fg-2);
+}
+.lf-head__big {
+  display: grid;
+  justify-items: end;
+  gap: 1px;
+  min-width: 64px;
+  text-align: right;
+}
+.lf-head__big b {
+  font-family: var(--f-mono);
+  font-size: 20px;
+  color: var(--lc);
+}
+.lf-head__big span {
+  font-size: 11px;
+  color: var(--fg-3);
+}
+
+.lf-tabs {
+  display: flex;
+  gap: 6px;
+  margin: 12px 0 4px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.lf-tab {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 40px;
+  padding: 0 14px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--fg-2);
+  box-shadow: inset 0 0 0 1px var(--rule);
+}
+.lf-tab small {
+  font-family: var(--f-mono);
+  font-size: 10.5px;
+  color: var(--fg-3);
+}
+.lf-tab[aria-current='page'] {
+  color: #111;
+  background: var(--lc);
+  box-shadow: none;
+}
+.lf-tab[aria-current='page'] small {
+  color: inherit;
+}
+
+.lf-empty {
+  display: grid;
+  gap: 12px;
+  margin-top: 12px;
+}
+.lf-empty p {
+  margin: 0;
+  line-height: 1.5;
+  color: var(--fg-2);
+}
+.lf-acts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 12px 0 10px;
+}
+.lf-acts .i-btn {
+  flex: 1 1 auto;
+}
+.lf .i-btn--sig {
+  background: var(--lc);
+  color: #111;
+}
+.lf-nudge {
+  margin: 0 0 10px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  font-size: 13px;
+  color: var(--fg-2);
+  background: color-mix(in srgb, var(--lc) 12%, transparent);
+}
+
+/* toggle pills: tags, kinds, filters */
+.lf-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.lf-pill {
+  min-height: 36px;
+  padding: 0 12px;
+  border-radius: 999px;
+  font-size: 13px;
+  color: var(--fg-2);
+  box-shadow: inset 0 0 0 1px var(--rule);
+}
+.lf-pill[aria-pressed='true'] {
+  color: #111;
+  font-weight: 700;
+  background: var(--lc);
+  box-shadow: none;
+}
+
+/* a bar that fills: savings, budgets, progress */
+.lf-bar {
+  position: relative;
+  display: block;
+  height: 8px;
+  margin: 6px 0 4px;
+  border-radius: 4px;
+  background: var(--rule);
+}
+.lf-bar i {
+  display: block;
+  width: var(--p);
+  max-width: 100%;
+  height: 100%;
+  border-radius: 4px;
+  background: var(--lc);
+}
+.lf-bar.is-over i {
+  background: var(--warn, #f08a3e);
+}
+
+.lf-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 8px;
+}
+.lf-card {
+  display: grid;
+  gap: 4px;
+  align-content: start;
+  min-height: 72px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  text-align: left;
+  background: var(--surf);
+  box-shadow: inset 3px 0 0 var(--lc), inset 0 0 0 1px var(--rule);
+}
+.lf-card b {
+  font-size: 14px;
+  overflow-wrap: anywhere;
+}
+.lf-card small {
+  font-size: 12px;
+  color: var(--fg-2);
+}
+.lf-card em {
+  font-style: normal;
+  font-family: var(--f-mono);
+  font-size: 11px;
+  color: var(--fg-3);
+}
+
+.lf-delta {
+  font-family: var(--f-mono);
+  font-size: 11px;
+  color: var(--fg-3);
+}
+.lf-delta.is-good {
+  color: var(--ok);
+}
+.lf-delta.is-bad {
+  color: var(--warn, #f08a3e);
+}
+
+.lf-row-k {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  font-size: 17px;
+  background: color-mix(in srgb, var(--lc) 18%, transparent);
+}
+.lf-stars {
+  letter-spacing: 1px;
+  color: var(--lc);
+}
+.lf-search {
+  margin: 8px 0;
+}
+
+/* Home → More: the doors in */
+.lf-doors {
+  display: grid;
+  gap: 6px;
+}
+.lf-door {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 12px;
+  min-height: 56px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  text-align: left;
+  background: linear-gradient(100deg, color-mix(in srgb, var(--lc) 14%, var(--surf)), var(--surf) 55%);
+  box-shadow: inset 3px 0 0 var(--lc), inset 0 0 0 1px var(--rule);
+}
+.lf-door__k {
+  font-size: 24px;
+  line-height: 1;
+  color: var(--lc);
+}
+.lf-door__t {
+  display: grid;
+  gap: 1px;
+  min-width: 0;
+}
+.lf-door__t b {
+  font-size: 14px;
+}
+.lf-door__t small {
+  font-size: 12px;
+  color: var(--fg-2);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+/* rows that lead with an icon: icon, text, then whatever is on the right */
+.i-row:has(> .lf-row-k) {
+  grid-template-columns: auto minmax(0, 1fr) auto;
+}

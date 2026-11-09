@@ -132,8 +132,17 @@ const merge = (id: string, patch: Record<string, unknown>) => {
 
 // ─── check-in ───────────────────────────────────────────────────────────────
 
-export function saveCheckIn(date: string, c: { mood: number; energy: number | null; note: string }) {
-  saveDay('hq_checkin', date, { date, mood: c.mood, energy: c.energy, note: c.note.trim().slice(0, 280) });
+/** Saves today's weather; anything not passed (energy, stress, tags, note) keeps what was there. */
+export function saveCheckIn(date: string, c: { mood: number; energy?: number | null; stress?: number | null; tags?: string[]; note?: string }) {
+  const prev = hqOf(data.get()).checkIns.find((x) => x.date === date);
+  saveDay('hq_checkin', date, {
+    date,
+    mood: c.mood,
+    energy: c.energy !== undefined ? c.energy : (prev?.energy ?? null),
+    stress: c.stress !== undefined ? c.stress : (prev?.stress ?? null),
+    tags: (c.tags ?? prev?.tags ?? []).slice(0, 12),
+    note: (c.note ?? prev?.note ?? '').trim().slice(0, 280),
+  });
 }
 
 // ─── rituals ────────────────────────────────────────────────────────────────

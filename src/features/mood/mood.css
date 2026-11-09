@@ -1,0 +1,107 @@
+.mo-tags {
+  display: grid;
+  gap: 8px;
+  margin-top: 8px;
+}
+.mo-own {
+  display: flex;
+  gap: 6px;
+}
+.mo-own .i-input {
+  flex: 1;
+  min-width: 0;
+}
+.mo-chart {
+  margin: 0;
+}
+.mo-chart svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+.mo-chart .g {
+  stroke: var(--rule);
+  stroke-width: 1;
+}
+.mo-chart .ax {
+  font-family: var(--f-mono);
+  font-size: 9px;
+  fill: var(--fg-3);
+}
+.mo-chart .ln {
+  fill: none;
+  stroke: var(--l);
+  stroke-width: 2;
+  stroke-linejoin: round;
+}
+.mo-chart .dt {
+  fill: var(--l);
+}
+.mo-key {
+  display: flex;
+  gap: 14px;
+  margin-top: 6px;
+  font-size: 12px;
+  color: var(--fg-2);
+}
+.mo-key i {
+  display: inline-block;
+  width: 10px;
+  height: 3px;
+  margin-right: 4px;
+  vertical-align: middle;
+  border-radius: 2px;
+}
+.mo-meters {
+  margin-top: 10px;
+}
+.mo-meters .lf-delta {
+  display: block;
+  margin-top: 2px;
+}
+.mo-finds {
+  margin-top: 8px;
+}
+.mo-finds .i-note {
+  margin: 0 0 6px;
+}
+.mo-week {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+  text-align: center;
+}
+.mo-week__d {
+  display: grid;
+  gap: 3px;
+  justify-items: center;
+}
+.mo-week__w {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  font-size: 16px;
+  color: #111;
+  background: var(--w);
+}
+.mo-week__d small {
+  font-size: 11px;
+  color: var(--fg-3);
+}
+.mo-week__d em {
+  font-style: normal;
+  font-family: var(--f-mono);
+  font-size: 9.5px;
+  color: var(--fg-3);
+}
+.mo-days {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 8px;
+}
+.mo-days__h {
+  display: block;
+  padding: 10px 12px 0;
+}

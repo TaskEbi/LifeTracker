@@ -8,7 +8,7 @@ import { legsHurt } from '../../domain/hq/body';
 import { roughToday } from '../../domain/hq/beacon';
 import { closingDate, firstThingToday, isClosingTime } from '../../domain/hq/diary';
 import { wordsOfDay } from '../../domain/hq/quotes';
-import { weatherOf, WEATHER } from '../../domain/hq/checkin';
+import { stressName, weatherOf, WEATHER } from '../../domain/hq/checkin';
 import { nextMoves, type Energy, type Move } from '../../domain/hq/nextMove';
 import { currentReview, reviewIsDue } from '../../domain/hq/review';
 import { appliesOn, slotAt, SLOTS } from '../../domain/hq/rituals';
@@ -292,6 +292,7 @@ export function CheckInCard({ always }: { always?: boolean }) {
       <button type="button" className="hc-weather__done" style={{ '--w': w.c } as CSSProperties} onClick={() => setOpen(true)} aria-label={`Inner weather today: ${w.name}. Change`}>
         <span aria-hidden="true">{w.kanji}</span> {w.name}
         {c.energy ? ` · energy ${c.energy}/5` : ''}
+        {c.stress ? ` · stress ${c.stress}/5` : ''}
       </button>
     );
   }
@@ -306,7 +307,7 @@ export function CheckInCard({ always }: { always?: boolean }) {
             <button key={w.v} type="button" className="hc-weather__b" aria-pressed={c?.mood === w.v} style={{ '--w': w.c } as CSSProperties} onClick={() => {
                 // Stay open for the energy and the line.
                 setOpen(true);
-                saveCheckIn(today, { mood: w.v, energy: c?.energy ?? null, note });
+                saveCheckIn(today, { mood: w.v, note });
               }}
             >
               <b aria-hidden="true">{w.kanji}</b>
@@ -322,7 +323,13 @@ export function CheckInCard({ always }: { always?: boolean }) {
                 <button key={v} type="button" className={`hc-batt${(c.energy ?? 0) >= v ? ' is-on' : ''}`} aria-label={`Energy ${v} of 5`} aria-pressed={c.energy === v} onClick={() => saveCheckIn(today, { mood: c.mood, energy: v, note })} />
               ))}
             </div>
-            <input className="i-input" value={note} onChange={(e) => setNote(e.target.value)} onBlur={() => note !== c.note && saveCheckIn(today, { mood: c.mood, energy: c.energy, note })} placeholder="One line about today · optional" aria-label="One line about today" maxLength={280} />
+            <div className="hc-weather__energy hc-weather__stress" role="group" aria-label="Stress">
+              <span>Stress</span>
+              {[1, 2, 3, 4, 5].map((v) => (
+                <button key={v} type="button" className={`hc-batt${(c.stress ?? 0) >= v ? ' is-on' : ''}`} aria-label={`Stress ${v} of 5: ${stressName(v)}`} aria-pressed={c.stress === v} onClick={() => saveCheckIn(today, { mood: c.mood, stress: v, note })} />
+              ))}
+            </div>
+            <input className="i-input" value={note} onChange={(e) => setNote(e.target.value)} onBlur={() => note !== c.note && saveCheckIn(today, { mood: c.mood, note })} placeholder="One line about today · optional" aria-label="One line about today" maxLength={280} />
             {!always && (
               <button type="button" className="i-link" onClick={() => setOpen(false)}>
                 Done

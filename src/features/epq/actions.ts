@@ -13,6 +13,7 @@ import {
   logOf,
   milestoneOf,
   plannedMilestones,
+  PLAN_MILESTONES,
   projectOf,
   sortMilestones,
   sourceOf,
@@ -84,8 +85,17 @@ export function toggleMilestone(m: Milestone, today: string) {
 
 /** Adds the usual stages, skipping any you already have by name. */
 export function addUsualMilestones(today: string, deadline: string | null, have: Milestone[]) {
+  addMilestones(plannedMilestones(today, deadline), have);
+}
+
+/** Adds the dated stages of your own research plan, skipping any you already have by name. */
+export function addPlanMilestones(have: Milestone[]) {
+  addMilestones(PLAN_MILESTONES, have);
+}
+
+function addMilestones(list: { title: string; due: string }[], have: Milestone[]) {
   const names = new Set(have.map((m) => m.title.toLowerCase()));
-  for (const m of plannedMilestones(today, deadline)) if (!names.has(m.title.toLowerCase())) saveMilestone({ title: m.title, due: m.due, done: null });
+  for (const m of list) if (!names.has(m.title.toLowerCase())) saveMilestone({ title: m.title, due: m.due, done: null });
 }
 
 export function saveLog(e: Omit<LogEntry, 'id'>, id?: string) {

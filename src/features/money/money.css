@@ -1,0 +1,67 @@
+.mn-amount {
+  font-family: var(--f-mono);
+  font-size: 26px;
+}
+.mn-due {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 12px;
+}
+.mn-tx {
+  width: 100%;
+  text-align: left;
+}
+.mn-tx.is-in .i-row__n {
+  color: var(--ok);
+}
+.mn-tx.is-save .i-row__n {
+  color: var(--lc);
+}
+.mn-tx:disabled {
+  opacity: 1;
+  cursor: default;
+}
+.mn-budget {
+  display: grid;
+  gap: 2px;
+  margin-top: 10px;
+}
+.mn-budget__h {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 13px;
+}
+.mn-budget small {
+  font-size: 12px;
+  color: var(--fg-2);
+}
+.mn-goals {
+  display: grid;
+  gap: 8px;
+}
+.mn-goal {
+  display: grid;
+  gap: 2px;
+}
+.mn-goal__h {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+.mn-goal small {
+  font-size: 12.5px;
+  color: var(--fg-2);
+}
+.mn-goal__acts {
+  display: flex;
+  gap: 6px;
+  margin-top: 8px;
+}
+.mn-cats {
+  display: grid;
+  gap: 10px;
+}

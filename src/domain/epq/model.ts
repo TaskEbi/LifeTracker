@@ -79,6 +79,30 @@ export function plannedMilestones(today: string, deadline: string | null): { tit
   return USUAL_MILESTONES.map((m) => ({ title: m.title, due: addDays(today, Math.round(span * m.at)) }));
 }
 
+/**
+ * The owner's own plan (handover of 9 Nov 2026): an essay on AI and expressive piano performance
+ * backed by three experiments. Dates assume a late-April hand-in until the supervisor confirms them.
+ */
+export const MY_PLAN = {
+  title: 'AI and expressive piano performance',
+  question: 'To what extent can AI systems perform classical piano music with expression that is human-like?',
+  deadline: '2027-04-30',
+  started: '2026-10-07',
+};
+export const PLAN_MILESTONES: { title: string; due: string }[] = [
+  { title: 'Rationale final draft submitted', due: '2026-11-09' },
+  { title: 'Plan agreed with supervisor', due: '2026-11-14' },
+  { title: 'Part A proposal submitted', due: '2026-11-21' },
+  { title: 'Gate 1: an AI renderer outputs MIDI', due: '2026-11-30' },
+  { title: 'Planning Review: feature code v1 on one piece', due: '2026-12-18' },
+  { title: 'Gate 2: classifier checked for file quirks', due: '2027-01-31' },
+  { title: 'Ethics sign-off and pilot listening test', due: '2027-02-12' },
+  { title: 'Listening test run · Mid-Project Review', due: '2027-03-05' },
+  { title: 'Dated essay draft to supervisor', due: '2027-03-31' },
+  { title: 'Final essay handed in', due: '2027-04-30' },
+  { title: 'Presentation and reflection', due: '2027-05-14' },
+];
+
 export type MilestoneState = 'done' | 'late' | 'soon' | 'later' | 'undated';
 export function milestoneState(m: Milestone, today: string): MilestoneState {
   if (m.done) return 'done';

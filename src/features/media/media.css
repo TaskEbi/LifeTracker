@@ -1,0 +1,46 @@
+.md-row {
+  width: 100%;
+  text-align: left;
+}
+.md-card {
+  gap: 6px;
+}
+.md-card__t {
+  display: grid;
+  gap: 2px;
+  text-align: left;
+}
+.md-card__acts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 2px;
+}
+.md-pick {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.md-states,
+.md-types {
+  margin-top: 6px;
+  margin-bottom: 8px;
+}
+.md-types .lf-pill {
+  display: inline-flex;
+  align-items: center;
+}
+.md-stars {
+  display: flex;
+  gap: 2px;
+}
+.md-stars button {
+  width: 40px;
+  height: 40px;
+  font-size: 24px;
+  color: var(--rule);
+}
+.md-stars button.is-on {
+  color: #ffc94d;
+}

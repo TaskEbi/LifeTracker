@@ -16,6 +16,9 @@ export interface DayRow {
   screen: number | null;
   mood: number | null;
   energy: number | null;
+  stress: number | null;
+  /** Minutes with other people (from People: who you spent time with), or null if none logged that day. */
+  social: number | null;
   /** Minutes logged, everything. */
   work: number;
   /** Study, coding, chess and uni prep. */
@@ -26,7 +29,7 @@ export interface DayRow {
   reading: number;
 }
 
-export type Metric = 'sleep' | 'bed' | 'screen' | 'mood' | 'energy' | 'work' | 'brain' | 'move' | 'violin' | 'reading';
+export type Metric = 'sleep' | 'bed' | 'screen' | 'mood' | 'energy' | 'stress' | 'social' | 'work' | 'brain' | 'move' | 'violin' | 'reading';
 
 export const METRIC_LABEL: Record<Metric, string> = {
   sleep: 'Sleep',
@@ -34,6 +37,8 @@ export const METRIC_LABEL: Record<Metric, string> = {
   screen: 'Screen time',
   mood: 'Inner weather',
   energy: 'Energy',
+  stress: 'Stress',
+  social: 'Time with people',
   work: 'Time logged',
   brain: 'Brain work',
   move: 'Movement',
@@ -41,13 +46,13 @@ export const METRIC_LABEL: Record<Metric, string> = {
   reading: 'Reading',
 };
 /** What a self-experiment can watch. */
-export const EXPERIMENT_METRICS: Metric[] = ['sleep', 'bed', 'mood', 'energy', 'screen', 'work', 'brain', 'violin'];
+export const EXPERIMENT_METRICS: Metric[] = ['sleep', 'bed', 'mood', 'energy', 'stress', 'screen', 'work', 'brain', 'violin'];
 
 const pad = (n: number) => String(n).padStart(2, '0');
 
 /** A value of a metric, ready to read. */
 export function fmtMetric(metric: Metric, v: number): string {
-  if (metric === 'mood' || metric === 'energy') return `${v.toFixed(1)}/5`;
+  if (metric === 'mood' || metric === 'energy' || metric === 'stress') return `${v.toFixed(1)}/5`;
   if (metric === 'bed') {
     const m = ((Math.round(v) + 720) % 1440 + 1440) % 1440;
     return `${pad(Math.floor(m / 60))}:${pad(m % 60)}`;
@@ -59,7 +64,7 @@ export function fmtMetric(metric: Metric, v: number): string {
 const toMin = (t: string) => +t.slice(0, 2) * 60 + +t.slice(3, 5);
 
 /** One row per day from the first day anything was logged (at most `maxDays` back) up to today. */
-export function labRows(input: ProgressInput, checkIns: CheckIn[], maxDays = 365): DayRow[] {
+export function labRows(input: ProgressInput, checkIns: CheckIn[], maxDays = 365, social: Map<string, number> = new Map()): DayRow[] {
   const days = dayFacts(input);
   const sleep = new Map<string, number>();
   const screen = new Map<string, number>();
@@ -83,6 +88,8 @@ export function labRows(input: ProgressInput, checkIns: CheckIn[], maxDays = 365
       screen: screen.get(date) ?? null,
       mood: c?.mood ?? null,
       energy: c?.energy ?? null,
+      stress: c?.stress ?? null,
+      social: social.get(date) ?? (c ? 0 : null),
       work: f?.minutes ?? 0,
       brain: (min.study ?? 0) + (min.coding ?? 0) + (min.chess ?? 0) + (min.future ?? 0),
       move: (min.sports ?? 0) + (min.gym ?? 0),
@@ -118,6 +125,12 @@ export const HYPOTHESES: Hypothesis[] = [
   { id: 'violin-mood', x: 'violin', y: 'mood', lag: 0, title: 'Violin and your inner weather', hi: 'On days you played', lo: 'On days you didn’t', binary: true },
   { id: 'read-sleep', x: 'reading', y: 'sleep', lag: 1, title: 'Reading and that night’s sleep', hi: 'After reading', lo: 'After no reading', binary: true },
   { id: 'work-mood', x: 'work', y: 'mood', lag: 0, title: 'A full day and your inner weather', hi: 'On fuller days', lo: 'On lighter days' },
+  { id: 'sleep-stress', x: 'sleep', y: 'stress', lag: 0, title: 'Sleep and stress', hi: 'After more sleep', lo: 'After less sleep' },
+  { id: 'move-stress', x: 'move', y: 'stress', lag: 1, title: 'Exercise and the next day’s stress', hi: 'The day after moving', lo: 'The day after not', binary: true },
+  { id: 'screen-stress', x: 'screen', y: 'stress', lag: 0, title: 'Screen time and stress', hi: 'On high-screen days', lo: 'On low-screen days' },
+  { id: 'work-stress', x: 'work', y: 'stress', lag: 0, title: 'A full day and stress', hi: 'On fuller days', lo: 'On lighter days' },
+  { id: 'social-mood', x: 'social', y: 'mood', lag: 0, title: 'Time with people and your inner weather', hi: 'On days with people', lo: 'On days without', binary: true },
+  { id: 'social-stress', x: 'social', y: 'stress', lag: 0, title: 'Time with people and stress', hi: 'On days with people', lo: 'On days without', binary: true },
 ];
 
 export const MIN_PAIRS = 14;

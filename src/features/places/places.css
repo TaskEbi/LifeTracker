@@ -1,0 +1,148 @@
+.pl-map {
+  margin: 0 0 10px;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: inset 0 0 0 1px var(--rule);
+}
+.pl-map svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+.pl-map figcaption {
+  padding: 6px 10px;
+}
+.pl-map__sea {
+  fill: color-mix(in srgb, var(--lc) 6%, var(--surf));
+}
+.pl-map__land {
+  fill: var(--surf-3, #3a3a3a);
+  stroke: var(--bg);
+  stroke-width: 0.4;
+}
+.pl-map__land.is-been {
+  fill: var(--lc);
+}
+.pl-map__dot {
+  fill: #fff;
+  stroke: #111;
+  stroke-width: 1.2;
+}
+.pl-map__want {
+  fill: none;
+  stroke: #ffc94d;
+  stroke-width: 2;
+}
+.pl-countries {
+  margin: 8px 0;
+}
+.pl-countries .lf-pill {
+  display: inline-flex;
+  align-items: center;
+}
+.pl-row {
+  width: 100%;
+  text-align: left;
+}
+.pl-here {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+.pl-trips {
+  display: grid;
+  gap: 8px;
+}
+.pl-trip {
+  display: grid;
+  gap: 6px;
+}
+.pl-trip__h {
+  display: grid;
+  gap: 2px;
+  text-align: left;
+}
+.pl-trip__h small,
+.pl-trip__places {
+  font-size: 12px;
+  color: var(--fg-2);
+}
+.pl-trip__note {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.45;
+  white-space: pre-wrap;
+}
+.pl-trip__shots {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 4px;
+}
+.pl-trip__shots button {
+  aspect-ratio: 1;
+  overflow: hidden;
+  border-radius: 6px;
+}
+.pl-trip__shots img,
+.pl-trip__shots .al-photo {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.pl-trip__more {
+  display: grid;
+  place-items: center;
+  font-family: var(--f-mono);
+  font-size: 12px;
+  color: var(--fg-3);
+}
+.pl-quick .i-btn {
+  flex: 1 1 0;
+}
+.pl-goal {
+  display: grid;
+  gap: 4px;
+  margin-top: 10px;
+}
+.pl-goal small {
+  font-size: 12px;
+  color: var(--fg-2);
+}
+.pl-weeks {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  align-items: end;
+  gap: 6px;
+  height: 130px;
+}
+.pl-weeks__w {
+  display: grid;
+  grid-template-rows: 1fr auto;
+  align-items: end;
+  height: 100%;
+  text-align: center;
+}
+.pl-weeks__w i {
+  display: block;
+  min-height: 2px;
+  border-radius: 3px 3px 0 0;
+  background: color-mix(in srgb, var(--lc) 55%, transparent);
+}
+.pl-weeks__w.is-met i {
+  background: var(--lc);
+}
+.pl-weeks__w small {
+  font-family: var(--f-mono);
+  font-size: 10px;
+  color: var(--fg-3);
+  min-height: 14px;
+}
+.pl-weeks__goal {
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  border-top: 1px dashed var(--fg-3);
+  pointer-events: none;
+}

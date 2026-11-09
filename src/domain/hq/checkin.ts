@@ -19,8 +19,18 @@ export interface CheckIn {
   mood: number;
   /** 1 empty … 5 full, or null if only the weather was given. */
   energy: number | null;
+  /** 1 calm … 5 swamped, or null if not given. */
+  stress?: number | null;
+  /** What was going on: a few words from MOOD_TAGS or your own. */
+  tags?: string[];
   note: string;
 }
+
+export const STRESS = ['Calm', 'Settled', 'Some', 'Tense', 'Swamped'] as const;
+export const stressName = (v: number) => STRESS[Math.min(5, Math.max(1, Math.round(v))) - 1];
+
+/** The usual things going on in a day, to tag a check-in with in one tap. */
+export const MOOD_TAGS = ['School', 'Exams', 'Homework', 'Friends', 'Family', 'Music', 'Sport', 'Outside', 'Unwell', 'Tired', 'Screens', 'Alone time'] as const;
 
 const inRange = (v: unknown) => (typeof v === 'number' && v >= 1 && v <= 5 ? Math.round(v) : null);
 
@@ -28,5 +38,6 @@ export function checkInOf(r: LtRecord): CheckIn | null {
   const d = r.data;
   const mood = inRange(d.mood);
   if (r.deleted_at || mood == null || typeof d.date !== 'string') return null;
-  return { date: d.date, mood, energy: inRange(d.energy), note: typeof d.note === 'string' ? d.note : '' };
+  const tags = Array.isArray(d.tags) ? (d.tags as unknown[]).filter((t): t is string => typeof t === 'string' && !!t.trim()).map((t) => t.trim().slice(0, 30)).slice(0, 12) : [];
+  return { date: d.date, mood, energy: inRange(d.energy), stress: inRange(d.stress), tags, note: typeof d.note === 'string' ? d.note : '' };
 }

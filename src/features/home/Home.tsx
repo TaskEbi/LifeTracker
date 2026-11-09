@@ -39,6 +39,7 @@ import { albumStreak, daysToReel, reelOpen } from '../../domain/album/album';
 import { reviewQueue } from '../../domain/hq/srs';
 import { roughToday } from '../../domain/hq/beacon';
 import { EPQ_KANJI, epqLine, useEpq } from '../epq/EpqPage';
+import { LifeDoors } from '../life/LifeDoors';
 import './home.css';
 
 const pad2 = (n: number) => String(n).padStart(2, '0');
@@ -531,6 +532,8 @@ function MorePage() {
       </div>
 
       <div>
+        <Head k="生">Life</Head>
+        <LifeDoors />
         <section className="h-sec" aria-label="Pages">
           <Head k="頁">Pages</Head>
           <div className="h-sys">

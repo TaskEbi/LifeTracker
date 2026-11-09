@@ -538,3 +538,9 @@
     transition: none;
   }
 }
+.hc-weather__energy span {
+  min-width: 46px;
+}
+.hc-weather__stress .hc-batt.is-on {
+  background: var(--warn, #f08a3e);
+}

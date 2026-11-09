@@ -5,7 +5,7 @@ import { closeSheet, type SheetSpec } from '../../app/sheets';
 import { ltToday } from '../../data/lt';
 import { deleteRecord } from '../../data/records';
 import { data } from '../../data/store';
-import { DEFAULT_HOURS, DEFAULT_WORDS, EPQ_SUBJECT, LOG_KINDS, LOG_MAX, LOG_PROMPTS, logOf, milestoneOf, NOTE_MAX, SOURCE_TYPES, sourceOf, TRUST, type LogKind, type SourceType, type Trust } from '../../domain/epq/model';
+import { DEFAULT_HOURS, DEFAULT_WORDS, EPQ_SUBJECT, LOG_KINDS, LOG_MAX, LOG_PROMPTS, logOf, milestoneOf, MY_PLAN, NOTE_MAX, SOURCE_TYPES, sourceOf, TRUST, type LogKind, type SourceType, type Trust } from '../../domain/epq/model';
 import { Picks, Toggle } from '../../ui/i/bits';
 import { DayPick } from '../../ui/i/fields';
 import { Sheet } from '../../ui/i/Sheet';
@@ -25,13 +25,13 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 function ProjectSheet() {
   const today = ltToday();
   const p = epqIn(data.get()).project;
-  const [title, setTitle] = useState(p?.title ?? '');
-  const [question, setQuestion] = useState(p?.question ?? '');
-  const [deadline, setDeadline] = useState(p?.deadline ?? '');
+  const [title, setTitle] = useState(p?.title ?? MY_PLAN.title);
+  const [question, setQuestion] = useState(p?.question ?? MY_PLAN.question);
+  const [deadline, setDeadline] = useState(p?.deadline ?? MY_PLAN.deadline);
   const [words, setWords] = useState(String(p?.wordTarget ?? DEFAULT_WORDS));
   const [hours, setHours] = useState(String(p?.hoursTarget ?? DEFAULT_HOURS));
   const [subject, setSubject] = useState(p?.subject ?? EPQ_SUBJECT);
-  const [started, setStarted] = useState(p?.started ?? today);
+  const [started, setStarted] = useState(p?.started ?? MY_PLAN.started);
   const w = num(words);
   const h = num(hours);
   const valid = Number.isFinite(w) && w > 0 && Number.isFinite(h) && h > 0 && !!subject.trim();
@@ -74,6 +74,7 @@ function ProjectSheet() {
         <input className="i-input" value={subject} onChange={(e) => setSubject(e.target.value)} maxLength={40} />
       </Field>
       <p className="i-note">Time on the project is logged as a Study session in this subject, so it counts toward Study’s level, streaks and the weekly boss. Most boards expect about 5,000 words and 120 hours; check your school’s.</p>
+      {!p && <p className="i-note">Filled in from your plan. The hand-in date of 30 April is an assumption until your supervisor confirms the real one.</p>}
     </Sheet>
   );
 }

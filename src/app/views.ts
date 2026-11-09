@@ -23,6 +23,11 @@ import { MathsChannel } from '../features/maths/MathsChannel';
 import { HqView } from '../features/hq/HqView';
 import { GameView } from '../features/game/GameView';
 import { AlbumView } from '../features/album/AlbumView';
+import { MoodPage } from '../features/mood/MoodPage';
+import { MoneyPage } from '../features/money/MoneyPage';
+import { PeoplePage } from '../features/people/PeoplePage';
+import { MediaPage } from '../features/media/MediaPage';
+import { PlacesPage } from '../features/places/PlacesPage';
 
 export const sectionViews: Partial<Record<RouteName, ComponentType>> = {
   violin: ViolinChannel,
@@ -45,4 +50,9 @@ export const sectionViews: Partial<Record<RouteName, ComponentType>> = {
   base: HqView,
   hangar: GameView,
   album: AlbumView,
+  mood: MoodPage,
+  money: MoneyPage,
+  people: PeoplePage,
+  media: MediaPage,
+  places: PlacesPage,
 };
