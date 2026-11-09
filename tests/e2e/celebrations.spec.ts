@@ -102,3 +102,21 @@ test('celebrations: new scenes preview, announce themselves and put the page bac
   await fx.getByRole('button', { name: 'Skip' }).click();
   await expect(fx).toHaveCount(0);
 });
+
+test('celebrations: surprise scenes can be previewed and switched off', async ({ page }) => {
+  await page.goto('/settings');
+  const toggle = page.getByRole('switch', { name: /Surprise scenes/ });
+  await expect(toggle).toBeVisible();
+  const group = page.getByRole('group', { name: /Preview celebrations · Surprises/ });
+  await expect(group.getByRole('button')).toHaveCount(41);
+  await group.getByRole('button', { name: /Ramen break/ }).click();
+  const fx = page.locator('.fx[role="dialog"]');
+  await expect(fx).toBeVisible();
+  await expect(fx).toContainText('Preview');
+  await expect(page.locator('.sv')).toBeVisible();
+  await expect(fx).toContainText('Ramen break', { timeout: 8000 });
+  await page.keyboard.press('Escape');
+  await expect(fx).toHaveCount(0);
+  await toggle.click();
+  expect(await page.evaluate(() => localStorage.getItem('lifetracker-fx-surprises'))).toBe('off');
+});

@@ -3,7 +3,7 @@
  * only, see fx.css); 3D comes from perspective on `.fx-at` anchors and preserve-3d chains.
  * Randomness is seeded so a scene draws the same on every render.
  */
-import { useMemo } from 'react';
+import { lazy, Suspense, useMemo } from 'react';
 import type { Achievement } from '../../../domain/progress/achievements';
 import type { MomentType } from '../../../domain/progress/moments';
 import { STAGES } from '../../../domain/progress/engine';
@@ -19,6 +19,20 @@ import { MonthlyScene, SecretScene } from './scenes/special';
 import type { AnyMomentFx, AnySpecialFx } from './scenes/types';
 import { SPECIAL_FX } from './scenes/specials';
 import type { SpecialType } from '../../../domain/fun/special';
+import { surpriseById } from '../../../domain/fun/surprise';
+import { SURPRISE_META } from './scenes/surprise/meta';
+
+/** The surprise scenes load in their own chunk; the layer asks for it early (preloadSurprises). */
+const loadSurprises = () => import('./scenes/surprise');
+const SurpriseScene = lazy(loadSurprises);
+export const preloadSurprises = () => void loadSurprises().catch(() => undefined);
+
+type SurpriseC = Extract<Celebration, { kind: 'surprise' }>;
+function surpriseTold(c: SurpriseC): Told {
+  const m = SURPRISE_META[c.id];
+  const s = c.section ? safeSection(c.section) : null;
+  return { kicker: `Surprise${s ? ` · ${s.name}` : ''}`, title: m.title, line: `${m.line}${c.xp ? ` +${c.xp} XP` : ''}`, color: m.color };
+}
 
 export { bossOf, type Told } from './kit';
 
@@ -64,6 +78,8 @@ export function tell(c: Celebration): Told {
       return momentFx(c.moment.type).tell(c.moment);
     case 'special':
       return specialFx(c.special.type).tell(c.special);
+    case 'surprise':
+      return surpriseTold(c);
   }
 }
 
@@ -86,6 +102,10 @@ export function timing(c: Celebration): Timing {
       return momentFx(c.moment.type).time(c.moment);
     case 'special':
       return specialFx(c.special.type).time(c.special);
+    case 'surprise': {
+      const m = SURPRISE_META[c.id];
+      return { dur: m.dur, hit: m.hit, shake: 'soft' };
+    }
   }
 }
 
@@ -395,6 +415,15 @@ export function Scene({ c }: { c: Celebration }) {
       const fx = specialFx(c.special.type);
       return <fx.Scene m={c.special} />;
     }
+    case 'surprise': {
+      const t = surpriseTold(c);
+      const s = c.section ? safeSection(c.section) : null;
+      return (
+        <Suspense fallback={null}>
+          <SurpriseScene id={c.id} chip={`surprise · ${s ? s.name : surpriseById(c.id)?.name ?? ''}`} title={t.title} line={t.line} hit={SURPRISE_META[c.id].hit} />
+        </Suspense>
+      );
+    }
   }
 }
 
@@ -424,6 +453,8 @@ function calmArt(c: Celebration) {
       return momentFx(c.moment.type).calm(c.moment);
     case 'special':
       return specialFx(c.special.type).calm(c.special);
+    case 'surprise':
+      return <span className="fx-calm__k">{surpriseById(c.id)?.kanji ?? '驚'}</span>;
   }
 }
 

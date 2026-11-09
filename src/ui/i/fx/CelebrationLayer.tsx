@@ -11,8 +11,9 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react
 import { rewardStore } from '../../../data/lt';
 import { useStore } from '../../../lib/createStore';
 import { celebrate, celebrationStore, fxStore, playStyle, type Celebration } from './celebrate';
-import { celebrationsFor } from './fromReward';
-import { CalmCard, Scene, tell, timing } from './scenes';
+import { celebrationsFor, MAX_CELEBRATIONS } from './fromReward';
+import { surpriseFor } from '../../../app/surprises';
+import { CalmCard, preloadSurprises, Scene, tell, timing } from './scenes';
 import './fx.css';
 
 const IN_MS = 460;
@@ -64,6 +65,12 @@ export function CelebrationLayer() {
   const startedAt = useRef(0);
   const prevFocus = useRef<HTMLElement | null>(null);
 
+  // The surprise scenes' chunk, fetched once the app has settled so a surprise never waits for it.
+  useEffect(() => {
+    const id = window.setTimeout(preloadSurprises, 4000);
+    return () => window.clearTimeout(id);
+  }, []);
+
   // A save's reward: queue its celebrations once (the reward box waits until they're done).
   useEffect(() => {
     const seen = new WeakSet<object>();
@@ -73,6 +80,8 @@ export function CelebrationLayer() {
       seen.add(r);
       if (fxStore.get().mode === 'off') return;
       const items = celebrationsFor(r);
+      const extra = surpriseFor(r, MAX_CELEBRATIONS - items.length);
+      if (extra) items.push(extra);
       if (items.length) celebrate(...items);
     });
   }, []);

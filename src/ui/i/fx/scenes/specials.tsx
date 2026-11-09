@@ -29,7 +29,7 @@ const MONTH_KANJI = ['一月', '二月', '三月', '四月', '五月', '六月',
  * A comic panel hanging in the 3D stage. `x`/`y` place its centre (percent of the screen),
  * `inAt`/`outAt` (ms) are when it swings in and when it flies off for the splash.
  */
-function Panel({ x = 50, y, w, h, rz = 0, inAt, outAt, from = 'right', className = '', children }: { x?: number; y: number; w: string; h: string; rz?: number; inAt: number; outAt: number; from?: 'left' | 'right' | 'below'; className?: string; children: ReactNode }) {
+export function Panel({ x = 50, y, w, h, rz = 0, inAt, outAt, from = 'right', className = '', children }: { x?: number; y: number; w: string; h: string; rz?: number; inAt: number; outAt: number; from?: 'left' | 'right' | 'below'; className?: string; children: ReactNode }) {
   return (
     <div className={`sp-panel sp-panel--${from} ${className}`} style={{ '--x': `${x}%`, '--y': `${y}%`, '--w': w, '--h': h, '--rz': `${rz}deg`, '--in': `${inAt}ms`, '--out': `${outAt}ms` } as Css}>
       <div className="sp-panel__in">{children}</div>
@@ -39,7 +39,7 @@ function Panel({ x = 50, y, w, h, rz = 0, inAt, outAt, from = 'right', className
 }
 
 /** Sound-effect lettering: each character pops in after the last. */
-function Sfx({ text, at, className = '', step = 70, color }: { text: string; at: number; className?: string; step?: number; color?: string }) {
+export function Sfx({ text, at, className = '', step = 70, color }: { text: string; at: number; className?: string; step?: number; color?: string }) {
   return (
     <span className={`sp-sfx ${className}`} style={color ? ({ '--sc': color } as Css) : undefined} aria-hidden="true">
       {[...text].map((ch, i) => (
@@ -52,7 +52,7 @@ function Sfx({ text, at, className = '', step = 70, color }: { text: string; at:
 }
 
 /** The splash page behind the big moment: a coloured sunburst that turns slowly. */
-function Splash({ className = '' }: { className?: string }) {
+export function Splash({ className = '' }: { className?: string }) {
   return (
     <div className={`sp-splash ${className}`} aria-hidden="true">
       <i className="sp-splash__burst" />
@@ -62,7 +62,7 @@ function Splash({ className = '' }: { className?: string }) {
   );
 }
 
-function Big({ text, back, className = '' }: { text: string; back: string; className?: string }) {
+export function Big({ text, back, className = '' }: { text: string; back: string; className?: string }) {
   return (
     <div className={`sp-big ${className}`}>
       <div className="sp-big__in">
@@ -73,7 +73,7 @@ function Big({ text, back, className = '' }: { text: string; back: string; class
 }
 
 /** The 3D stage: panels hang in it and the camera drifts round them while they're on screen. */
-function Stage({ children }: { children: ReactNode }) {
+export function Stage({ children }: { children: ReactNode }) {
   return (
     <div className="sp-stage">
       <div className="sp-cam">{children}</div>
@@ -82,7 +82,7 @@ function Stage({ children }: { children: ReactNode }) {
 }
 
 /** A row of buildings with lit windows; `off` lets the windows go dark one building at a time. */
-function City({ seed, n, layer, off }: { seed: number; n: number; layer: 'far' | 'mid' | 'near'; off?: [number, number] }) {
+export function City({ seed, n, layer, off }: { seed: number; n: number; layer: 'far' | 'mid' | 'near'; off?: [number, number] }) {
   const blds = useMemo(() => {
     const r = rng(seed);
     return range(n).map((i) => ({
@@ -104,7 +104,7 @@ function City({ seed, n, layer, off }: { seed: number; n: number; layer: 'far' |
 }
 
 /** Things falling through the scene in depth: petals, leaves, snow, sparks. */
-function Fall({ n, seed, kind, from = 0, span = 2400 }: { n: number; seed: number; kind: 'petal' | 'leaf' | 'snow' | 'spark'; from?: number; span?: number }) {
+export function Fall({ n, seed, kind, from = 0, span = 2400 }: { n: number; seed: number; kind: 'petal' | 'leaf' | 'snow' | 'spark'; from?: number; span?: number }) {
   const parts = useMemo(() => {
     const r = rng(seed);
     return range(n).map(

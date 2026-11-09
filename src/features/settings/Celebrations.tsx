@@ -16,6 +16,7 @@ import { specialFor } from '../../app/specialMoments';
 import { hqOf } from '../hq/store';
 import { hourIn } from '../../domain/fun/season';
 import type { Special, SpecialType } from '../../domain/fun/special';
+import { SURPRISE_CHANCE, SURPRISE_DAILY, SURPRISES } from '../../domain/fun/surprise';
 
 const MODES: { id: FxMode; label: string; hint: string }[] = [
   { id: 'full', label: 'Full', hint: '3D sequences (calm cards if the phone asks for less motion)' },
@@ -104,6 +105,10 @@ export function Celebrations() {
       {
         name: 'Special moments · longer scenes',
         items: specials,
+      },
+      {
+        name: `Surprises · ${SURPRISES.length} short scenes`,
+        items: SURPRISES.map((x) => ({ label: `${x.kanji} ${x.name}${x.section ? ` · ${SECTIONS.find((s) => s.id === x.section)?.name}` : ''}`, c: { kind: 'surprise', id: x.id, section: x.section ?? null, preview: true } as Celebration })),
       },
       {
         name: 'Core',
@@ -226,6 +231,16 @@ export function Celebrations() {
             label="Special moments"
             hint="6–7 second comic scenes: good morning on the first open of the day, good night from your wind-down, a new week, month, season or year, today’s checklist done, a stormy mood, closing the day, the weekly review. Tap to skip any of them."
             onChange={(moments) => setFxPrefs({ moments })}
+          />
+        </div>
+      )}
+      {mode === 'full' && (
+        <div style={{ marginTop: 8 }}>
+          <Toggle
+            on={prefs.surprises}
+            label="Surprise scenes"
+            hint={`${SURPRISES.length} comic scenes of 5–8 seconds that now and then follow something you log: about one save in ${Math.round(1 / SURPRISE_CHANCE)}, at most ${SURPRISE_DAILY} a day and never twice within 40 minutes. A section's own scene only follows a save in that section. Tap to skip.`}
+            onChange={(surprises) => setFxPrefs({ surprises })}
           />
         </div>
       )}
