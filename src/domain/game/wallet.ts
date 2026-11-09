@@ -8,7 +8,7 @@ import type { SectionId } from '../../data/types';
 import type { Bag, ChestTier, CosmeticKind, Mats, Rarity } from './catalog';
 import { chassisById, COSMETIC_NAME, cosmeticOf, MATS, upgradeById } from './catalog';
 
-export type TxType = 'buy' | 'mk' | 'upgrade' | 'open' | 'spin' | 'claim' | 'use' | 'trade' | 'deliver';
+export type TxType = 'buy' | 'mk' | 'upgrade' | 'open' | 'spin' | 'claim' | 'use' | 'trade' | 'deliver' | 'roll' | 'cast';
 
 export interface Tx {
   id: string;

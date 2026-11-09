@@ -306,6 +306,8 @@ export interface Title extends Gear {
   level?: number;
   /** Earned by completing a gear set (sets.ts), never sold. */
   set?: string;
+  /** Earned in the Arcade (arcade.ts), never sold. */
+  arcade?: boolean;
 }
 
 export const TITLES: Title[] = [
@@ -351,10 +353,14 @@ export const TITLES: Title[] = [
   { id: 'set_hyakki', name: 'Head of the Parade', rarity: 'epic', set: 'hyakki' },
   { id: 'set_momiji', name: 'Autumn Spirit', rarity: 'epic', set: 'momiji' },
   { id: 'set_yuki', name: 'Snow Festival Royalty', rarity: 'epic', set: 'yuki' },
+  { id: 'angler', name: 'Weekend Angler', rarity: 'rare', arcade: true },
+  { id: 'pondlord', name: 'Lord of the Pond', rarity: 'legendary', arcade: true },
+  { id: 'bingo', name: 'Bingo Caller', rarity: 'epic', arcade: true },
+  { id: 'sugoroku', name: 'Around the Board', rarity: 'epic', arcade: true },
 ];
 
 /** Things the shop and the capsule machine may hand out: not event-only, earned or set titles. */
-export const sellable = (g: Gear & Partial<Title>) => !g.event && !g.section && !g.level && !g.set;
+export const sellable = (g: Gear & Partial<Title>) => !g.event && !g.section && !g.level && !g.set && !g.arcade;
 
 export type CosmeticKind = 'paint' | 'hat' | 'pet' | 'aura' | 'title';
 export const cosmeticLists: Record<CosmeticKind, readonly (Gear | Paint | Title)[]> = { paint: PAINTS, hat: HATS, pet: PETS, aura: AURAS, title: TITLES };

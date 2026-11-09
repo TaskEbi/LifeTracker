@@ -5,6 +5,7 @@ import { SOURCE_INFO, itemName, upgradeName, type GrantSource, type Tx } from '.
 import { consumableById } from '../../domain/game/catalog';
 import { LUCKY_BAG, NIGHT_EXTRAS } from '../../domain/game/market';
 import { SETS } from '../../domain/game/sets';
+import { BOARD, fishById, lineName, parseCastRef, parseRollRef } from '../../domain/game/arcade';
 import { H2 } from '../../ui/i/bits';
 import { lootLines, num, Price } from './bits';
 import { useGame } from './store';
@@ -26,6 +27,8 @@ const txLine = (t: Tx): string => {
     case 'claim':
       if (t.ref.startsWith('stamp:')) return `Stamp card ${t.ref.slice(6)} handed in`;
       if (t.ref.startsWith('set:')) return `Set complete: ${SETS.find((x) => x.id === t.ref.slice(4))?.name ?? t.ref.slice(4)}`;
+      if (t.ref.startsWith('bingo:')) return t.ref.endsWith(':full') ? 'Bingo: full card' : `Bingo: ${lineName(Number(t.ref.split(':')[2]))}`;
+      if (t.ref.startsWith('fishbook:')) return `Fish book: ${t.ref.slice(9)} kinds`;
       return 'Festival prize';
     case 'use':
       return `Used: ${consumableById(t.ref)?.name ?? t.ref}`;
@@ -33,6 +36,15 @@ const txLine = (t: Tx): string => {
       return 'Exchange';
     case 'deliver':
       return 'Delivered a request';
+    case 'roll': {
+      const r = parseRollRef(t.ref);
+      return r ? `Sugoroku: rolled ${r.value}, ${BOARD[r.to]?.label ?? 'a square'}` : 'Sugoroku';
+    }
+    case 'cast': {
+      const c = parseCastRef(t.ref);
+      const f = c?.fish ? fishById(c.fish) : null;
+      return f ? `Pond: ${f.name}, ${c!.cm} cm` : 'Pond: it got away';
+    }
   }
 };
 

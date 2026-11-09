@@ -15,6 +15,7 @@ import { accent } from '../../ui/i/bits';
 import { droneMood, hourIn, seasonOf, timeOfDay, TOD_LABEL } from '../../domain/fun/season';
 import { LivingDrone } from './LivingDrone';
 import { Purse } from '../game/Purse';
+import { arcadeLine, useArcade } from '../game/arcadeStore';
 import { useGame } from '../game/store';
 import { OmikujiCard } from './Omikuji';
 import { Sky } from './Sky';
@@ -447,6 +448,7 @@ function ArenaPage() {
   const ach = useAchievements();
   const boss = useBoss();
   const { recap } = useLookBack(1);
+  const arcade = useArcade();
   const hasRecap = recap.minutes > 0 || recap.activeDays > 0;
   return (
     <div className="h-grid">
@@ -473,6 +475,7 @@ function ArenaPage() {
         <section className="h-sec" aria-label="Your progress">
           <Head k="覚">Progress</Head>
           <div className="h-sys">
+            <Door k="遊" name="Arcade" sub={arcadeLine(arcade)} go={() => navigate('hangar', ['arcade'])} wide />
             <Door k={SYSTEM_KANJI.hangar} name="Hangar" sub="Shop · capsules · events" go={() => navigate('hangar')} />
             <Door k={SYSTEM_KANJI.progress} name="Awakening" sub={`${STAGES.length} forms · ${rankFor(p.overall.level)}`} go={() => navigate('progress')} />
             <Door k="紋" name="Emblems" sub={`${ach.filter((a) => a.unlockedOn).length}/${ach.length} earned`} go={() => navigate('progress', ['achievements'])} />

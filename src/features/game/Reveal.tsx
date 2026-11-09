@@ -179,10 +179,11 @@ function SpinReveal({ res }: { res: Extract<Reveal, { kind: 'spin' }>['res'] }) 
   );
 }
 
-const LOOT_COLOR = { bag: '#ff4d6d', stamp: '#ffc23d', set: '#21e6ff' } as const;
+const LOOT_COLOR = { bag: '#ff4d6d', stamp: '#ffc23d', set: '#21e6ff', bingo: '#ffe14d', fish: '#4dd6ff' } as const;
+const LOOT_SEAL = { stamp: '満', set: '揃', bingo: '当', fish: '魚' } as const;
 
 /** A lucky bag tearing open, a stamp card handed in, a set completed. */
-function LootReveal({ art, title, line, gain, okRef }: { art: 'bag' | 'stamp' | 'set'; title: string; line?: string; gain: Bag; okRef: React.RefObject<HTMLButtonElement | null> }) {
+function LootReveal({ art, title, line, gain, okRef }: { art: keyof typeof LOOT_COLOR; title: string; line?: string; gain: Bag; okRef: React.RefObject<HTMLButtonElement | null> }) {
   const full = playStyle() === 'full';
   const [open, setOpen] = useState(!full);
   useEffect(() => {
@@ -196,7 +197,7 @@ function LootReveal({ art, title, line, gain, okRef }: { art: 'bag' | 'stamp' | 
   return (
     <div className={`gm-rv__chest gm-rv__chest--${art}${open ? ' is-open' : ''}`} style={{ '--a': LOOT_COLOR[art] } as CSSProperties} onClick={() => setOpen(true)}>
       <span className="gm-rv__rays" aria-hidden="true" />
-      <div className="gm-rv__box-art">{art === 'bag' ? <BagArt /> : <span className="gm-rv__seal" aria-hidden="true">{art === 'stamp' ? '満' : '揃'}</span>}</div>
+      <div className="gm-rv__box-art">{art === 'bag' ? <BagArt /> : <span className="gm-rv__seal" aria-hidden="true">{LOOT_SEAL[art]}</span>}</div>
       <h2>{title}</h2>
       {line && <p>{line}</p>}
       {open && <Lines gain={gain} />}

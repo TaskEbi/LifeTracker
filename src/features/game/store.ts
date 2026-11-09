@@ -134,7 +134,7 @@ rewardEarnings.of = (before, after, today) => {
 
 // ─── writing transactions ───────────────────────────────────────────────────
 
-function write(tx: Omit<Tx, 'id' | 'at'>, id = uuid()): Tx {
+export function write(tx: Omit<Tx, 'id' | 'at'>, id = uuid()): Tx {
   const at = ltToday();
   const t = now();
   const prev = data.get().lt_records.get(id);
@@ -443,7 +443,7 @@ export function buyNightExtra(extra: (typeof NIGHT_EXTRAS)[number]['id']): boole
   return pay('buy', `night:${extra}`, x.cost, x.gain, id);
 }
 
-function claimOnce(ref: string, gain: Bag): boolean {
+export function claimOnce(ref: string, gain: Bag): boolean {
   const id = pairId('gm:claim', ref);
   if (rowLive(data.get(), id)) return false;
   write({ type: 'claim', ref, cost: {}, gain }, id);

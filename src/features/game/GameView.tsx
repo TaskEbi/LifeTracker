@@ -26,11 +26,15 @@ import { buyItem, buyMk, claimSet, setLoadout, setWish, standingNow, useGame, us
 import { listPrice, saved, withRank } from '../../domain/game/market';
 import { setPrize, setRarity, setsProgress, setTitleName } from '../../domain/game/sets';
 import { WorkshopTab } from './Workshop';
+import { ArcadeTab } from './Arcade';
+import { useArcade } from './arcadeStore';
+import { arcadeWaiting } from '../../domain/game/arcade';
 import './game.css';
 
 const TABS = [
   { id: '', label: 'Hangar', kanji: '機' },
   { id: 'shop', label: 'Shop', kanji: '店' },
+  { id: 'arcade', label: 'Arcade', kanji: '遊' },
   { id: 'capsule', label: 'Capsules', kanji: '蛋' },
   { id: 'workshop', label: 'Workshop', kanji: '工' },
   { id: 'events', label: 'Events', kanji: '祭' },
@@ -44,6 +48,7 @@ export function GameView() {
   const w = g.wallet;
   const run = eventOn(g.today);
   const reveal = useStore(revealStore, (s) => s.reveal);
+  const waiting = arcadeWaiting(useArcade());
   return (
     <div className="gm">
       <ChannelBar current="hangar" />
@@ -72,10 +77,11 @@ export function GameView() {
             <span aria-hidden="true">{t.kanji}</span>
             <b>{t.label}</b>
             {t.id === '' && w.chests.length > 0 && <i className="gm-tab__n">{w.chests.length}</i>}
+            {t.id === 'arcade' && waiting > 0 && <i className="gm-tab__n">{waiting}</i>}
           </button>
         ))}
       </nav>
-      {tab === 'shop' ? <ShopTab /> : tab === 'capsule' ? <CapsuleTab /> : tab === 'workshop' ? <WorkshopTab /> : tab === 'events' ? <EventsTab /> : tab === 'ledger' ? <LedgerTab /> : <Bay g={g} run={run} />}
+      {tab === 'shop' ? <ShopTab /> : tab === 'arcade' ? <ArcadeTab /> : tab === 'capsule' ? <CapsuleTab /> : tab === 'workshop' ? <WorkshopTab /> : tab === 'events' ? <EventsTab /> : tab === 'ledger' ? <LedgerTab /> : <Bay g={g} run={run} />}
       {reveal && <RevealLayer reveal={reveal} onClose={closeReveal} />}
     </div>
   );
