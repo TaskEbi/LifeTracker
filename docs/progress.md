@@ -316,3 +316,11 @@ The Hangar's shop became a street with a shopkeeper. Everything is drawn from th
 - The shop has four stalls (`/hangar/shop`, `/requests`, `/night`, `/catalogue`) and a "How the shop works" guide with the rank table.
 - Fixed: the Hangar e2e seed reloaded before 170 sessions reached IndexedDB, so two older Hangar tests had been failing on main; it now waits for the rows.
 - Verified: 646 unit/DB tests (19 new: trust and ranks, stamps, time sale, haggle zones, lucky bag, requests, night stock, sets, wishlist, Mameda), typecheck, the 6 Hangar e2e tests in WebKit at iPhone size (new: the street stamps, ranks, haggles, delivers, opens after dark, and keeps a wish across a reload; the three new stall routes in the sweep). Screens checked by day and by night.
+
+## M31 · Home split into three pages (done)
+Home had grown to about 3,400 px on a phone with nineteen blocks. It is now three pages with a sticky switcher under the header. Each page has its own address (`/`, `/home/arena`, `/home/more`). Switching pages replaces the history entry, so Back still leaves Home.
+- **Today 今** (`/`): the checklist, last night's first thing (morning only), the character, Today / tomorrow (focus strip, today's plan, events and due tasks, "n more" past seven), training quests, the Big Three or the weekly-review nudge, and "What should I do now?" (Next move, folded until opened; the device remembers open or closed). On a rough-weather day the Lighthouse comes to Today too.
+- **Arena 戦** (`/home/arena`): the purse, boss raid, shadow rival, fortune, last week's recap when there is one, and Hangar / Awakening / Emblems / Missions. The tab shows a count when chests are waiting.
+- **More 他** (`/home/more`): all twelve sections with levels, the Hideout rooms as a 3 × 3 grid, the other pages (now reading, next contest, album, bucket list, hideout, activity, calendar, settings) and the Lighthouse. The tab shows how many rooms need you.
+- Removed from Home as duplicates: the evening "Close the day" card (the checklist has it) and the rituals card (the checklist row opens the rituals room).
+- Verified: 646 unit/DB tests, typecheck, all 93 e2e tests in WebKit at iPhone size (new `home.spec.ts`: the three pages, addresses, Back and reload; six older tests moved to the page their card now lives on). Checked at phone and desktop widths.

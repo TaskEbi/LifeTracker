@@ -89,6 +89,9 @@ test('hangar: records pay, chests open once, buying spends, and it all survives 
 
   // the bought body is on Home too
   await page.getByRole('button', { name: 'Home', exact: true }).first().click();
+  await expect(page.getByRole('region', { name: 'Your character' })).toBeVisible();
+  // and the purse is on Home's Arena page
+  await page.getByRole('navigation', { name: 'Home pages' }).getByRole('button', { name: /Arena/ }).click();
   await expect(page.locator('.h-purse')).toBeVisible();
 });
 

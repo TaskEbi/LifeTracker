@@ -177,8 +177,11 @@ export function BeaconCard() {
   );
 }
 
-/** Morning: what you decided last night. Evening: the way in to closing the day. */
-export function BookendCard() {
+/**
+ * Morning: what you decided last night. Evening: the way in to closing the day, unless
+ * `morningOnly` (Home's checklist already has a Close the day row).
+ */
+export function BookendCard({ morningOnly }: { morningOnly?: boolean } = {}) {
   const today = useToday();
   const hq = useHq();
   const st = useStore(data, (s) => s);
@@ -193,7 +196,7 @@ export function BookendCard() {
   });
   const closed = hq.closes.some((c) => c.date === closingDate(today, hour) && c.at);
   if (isClosingTime(hour)) {
-    if (closed) return null;
+    if (closed || morningOnly) return null;
     return (
       <button type="button" className="hc-review hc-review--night" onClick={() => navigate('base', ['close'])}>
         <span className="hc-review__k" aria-hidden="true">

@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test';
 
 test('omikuji: shake the box, read the fortune, and it is the same when you come back', async ({ page }) => {
-  await page.goto('/');
+  await page.goto('/home/arena');
   await page.getByRole('button', { name: "Today's fortune. Shake the box" }).click();
   const dialog = page.getByRole('dialog', { name: "Today's fortune" });
   await dialog.getByRole('button', { name: 'Shake the box' }).click();
@@ -77,7 +77,7 @@ test('a section picture answers a tap, and the header buttons still work', async
 
 test('the kanji cut plays going into a section, without holding anything up', async ({ page }) => {
   await page.addInitScript(() => localStorage.setItem('lifetracker-fx', 'full'));
-  await page.goto('/');
+  await page.goto('/home/more');
   await page.getByRole('region', { name: 'Techniques: your sections' }).getByRole('button', { name: /Reading/ }).first().click();
   await expect(page.locator('.dr')).toHaveCount(1);
   await expect(page.getByRole('heading', { level: 1, name: 'Reading' })).toBeVisible();

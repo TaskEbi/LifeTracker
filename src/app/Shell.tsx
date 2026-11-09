@@ -58,7 +58,7 @@ function Rail({ current, rest }: { current: RouteName; rest: string[] }) {
       key={`${id}/${sub.join('/')}`}
       type="button"
       className="i-rail__item"
-      aria-current={current === id && rest.join('/') === sub.join('/') ? 'page' : undefined}
+      aria-current={current === id && (id === 'home' || rest.join('/') === sub.join('/')) ? 'page' : undefined}
       onClick={() => navigate(id, sub)}
       style={(SECTION_IDS as readonly string[]).includes(id) ? accent(id as never) : undefined}
     >

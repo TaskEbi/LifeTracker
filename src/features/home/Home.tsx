@@ -1,5 +1,5 @@
-import { useMemo, useState, type CSSProperties } from 'react';
-import { navigate } from '../../app/router';
+import { useMemo, useState, type CSSProperties, type ReactNode } from 'react';
+import { navigate, useRoute } from '../../app/router';
 import { StatusBar } from '../../app/Shell';
 import { openSheet } from '../../app/sheets';
 import { toggleTask } from '../../data/ltActions';
@@ -15,6 +15,7 @@ import { accent } from '../../ui/i/bits';
 import { droneMood, hourIn, seasonOf, timeOfDay, TOD_LABEL } from '../../domain/fun/season';
 import { LivingDrone } from './LivingDrone';
 import { Purse } from '../game/Purse';
+import { useGame } from '../game/store';
 import { OmikujiCard } from './Omikuji';
 import { Sky } from './Sky';
 import { bucketItems } from '../bucket/actions';
@@ -28,17 +29,31 @@ import { Recap } from '../progress/LookBack';
 import { useFxPrefs } from '../../ui/i/fx/celebrate';
 import { QuestCard } from '../progress/QuestsPanel';
 import { PlanToday } from '../plans/PlanToday';
-import { BeaconCard, BigThreeCard, BookendCard, NextMoveCard, RitualsCard, ShadowCard } from '../hq/HomeCards';
+import { BeaconCard, BigThreeCard, BookendCard, NextMoveCard, ShadowCard } from '../hq/HomeCards';
 import { HideoutDock } from '../hq/HideoutDock';
+import { ROOMS, useRoomStatus, type RoomId } from '../hq/rooms';
 import { TodayChecklist } from './TodayChecklist';
 import { useHq } from '../hq/store';
 import { useAlbum } from '../album/store';
 import { albumStreak, daysToReel, reelOpen } from '../../domain/album/album';
 import { reviewQueue } from '../../domain/hq/srs';
+import { roughToday } from '../../domain/hq/beacon';
 import './home.css';
 
 const pad2 = (n: number) => String(n).padStart(2, '0');
 const DAYS = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
+
+/**
+ * Home is three pages, so no one page has to hold everything:
+ * Today (what to do now), Arena (the game: boss, rival, fortune, purse) and More (every section, room and page).
+ */
+export type HomeTab = 'today' | 'arena' | 'more';
+const TABS: { id: HomeTab; kanji: string; label: string; hint: string }[] = [
+  { id: 'today', kanji: '今', label: 'Today', hint: 'What to do now' },
+  { id: 'arena', kanji: '戦', label: 'Arena', hint: 'Boss, rival, fortune' },
+  { id: 'more', kanji: '他', label: 'More', hint: 'Sections, rooms, pages' },
+];
+export const homeTabOf = (rest: string[]): HomeTab => (rest[0] === 'arena' || rest[0] === 'more' ? rest[0] : 'today');
 
 /** One section as a 技 technique: kanji, name, level and its streak light. */
 function Technique({ id }: { id: SectionId }) {
@@ -112,44 +127,109 @@ function useTodayRows(today: string): TodayRow[] {
   }, [events, todos, prefs, today]);
 }
 
-export function Home() {
+/** A kanji + label heading, with an optional link on the right. */
+function Head({ k, children, link }: { k: string; children: ReactNode; link?: { label: string; go: () => void } }) {
+  return (
+    <div className="h-h2row">
+      <h2 className="h-h2">
+        <span aria-hidden="true">{k}</span> {children}
+      </h2>
+      {link && (
+        <button type="button" className="i-link" onClick={link.go}>
+          {link.label} ▶
+        </button>
+      )}
+    </div>
+  );
+}
+
+/** One tile in a grid of ways out: kanji, name and a status line. */
+function Door({ k, name, sub, go, wide }: { k: string; name: string; sub: ReactNode; go: () => void; wide?: boolean }) {
+  return (
+    <button type="button" className={`h-sys__btn${wide ? ' h-sys__btn--wide' : ''}`} onClick={go}>
+      <span aria-hidden="true">{k}</span>
+      <b>{name}</b>
+      <small>{sub}</small>
+    </button>
+  );
+}
+
+function HomeHeader() {
   const today = useToday();
   const p = useProgress();
   const st = useStore(data, (s) => s);
-  const rows = useTodayRows(today);
+  const input = progressInput(st, today);
+  const chapter = useMemo(() => [...activeDays(input)].filter((d) => d <= today).length || 1, [input, today]);
+  const stage = STAGES[p.overall.stage];
+  return (
+    <header className="h-head">
+      <div className="h-head__ep" aria-hidden="true">
+        第<span className="h-head__num">{chapter}</span>話
+      </div>
+      <div className="h-head__t">
+        <h1>LifeTracker</h1>
+        <p>
+          Chapter {chapter} · the {stage.name} arc · {shortDay(today)}
+        </p>
+      </div>
+      <div
+        className={`h-head__streak${p.streak.held ? ' is-held' : ''}`}
+        title={p.streak.held ? 'Yesterday was missed: the buffer is holding the streak. Log something today or it ends.' : 'Days in a row with anything logged. Planned rest days count, and one missed day won’t break it.'}
+      >
+        <b>{p.streak.n}日</b>
+        <span>Streak</span>
+        <small className="h-head__shield">{p.streak.held ? '盾 used · log today' : '盾 ready'}</small>
+      </div>
+    </header>
+  );
+}
+
+function HomeTabs({ tab }: { tab: HomeTab }) {
+  const status = useRoomStatus();
+  const alerts = (Object.keys(ROOMS) as RoomId[]).filter((id) => status[id].alert).length;
+  const chests = useGame().wallet.chests.length;
+  return (
+    <nav className="h-tabs" aria-label="Home pages">
+      {TABS.map((t) => {
+        return (
+          <button
+            key={t.id}
+            type="button"
+            className="h-tabs__btn"
+            aria-current={tab === t.id ? 'page' : undefined}
+            onClick={() => navigate('home', t.id === 'today' ? [] : [t.id], { replace: true })}
+            title={t.hint}
+          >
+            <span className="h-tabs__k" aria-hidden="true">
+              {t.kanji}
+            </span>
+            <span>{t.label}</span>
+            {t.id === 'more' && alerts > 0 ? (
+              <i className="h-tabs__n" aria-label={`${alerts} ${alerts === 1 ? 'room needs' : 'rooms need'} you`}>
+                {alerts}
+              </i>
+            ) : t.id === 'arena' && chests > 0 ? (
+              <i className="h-tabs__n" aria-label={`${chests} ${chests === 1 ? 'chest' : 'chests'} waiting`}>
+                {chests}
+              </i>
+            ) : null}
+          </button>
+        );
+      })}
+    </nav>
+  );
+}
+
+/** The character: level, form and the power bar. Tap the robot and it talks. */
+function Hero({ rows }: { rows: TodayRow[] }) {
+  const today = useToday();
+  const p = useProgress();
+  const st = useStore(data, (s) => s);
   const quests = useQuests();
-  const ach = useAchievements();
   const boss = useBoss();
-  const focus = useFocus();
-  const { recap } = useLookBack(1);
-  // The recap leads the first two days of a week, like the "previously on…" before an episode.
-  const showRecap = weekdayIndex(today) <= 1 && (recap.minutes > 0 || recap.activeDays > 0);
   const [bubble, setBubble] = useState<string | null>(null);
   const [n, setN] = useState(0);
   const input = progressInput(st, today);
-  const chapter = useMemo(() => [...activeDays(input)].filter((d) => d <= today).length || 1, [input, today]);
-  const nowReading = useMemo(() => {
-    const sessions = sessionsIn(st);
-    const book = likelyBook(booksIn(st), sessions);
-    return book ? { title: book.title, pct: bookProgress(book, sessions).pct } : null;
-  }, [st]);
-  const nextContest = useMemo(() => upcoming(sittingsIn(st), today)[0] ?? null, [st, today]);
-  const album = useAlbum();
-  const albumLine = useMemo(() => {
-    const day = album.days.get(today);
-    const run = albumStreak(album.days.keys(), today).current;
-    const y = Number(today.slice(0, 4));
-    const reel = reelOpen(y, today) ? `the ${y} reel is ready` : daysToReel(y, today) <= 31 ? `the reel opens in ${daysToReel(y, today)} days` : null;
-    const parts = [day?.face ? 'today’s face is on film' : 'today’s face: not yet', day?.memories.length ? `${day.memories.length} ${day.memories.length === 1 ? 'memory' : 'memories'}` : null, run > 1 ? `${run} days in a row` : null, reel];
-    const t = parts.filter(Boolean).join(' · ');
-    return t.charAt(0).toUpperCase() + t.slice(1);
-  }, [album, today]);
-  const bucket = useMemo(() => {
-    const { open, done } = bucketItems(st);
-    return { total: open.length + done.length, done: done.length, next: open[0]?.title };
-  }, [st]);
-  const hq = useHq();
-  const dueCards = useMemo(() => reviewQueue(hq.cards, today).length, [hq.cards, today]);
   const stage = STAGES[p.overall.stage];
   const next = STAGES[p.overall.stage + 1];
   const daily = quests.daily.quests;
@@ -178,77 +258,117 @@ export function Home() {
   };
 
   return (
-    <div className="h-home">
-      <StatusBar />
-      <header className="h-head">
-        <div className="h-head__ep" aria-hidden="true">
-          第<span className="h-head__num">{chapter}</span>話
-        </div>
-        <div className="h-head__t">
-          <h1>LifeTracker</h1>
-          <p>
-            Chapter {chapter} · the {stage.name} arc · {shortDay(today)}
-          </p>
-        </div>
-        <div
-          className={`h-head__streak${p.streak.held ? ' is-held' : ''}`}
-          title={p.streak.held ? 'Yesterday was missed: the buffer is holding the streak. Log something today or it ends.' : 'Days in a row with anything logged. Planned rest days count, and one missed day won’t break it.'}
-        >
-          <b>{p.streak.n}日</b>
-          <span>Streak</span>
-          <small className="h-head__shield">{p.streak.held ? '盾 used · log today' : '盾 ready'}</small>
-        </div>
-      </header>
+    <section className="h-hero" style={{ '--c': stage.c, '--c2': stage.c2 } as CSSProperties} aria-label="Your character">
+      <div className="h-hero__in">
+        <Sky date={today} tod={tod} />
+        <span className="h-hero__speed" aria-hidden="true" />
+        {skyOn && (
+          <span className="h-hero__season" title={seasonOf(today).label} aria-hidden="true">
+            {seasonOf(today).kanji} · {TOD_LABEL[tod]}
+          </span>
+        )}
+        <LivingDrone stage={p.overall.stage} mood={droneMood({ hour, streakHeld: p.streak.held, dailyDone: dailyDone === daily.length })} onTalk={poke} onSay={setBubble} />
+        <span className="h-hero__lv">
+          <span className="h-hero__lvk">LV</span>
+          <b>{p.overall.level}</b>
+          <span className="h-hero__tag h-hero__tag--rank">{rankFor(p.overall.level)}</span>
+          <span className="h-hero__tag h-hero__tag--form">
+            Form {p.overall.stage + 1} · {stage.name}
+          </span>
+        </span>
+        <span className="h-hero__sfx" aria-hidden="true">
+          ゴゴゴゴ
+        </span>
+        <span className="h-hero__power">
+          <span className="h-hero__powerl">
+            <span>Power</span>
+            <span>
+              {p.overall.into.toLocaleString('en-GB')} / {p.overall.need.toLocaleString('en-GB')}
+              {next ? ` · 覚醒 → ${next.name.toUpperCase()} @ LV ${next.level}` : ' · 極 MAX FORM'}
+            </span>
+          </span>
+          <span className="h-hero__bar" role="progressbar" aria-label="Overall level progress" aria-valuenow={Math.round(p.overall.pct * 100)} aria-valuemin={0} aria-valuemax={100}>
+            {Array.from({ length: 24 }, (_, i) => (
+              <i key={i} className={i < Math.round(p.overall.pct * 24) ? 'is-on' : ''} />
+            ))}
+          </span>
+        </span>
+        {bubble && (
+          <span className="h-hero__bubble" role="status">
+            {bubble}
+          </span>
+        )}
+      </div>
+    </section>
+  );
+}
 
-      <TodayChecklist />
+const MOVE_KEY = 'lt.home.next-move-open';
 
-      <div className="h-grid">
-        <div>
-          <section className="h-hero" style={{ '--c': stage.c, '--c2': stage.c2 } as CSSProperties} aria-label="Your character">
-            <div className="h-hero__in">
-              <Sky date={today} tod={tod} />
-              <span className="h-hero__speed" aria-hidden="true" />
-              {skyOn && (
-                <span className="h-hero__season" title={seasonOf(today).label} aria-hidden="true">
-                  {seasonOf(today).kanji} · {TOD_LABEL[tod]}
-                </span>
-              )}
-              <LivingDrone stage={p.overall.stage} mood={droneMood({ hour, streakHeld: p.streak.held, dailyDone: dailyDone === daily.length })} onTalk={poke} onSay={setBubble} />
-              <span className="h-hero__lv">
-                <span className="h-hero__lvk">LV</span>
-                <b>{p.overall.level}</b>
-                <span className="h-hero__tag h-hero__tag--rank">{rankFor(p.overall.level)}</span>
-                <span className="h-hero__tag h-hero__tag--form">
-                  Form {p.overall.stage + 1} · {stage.name}
-                </span>
-              </span>
-              <span className="h-hero__sfx" aria-hidden="true">
-                ゴゴゴゴ
-              </span>
-              <span className="h-hero__power">
-                <span className="h-hero__powerl">
-                  <span>Power</span>
-                  <span>
-                    {p.overall.into.toLocaleString('en-GB')} / {p.overall.need.toLocaleString('en-GB')}
-                    {next ? ` · 覚醒 → ${next.name.toUpperCase()} @ LV ${next.level}` : ' · 極 MAX FORM'}
-                  </span>
-                </span>
-                <span className="h-hero__bar" role="progressbar" aria-label="Overall level progress" aria-valuenow={Math.round(p.overall.pct * 100)} aria-valuemin={0} aria-valuemax={100}>
-                  {Array.from({ length: 24 }, (_, i) => (
-                    <i key={i} className={i < Math.round(p.overall.pct * 24) ? 'is-on' : ''} />
-                  ))}
-                </span>
-              </span>
-              {bubble && (
-                <span className="h-hero__bubble" role="status">
-                  {bubble}
-                </span>
-              )}
-            </div>
-          </section>
+/** 次の一手 folded into one strip until you want it, so it doesn't push everything down. */
+function NextMoveFold() {
+  const [open, setOpen] = useState(() => {
+    try {
+      return localStorage.getItem(MOVE_KEY) === '1';
+    } catch {
+      return false;
+    }
+  });
+  const flip = () => {
+    setOpen(!open);
+    try {
+      localStorage.setItem(MOVE_KEY, open ? '0' : '1');
+    } catch {
+      /* stays as it is for this visit */
+    }
+  };
+  return (
+    <div className="h-fold">
+      <button type="button" className="h-move" aria-expanded={open} onClick={flip}>
+        <span className="h-focus__k" aria-hidden="true">
+          次
+        </span>
+        <span className="h-focus__t">
+          <b>What should I do now?</b>
+          <small>Pick how long you have and how you feel</small>
+        </span>
+        <span className="h-focus__go" aria-hidden="true">
+          {open ? '▲' : '▼'}
+        </span>
+      </button>
+      {open && <NextMoveCard />}
+    </div>
+  );
+}
 
-          <Purse />
+function TodayPage() {
+  const today = useToday();
+  const rows = useTodayRows(today);
+  const quests = useQuests();
+  const focus = useFocus();
+  const daily = quests.daily.quests;
+  const dailyDone = daily.filter((q) => q.doneOn).length;
+  // The Lighthouse lives on More, but on a rough day it comes to Today.
+  const rough = roughToday(useHq().checkIns, today);
 
+  return (
+    <div className="h-grid">
+      <div>
+        <TodayChecklist />
+        {rough && (
+          <div className="h-sec">
+            <BeaconCard />
+          </div>
+        )}
+        <BookendCard morningOnly />
+        <Hero rows={rows} />
+      </div>
+
+      <div>
+        <section className="h-sec" aria-label="Today and tomorrow">
+          <Head k="予定" link={{ label: 'Calendar', go: () => navigate('calendar') }}>
+            Today / tomorrow
+          </Head>
           <button type="button" className="h-focus" onClick={() => openSheet({ type: 'focus' })}>
             <span className="h-focus__k" aria-hidden="true">
               集中
@@ -261,169 +381,190 @@ export function Home() {
               ▶
             </span>
           </button>
-
-          <HideoutDock />
-
-          <BookendCard />
-
-          <BeaconCard />
-
-          <NextMoveCard />
-
-          <BigThreeCard />
-
-          <RitualsCard />
-
-          <ShadowCard />
-
-          <OmikujiCard />
-
           <PlanToday />
+          <div className="h-today">
+            {rows.length === 0 ? (
+              <p className="i-note" style={{ padding: '10px 0' }}>
+                Nothing planned or due. Add events in the calendar, or{' '}
+                <button type="button" className="i-link" style={{ minHeight: 0 }} onClick={() => openSheet({ type: 'task' })}>
+                  add a task
+                </button>
+                .
+              </p>
+            ) : (
+              rows.slice(0, 7).map((r) => (
+                <div key={r.key} className="h-trow" style={accent(r.section)}>
+                  <span className="h-trow__t" style={r.when === 'LATE' ? { color: 'var(--warn)' } : undefined}>
+                    {r.when}
+                  </span>
+                  <span className="h-trow__k" aria-hidden="true">
+                    {r.section ? sectionInfo(r.section).kanji : '・'}
+                  </span>
+                  <span className="h-trow__x">{r.title}</span>
+                  {r.taskId ? (
+                    <button type="button" className="h-ck" onClick={() => toggleTask(r.taskId!)} aria-label={`Complete: ${r.title}`} />
+                  ) : (
+                    <span className={`h-trow__tag${r.clash ? ' is-warn' : ''}`}>{r.clash ? 'CLASH' : r.tag ?? ''}</span>
+                  )}
+                </div>
+              ))
+            )}
+            {rows.length > 7 && (
+              <button type="button" className="i-link h-today__more" onClick={() => navigate('calendar')}>
+                {rows.length - 7} more ▶
+              </button>
+            )}
+          </div>
+        </section>
 
-          <section className="h-sec" aria-label="Techniques: your sections">
-            <h2 className="h-h2">
-              <span aria-hidden="true">技</span> Techniques
-            </h2>
-            <div className="h-techs">
-              {SECTIONS.map((s) => (
-                <Technique key={s.id} id={s.id} />
-              ))}
-            </div>
-          </section>
+        <section className="h-sec" aria-label="Today's training">
+          <Head k="修行" link={{ label: 'All missions', go: () => navigate('progress', ['quests']) }}>
+            Training · {dailyDone}/{daily.length}
+          </Head>
+          <div className="pg-quests">
+            {daily.map((q) => (
+              <QuestCard key={q.key} q={q} now={q === daily.find((x) => !x.doneOn)} />
+            ))}
+          </div>
+        </section>
+
+        <div className="h-sec">
+          <BigThreeCard />
         </div>
 
-        <div>
-          {showRecap && <Recap recap={recap} />}
-
-          <section className="h-sec" aria-label="Weekly boss">
-            <div className="h-h2row">
-              <h2 className="h-h2">
-                <span aria-hidden="true">討伐</span> Boss raid
-              </h2>
-            </div>
-            <BossCard fight={boss} compact />
-          </section>
-
-          <section className="h-sec" aria-label="Today's training">
-            <div className="h-h2row">
-              <h2 className="h-h2">
-                <span aria-hidden="true">修行</span> Training · {dailyDone}/3
-              </h2>
-              <button type="button" className="i-link" onClick={() => navigate('progress', ['quests'])}>
-                All missions ▶
-              </button>
-            </div>
-            <div className="pg-quests">
-              {daily.map((q) => (
-                <QuestCard key={q.key} q={q} now={q === daily.find((x) => !x.doneOn)} />
-              ))}
-            </div>
-          </section>
-
-          <section className="h-sec" aria-label="Today and tomorrow">
-            <div className="h-h2row">
-              <h2 className="h-h2">
-                <span aria-hidden="true">予定</span> Today / tomorrow
-              </h2>
-              <button type="button" className="i-link" onClick={() => navigate('calendar')}>
-                Calendar ▶
-              </button>
-            </div>
-            <div className="h-today">
-              {rows.length === 0 ? (
-                <p className="i-note" style={{ padding: '10px 0' }}>
-                  Nothing planned or due. Add events in the calendar, or{' '}
-                  <button type="button" className="i-link" style={{ minHeight: 0 }} onClick={() => openSheet({ type: 'task' })}>
-                    add a task
-                  </button>
-                  .
-                </p>
-              ) : (
-                rows.slice(0, 7).map((r) => (
-                  <div key={r.key} className="h-trow" style={accent(r.section)}>
-                    <span className="h-trow__t" style={r.when === 'LATE' ? { color: 'var(--warn)' } : undefined}>
-                      {r.when}
-                    </span>
-                    <span className="h-trow__k" aria-hidden="true">
-                      {r.section ? sectionInfo(r.section).kanji : '・'}
-                    </span>
-                    <span className="h-trow__x">{r.title}</span>
-                    {r.taskId ? (
-                      <button type="button" className="h-ck" onClick={() => toggleTask(r.taskId!)} aria-label={`Complete: ${r.title}`} />
-                    ) : (
-                      <span className={`h-trow__tag${r.clash ? ' is-warn' : ''}`}>{r.clash ? 'CLASH' : r.tag ?? ''}</span>
-                    )}
-                  </div>
-                ))
-              )}
-            </div>
-          </section>
-
-          <nav className="h-sys" aria-label="More">
-            <button type="button" className="h-sys__btn h-sys__btn--wide" onClick={() => navigate('base')}>
-              <span aria-hidden="true">{SYSTEM_KANJI.base}</span>
-              <b>Hideout</b>
-              <small>{dueCards ? `${dueCards} recall ${dueCards === 1 ? 'card' : 'cards'} waiting` : 'War room · dojo · lab · vault · oracle…'}</small>
-            </button>
-            {nowReading && (
-              <button type="button" className="h-sys__btn h-sys__btn--wide" onClick={() => navigate('reading')}>
-                <span aria-hidden="true">{sectionInfo('reading').kanji}</span>
-                <b>Now reading</b>
-                <small>{nowReading.title} · {nowReading.pct}%</small>
-              </button>
-            )}
-            {nextContest && (
-              <button type="button" className="h-sys__btn h-sys__btn--wide" onClick={() => navigate('maths')}>
-                <span aria-hidden="true">{sectionInfo('maths').kanji}</span>
-                <b>Next contest</b>
-                <small>
-                  {nextContest.label}
-                  {nextContest.date ? ` · ${daysUntil(nextContest.date, today) === 0 ? 'today' : daysUntil(nextContest.date, today) === 1 ? 'tomorrow' : `in ${daysUntil(nextContest.date, today)} days`}` : ' · date not set'}
-                </small>
-              </button>
-            )}
-            <button type="button" className="h-sys__btn h-sys__btn--wide" onClick={() => navigate('album')}>
-              <span aria-hidden="true">{SYSTEM_KANJI.album}</span>
-              <b>Album</b>
-              <small>{albumLine}</small>
-            </button>
-            <button type="button" className="h-sys__btn h-sys__btn--wide" onClick={() => navigate('bucket')}>
-              <span aria-hidden="true">{SYSTEM_KANJI.bucket}</span>
-              <b>Bucket list</b>
-              <small>{bucket.total ? `${bucket.done} of ${bucket.total} crossed off${bucket.next ? ` · next: ${bucket.next}` : ''}` : 'Everything you want to do someday'}</small>
-            </button>
-            <button type="button" className="h-sys__btn" onClick={() => navigate('hangar')}>
-              <span aria-hidden="true">{SYSTEM_KANJI.hangar}</span>
-              <b>Hangar</b>
-              <small>Shop · capsules · events</small>
-            </button>
-            <button type="button" className="h-sys__btn" onClick={() => navigate('progress')}>
-              <span aria-hidden="true">{SYSTEM_KANJI.progress}</span>
-              <b>Awakening</b>
-              <small>
-                {STAGES.length} forms · {rankFor(p.overall.level)}
-              </small>
-            </button>
-            <button type="button" className="h-sys__btn" onClick={() => navigate('progress', ['achievements'])}>
-              <span aria-hidden="true">紋</span>
-              <b>Emblems</b>
-              <small>
-                {ach.filter((a) => a.unlockedOn).length}/{ach.length} earned
-              </small>
-            </button>
-            <button type="button" className="h-sys__btn" onClick={() => navigate('log')}>
-              <span aria-hidden="true">{SYSTEM_KANJI.log}</span>
-              <b>All activity</b>
-              <small>Daily Log</small>
-            </button>
-            <button type="button" className="h-sys__btn" onClick={() => navigate('settings')}>
-              <span aria-hidden="true">{SYSTEM_KANJI.settings}</span>
-              <b>Settings</b>
-              <small>Themes · sync</small>
-            </button>
-          </nav>
+        <div className="h-sec">
+          <NextMoveFold />
         </div>
       </div>
+    </div>
+  );
+}
+
+function ArenaPage() {
+  const p = useProgress();
+  const ach = useAchievements();
+  const boss = useBoss();
+  const { recap } = useLookBack(1);
+  const hasRecap = recap.minutes > 0 || recap.activeDays > 0;
+  return (
+    <div className="h-grid">
+      <div>
+        <Purse />
+        <section className="h-sec" aria-label="Weekly boss">
+          <Head k="討伐">Boss raid</Head>
+          <BossCard fight={boss} compact />
+        </section>
+        <div className="h-sec">
+          <ShadowCard />
+        </div>
+      </div>
+
+      <div>
+        <div className="h-sec">
+          <OmikujiCard />
+        </div>
+        {hasRecap && (
+          <div className="h-sec">
+            <Recap recap={recap} />
+          </div>
+        )}
+        <section className="h-sec" aria-label="Your progress">
+          <Head k="覚">Progress</Head>
+          <div className="h-sys">
+            <Door k={SYSTEM_KANJI.hangar} name="Hangar" sub="Shop · capsules · events" go={() => navigate('hangar')} />
+            <Door k={SYSTEM_KANJI.progress} name="Awakening" sub={`${STAGES.length} forms · ${rankFor(p.overall.level)}`} go={() => navigate('progress')} />
+            <Door k="紋" name="Emblems" sub={`${ach.filter((a) => a.unlockedOn).length}/${ach.length} earned`} go={() => navigate('progress', ['achievements'])} />
+            <Door k="任" name="Missions" sub="Daily · weekly · monthly" go={() => navigate('progress', ['quests'])} />
+          </div>
+        </section>
+      </div>
+    </div>
+  );
+}
+
+function MorePage() {
+  const today = useToday();
+  const st = useStore(data, (s) => s);
+  const nowReading = useMemo(() => {
+    const sessions = sessionsIn(st);
+    const book = likelyBook(booksIn(st), sessions);
+    return book ? { title: book.title, pct: bookProgress(book, sessions).pct } : null;
+  }, [st]);
+  const nextContest = useMemo(() => upcoming(sittingsIn(st), today)[0] ?? null, [st, today]);
+  const album = useAlbum();
+  const albumLine = useMemo(() => {
+    const day = album.days.get(today);
+    const run = albumStreak(album.days.keys(), today).current;
+    const y = Number(today.slice(0, 4));
+    const reel = reelOpen(y, today) ? `the ${y} reel is ready` : daysToReel(y, today) <= 31 ? `the reel opens in ${daysToReel(y, today)} days` : null;
+    const parts = [day?.face ? 'today’s face is on film' : 'today’s face: not yet', day?.memories.length ? `${day.memories.length} ${day.memories.length === 1 ? 'memory' : 'memories'}` : null, run > 1 ? `${run} days in a row` : null, reel];
+    const t = parts.filter(Boolean).join(' · ');
+    return t.charAt(0).toUpperCase() + t.slice(1);
+  }, [album, today]);
+  const bucket = useMemo(() => {
+    const { open, done } = bucketItems(st);
+    return { total: open.length + done.length, done: done.length, next: open[0]?.title };
+  }, [st]);
+  const hq = useHq();
+  const dueCards = useMemo(() => reviewQueue(hq.cards, today).length, [hq.cards, today]);
+  const contestWhen = nextContest?.date
+    ? (() => {
+        const d = daysUntil(nextContest.date, today);
+        return d === 0 ? 'today' : d === 1 ? 'tomorrow' : `in ${d} days`;
+      })()
+    : 'date not set';
+
+  return (
+    <div className="h-grid">
+      <div>
+        <section className="h-sec" aria-label="Techniques: your sections">
+          <Head k="技">Sections</Head>
+          <div className="h-techs">
+            {SECTIONS.map((s) => (
+              <Technique key={s.id} id={s.id} />
+            ))}
+          </div>
+        </section>
+        <HideoutDock />
+      </div>
+
+      <div>
+        <section className="h-sec" aria-label="Pages">
+          <Head k="頁">Pages</Head>
+          <div className="h-sys">
+            {nowReading && <Door wide k={sectionInfo('reading').kanji} name="Now reading" sub={`${nowReading.title} · ${nowReading.pct}%`} go={() => navigate('reading')} />}
+            {nextContest && <Door wide k={sectionInfo('maths').kanji} name="Next contest" sub={`${nextContest.label} · ${contestWhen}`} go={() => navigate('maths')} />}
+            <Door wide k={SYSTEM_KANJI.album} name="Album" sub={albumLine} go={() => navigate('album')} />
+            <Door
+              wide
+              k={SYSTEM_KANJI.bucket}
+              name="Bucket list"
+              sub={bucket.total ? `${bucket.done} of ${bucket.total} crossed off${bucket.next ? ` · next: ${bucket.next}` : ''}` : 'Everything you want to do someday'}
+              go={() => navigate('bucket')}
+            />
+            <Door k={SYSTEM_KANJI.base} name="Hideout" sub={dueCards ? `${dueCards} recall ${dueCards === 1 ? 'card' : 'cards'}` : 'All rooms'} go={() => navigate('base')} />
+            <Door k={SYSTEM_KANJI.log} name="Activity" sub="The Daily Log" go={() => navigate('log')} />
+            <Door k={SYSTEM_KANJI.calendar} name="Calendar" sub="Events · exams" go={() => navigate('calendar')} />
+            <Door k={SYSTEM_KANJI.settings} name="Settings" sub="Themes · sync" go={() => navigate('settings')} />
+          </div>
+        </section>
+        <div className="h-sec">
+          <BeaconCard />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export function Home() {
+  const route = useRoute();
+  const tab = homeTabOf(route.rest);
+  return (
+    <div className="h-home">
+      <StatusBar />
+      <HomeHeader />
+      <HomeTabs tab={tab} />
+      {tab === 'today' ? <TodayPage /> : tab === 'arena' ? <ArenaPage /> : <MorePage />}
     </div>
   );
 }

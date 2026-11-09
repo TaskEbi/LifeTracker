@@ -48,8 +48,8 @@ test('lighthouse: a message left on a good day comes back on a bad one, then wor
   await sheet.getByRole('button', { name: 'Keep it for that day' }).click();
   await expect(page.getByText('You always feel better ten minutes in.')).toBeVisible();
 
-  // One tap from Home on the day it's needed.
-  await page.goto('/');
+  // On Home's More page, and on Today when the weather is rough.
+  await page.goto('/home/more');
   await page.getByRole('region', { name: 'Lighthouse' }).getByRole('button', { name: /Struggling/ }).click();
   await expect(page.getByRole('heading', { name: 'What’s going on?', level: 1 })).toBeVisible();
   await page.getByRole('button', { name: 'I can’t be bothered' }).click();
@@ -146,6 +146,7 @@ test('scroll: a bare word still filters commands', async ({ page }) => {
 
 test('next move: suggests something with a reason and starts it', async ({ page }) => {
   await page.goto('/');
+  await page.getByRole('button', { name: /What should I do now/ }).click();
   const card = page.getByRole('region', { name: 'Next move' });
   await card.getByRole('group', { name: 'Time you have' }).getByRole('button', { name: '60 min' }).click();
   await card.getByRole('group', { name: 'How you feel' }).getByRole('button', { name: 'Tired' }).click();
@@ -223,7 +224,7 @@ test('dojo: a mistake with a cause shows up in where marks leak', async ({ page 
 
 test('war room: review, seal, and the Big Three lands on Home', async ({ page }) => {
   await page.clock.install({ time: new Date('2026-11-09T09:00:00+08:00') }); // a Monday
-  await page.goto('/');
+  await page.goto('/home/more');
   await page.getByRole('region', { name: 'Hideout rooms' }).getByRole('button', { name: /^War room: Weekly review/ }).click();
   await expect(page.getByRole('heading', { name: 'War room', level: 1 })).toBeVisible();
   const flow = page.getByRole('region', { name: 'Weekly review' });

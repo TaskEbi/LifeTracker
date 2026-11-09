@@ -23,14 +23,15 @@ function parse(pathname: string, hash: string): Route {
   if (pathname === '/share') return { name: 'cabinet', rest: [] };
   const [first = '', ...rest] = pathname.replace(/^\/+|\/+$/g, '').split('/');
   const name = (ORDER as string[]).includes(first) ? (first as RouteName) : 'home';
-  return { name, rest: name === 'home' ? [] : rest };
+  // Home's own pages live at /home/arena and /home/more; anything unknown lands on plain Home.
+  return { name, rest: first === name ? rest : [] };
 }
 
 const initial = parse(location.pathname, location.hash);
 export const router = createStore<{ route: Route; dir: 'fwd' | 'back' }>({ route: initial, dir: 'fwd' });
 
 export function pathOf(route: Route): string {
-  return route.name === 'home' ? '/' : `/${[route.name, ...route.rest].join('/')}`;
+  return route.name === 'home' && !route.rest.length ? '/' : `/${[route.name, ...route.rest].join('/')}`;
 }
 
 export function navigate(name: RouteName, rest: string[] = [], opts: { replace?: boolean } = {}) {
