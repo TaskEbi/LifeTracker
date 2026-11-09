@@ -38,6 +38,7 @@ import { useAlbum } from '../album/store';
 import { albumStreak, daysToReel, reelOpen } from '../../domain/album/album';
 import { reviewQueue } from '../../domain/hq/srs';
 import { roughToday } from '../../domain/hq/beacon';
+import { EPQ_KANJI, epqLine, useEpq } from '../epq/EpqPage';
 import './home.css';
 
 const pad2 = (n: number) => String(n).padStart(2, '0');
@@ -505,6 +506,7 @@ function MorePage() {
     const { open, done } = bucketItems(st);
     return { total: open.length + done.length, done: done.length, next: open[0]?.title };
   }, [st]);
+  const epq = useEpq();
   const hq = useHq();
   const dueCards = useMemo(() => reviewQueue(hq.cards, today).length, [hq.cards, today]);
   const contestWhen = nextContest?.date
@@ -532,6 +534,7 @@ function MorePage() {
         <section className="h-sec" aria-label="Pages">
           <Head k="頁">Pages</Head>
           <div className="h-sys">
+            <Door wide k={EPQ_KANJI} name="EPQ" sub={epqLine(epq, today)} go={() => navigate('study', ['epq'])} />
             {nowReading && <Door wide k={sectionInfo('reading').kanji} name="Now reading" sub={`${nowReading.title} · ${nowReading.pct}%`} go={() => navigate('reading')} />}
             {nextContest && <Door wide k={sectionInfo('maths').kanji} name="Next contest" sub={`${nextContest.label} · ${contestWhen}`} go={() => navigate('maths')} />}
             <Door wide k={SYSTEM_KANJI.album} name="Album" sub={albumLine} go={() => navigate('album')} />

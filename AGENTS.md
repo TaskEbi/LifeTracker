@@ -13,6 +13,7 @@ LifeTracker is a personal tracker (React 19 + Vite + TypeScript PWA) that shares
 - Time spent → `log_entries` (the Daily Log row). Section detail goes in `lt_details` with the **same id**.
 - Sleep / screen time → `log_metrics` (one row per metric per day, id from `metricId`). Bed/wake → `lt_nights`.
 - Tasks → `todos` (+ `section`). Cabinet → `items` / `rooms` / `connections`. Bucket list → `lt_bucket` (done when `done_at` is set).
+- EPQ → time is Study sessions whose subject is the project's (default `EPQ`); the project, milestones, production log, sources and daily word counts are `lt_records` kinds `epq_*` under the study section (`src/features/epq/actions.ts`). No migration.
 - Maths → `lt_records` kinds `sitting` (a paper, real or practice) and `problem`; a real contest with a date also has an `lt_events` row tagged `data.maths`.
 - Hideout (review, cards, check-ins, niggles, gear, predictions, capsules, rituals) → `lt_records` with `hq_*` kinds under the cabinet section (`src/features/hq/store.ts`). A row holds 32 KB at most, so long text needs a limit.
 - Album (a face and memories per day) → one `lt_records` row per photo, kind `album_shot`, under the cabinet section (`src/features/album/store.ts`). The image is a blob on the device until sync uploads it to Curio Cabinet's private `photos` bucket (`src/lib/photos.ts`); the row keeps the path and a small inline thumbnail.

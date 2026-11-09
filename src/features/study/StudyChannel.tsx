@@ -18,6 +18,8 @@ import { Sheet } from '../../ui/i/Sheet';
 import { isStudyDetail, LEVEL_LABEL, markOf, minutesBySubject, pct, STUDY_KINDS, subjectMarks, subjectsOf, topicOf, type HardTopic, type Mark, type StudyDetail } from './model';
 import './study.css';
 import { StudyArt } from './Art';
+import { navigate, useRoute } from '../../app/router';
+import { EPQ_KANJI, EpqPage, epqLine, useEpq } from '../epq/EpqPage';
 import './theme.css';
 
 const subjectsNow = () => subjectsOf(prefValue(data.get(), 'study_subjects'));
@@ -196,7 +198,37 @@ registerSheet('study-mark', MarkSheet);
 registerSheet('study-topic', TopicSheet);
 registerSheet('study-subjects', SubjectsSheet);
 
+/** The way into the EPQ page, with its countdown and hours. */
+function EpqDoor() {
+  const today = useToday();
+  const s = useEpq();
+  const p = s.project;
+  return (
+    <button type="button" className="epq-door" onClick={() => navigate('study', ['epq'])}>
+      <span className="epq-door__k" aria-hidden="true">
+        {EPQ_KANJI}
+      </span>
+      <span className="epq-door__t">
+        <b>{p ? p.title || 'EPQ' : 'EPQ'}</b>
+        <small>{epqLine(s, today)}</small>
+      </span>
+      <span aria-hidden="true">▶</span>
+    </button>
+  );
+}
+
 export function StudyChannel() {
+  const route = useRoute();
+  if (route.rest[0] === 'epq')
+    return (
+      <div style={accent('study')}>
+        <EpqPage />
+      </div>
+    );
+  return <StudyDesk />;
+}
+
+function StudyDesk() {
   const today = useToday();
   const st = useStore(data, (s) => s);
   const subjects = subjectsOf(prefValue(st, 'study_subjects'));
@@ -217,6 +249,7 @@ export function StudyChannel() {
       <button type="button" className="i-btn i-btn--sig i-btn--block" onClick={() => openSheet({ type: 'study' })}>
         <Icon name="plus" /> Log study
       </button>
+      <EpqDoor />
       <div className="i-meters" style={{ marginTop: 10 }}>
         <Meter value={formatMinutes(weekTotal)} label="This week" />
         <Meter value={exams[0] ? `${Math.round((Date.parse(exams[0].date) - Date.parse(today)) / 864e5)}d` : '—'} label={exams[0] ? `To ${exams[0].event.title}` : 'No exams set'} />

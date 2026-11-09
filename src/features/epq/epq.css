@@ -1,0 +1,380 @@
+/* 探 EPQ: lives inside Study, so it wears the chalkboard; these are its own pieces. */
+.epq-back {
+  margin: 4px 0 6px;
+}
+.epq-head {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: center;
+  padding: 14px 14px 14px 12px;
+  border-radius: 10px;
+  background: var(--surf);
+  box-shadow: inset 0 0 0 1px var(--rule);
+}
+.epq-head__k {
+  font-size: 40px;
+  line-height: 1;
+  color: var(--c-study);
+}
+.epq-head__t small {
+  font-family: var(--f-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--fg-3);
+}
+.epq-head__t h1 {
+  margin: 2px 0 0;
+  font-size: 20px;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+}
+.epq-head__t p {
+  margin: 4px 0 0;
+  font-size: 13px;
+  color: var(--fg-2);
+}
+.epq-head__due {
+  display: grid;
+  justify-items: center;
+  gap: 1px;
+  min-width: 72px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--c-study) 16%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--c-study) 50%, transparent);
+}
+.epq-head__due b {
+  font-family: var(--f-mono);
+  font-size: 18px;
+  color: var(--c-study);
+}
+.epq-head__due span {
+  font-size: 11px;
+  color: var(--fg-2);
+}
+.epq-head__due i {
+  font-style: normal;
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--fg-3);
+}
+
+.epq-tabs {
+  display: flex;
+  gap: 6px;
+  margin: 12px 0 4px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.epq-tab {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 40px;
+  padding: 0 14px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--fg-2);
+  box-shadow: inset 0 0 0 1px var(--rule);
+}
+.epq-tab small {
+  font-family: var(--f-mono);
+  font-size: 10.5px;
+  color: var(--fg-3);
+}
+.epq-tab[aria-current='page'] {
+  color: var(--bg);
+  background: var(--c-study);
+  box-shadow: none;
+}
+.epq-tab[aria-current='page'] small {
+  color: inherit;
+}
+
+.epq-welcome {
+  display: grid;
+  gap: 12px;
+  margin-top: 12px;
+}
+.epq-welcome p {
+  margin: 0;
+  line-height: 1.5;
+}
+
+.epq-acts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 12px 0 10px;
+}
+.epq-acts .i-btn {
+  flex: 1 1 auto;
+}
+.epq-nudge {
+  margin: 0 0 10px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  font-size: 13px;
+  color: var(--fg-2);
+  background: color-mix(in srgb, var(--c-study) 10%, transparent);
+}
+
+.epq-paces {
+  display: grid;
+  gap: 14px;
+  margin-top: 10px;
+}
+.epq-pace__h {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 13px;
+}
+.epq-pace__bar {
+  position: relative;
+  display: block;
+  height: 8px;
+  margin: 6px 0 5px;
+  border-radius: 4px;
+  background: var(--rule);
+  overflow: visible;
+}
+.epq-pace__bar i {
+  display: block;
+  width: var(--p);
+  height: 100%;
+  border-radius: 4px;
+  background: var(--c-study);
+}
+.epq-pace__bar em {
+  position: absolute;
+  top: -3px;
+  bottom: -3px;
+  left: var(--e);
+  width: 2px;
+  background: var(--fg);
+  opacity: 0.7;
+}
+.epq-pace small {
+  font-size: 12px;
+  color: var(--fg-2);
+}
+
+.epq-ms {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+  padding: 2px 0;
+}
+.epq-ms + .epq-ms {
+  border-top: 1px solid var(--rule);
+}
+.epq-ms__ck {
+  width: 28px;
+  height: 28px;
+  margin: 8px 0;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-weight: 900;
+  color: var(--bg);
+  box-shadow: inset 0 0 0 2px var(--fg-3);
+}
+.epq-ms.is-done .epq-ms__ck {
+  background: var(--ok);
+  box-shadow: none;
+}
+.epq-ms.is-late .epq-ms__ck {
+  box-shadow: inset 0 0 0 2px var(--warn);
+}
+.epq-ms.is-next .epq-ms__ck {
+  box-shadow: inset 0 0 0 2px var(--c-study);
+}
+.epq-ms__t {
+  display: grid;
+  gap: 1px;
+  min-height: 44px;
+  text-align: left;
+  align-content: center;
+}
+.epq-ms__t b {
+  font-size: 14px;
+}
+.epq-ms.is-done .epq-ms__t b {
+  color: var(--fg-3);
+  text-decoration: line-through;
+}
+.epq-ms__t small {
+  font-size: 12px;
+  color: var(--fg-3);
+}
+.epq-ms.is-late .epq-ms__t small {
+  color: var(--warn);
+}
+.epq-ms.is-soon .epq-ms__t small,
+.epq-ms.is-next .epq-ms__t small {
+  color: var(--c-study);
+}
+.epq-empty {
+  display: grid;
+  gap: 10px;
+  padding: 12px 0;
+}
+
+.epq-weeks {
+  display: grid;
+  grid-template-columns: repeat(10, minmax(0, 1fr));
+  align-items: end;
+  gap: 6px;
+  height: 110px;
+}
+.epq-weeks__w {
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto;
+  align-items: end;
+  height: 100%;
+}
+.epq-weeks__w i {
+  display: block;
+  min-height: 2px;
+  border-radius: 3px 3px 0 0;
+  background: var(--c-study);
+}
+.epq-weeks__w small {
+  height: 14px;
+  font-family: var(--f-mono);
+  font-size: 9.5px;
+  text-align: center;
+  color: var(--fg-3);
+}
+
+.epq-log small {
+  white-space: pre-line;
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.epq-log__next {
+  color: var(--c-study) !important;
+}
+.epq-kind {
+  font-family: var(--f-mono);
+  font-size: 10px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  padding: 2px 6px;
+  margin-right: 4px;
+  border-radius: 4px;
+  box-shadow: inset 0 0 0 1px currentColor;
+  color: var(--c-study);
+}
+.epq-kind.is-decision {
+  color: var(--ok);
+}
+.epq-kind.is-problem {
+  color: var(--warn);
+}
+.epq-kind.is-reflection {
+  color: var(--fg-2);
+}
+
+.epq-src {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+}
+.epq-src + .epq-src {
+  border-top: 1px solid var(--rule);
+}
+.epq-src .i-row {
+  border: 0;
+}
+.epq-src__notes {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.epq-src__use {
+  min-height: 36px;
+  padding: 0 10px;
+  border-radius: 999px;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--fg-3);
+  box-shadow: inset 0 0 0 1px var(--rule);
+}
+.epq-src__use[aria-checked='true'] {
+  color: var(--bg);
+  background: var(--c-study);
+  box-shadow: none;
+}
+.epq-trust {
+  font-family: var(--f-mono);
+  font-size: 10px;
+  text-transform: uppercase;
+  padding: 3px 6px;
+  border-radius: 5px;
+  box-shadow: inset 0 0 0 1px currentColor;
+}
+.epq-trust.is-3 {
+  color: var(--ok);
+}
+.epq-trust.is-2 {
+  color: var(--c-study);
+}
+.epq-trust.is-1 {
+  color: var(--warn);
+}
+.epq-refs {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding-left: 32px;
+  font-size: 13px;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+/* Study's way in */
+.epq-door {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: center;
+  width: 100%;
+  margin-top: 10px;
+  padding: 10px 14px;
+  text-align: left;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--c-study) 12%, var(--surf));
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--c-study) 40%, transparent);
+}
+.epq-door__k {
+  font-size: 26px;
+  line-height: 1;
+  color: var(--c-study);
+}
+.epq-door__t {
+  display: grid;
+  gap: 1px;
+  min-width: 0;
+}
+.epq-door__t b {
+  font-size: 14px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.epq-door__t small {
+  font-size: 12px;
+  color: var(--fg-2);
+}
