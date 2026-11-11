@@ -13,6 +13,10 @@ import { peopleLine } from '../people/PeoplePage';
 import { usePeople } from '../people/store';
 import { placesLine } from '../places/PlacesPage';
 import { usePlaces } from '../places/store';
+import { stageHomeLine } from '../stage/StagePage';
+import { useShows } from '../stage/store';
+import { data } from '../../data/store';
+import { useStore } from '../../lib/createStore';
 import { LIFE, LIFE_IDS, type LifeId } from './Frame';
 
 export function LifeDoors() {
@@ -23,6 +27,8 @@ export function LifeDoors() {
   const people = usePeople();
   const media = useMedia();
   const places = usePlaces();
+  const shows = useShows();
+  const st = useStore(data, (x) => x);
   const c = hq.checkIns.find((x) => x.date === today);
   const streak = checkInStreak(hq.checkIns, today);
   const lines: Record<LifeId, string> = {
@@ -31,6 +37,7 @@ export function LifeDoors() {
     people: peopleLine(people, today),
     media: mediaLine(media, today),
     places: placesLine(places, today),
+    stage: stageHomeLine(st, shows, today),
   };
   return (
     <section className="h-sec" aria-label="Life">

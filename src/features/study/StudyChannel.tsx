@@ -101,7 +101,7 @@ function MarkSheet({ spec }: { spec: SheetSpec }) {
               Delete
             </button>
           )}
-          <button type="button" className="i-btn i-btn--sig i-btn--block" disabled={!valid} onClick={() => (saveRecord('study', 'study_mark', { subject, title: title.trim().slice(0, 80), score: s, outOf: o, date }, rec?.id), closeSheet())}>
+          <button type="button" className="i-btn i-btn--sig i-btn--block" disabled={!valid} onClick={() => (saveRecord('study', 'study_mark', { ...(rec?.data ?? {}), subject, title: title.trim().slice(0, 80), score: s, outOf: o, date }, rec?.id), closeSheet())}>
             Save mark
           </button>
         </>
@@ -333,6 +333,9 @@ function StudyDesk() {
           <p className="i-note" style={{ padding: '12px 0' }}>Test and homework marks go here, per subject.</p>
         )}
       </div>
+      <button type="button" className="i-link" onClick={() => navigate('stage', ['tests'])}>
+        Tests on the Stage: guesses, revision before each, trends →
+      </button>
 
       <H2 aside={`${sessions.length} sessions`}>Recent sessions</H2>
       <div className="i-pnl i-pnl--flush">

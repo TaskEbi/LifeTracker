@@ -1,0 +1,65 @@
+/* The repertoire list, inside the violin section's recital-stage look. */
+.rp-h1 {
+  margin: 8px 0 10px;
+  font-size: 24px;
+}
+.rp-acts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 12px 0;
+}
+.rp-acts .i-btn {
+  flex: 1 1 auto;
+}
+.rp-composers {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0 0 10px;
+}
+.rp-chip {
+  min-height: 34px;
+  padding: 0 12px;
+  border-radius: 999px;
+  font-size: 13px;
+  box-shadow: inset 0 0 0 1px var(--rule);
+}
+.rp-chip small {
+  margin-left: 4px;
+  font-family: var(--f-mono);
+  color: var(--fg-3);
+}
+.rp-chip[aria-pressed='true'] {
+  color: #111;
+  background: var(--c);
+  box-shadow: none;
+}
+.rp-chip[aria-pressed='true'] small {
+  color: inherit;
+}
+.rp-tools {
+  display: grid;
+  gap: 8px;
+  margin: 10px 0 4px;
+}
+.rp-composer {
+  font-weight: 500;
+  color: var(--fg-2);
+}
+.rp-row .i-row__t small {
+  white-space: normal;
+}
+.rp-perf {
+  display: grid;
+  place-items: center;
+  min-width: 40px;
+  font-size: 18px;
+  line-height: 1;
+  color: var(--c);
+}
+.rp-perf small {
+  font-family: var(--f-mono);
+  font-size: 11px;
+  color: var(--fg-3);
+}

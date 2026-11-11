@@ -28,6 +28,7 @@ import { MoneyPage } from '../features/money/MoneyPage';
 import { PeoplePage } from '../features/people/PeoplePage';
 import { MediaPage } from '../features/media/MediaPage';
 import { PlacesPage } from '../features/places/PlacesPage';
+import { StagePage } from '../features/stage/StagePage';
 
 export const sectionViews: Partial<Record<RouteName, ComponentType>> = {
   violin: ViolinChannel,
@@ -55,4 +56,5 @@ export const sectionViews: Partial<Record<RouteName, ComponentType>> = {
   people: PeoplePage,
   media: MediaPage,
   places: PlacesPage,
+  stage: StagePage,
 };

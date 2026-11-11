@@ -53,7 +53,14 @@ function SportSheet({ spec }: { spec: SheetSpec }) {
     }
   };
   const save = () => {
-    const detail: SportDetail = distance ? { sport, km: Math.round(km * 100) / 100, ...(route.trim() ? { route: route.trim().slice(0, 80) } : {}) } : { sport, type, ...(type === 'match' && score.trim() ? { score: score.trim().slice(0, 60) } : {}) };
+    const base: SportDetail = distance ? { sport, km: Math.round(km * 100) / 100, ...(route.trim() ? { route: route.trim().slice(0, 80) } : {}) } : { sport, type, ...(type === 'match' && score.trim() ? { score: score.trim().slice(0, 60) } : {}) };
+    // Keep what the Stage added (opponent, sets, stats, race name and time, how it went) when it's the same sport.
+    const keep: Record<string, unknown> = pd && pd.sport === sport ? { ...(pd as unknown as Record<string, unknown>) } : {};
+    for (const k of ['sport', 'km', 'route', 'type', 'score']) delete keep[k];
+    if (keep.sets && score.trim() !== (pd?.score ?? '')) delete keep.sets; // a new score typed here replaces the Stage's sets
+    // The race time goes if the distance or the minutes were changed here.
+    if (keep.secs && (pd?.km !== base.km || Math.max(1, Math.round(Number(keep.secs) / 60)) !== minutes)) delete keep.secs;
+    const detail = { ...keep, ...base } as SportDetail;
     let err: string | null = null;
     withReward(() => {
       const r = saveSession({ section: 'sports', date, minutes, note, subcategory: info.name, detail: detail as unknown as Record<string, unknown> }, editId);
@@ -185,6 +192,9 @@ function SportsMain() {
           <p className="i-note" style={{ padding: '12px 0' }}>Nothing logged{sport === 'all' ? '' : ` for ${sportInfo(sport)!.name.toLowerCase()}`} yet.</p>
         )}
       </div>
+      <button type="button" className="i-link" onClick={() => navigate('stage', ['games'])}>
+        Matches and races on the Stage: record, form, sets, bests →
+      </button>
       <Source kind="off">Garmin Connect and Strava aren't connected. Strava's API allows authorised activity imports; it needs an app registration and is listed as a future integration.</Source>
 
       <div className="i-cols">

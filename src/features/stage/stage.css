@@ -1,0 +1,692 @@
+/* 本番 The Stage: a theatre. Red curtain over the header, ticket stubs for results, a marquee for what's coming up,
+   a trophy shelf. --tc is each kind's colour (violin orange, tests violet, matches red…). */
+.stg-page {
+  --curtain: #8f1d2c;
+  --curtain-2: #5a0f1a;
+  --gold: #e8c05a;
+}
+
+/* the curtain: velvet folds, a scalloped valance and a spotlight on the title */
+.stg-page .lf-head {
+  position: relative;
+  overflow: hidden;
+  padding-top: 28px;
+  color: #fff4ea;
+  background:
+    radial-gradient(ellipse 60% 90% at 30% 110%, rgba(255, 236, 190, 0.28), transparent 70%),
+    repeating-linear-gradient(90deg, rgba(0, 0, 0, 0.28) 0 6px, rgba(255, 255, 255, 0.05) 12px, rgba(0, 0, 0, 0.18) 22px, rgba(0, 0, 0, 0.32) 28px),
+    linear-gradient(180deg, var(--curtain), var(--curtain-2));
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.4), inset 0 -10px 18px -10px rgba(0, 0, 0, 0.6);
+}
+.stg-page .lf-head::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto;
+  height: 18px;
+  background:
+    radial-gradient(circle at 12px -2px, var(--curtain-2) 11px, transparent 12px) 0 0 / 24px 16px repeat-x,
+    linear-gradient(180deg, #3d0911, var(--curtain-2));
+  background-size: 24px 16px, 100% 6px;
+  background-repeat: repeat-x, no-repeat;
+  border-bottom: 2px solid var(--gold);
+  border-bottom-color: transparent;
+  box-shadow: 0 2px 0 -1px color-mix(in srgb, var(--gold) 60%, transparent);
+}
+.stg-page .lf-head__k {
+  color: var(--gold);
+  text-shadow: 0 0 18px rgba(255, 210, 120, 0.55);
+}
+.stg-page .lf-head__t p {
+  color: rgba(255, 240, 225, 0.82);
+}
+.stg-count b {
+  color: var(--gold);
+  letter-spacing: 0.02em;
+}
+.stg-count span {
+  max-width: 110px;
+  color: rgba(255, 240, 225, 0.75);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.stg {
+  display: grid;
+  gap: 0;
+}
+.stg .i-h2 {
+  margin-top: 16px;
+}
+
+/* ─── ticket stubs ─────────────────────────────────────────────────────── */
+.stg-tickets {
+  display: grid;
+  gap: 8px;
+}
+.stg-ticket {
+  --tc: var(--lc);
+  position: relative;
+  display: grid;
+  grid-template-columns: 58px minmax(0, 1fr) auto;
+  align-items: stretch;
+  min-height: 66px;
+  border-radius: 8px;
+  text-align: left;
+  background: var(--surf);
+  box-shadow: inset 0 0 0 1px var(--rule);
+}
+.stg-ticket__stub {
+  position: relative;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 2px;
+  border-radius: 8px 0 0 8px;
+  background: color-mix(in srgb, var(--tc) 22%, var(--surf));
+  border-right: 2px dashed color-mix(in srgb, var(--tc) 45%, var(--rule));
+}
+/* the punched notches either side of the tear line */
+.stg-ticket__stub::before,
+.stg-ticket__stub::after {
+  content: '';
+  position: absolute;
+  right: -7px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--bg);
+}
+.stg-ticket__stub::before {
+  top: -6px;
+}
+.stg-ticket__stub::after {
+  bottom: -6px;
+}
+.stg-ticket__stub i {
+  font-style: normal;
+  font-size: 24px;
+  line-height: 1;
+  color: color-mix(in srgb, var(--tc) 75%, var(--fg));
+}
+.stg-ticket__stub small {
+  font-family: var(--f-mono);
+  font-size: 9.5px;
+  letter-spacing: 0.04em;
+  color: #e9792b;
+}
+.stg-ticket__t {
+  display: grid;
+  align-content: center;
+  gap: 2px;
+  min-width: 0;
+  padding: 8px 10px 8px 14px;
+}
+.stg-ticket__t em {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-style: normal;
+  font-family: var(--f-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--fg-3);
+}
+.stg-ticket__t b {
+  font-size: 14.5px;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+}
+.stg-ticket__t small {
+  font-size: 12px;
+  color: var(--fg-2);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.stg-ticket__r {
+  display: grid;
+  align-content: center;
+  justify-items: end;
+  gap: 2px;
+  max-width: 132px;
+  padding: 8px 12px 8px 4px;
+  text-align: right;
+}
+.stg-ticket__r b {
+  font-family: var(--f-mono);
+  font-size: 13.5px;
+  line-height: 1.2;
+}
+.stg-ticket.is-win .stg-ticket__r b {
+  color: var(--ok);
+}
+.stg-ticket.is-loss .stg-ticket__r b {
+  color: var(--fg-2);
+}
+.stg-stars {
+  font-size: 11px;
+  letter-spacing: 1px;
+  color: #e8a83a;
+}
+.stg-badge {
+  padding: 1px 6px;
+  border-radius: 999px;
+  font-size: 9.5px;
+  font-weight: 800;
+  color: #111;
+  background: var(--gold, #e8c05a);
+}
+
+/* ─── coming up: marquee cards with bulbs ─────────────────────────────── */
+.stg-marquee {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 10px;
+}
+.stg-up {
+  --tc: var(--lc);
+  position: relative;
+  display: grid;
+  gap: 6px;
+  padding: 14px 14px 12px;
+  border-radius: 10px;
+  background: linear-gradient(160deg, color-mix(in srgb, var(--tc) 14%, var(--surf)), var(--surf) 70%);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--tc) 40%, var(--rule));
+}
+/* a row of bulbs along the top, gently chasing */
+.stg-up::before {
+  content: '';
+  position: absolute;
+  inset: 4px 10px auto;
+  height: 4px;
+  background: radial-gradient(circle, #ffe7a3 0 1.6px, transparent 2.2px) 0 0 / 12px 4px repeat-x;
+  opacity: 0.9;
+  animation: stg-bulbs 1.6s steps(2) infinite;
+}
+@keyframes stg-bulbs {
+  50% {
+    background-position: 6px 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .stg-up::before {
+    animation: none;
+  }
+}
+.stg-up__top {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+}
+.stg-up__k {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  font-size: 22px;
+  color: color-mix(in srgb, var(--tc) 75%, var(--fg));
+  background: color-mix(in srgb, var(--tc) 20%, transparent);
+}
+.stg-up__t {
+  display: grid;
+  gap: 1px;
+  min-width: 0;
+}
+.stg-up__t em {
+  font-style: normal;
+  font-family: var(--f-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--fg-3);
+}
+.stg-up__t b {
+  font-size: 15px;
+  overflow-wrap: anywhere;
+}
+.stg-up__t small {
+  font-size: 12px;
+  color: var(--fg-2);
+}
+.stg-up__n {
+  display: grid;
+  justify-items: center;
+  min-width: 44px;
+}
+.stg-up__n b {
+  font-family: var(--f-mono);
+  font-size: 26px;
+  line-height: 1;
+  color: color-mix(in srgb, var(--tc) 70%, var(--fg));
+}
+.stg-up__n small {
+  font-size: 10.5px;
+  color: var(--fg-3);
+}
+.stg-up .lf-bar i {
+  background: var(--tc);
+}
+.stg-up__goal {
+  margin: 0;
+  font-size: 13px;
+  color: var(--fg-2);
+}
+.stg-up__acts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.stg-last {
+  margin: 0 0 4px;
+  padding: 6px 10px;
+  border-left: 3px solid var(--tc, var(--lc));
+  border-radius: 0 6px 6px 0;
+  font-size: 13px;
+  color: var(--fg-2);
+  background: color-mix(in srgb, var(--tc, var(--lc)) 9%, transparent);
+}
+.stg-last q {
+  font-style: italic;
+  color: var(--fg);
+}
+.stg-await {
+  --lc: var(--tc);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+/* ─── the trophy shelf ────────────────────────────────────────────────── */
+.stg-shelf {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(118px, 1fr));
+  gap: 14px 8px;
+  padding: 12px 10px 16px;
+  border-radius: 10px;
+  background:
+    linear-gradient(180deg, transparent calc(100% - 10px), #6b4426 calc(100% - 10px), #4a2d18) bottom / 100% 100% no-repeat,
+    color-mix(in srgb, #6b4426 10%, var(--surf));
+  box-shadow: inset 0 0 0 1px var(--rule);
+}
+.stg-trophy {
+  --m: var(--t-bronze, #c98b4a);
+  display: grid;
+  justify-items: center;
+  gap: 2px;
+  padding: 4px 2px 6px;
+  text-align: center;
+}
+.stg-trophy.is-gold {
+  --m: var(--t-gold, #e8c05a);
+}
+.stg-trophy.is-silver {
+  --m: var(--t-silver, #c3ccd6);
+}
+.stg-trophy__m {
+  display: grid;
+  place-items: center;
+  width: 50px;
+  height: 50px;
+  margin-bottom: 4px;
+  border-radius: 50%;
+  font-size: 22px;
+  color: #1a1206;
+  background: radial-gradient(circle at 35% 30%, #fff8 0 12%, transparent 40%), var(--m);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--m) 50%, transparent), 0 4px 10px rgba(0, 0, 0, 0.35);
+}
+.stg-trophy b {
+  font-size: 12.5px;
+}
+.stg-trophy small {
+  max-width: 100%;
+  font-size: 11px;
+  color: var(--fg-2);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ─── tests ───────────────────────────────────────────────────────────── */
+.stg-facts {
+  display: grid;
+  gap: 8px;
+  margin: 4px 0;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--lc) 8%, var(--surf));
+  box-shadow: inset 0 0 0 1px var(--rule);
+}
+.stg-facts p {
+  margin: 0;
+  font-size: 13.5px;
+  line-height: 1.5;
+}
+.stg-subjects {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 8px;
+}
+.stg-subject {
+  display: grid;
+  gap: 6px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: var(--surf);
+  box-shadow: inset 3px 0 0 var(--c-study), inset 0 0 0 1px var(--rule);
+}
+.stg-subject header {
+  display: flex;
+  justify-content: space-between;
+  gap: 6px;
+  font-size: 14px;
+}
+.stg-subject header small {
+  font-size: 10px;
+  color: var(--fg-3);
+}
+.stg-subject > small {
+  font-size: 11.5px;
+  color: var(--fg-2);
+}
+.stg-spark {
+  display: flex;
+  align-items: flex-end;
+  gap: 3px;
+  height: 40px;
+}
+.stg-spark i {
+  flex: 1;
+  max-width: 14px;
+  border-radius: 2px 2px 0 0;
+  background: color-mix(in srgb, var(--c-study) 70%, transparent);
+}
+.stg-spark i:last-child {
+  background: var(--c-study);
+}
+
+/* ─── games ───────────────────────────────────────────────────────────── */
+.stg-rec {
+  display: grid;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+.stg-rec__form {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  font-size: 13px;
+  color: var(--fg-2);
+}
+.stg-form {
+  display: inline-flex;
+  gap: 4px;
+}
+.stg-form i {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 4px;
+  font-style: normal;
+  font-family: var(--f-mono);
+  font-size: 11px;
+  font-weight: 800;
+  color: #111;
+  background: var(--fg-3);
+}
+.stg-form i.is-win {
+  background: var(--ok);
+}
+.stg-form i.is-loss {
+  background: #ff6b6b;
+}
+.stg-avgs {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+  gap: 8px;
+}
+.stg-avgs span {
+  display: grid;
+  gap: 1px;
+}
+.stg-avgs b {
+  font-family: var(--f-mono);
+  font-size: 18px;
+}
+.stg-avgs small {
+  font-size: 11px;
+  color: var(--fg-3);
+}
+.stg-bests {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.stg-best {
+  display: grid;
+  gap: 2px;
+  padding: 10px;
+  border-radius: 10px;
+  text-align: left;
+  background: color-mix(in srgb, var(--c-sports) 12%, var(--surf));
+  box-shadow: inset 0 0 0 1px var(--rule);
+}
+.stg-best b {
+  font-size: 17px;
+}
+.stg-best small {
+  font-size: 11px;
+  color: var(--fg-2);
+}
+
+/* ─── lessons ─────────────────────────────────────────────────────────── */
+.stg-notes {
+  display: grid;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+.stg-notes h3 {
+  margin: 6px 0 2px;
+  font-size: 14px;
+}
+.stg-notes h3 span {
+  color: color-mix(in srgb, var(--tc) 75%, var(--fg));
+}
+.stg-note {
+  display: grid;
+  gap: 3px;
+  padding: 8px 12px;
+  border-left: 3px solid var(--tc);
+  border-radius: 0 8px 8px 0;
+  text-align: left;
+  background: var(--surf);
+  font-size: 13px;
+  line-height: 1.45;
+}
+.stg-note small {
+  font-size: 11.5px;
+  color: var(--fg-3);
+}
+.stg-note b {
+  margin-right: 4px;
+  font-size: 11px;
+  font-family: var(--f-mono);
+  text-transform: uppercase;
+  color: var(--fg-3);
+}
+
+/* ─── sheets ──────────────────────────────────────────────────────────── */
+.stg-kinds {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 8px;
+}
+.stg-kind {
+  display: grid;
+  gap: 3px;
+  justify-items: start;
+  padding: 12px;
+  border-radius: 10px;
+  text-align: left;
+  background: linear-gradient(150deg, color-mix(in srgb, var(--tc) 16%, var(--surf)), var(--surf) 70%);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--tc) 35%, var(--rule));
+}
+.stg-kind span {
+  font-size: 24px;
+  line-height: 1;
+  color: color-mix(in srgb, var(--tc) 75%, var(--fg));
+}
+.stg-kind b {
+  font-size: 14px;
+}
+.stg-kind small {
+  font-size: 11.5px;
+  line-height: 1.35;
+  color: var(--fg-2);
+}
+.stg-two {
+  display: flex;
+  gap: 8px;
+  align-items: end;
+}
+.stg-two > * {
+  flex: 1 1 0;
+  min-width: 0;
+}
+.stg-pct {
+  flex: 0 0 auto;
+  min-width: 48px;
+  padding-bottom: 12px;
+  font-family: var(--f-mono);
+  text-align: right;
+}
+.stg-scale {
+  display: flex;
+  gap: 6px;
+}
+.stg-scale button {
+  flex: 1;
+  min-height: 42px;
+  border-radius: 8px;
+  font-family: var(--f-mono);
+  font-weight: 700;
+  color: var(--fg-2);
+  box-shadow: inset 0 0 0 1px var(--rule);
+}
+.stg-scale button[aria-pressed='true'] {
+  color: #111;
+  background: var(--sig);
+  box-shadow: none;
+}
+.stg-scale--stars button {
+  font-size: 22px;
+  color: var(--fg-3);
+}
+.stg-scale--stars button.is-on,
+.stg-scale--stars button[aria-pressed='true'] {
+  color: #e8a83a;
+  background: none;
+  box-shadow: inset 0 0 0 1px var(--rule);
+}
+.stg-scale__w {
+  font-weight: 600;
+  color: var(--fg-2);
+}
+.stg-sub {
+  margin: 10px 0 0;
+  padding-top: 10px;
+  font-size: 14px;
+  border-top: 1px solid var(--rule);
+}
+.stg-before summary {
+  min-height: 40px;
+  padding: 10px 0;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--fg-2);
+  cursor: pointer;
+}
+.stg-before[open] {
+  display: grid;
+  gap: 10px;
+}
+.stg-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 6px;
+}
+.stg-stat {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  padding: 4px 4px 4px 10px;
+  border-radius: 8px;
+  font-size: 13px;
+  box-shadow: inset 0 0 0 1px var(--rule);
+}
+.stg-stat__c {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+.stg-stat__c button {
+  width: 36px;
+  height: 36px;
+  border-radius: 6px;
+  font-size: 18px;
+  background: var(--surf-2);
+}
+.stg-stat__c output {
+  min-width: 24px;
+  font-family: var(--f-mono);
+  text-align: center;
+}
+.stg-pieces {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  max-height: 220px;
+  overflow-y: auto;
+}
+.stg-checks {
+  display: grid;
+  gap: 4px;
+}
+.stg-check {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 42px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  text-align: left;
+  font-size: 14px;
+  box-shadow: inset 0 0 0 1px var(--rule);
+}
+.stg-check i {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 22px;
+  height: 22px;
+  border-radius: 5px;
+  font-style: normal;
+  font-weight: 800;
+  color: #111;
+  box-shadow: inset 0 0 0 2px var(--fg-3);
+}
+.stg-check[aria-checked='true'] {
+  color: var(--fg-2);
+}
+.stg-check[aria-checked='true'] i {
+  background: var(--ok);
+  box-shadow: none;
+}

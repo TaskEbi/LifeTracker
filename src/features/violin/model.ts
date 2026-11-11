@@ -41,7 +41,16 @@ export interface Piece {
   status: string;
   group: string;
   archived: boolean;
+  /** Repertoire: when you started and finished it, "2024" or "2024-09"; '' if not known. */
+  started: string;
+  finished: string;
+  /** A grade or level, e.g. "Grade 6" or "ABRSM 7". */
+  level: string;
+  note: string;
+  fav: boolean;
 }
+
+const ym = (v: unknown) => (typeof v === 'string' && /^\d{4}(-(0[1-9]|1[0-2]))?$/.test(v) ? v : '');
 
 export function pieceOf(r: LtRecord): Piece {
   const d = r.data as Partial<Piece>;
@@ -53,10 +62,72 @@ export function pieceOf(r: LtRecord): Piece {
     status: typeof d.status === 'string' ? d.status : r.kind === 'scale' ? '' : 'Learning',
     group: typeof d.group === 'string' ? d.group : '',
     archived: !!r.archived_at,
+    started: ym(d.started),
+    finished: ym(d.finished),
+    level: typeof d.level === 'string' ? d.level.slice(0, 30) : '',
+    note: typeof d.note === 'string' ? d.note.slice(0, 600) : '',
+    fav: d.fav === true,
   };
 }
 
-export const PIECE_STATUSES = ['Learning', 'Polishing', 'Rehearsing', 'Performed', 'Shelved'] as const;
+export const PIECE_STATUSES = ['Learning', 'Polishing', 'Rehearsing', 'Performed', 'Learned', 'Shelved'] as const;
+
+// ─── repertoire ─────────────────────────────────────────────────────────────
+
+/** "Composer — Title" for lists. */
+export const pieceName = (p: Pick<Piece, 'composer' | 'title'>) => (p.composer ? `${p.composer} — ${p.title}` : p.title);
+
+/** The year a piece belongs to in the repertoire: finished, else started, else null. */
+export const pieceYear = (p: Pick<Piece, 'started' | 'finished'>): number | null => (p.finished ? +p.finished.slice(0, 4) : p.started ? +p.started.slice(0, 4) : null);
+
+/** "Sep 2024 – Mar 2025", "2023", "since Oct 2026" or ''. */
+export function pieceSpan(p: Pick<Piece, 'started' | 'finished' | 'archived'>): string {
+  const M = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  const f = (v: string) => (v.length > 4 ? `${M[+v.slice(5, 7) - 1]} ${v.slice(0, 4)}` : v);
+  if (p.started && p.finished) return p.started === p.finished ? f(p.started) : `${f(p.started)} – ${f(p.finished)}`;
+  if (p.finished) return f(p.finished);
+  if (p.started) return p.archived ? `from ${f(p.started)}` : `since ${f(p.started)}`;
+  return '';
+}
+
+export interface RepertoireLine {
+  composer: string;
+  title: string;
+  year: string;
+}
+/**
+ * Lines for adding many past pieces at once: "Composer — Title", "Composer: Title", "Composer - Title", or a title
+ * alone, each with an optional year at the end ("… 2023" or "… (2023)"). A line's year beats the default.
+ */
+export function parseRepertoire(text: string, defaultYear = ''): RepertoireLine[] {
+  const out: RepertoireLine[] = [];
+  for (const raw of text.split(/\r?\n/)) {
+    let line = raw.replace(/^\s*(?:[-*•·]|\d+[.)])\s+/, '').trim();
+    if (!line) continue;
+    let year = /^\d{4}$/.test(defaultYear) ? defaultYear : '';
+    const y = /[\s,]*\(?((?:19|20)\d{2})\)?\s*$/.exec(line);
+    if (y && y.index > 0) {
+      year = y[1];
+      line = line.slice(0, y.index).trim();
+    }
+    const m = /^(.{1,80}?)\s*(?:—|–|:|\s-\s)\s*(.+)$/.exec(line);
+    const composer = m ? m[1].trim() : '';
+    const title = (m ? m[2] : line).trim().slice(0, 120);
+    if (title) out.push({ composer: composer.slice(0, 80), title, year });
+  }
+  return out.slice(0, 100);
+}
+
+export type RepSort = 'year' | 'composer' | 'title';
+/** The repertoire in order: by year (newest first, undated last), composer, or title. */
+export function sortRepertoire<T extends Pick<Piece, 'composer' | 'title' | 'started' | 'finished' | 'archived'>>(list: T[], by: RepSort): T[] {
+  const name = (p: T) => p.title.toLowerCase();
+  if (by === 'title') return [...list].sort((a, b) => name(a).localeCompare(name(b)));
+  if (by === 'composer') return [...list].sort((a, b) => Number(!a.composer) - Number(!b.composer) || a.composer.localeCompare(b.composer) || name(a).localeCompare(name(b)));
+  // Current pieces first, then by the latest date known.
+  const key = (p: T) => (!p.archived ? '9999' : p.finished || p.started || '0000');
+  return [...list].sort((a, b) => key(b).localeCompare(key(a)) || name(a).localeCompare(name(b)));
+}
 
 // ─── statistics ─────────────────────────────────────────────────────────────
 

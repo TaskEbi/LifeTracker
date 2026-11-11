@@ -2,6 +2,9 @@ import { useMemo, useState } from 'react';
 import { navigate, useRoute } from '../../app/router';
 import { openSheet } from '../../app/sheets';
 import { PracticeRoom } from './PracticeRoom';
+import { Repertoire } from './Repertoire';
+import { useShows } from '../stage/store';
+import '../stage/sheets';
 import { sectionEntries, sectionRecords, setTargets, useTargets, useToday } from '../../data/lt';
 import { deleteSession } from '../../data/sessions';
 import { data } from '../../data/store';
@@ -46,6 +49,7 @@ function SessionRow({ s, names }: { s: Session; names: Map<string, string> }) {
 export function ViolinChannel() {
   const route = useRoute();
   if (route.rest[0] === 'room') return <PracticeRoom />;
+  if (route.rest[0] === 'repertoire') return <Repertoire />;
   return <Journal />;
 }
 
@@ -57,7 +61,6 @@ function Journal() {
   const records = useMemo(() => [...sectionRecords(st, 'violin', 'piece'), ...sectionRecords(st, 'violin', 'scale')].map(pieceOf), [st]);
   const names = useMemo(() => new Map(records.map((p) => [p.id, p.kind === 'piece' && p.composer ? `${p.composer} ${p.title}` : p.title])), [records]);
   const [shown, setShown] = useState(PAGE);
-  const [showPast, setShowPast] = useState(false);
 
   const weeks = weekTotals(sessions, today, 8);
   const thisWeek = weeks[weeks.length - 1];
@@ -67,7 +70,9 @@ function Journal() {
     [st.lt_events, today],
   );
   const current = records.filter((p) => !p.archived);
-  const past = records.filter((p) => p.archived);
+  const pieceCount = records.filter((p) => p.kind === 'piece').length;
+  const shows = useShows();
+  const pastShows = shows.filter((s) => s.type === 'violin').slice(0, 3);
 
   return (
     <div style={accent('violin')}>
@@ -121,6 +126,28 @@ function Journal() {
         ) : (
           <p className="i-note" style={{ padding: '12px 0' }}>No performances coming up. Add one with its date and pieces.</p>
         )}
+        {pastShows.map((s) => (
+          <button key={s.id} type="button" className="i-row" onClick={() => openSheet({ type: 'stage-log', editId: s.id })}>
+            <span className="i-row__t">
+              <b>{s.title}</b>
+              <small>
+                {shortDay(s.date)} · {s.kind}
+                {s.pieces.length ? ` · ${s.pieces.map((id) => names.get(id)).filter(Boolean).join(', ')}` : ''}
+              </small>
+            </span>
+            <span className="i-row__n" style={{ fontSize: 14 }}>
+              {s.result}
+            </span>
+          </button>
+        ))}
+      </div>
+      <div className="i-btns" style={{ marginTop: 6 }}>
+        <button type="button" className="i-link" onClick={() => openSheet({ type: 'stage-log', kind: 'violin' })}>
+          + Log how one went
+        </button>
+        <button type="button" className="i-link" onClick={() => navigate('stage')}>
+          All results on the Stage →
+        </button>
       </div>
 
       <div className="i-cols">
@@ -151,26 +178,9 @@ function Journal() {
             )}
           </div>
           <p className="i-note" style={{ marginTop: 6 }}>Minutes per piece only appear for sessions where you split the time.</p>
-          {past.length > 0 && (
-            <>
-              <button type="button" className="i-link" onClick={() => setShowPast(!showPast)}>
-                {showPast ? 'Hide' : 'Show'} past repertoire ({past.length})
-              </button>
-              {showPast && (
-                <div className="i-pnl i-pnl--flush">
-                  {past.map((p) => (
-                    <button key={p.id} type="button" className="i-row" onClick={() => openSheet({ type: 'violin-piece', editId: p.id })}>
-                      <span className="i-row__t">
-                        <b>{p.composer ? `${p.composer} — ${p.title}` : p.title}</b>
-                        <small>{itemStats(sessions, p.id).sessions} sessions</small>
-                      </span>
-                      <span className="i-tag">{(p.status || 'Archived').toUpperCase()}</span>
-                    </button>
-                  ))}
-                </div>
-              )}
-            </>
-          )}
+          <button type="button" className="i-btn i-btn--block" style={{ marginTop: 8 }} onClick={() => navigate('violin', ['repertoire'])}>
+            Repertoire: {pieceCount ? `all ${pieceCount} pieces` : 'every piece you’ve played'} →
+          </button>
         </div>
         <div>
           <H2 aside="min / week · 8 weeks">Weekly totals</H2>

@@ -12,14 +12,15 @@ export const LIFE = {
   people: { k: '人', name: 'People', c: '#6fd0ff', blurb: 'Birthdays, gifts, notes and time together' },
   media: { k: '観', name: 'Media', c: '#b48cff', blurb: 'Films, shows, anime, manga, music and games' },
   places: { k: '旅', name: 'Places', c: '#5fd39a', blurb: 'Where you’ve been, time outside and where next' },
+  stage: { k: '本', name: 'Stage', c: '#ff5a5f', blurb: 'Concerts, tests, matches and races: getting ready, the day, and after' },
 } as const;
 export type LifeId = keyof typeof LIFE;
 export const LIFE_IDS = Object.keys(LIFE) as LifeId[];
 
-export function LifePage({ id, line, aside, tabs, tab, children }: { id: LifeId; line?: ReactNode; aside?: ReactNode; tabs?: { id: string; label: string; n?: number }[]; tab?: string; children: ReactNode }) {
+export function LifePage({ id, line, aside, tabs, tab, className, children }: { id: LifeId; line?: ReactNode; aside?: ReactNode; tabs?: { id: string; label: string; n?: number }[]; tab?: string; className?: string; children: ReactNode }) {
   const l = LIFE[id];
   return (
-    <div className="lf" style={{ '--lc': l.c } as CSSProperties}>
+    <div className={`lf${className ? ` ${className}` : ''}`} style={{ '--lc': l.c } as CSSProperties}>
       <button type="button" className="i-link lf-back" onClick={() => navigate('home', ['more'])}>
         ◀ More
       </button>

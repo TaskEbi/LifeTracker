@@ -165,7 +165,8 @@ function NewEvent({ preset }: { preset: Record<string, unknown> }) {
       title, section: section === 'none' ? null : section, kind, date, note,
       start: allDay ? null : start, end: allDay ? null : end,
       repeat, count,
-      data: kind === 'performance' && pieces.length ? { pieces } : {},
+      // The Stage passes data.stage so it knows what kind of day this is (a talk, a race…).
+      data: { ...(typeof preset.stage === 'string' ? { stage: preset.stage } : {}), ...(kind === 'performance' && pieces.length ? { pieces } : {}) },
     });
     if ('error' in made) return setError(made.error);
     closeSheet();
