@@ -83,6 +83,18 @@ describe('the LifeTracker migration', () => {
     expect(r.rows.every((x) => x.relrowsecurity)).toBe(true);
   });
 
+  it('adds a members-only bucket for Album videos and leaves Curio Cabinet’s photos bucket as it was', async () => {
+    const r = await pg.query<{ id: string; public: boolean; file_size_limit: number; allowed_mime_types: string[] }>(`select id, public, file_size_limit, allowed_mime_types from storage.buckets order by id`);
+    expect(r.rows).toEqual([
+      { id: 'lt-videos', public: false, file_size_limit: 52428800, allowed_mime_types: ['video/mp4', 'video/quicktime', 'video/webm'] },
+      { id: 'photos', public: false, file_size_limit: 15728640, allowed_mime_types: ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/avif'] },
+    ]);
+    await as(member, `insert into storage.objects (bucket_id, name) values ('lt-videos', 'album-video/a.mp4')`);
+    expect(await as(member, `select name from storage.objects where bucket_id = 'lt-videos'`)).toEqual([{ name: 'album-video/a.mp4' }]);
+    expect(await as(stranger, `select name from storage.objects where bucket_id = 'lt-videos'`)).toEqual([]);
+    await expect(as(stranger, `insert into storage.objects (bucket_id, name) values ('lt-videos', 'album-video/b.mp4')`)).rejects.toThrow(/row-level security/);
+  });
+
   it('publishes the lt_ tables for realtime', async () => {
     const r = await pg.query<{ tablename: string }>(`select tablename from pg_publication_tables where pubname = 'supabase_realtime'`);
     for (const t of LT_TABLES) expect(r.rows.map((x) => x.tablename)).toContain(t);

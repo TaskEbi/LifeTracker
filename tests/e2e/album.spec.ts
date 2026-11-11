@@ -75,7 +75,11 @@ test('album: a face and memories for today, a caption and a cover, the contact s
   // it survives a reload (kept in this browser)
   await page.reload();
   await expect(page.getByRole('button', { name: 'Memory 1: Sunset from the bridge' })).toBeVisible();
-  await expect(page.getByText('Local only: photos stay in this browser')).toBeVisible();
+  await expect(page.getByText('Local only: photos and videos stay in this browser')).toBeVisible();
+
+  // a video the album can't keep says why (videos that play are in album-video.spec.ts)
+  await page.getByLabel('Choose memories').setInputFiles({ name: 'old.avi', mimeType: 'video/x-msvideo', buffer: Buffer.from('RIFF') });
+  await expect(page.getByText('That kind of video can’t be kept (MP4, MOV or WebM)')).toBeVisible();
 
   // the contact sheet has today
   await page.getByRole('navigation', { name: 'Album' }).getByRole('button', { name: /Contact sheet/ }).click();

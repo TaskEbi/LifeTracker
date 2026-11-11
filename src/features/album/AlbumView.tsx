@@ -12,11 +12,13 @@ import { data } from '../../data/store';
 import { toast } from '../../data/ui';
 import {
   albumStreak,
+  clipLength,
   coverOf,
   daysInYear,
   daysToReel,
   MEMORIES_PER_DAY,
   MONTH_NAMES,
+  VIDEO_MAX_SECONDS,
   onThisDay,
   reelOpen,
   reelOpensOn,
@@ -33,7 +35,8 @@ import { AlbumArt } from './Art';
 import { FaceCamera } from './Camera';
 import { Photo } from './Photo';
 import { ReelPlayer } from './Reel';
-import { addShot, useAlbum } from './store';
+import { addClip, addShot, useAlbum } from './store';
+import { isVideoFile, readClip } from './clip';
 import './ShotSheet';
 import './album.css';
 
@@ -119,17 +122,20 @@ function Day({ date, today, days }: { date: string; today: string; days: Map<str
     setDeveloping(take.length);
     const added: Shot[] = [];
     let failed = 0;
+    let why = '';
     for (const f of take) {
       try {
-        added.push(await addShot(f, date, 'memory'));
-      } catch {
+        added.push(isVideoFile(f) ? await addClip(await readClip(f), date) : await addShot(f, date, 'memory'));
+      } catch (e) {
         failed++;
+        why = isVideoFile(f) && e instanceof Error ? e.message : 'That photo couldn’t be read';
       }
       setDeveloping((n) => n - 1);
     }
     setDeveloping(0);
     const skipped = files.length - take.length;
-    if (failed) toast(`${failed} ${failed === 1 ? 'photo' : 'photos'} couldn’t be read${added.length ? ` · ${added.length} added` : ''}`);
+    if (failed === 1 && take.length === 1) toast(why);
+    else if (failed) toast(`${failed} couldn’t be kept${added.length ? ` · ${added.length} added` : ''} · ${why}`);
     else if (added.length === 1 && !skipped) openSheet({ type: 'album-shot', id: added[0].id, fresh: true });
     else toast(`${added.length} ${added.length === 1 ? 'memory' : 'memories'} added${skipped ? ` · ${skipped} left out (${MEMORIES_PER_DAY} a day)` : ''}`);
   };
@@ -185,7 +191,7 @@ function Day({ date, today, days }: { date: string; today: string; days: Map<str
         <ul className="al-prints" aria-label={`Memories, ${shortDay(date)}`}>
           {memories.map((m, i) => (
             <li key={m.id} className="al-print" style={{ '--r': `${((i * 41) % 9) - 4}deg` } as CSSProperties}>
-              <button type="button" onClick={() => openSheet({ type: 'album-shot', id: m.id })} aria-label={`Memory ${i + 1}${m.caption ? `: ${m.caption}` : ''}${m.star ? ' (cover)' : ''}`}>
+              <button type="button" onClick={() => openSheet({ type: 'album-shot', id: m.id })} aria-label={`Memory ${i + 1}${m.video ? `, video${m.dur ? ` ${clipLength(m.dur)}` : ''}` : ''}${m.caption ? `: ${m.caption}` : ''}${m.star ? ' (cover)' : ''}`}>
                 <Photo shot={m} />
                 <span className="al-print__cap">{m.caption || ' '}</span>
                 {m.star && (
@@ -213,7 +219,7 @@ function Day({ date, today, days }: { date: string; today: string; days: Map<str
         <input
           ref={input}
           type="file"
-          accept="image/*"
+          accept="image/*,video/*"
           multiple
           hidden
           aria-label="Choose memories"
@@ -223,7 +229,11 @@ function Day({ date, today, days }: { date: string; today: string; days: Map<str
             if (files.length) void addFiles(files);
           }}
         />
-        {!memories.length && <p className="al-hint">Whatever you want to remember about {isToday ? 'today' : 'the day'}: the view, who you were with, what you ate, the thing that made you laugh.</p>}
+        {!memories.length && (
+          <p className="al-hint">
+            Whatever you want to remember about {isToday ? 'today' : 'the day'}: the view, who you were with, what you ate, the thing that made you laugh. Photos or short videos (up to {VIDEO_MAX_SECONDS} seconds).
+          </p>
+        )}
       </section>
 
       <section className="al-strip" aria-label="The last two weeks">
@@ -276,8 +286,8 @@ function Day({ date, today, days }: { date: string; today: string; days: Map<str
 
       <p className="al-note">
         {mode === 'synced'
-          ? 'Photos are kept on this phone first, then uploaded to your private photo storage (the one Curio Cabinet uses) when it syncs.'
-          : 'Local only: photos stay in this browser on this device and aren’t uploaded anywhere.'}
+          ? 'Photos and videos are kept on this phone first, then uploaded to your private storage when it syncs (photos with Curio Cabinet’s, videos in a bucket of their own).'
+          : 'Local only: photos and videos stay in this browser on this device and aren’t uploaded anywhere.'}
       </p>
 
       {camera && (

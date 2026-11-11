@@ -14,6 +14,12 @@ export const MEMORIES_PER_DAY = 8;
 export const CAPTION_MAX = 140;
 /** Longest inline thumbnail (a data: URL) kept in the row; rows hold 32 KB at most. */
 export const THUMB_MAX = 20_000;
+/** A memory can be a short video: kept as it is (no re-encoding on the phone), so it has limits. */
+export const VIDEO_MAX_SECONDS = 60;
+/** The storage plan's largest upload. */
+export const VIDEO_MAX_BYTES = 50 * 1024 * 1024;
+/** Remote paths of videos start with this; they live in their own bucket (src/lib/photos.ts). */
+export const VIDEO_PREFIX = 'album-video/';
 /** The year's reel opens on New Year's Eve. */
 export const reelOpensOn = (year: number) => `${year}-12-31`;
 
@@ -32,11 +38,16 @@ export interface Shot {
   at: string;
   /** Save order (the row's sort_order), for shots taken in the same instant. */
   seq: number;
+  /** A video memory (faces are always photos); `thumb` is then its poster frame. */
+  video: boolean;
+  /** A video's length in seconds (0 for a photo). */
+  dur: number;
 }
 
 export function shotOf(r: { id: string; data: Record<string, unknown>; created_at: string; sort_order?: number }): Shot | null {
   const d = r.data;
   if (!isDate(d.date) || (d.role !== 'face' && d.role !== 'memory') || typeof d.path !== 'string' || !d.path) return null;
+  const video = d.media === 'video' && d.role === 'memory';
   return {
     id: r.id,
     date: d.date,
@@ -47,8 +58,16 @@ export function shotOf(r: { id: string; data: Record<string, unknown>; created_a
     star: d.star === true,
     at: typeof d.at === 'string' ? d.at : r.created_at,
     seq: Number(r.sort_order) || 0,
+    video,
+    dur: video && typeof d.dur === 'number' && Number.isFinite(d.dur) && d.dur > 0 ? Math.round(d.dur * 10) / 10 : 0,
   };
 }
+
+/** A video's length as on a phone: 0:07, 1:00. */
+export const clipLength = (sec: number) => {
+  const s = Math.max(0, Math.round(sec));
+  return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
+};
 
 export interface AlbumDay {
   date: string;
@@ -123,6 +142,8 @@ export interface YearInPhotos {
   busiest: { date: string; n: number } | null;
   /** Days with anything, per month (0 = January). */
   byMonth: number[];
+  /** Of the memories, how many are videos. */
+  videos: number;
   /** Memories per month. */
   memoriesByMonth: number[];
   topMonth: number | null;
@@ -154,6 +175,7 @@ export function yearInPhotos(days: Map<string, AlbumDay>, year: number): YearInP
     days: inYear.length,
     faces: inYear.flatMap((d) => (d.face ? [d.face] : [])),
     memories: inYear.reduce((n, d) => n + d.memories.length, 0),
+    videos: inYear.reduce((n, d) => n + d.memories.filter((m) => m.video).length, 0),
     captions,
     best: albumStreak(
       inYear.map((d) => d.date),

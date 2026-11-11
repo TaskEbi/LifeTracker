@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { albumStreak, byDay, coverOf, daysToReel, frameMs, monthPicks, onThisDay, reelOpen, shotOf, stamp, tileOf, yearInPhotos, type Shot } from './album';
+import { albumStreak, byDay, clipLength, coverOf, daysToReel, frameMs, monthPicks, onThisDay, reelOpen, shotOf, stamp, tileOf, yearInPhotos, type Shot } from './album';
 
 let n = 0;
 const shot = (date: string, role: Shot['role'] = 'memory', extra: Partial<Shot> = {}): Shot => ({
@@ -12,6 +12,8 @@ const shot = (date: string, role: Shot['role'] = 'memory', extra: Partial<Shot> 
   star: false,
   at: `${date}T12:00:${String(n % 60).padStart(2, '0')}.000Z`,
   seq: n,
+  video: false,
+  dur: 0,
   ...extra,
 });
 
@@ -28,12 +30,25 @@ describe('album shots', () => {
       star: true,
       at: '2026-11-04T08:00:00.000Z',
       seq: 3,
+      video: false,
+      dur: 0,
     });
     expect(shotOf(row({ date: '2026-02-30', role: 'face', path: 'p' }))).toBeNull();
     expect(shotOf(row({ date: '2026-11-04', role: 'selfie', path: 'p' }))).toBeNull();
     expect(shotOf(row({ date: '2026-11-04', role: 'memory', path: '' }))).toBeNull();
     // only an image data: URL is used as a thumbnail
     expect(shotOf(row({ date: '2026-11-04', role: 'memory', path: 'p', thumb: 'javascript:alert(1)' }))!.thumb).toBeNull();
+  });
+
+  it('reads a video memory, its length, and never a video face', () => {
+    const row = (data: Record<string, unknown>) => ({ id: 'v', data, created_at: '2026-11-11T08:00:00.000Z' });
+    const v = shotOf(row({ date: '2026-11-11', role: 'memory', path: 'album-video/a.mp4', media: 'video', dur: 12.345 }))!;
+    expect([v.video, v.dur]).toEqual([true, 12.3]);
+    expect(shotOf(row({ date: '2026-11-11', role: 'memory', path: 'p', media: 'video', dur: 'long' }))!.dur).toBe(0);
+    expect(shotOf(row({ date: '2026-11-11', role: 'memory', path: 'p', media: 'video', dur: -3 }))!.dur).toBe(0);
+    expect(shotOf(row({ date: '2026-11-11', role: 'face', path: 'p', media: 'video', dur: 4 }))).toMatchObject({ video: false, dur: 0 });
+    expect(shotOf(row({ date: '2026-11-11', role: 'memory', path: 'p' }))!.video).toBe(false);
+    expect([clipLength(0), clipLength(6.6), clipLength(60), clipLength(75)]).toEqual(['0:00', '0:07', '1:00', '1:15']);
   });
 
   it('groups by day: one face (the later wins), memories in order, a starred cover', () => {
@@ -88,7 +103,7 @@ describe('the reel', () => {
       shot('2026-01-02', 'face'),
       shot('2026-01-03', 'face'),
       shot('2026-03-10', 'memory'),
-      shot('2026-03-10', 'memory'),
+      shot('2026-03-10', 'memory', { video: true, dur: 8 }),
       shot('2026-03-10', 'memory'),
       shot('2026-03-11', 'face', { caption: 'tired' }),
       shot('2025-12-31', 'face'),
@@ -97,6 +112,7 @@ describe('the reel', () => {
     expect(y.days).toBe(5);
     expect(y.faces.map((f) => f.date)).toEqual(['2026-01-01', '2026-01-02', '2026-01-03', '2026-03-11']);
     expect(y.memories).toBe(4);
+    expect(y.videos).toBe(1);
     expect(y.captions).toBe(2);
     expect(y.best).toBe(3);
     expect(y.busiest).toEqual({ date: '2026-03-10', n: 3 });

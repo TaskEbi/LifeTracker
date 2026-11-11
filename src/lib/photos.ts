@@ -3,7 +3,7 @@ import { currentSession, data } from '../data/store';
 import { updateItem } from '../data/actions';
 import { supabase } from './supabase';
 import { uuid } from './random';
-import { SHOT_KIND } from '../domain/album/album';
+import { SHOT_KIND, VIDEO_PREFIX } from '../domain/album/album';
 import { commit } from '../data/store';
 
 /**
@@ -14,6 +14,13 @@ import { commit } from '../data/store';
 
 const MAX_EDGE = 1600;
 const BUCKET = 'photos';
+/**
+ * The Album's videos have a bucket of their own (supabase/migrations/20261111120000_lifetracker_album_video.sql):
+ * Curio Cabinet's `photos` takes images only, up to 15 MB.
+ */
+const VIDEO_BUCKET = 'lt-videos';
+const bucketOf = (path: string) => (path.startsWith(VIDEO_PREFIX) ? VIDEO_BUCKET : BUCKET);
+const VIDEO_EXT: Record<string, string> = { 'video/mp4': 'mp4', 'video/quicktime': 'mov', 'video/webm': 'webm' };
 
 /** Downscale to at most `maxEdge` px and re-encode as WebP (JPEG if WebP isn't supported). */
 export async function shrinkImage(file: Blob, maxEdge = MAX_EDGE, quality = 0.85): Promise<Blob> {
@@ -82,6 +89,15 @@ export async function storePhotoBlob(file: Blob, maxEdge = MAX_EDGE): Promise<{ 
   return { path, blob };
 }
 
+/** Keep a video on this device as it is (no re-encoding) and return its local path. */
+export async function storeVideoBlob(file: Blob): Promise<string> {
+  const s = currentSession();
+  if (!s) throw new Error('Not ready');
+  const path = `local:${uuid()}`;
+  await s.db.putBlob(path, file);
+  return path;
+}
+
 /** Upload photos still only on this device, then point their items at the bucket copy. */
 export async function uploadPendingPhotos(): Promise<void> {
   const s = currentSession();
@@ -100,7 +116,9 @@ export async function uploadPendingPhotos(): Promise<void> {
     if (data.get().items.get(item.id)?.image_path === localPath) updateItem(item.id, { image_path: remote });
   }
   // The Album's photos (lt_records): the same, with the path in data.path.
-  const shots = [...data.get().lt_records.values()].filter((r) => r.kind === SHOT_KIND && !r.deleted_at && typeof r.data.path === 'string' && r.data.path.startsWith('local:'));
+  const shots = [...data.get().lt_records.values()].filter((r) => r.kind === SHOT_KIND && !r.deleted_at && r.data.media !== 'video' && typeof r.data.path === 'string' && r.data.path.startsWith('local:'));
+  // Videos are big: they go up on their own, after this sync, so they never hold up the rest.
+  queueVideoUploads();
   for (const r of shots) {
     const localPath = r.data.path as string;
     const blob = await s.db.getBlob(localPath);
@@ -109,6 +127,44 @@ export async function uploadPendingPhotos(): Promise<void> {
     const remote = `album/${uuid()}.${ext}`;
     const { error } = await supabase.storage.from(BUCKET).upload(remote, blob, { contentType: blob.type, upsert: false });
     if (error) throw error;
+    await s.db.putBlob(remote, blob);
+    const now = data.get().lt_records.get(r.id);
+    if (now && now.data.path === localPath) commit('lt_records', [{ ...now, data: { ...now.data, path: remote }, updated_at: new Date().toISOString() }]);
+  }
+}
+
+let videoRun: Promise<void> | null = null;
+/** A video that failed to upload waits this long before it is tried again (no 50 MB retries every sync). */
+const VIDEO_RETRY_MS = 15 * 60 * 1000;
+const videoRetryAt = new Map<string, number>();
+
+function queueVideoUploads() {
+  if (videoRun) return;
+  videoRun = uploadPendingVideos()
+    .catch((e) => console.warn('LifeTracker: video upload failed', e))
+    .finally(() => (videoRun = null));
+}
+
+/** The Album's videos still only on this device, one at a time, into their own bucket. */
+async function uploadPendingVideos(): Promise<void> {
+  const s = currentSession();
+  if (!s || !s.cloud || !supabase) return;
+  const pending = [...data.get().lt_records.values()].filter((r) => r.kind === SHOT_KIND && !r.deleted_at && r.data.media === 'video' && typeof r.data.path === 'string' && r.data.path.startsWith('local:'));
+  for (const r of pending) {
+    const localPath = r.data.path as string;
+    if ((videoRetryAt.get(localPath) ?? 0) > Date.now()) continue;
+    const blob = await s.db.getBlob(localPath);
+    if (!blob) continue;
+    const type = VIDEO_EXT[blob.type] ? blob.type : 'video/mp4';
+    const remote = `${VIDEO_PREFIX}${uuid()}.${VIDEO_EXT[type]}`;
+    const { error } = await supabase.storage.from(VIDEO_BUCKET).upload(remote, blob, { contentType: type, upsert: false });
+    if (error) {
+      // e.g. the bucket isn't there yet: the video stays on this device and is tried again later
+      videoRetryAt.set(localPath, Date.now() + VIDEO_RETRY_MS);
+      console.warn('LifeTracker: video upload failed, kept on this device', error);
+      continue;
+    }
+    videoRetryAt.delete(localPath);
     await s.db.putBlob(remote, blob);
     const now = data.get().lt_records.get(r.id);
     if (now && now.data.path === localPath) commit('lt_records', [{ ...now, data: { ...now.data, path: remote }, updated_at: new Date().toISOString() }]);
@@ -135,7 +191,7 @@ async function resolve(path: string): Promise<string | null> {
   const local = await s?.db.getBlob(path).catch(() => undefined);
   if (local) return URL.createObjectURL(local);
   if (path.startsWith('local:') || !supabase) return null;
-  const { data: signed } = await supabase.storage.from(BUCKET).createSignedUrl(path, 60 * 60 * 6);
+  const { data: signed } = await supabase.storage.from(bucketOf(path)).createSignedUrl(path, 60 * 60 * 6);
   return signed?.signedUrl ?? null;
 }
 
@@ -163,6 +219,6 @@ export async function photoBlob(path: string): Promise<Blob | null> {
   const local = await s?.db.getBlob(path);
   if (local) return local;
   if (!supabase || path.startsWith('local:')) return null;
-  const { data: blob } = await supabase.storage.from(BUCKET).download(path);
+  const { data: blob } = await supabase.storage.from(bucketOf(path)).download(path);
   return blob ?? null;
 }

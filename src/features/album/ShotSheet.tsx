@@ -21,13 +21,14 @@ function ShotSheet({ spec }: { spec: SheetSpec }) {
     );
   }
   const face = shot.role === 'face';
+  const kind = face ? 'Face' : shot.video ? 'Video' : 'Memory';
   const save = () => {
     if (caption.trim() !== shot.caption) setCaption(shot.id, caption);
     closeSheet();
   };
   return (
     <Sheet
-      title={face ? 'Face of the day' : spec.fresh ? 'New memory' : 'Memory'}
+      title={face ? 'Face of the day' : spec.fresh ? `New ${kind.toLowerCase()}` : kind}
       onClose={save}
       footer={
         <>
@@ -35,7 +36,7 @@ function ShotSheet({ spec }: { spec: SheetSpec }) {
             type="button"
             className="i-btn i-btn--danger"
             onClick={() => {
-              removeShot(shot.id, face ? 'Face removed' : 'Memory removed');
+              removeShot(shot.id, `${kind} removed`);
               closeSheet();
             }}
           >
@@ -47,8 +48,8 @@ function ShotSheet({ spec }: { spec: SheetSpec }) {
         </>
       }
     >
-      <figure className="al-shot">
-        <Photo shot={shot} alt={caption || (face ? 'Face' : 'Memory')} />
+      <figure className={`al-shot${shot.video ? ' al-shot--video' : ''}`}>
+        <Photo shot={shot} play alt={caption || kind} />
         <span className="al-stamp">{stamp(shot.date)}</span>
       </figure>
       <p className="i-note">{longDay(shot.date)}</p>
