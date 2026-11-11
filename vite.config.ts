@@ -31,7 +31,8 @@ export default defineConfig({
       registerType: 'autoUpdate',
       injectRegister: false,
       devOptions: { enabled: false },
-      injectManifest: { globPatterns: ['**/*.{js,css,html,svg,png,woff2}'] },
+      // The app must open offline, so the main bundle has to be precached; it passed the 2 MiB default in M37.
+      injectManifest: { globPatterns: ['**/*.{js,css,html,svg,png,woff2}'], maximumFileSizeToCacheInBytes: 4 * 1024 * 1024 },
       includeAssets: ['favicon.svg', 'apple-touch-icon.png'],
       manifest: {
         name: 'LifeTracker',
