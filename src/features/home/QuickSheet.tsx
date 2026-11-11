@@ -46,6 +46,8 @@ const CMDS: Cmd[] = [
   { id: 'bingo', label: 'bingo', hint: 'arcade · this week’s card', route: 'hangar', rest: ['arcade', 'bingo'] },
   { id: 'sugoroku', label: 'sugoroku', hint: 'arcade · roll the dice', route: 'hangar', rest: ['arcade', 'board'] },
   { id: 'fishing', label: 'fishing pond', hint: 'arcade · cast a line', route: 'hangar', rest: ['arcade', 'pond'] },
+  { id: 'papers', label: 'past papers', hint: 'study · every paper to 2021 · hard questions · retry', section: 'study', route: 'study', rest: ['papers'] },
+  { id: 'hardqs', label: 'hard physics questions', hint: 'past papers · worst-answered by topic', section: 'study', route: 'study', rest: ['papers', 'hard'] },
   { id: 'stage', label: 'stage', hint: 'performances · tests · matches · races', route: 'stage' },
   { id: 'result', label: 'log a result', hint: 'stage · concert · test · match · race', sheet: 'stage-pick', route: 'stage' },
   { id: 'repertoire', label: 'violin repertoire', hint: 'every piece you’ve played', section: 'violin', route: 'violin', rest: ['repertoire'] },

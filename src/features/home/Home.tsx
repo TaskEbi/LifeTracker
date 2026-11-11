@@ -40,6 +40,8 @@ import { albumStreak, daysToReel, reelOpen } from '../../domain/album/album';
 import { reviewQueue } from '../../domain/hq/srs';
 import { roughToday } from '../../domain/hq/beacon';
 import { EPQ_KANJI, epqLine, useEpq } from '../epq/EpqPage';
+import { papersLine } from '../papers/actions';
+import { PAPERS_KANJI, usePapers } from '../papers/door';
 import { LifeDoors } from '../life/LifeDoors';
 import './home.css';
 
@@ -511,6 +513,7 @@ function MorePage() {
     return { total: open.length + done.length, done: done.length, next: open[0]?.title };
   }, [st]);
   const epq = useEpq();
+  const papers = usePapers();
   const hq = useHq();
   const dueCards = useMemo(() => reviewQueue(hq.cards, today).length, [hq.cards, today]);
   const contestWhen = nextContest?.date
@@ -541,6 +544,7 @@ function MorePage() {
           <Head k="頁">Pages</Head>
           <div className="h-sys">
             <Door wide k={EPQ_KANJI} name="EPQ" sub={epqLine(epq, today)} go={() => navigate('study', ['epq'])} />
+            <Door wide k={PAPERS_KANJI} name="Past papers" sub={papersLine(papers, today)} go={() => navigate('study', ['papers'])} />
             {nowReading && <Door wide k={sectionInfo('reading').kanji} name="Now reading" sub={`${nowReading.title} · ${nowReading.pct}%`} go={() => navigate('reading')} />}
             {nextContest && <Door wide k={sectionInfo('maths').kanji} name="Next contest" sub={`${nextContest.label} · ${contestWhen}`} go={() => navigate('maths')} />}
             <Door wide k={SYSTEM_KANJI.album} name="Album" sub={albumLine} go={() => navigate('album')} />

@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { lazy, Suspense, useMemo, useState } from 'react';
 import { registerSheet } from '../../app/sheetRegistry';
 import { closeSheet, openSheet, type SheetSpec } from '../../app/sheets';
 import { ltToday, prefValue, sectionEntries, sectionRecords, setPref, useToday, withReward } from '../../data/lt';
@@ -21,6 +21,11 @@ import { StudyArt } from './Art';
 import { navigate, useRoute } from '../../app/router';
 import { EPQ_KANJI, EpqPage, epqLine, useEpq } from '../epq/EpqPage';
 import './theme.css';
+import { PAPERS_KANJI, usePapers } from '../papers/door';
+import { papersLine } from '../papers/actions';
+
+// The paper list is large, so the page loads in its own chunk.
+const PapersPage = lazy(() => import('../papers/PapersPage'));
 
 const subjectsNow = () => subjectsOf(prefValue(data.get(), 'study_subjects'));
 
@@ -31,8 +36,8 @@ function StudySheet({ spec }: { spec: SheetSpec }) {
   const prev = editId ? sectionEntries<StudyDetail>(data.get(), 'study').find((s) => s.entry.id === editId) : undefined;
   const pd = prev && isStudyDetail(prev.detail) ? prev.detail : null;
   const [subject, setSubject] = useState(pd?.subject ?? (spec.subject as string) ?? subjects[0]);
-  const [kind, setKind] = useState<string>(pd?.kind ?? 'Homework');
-  const [topic, setTopic] = useState(pd?.topic ?? '');
+  const [kind, setKind] = useState<string>(pd?.kind ?? (spec.kind as string | undefined) ?? 'Homework');
+  const [topic, setTopic] = useState(pd?.topic ?? (spec.topic as string | undefined) ?? '');
   const [minutes, setMinutes] = useState(prev?.entry.minutes ?? (spec.minutes as number | undefined) ?? 45);
   const [date, setDate] = useState(prev?.entry.date ?? today);
   const [note, setNote] = useState(prev?.entry.note ?? '');
@@ -217,8 +222,34 @@ function EpqDoor() {
   );
 }
 
+/** The way into Past papers: papers done, hard questions and retries due. */
+function PapersDoor() {
+  const today = useToday();
+  const s = usePapers();
+  return (
+    <button type="button" className="epq-door" onClick={() => navigate('study', ['papers'])}>
+      <span className="epq-door__k" aria-hidden="true">
+        {PAPERS_KANJI}
+      </span>
+      <span className="epq-door__t">
+        <b>Past papers</b>
+        <small>{papersLine(s, today)}</small>
+      </span>
+      <span aria-hidden="true">▶</span>
+    </button>
+  );
+}
+
 export function StudyChannel() {
   const route = useRoute();
+  if (route.rest[0] === 'papers')
+    return (
+      <div style={accent('study')}>
+        <Suspense fallback={<p className="i-note">Opening the paper list…</p>}>
+          <PapersPage />
+        </Suspense>
+      </div>
+    );
   if (route.rest[0] === 'epq')
     return (
       <div style={accent('study')}>
@@ -250,6 +281,7 @@ function StudyDesk() {
         <Icon name="plus" /> Log study
       </button>
       <EpqDoor />
+      <PapersDoor />
       <div className="i-meters" style={{ marginTop: 10 }}>
         <Meter value={formatMinutes(weekTotal)} label="This week" />
         <Meter value={exams[0] ? `${Math.round((Date.parse(exams[0].date) - Date.parse(today)) / 864e5)}d` : '—'} label={exams[0] ? `To ${exams[0].event.title}` : 'No exams set'} />
