@@ -47,6 +47,7 @@ const CMDS: Cmd[] = [
   { id: 'sugoroku', label: 'sugoroku', hint: 'arcade · roll the dice', route: 'hangar', rest: ['arcade', 'board'] },
   { id: 'fishing', label: 'fishing pond', hint: 'arcade · cast a line', route: 'hangar', rest: ['arcade', 'pond'] },
   { id: 'papers', label: 'past papers', hint: 'study · every paper to 2021 · hard questions · retry', section: 'study', route: 'study', rest: ['papers'] },
+  { id: 'notes', label: 'study notes', hint: 'study · physics · maths · further maths · computer science, topic by topic', section: 'study', route: 'study', rest: ['notes'] },
   { id: 'hardqs', label: 'hard physics questions', hint: 'past papers · worst-answered by topic', section: 'study', route: 'study', rest: ['papers', 'hard'] },
   { id: 'stage', label: 'stage', hint: 'performances · tests · matches · races', route: 'stage' },
   { id: 'result', label: 'log a result', hint: 'stage · concert · test · match · race', sheet: 'stage-pick', route: 'stage' },
