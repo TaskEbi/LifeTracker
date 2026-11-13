@@ -7,13 +7,17 @@ import { deleteRecord } from '../../data/records';
 import { deleteSession } from '../../data/sessions';
 import { data } from '../../data/store';
 import { toast } from '../../data/ui';
-import { dayCount, longDay } from '../../domain/log/dates';
+import { addDays, dayCount, longDay } from '../../domain/log/dates';
 import {
   LOGGABLE,
   MATCH_STATS,
   lastNote,
   parseSets,
   parseTime,
+  PLAN_EVENT,
+  planOf,
+  plannedMinutes,
+  planTitle,
   PREP,
   setsText,
   setTally,
@@ -21,6 +25,7 @@ import {
   SUBTYPES,
   timeText,
   type Outcome,
+  type Plan,
   type Reflection,
   type ShowType,
   type StageType,
@@ -29,9 +34,11 @@ import { Picks } from '../../ui/i/bits';
 import { DayPick, MinutesField } from '../../ui/i/fields';
 import { Sheet } from '../../ui/i/Sheet';
 import { Field } from '../life/Frame';
-import { SPORTS } from '../sports/model';
+import { deleteEvent } from '../calendar/actions';
+import { shift, TimeFields } from '../calendar/EventSheet';
+import { SPORTS, sportInfo } from '../sports/model';
 import { pieceName, pieceOf } from '../violin/model';
-import { prepFor, rawOf, savePrep, saveShow, saveSportResult, saveTest, showsIn, stageDays, subjectsNow } from './store';
+import { prepFor, rawOf, savePlan, savePrep, saveShow, saveSportResult, saveTest, showsIn, stageDays, subjectsNow, type PlanForm } from './store';
 
 const READY = ['Not at all', 'Shaky', 'Okay', 'Ready', 'Totally ready'];
 const NERVES = ['Calm', 'A little', 'Some', 'Very', 'Shaking'];
@@ -59,22 +66,10 @@ export function Scale({ label, value, onChange, words, glyph }: { label: string;
 /** What it was: the seven kinds, to log a result or to put one on the calendar. */
 function PickSheet({ spec }: { spec: SheetSpec }) {
   const plan = spec.plan === true;
-  const open = (t: StageType) => {
-    if (!plan) return openSheet({ type: 'stage-log', kind: t });
-    const at: Record<string, { kind: string; section: string | null }> = {
-      violin: { kind: 'performance', section: 'violin' },
-      test: { kind: 'exam', section: 'study' },
-      match: { kind: 'competition', section: 'sports' },
-      race: { kind: 'competition', section: 'sports' },
-      chess: { kind: 'competition', section: 'chess' },
-      talk: { kind: 'performance', section: null },
-      other: { kind: 'competition', section: null },
-    };
-    openSheet({ type: 'event', preset: { ...at[t], title: '', stage: t } });
-  };
+  const open = (t: StageType) => openSheet(plan ? { type: 'stage-plan', kind: t } : { type: 'stage-log', kind: t });
   return (
     <Sheet title={plan ? 'What’s coming up?' : 'What was it?'} onClose={closeSheet}>
-      {plan && <p className="i-note">It goes on the calendar, and the Stage counts down to it with a list to get ready.</p>}
+      {plan && <p className="i-note">It goes on the calendar and the Stage counts down to it. When it’s over, one tap logs it with what you planned already filled in.</p>}
       <div className="stg-kinds">
         {LOGGABLE.map((t) => (
           <button key={t} type="button" className="stg-kind" style={{ '--tc': STAGE_TYPES[t].c } as CSSProperties} onClick={() => open(t)}>
@@ -97,6 +92,30 @@ const HINT: Record<string, string> = {
   other: 'Any other competition or big day',
 };
 
+/** Repertoire as toggles: what you played, or what you'll play. */
+function PiecePicks({ label, value, onChange }: { label: string; value: string[]; onChange: (v: string[]) => void }) {
+  const repertoire = useMemo(() => {
+    const all = sectionRecords(data.get(), 'violin', 'piece').map(pieceOf);
+    return [...all.filter((p) => !p.archived), ...all.filter((p) => p.archived)];
+  }, []);
+  return (
+    <div className="i-field">
+      <span className="i-lab">{label}</span>
+      {repertoire.length ? (
+        <div className="stg-pieces" role="group" aria-label={label}>
+          {repertoire.map((p) => (
+            <button key={p.id} type="button" className="i-pick" aria-pressed={value.includes(p.id)} onClick={() => onChange(value.includes(p.id) ? value.filter((x) => x !== p.id) : [...value, p.id])}>
+              {pieceName(p)}
+            </button>
+          ))}
+        </div>
+      ) : (
+        <p className="i-note">Add pieces in Violin → Repertoire and they'll show here.</p>
+      )}
+    </div>
+  );
+}
+
 const n = (v: string) => {
   const x = Number(v.replace(',', '.'));
   return v.trim() !== '' && Number.isFinite(x) ? x : null;
@@ -115,24 +134,27 @@ function LogSheet({ spec }: { spec: SheetSpec }) {
   // A sports session keeps its own note (shown in the Sports log).
   const entryNote = editing?.source === 'sport' ? (st.log_entries.get(editing.id)?.note ?? '') : '';
   const prep = event && !editing ? prepFor(st, event) : null;
+  // What you planned ahead of time fills the form in.
+  const plan = ev && !editing ? planOf(ev.event.data) : planOf(undefined);
+  const planned = plannedMinutes(ev?.event.start ?? null, ev?.event.end ?? null);
   const info = STAGE_TYPES[type];
   const sentDate = typeof spec.date === 'string' && spec.date <= today ? spec.date : null;
 
   const [date, setDate] = useState(editing?.date ?? sentDate ?? today);
   const [title, setTitle] = useState(editing ? (editing.source === 'sport' ? s(raw.race) : s(raw.title)) : s(spec.title));
-  const [kind, setKind] = useState(s(raw.kind) || s(raw.testKind) || SUBTYPES[type]?.[0] || '');
-  const [where, setWhere] = useState(s(raw.where) || s(raw.comp));
+  const [kind, setKind] = useState(s(raw.kind) || s(raw.testKind) || plan.kind || SUBTYPES[type]?.[0] || '');
+  const [where, setWhere] = useState(s(raw.where) || s(raw.comp) || (type === 'match' ? plan.comp : plan.where));
   const [result, setResult] = useState(editing?.source === 'show' ? s(raw.result) : '');
   const [outcome, setOutcome] = useState<Outcome | null>(editing?.outcome ?? null);
   const [outcomeSet, setOutcomeSet] = useState(!!s(raw.result) || !!s(raw.outcome));
   const [place, setPlace] = useState(nn(raw.place));
-  const [opp, setOpp] = useState(s(raw.opp));
+  const [opp, setOpp] = useState(s(raw.opp) || plan.opp);
   const [oppRating, setOppRating] = useState(nn(raw.oppRating));
   const [colour, setColour] = useState<string | null>(s(raw.colour) || null);
   const [pieces, setPieces] = useState<string[]>(editing?.pieces ?? (Array.isArray(ev?.event.data.pieces) ? (ev!.event.data.pieces as string[]) : []));
   // tests
   const subjects = subjectsNow();
-  const [subject, setSubject] = useState(editing?.type === 'test' ? editing.kind : subjects[0]);
+  const [subject, setSubject] = useState(editing?.type === 'test' ? editing.kind : plan.subject || subjects[0]);
   const [score, setScore] = useState(nn(raw.score));
   const [outOf, setOutOf] = useState(nn(raw.outOf));
   const [grade, setGrade] = useState(s(raw.grade));
@@ -140,11 +162,11 @@ function LogSheet({ spec }: { spec: SheetSpec }) {
   // sport
   const court = SPORTS.filter((x) => x.kind === 'court');
   const distance = SPORTS.filter((x) => x.kind === 'distance');
-  const [sport, setSport] = useState<string>(s(raw.sport) || (type === 'match' ? 'volleyball' : 'running'));
-  const [minutes, setMinutes] = useState(editing?.minutes ?? (type === 'match' ? 90 : 30));
+  const [sport, setSport] = useState<string>(s(raw.sport) || plan.sport || (type === 'match' ? 'volleyball' : 'running'));
+  const [minutes, setMinutes] = useState(editing?.minutes ?? planned ?? (type === 'match' ? 90 : 30));
   const [setsIn, setSetsIn] = useState(Array.isArray(raw.sets) && raw.sets.length ? setsText(raw.sets as [number, number][]) : s(raw.score));
   const [stats, setStats] = useState<Record<string, number>>(editing?.stats ?? {});
-  const [km, setKm] = useState(nn(raw.km));
+  const [km, setKm] = useState(nn(raw.km) || plan.km);
   const [time, setTime] = useState(typeof raw.secs === 'number' ? timeText(raw.secs) : '');
   // before and after
   const [goal, setGoal] = useState(editing?.goal ?? prep?.goal ?? '');
@@ -155,10 +177,6 @@ function LogSheet({ spec }: { spec: SheetSpec }) {
   const [next, setNext] = useState(editing?.next ?? '');
   const [error, setError] = useState<string | null>(null);
 
-  const repertoire = useMemo(() => {
-    const all = sectionRecords(data.get(), 'violin', 'piece').map(pieceOf);
-    return [...all.filter((p) => !p.archived), ...all.filter((p) => p.archived)];
-  }, []);
   const sets = parseSets(setsIn);
   const tally = sets && sets.length ? setTally(sets) : null;
   const shownOutcome = outcomeSet ? outcome : (tally?.outcome ?? outcome);
@@ -168,9 +186,27 @@ function LogSheet({ spec }: { spec: SheetSpec }) {
   const oo = n(outOf);
   const pct = sc != null && oo != null && oo > 0 && sc >= 0 && sc <= oo ? Math.round((sc / oo) * 100) : null;
 
+  // A day that hasn't happened yet can't have a result: it goes on the calendar as a plan instead.
+  const ahead = date > today && !editing && !event;
+  const planFields: Partial<Plan> = {
+    kind: SUBTYPES[type] ? kind : '',
+    where: type === 'match' ? '' : where,
+    comp: type === 'match' ? where : '',
+    opp: type === 'match' || type === 'chess' ? opp : '',
+    sport: type === 'match' || type === 'race' ? sport : '',
+    km: type === 'race' ? km : '',
+    subject: type === 'test' ? subject : '',
+  };
+
   const save = () => {
     setError(null);
-    if (date > today) return setError("That day hasn't happened yet. Put it on the calendar with + Coming up instead.");
+    if (ahead) {
+      const err = savePlan({ type: type as PlanForm['type'], title: planTitle(type, type === 'match' ? '' : title, planFields, sportInfo(sport)?.name ?? 'Match'), date, start: null, end: null, plan: planFields, pieces: type === 'violin' ? pieces : [] });
+      if (err) return setError(err);
+      toast(`${info.one} added to Coming up`);
+      return closeSheet();
+    }
+    if (date > today) return setError("That day hasn't happened yet.");
     const pl = n(place);
     const placeV = pl != null && pl >= 1 ? Math.round(pl) : null;
     if (type === 'test') {
@@ -239,11 +275,12 @@ function LogSheet({ spec }: { spec: SheetSpec }) {
             </button>
           )}
           <button type="button" className="i-btn i-btn--sig i-btn--block" onClick={save}>
-            Save
+            {ahead ? 'Add to Coming up' : 'Save'}
           </button>
         </>
       }
     >
+      {ahead && <p className="i-note">That day is still ahead, so this goes on Coming up instead of the results. Log it once it has happened.</p>}
       {ev && !editing && (
         <p className="i-note">
           For <b>{ev.title}</b> on the calendar, {longDay(ev.date)}.
@@ -367,22 +404,7 @@ function LogSheet({ spec }: { spec: SheetSpec }) {
               <input className="i-input" value={where} onChange={(e) => setWhere(e.target.value)} maxLength={120} />
             </Field>
           )}
-          {type === 'violin' && (
-            <div className="i-field">
-              <span className="i-lab">What you played</span>
-              {repertoire.length ? (
-                <div className="stg-pieces" role="group" aria-label="What you played">
-                  {repertoire.map((p) => (
-                    <button key={p.id} type="button" className="i-pick" aria-pressed={pieces.includes(p.id)} onClick={() => setPieces(pieces.includes(p.id) ? pieces.filter((x) => x !== p.id) : [...pieces, p.id])}>
-                      {pieceName(p)}
-                    </button>
-                  ))}
-                </div>
-              ) : (
-                <p className="i-note">Add pieces in Violin → Repertoire and they'll show here.</p>
-              )}
-            </div>
-          )}
+          {type === 'violin' && <PiecePicks label="What you played" value={pieces} onChange={setPieces} />}
           {type !== 'chess' && (
             <>
               <div className="stg-two">
@@ -399,7 +421,7 @@ function LogSheet({ spec }: { spec: SheetSpec }) {
         </>
       )}
 
-      {type !== 'maths' && <DayPick value={date} onChange={setDate} today={today} />}
+      {type !== 'maths' && <DayPick value={date} onChange={setDate} today={today} ahead={!editing && !event} />}
 
       <h3 className="stg-sub">How it went</h3>
       {last && !editing && (
@@ -422,6 +444,145 @@ function LogSheet({ spec }: { spec: SheetSpec }) {
         <Scale label="Ready" value={ready} onChange={setReady} words={READY} />
         <Scale label="Nerves" value={nerves} onChange={setNerves} words={NERVES} />
       </details>
+      {error && (
+        <p className="i-error" role="alert">
+          {error}
+        </p>
+      )}
+    </Sheet>
+  );
+}
+
+/** Putting a day ahead on the calendar, or editing one: what it is, who or where, and when. */
+function PlanSheet({ spec }: { spec: SheetSpec }) {
+  const today = ltToday();
+  const st = data.get();
+  const key = typeof spec.key === 'string' ? spec.key : null;
+  const existing = key ? stageDays(st, today).find((u) => u.key === key) : undefined;
+  const type = (existing?.type ?? (spec.kind as StageType | undefined) ?? 'other') as Exclude<StageType, 'maths'>;
+  const info = STAGE_TYPES[type];
+  const plan0 = planOf(existing?.event.data);
+  const subjects = subjectsNow();
+  const court = SPORTS.filter((x) => x.kind === 'court');
+  const distance = SPORTS.filter((x) => x.kind === 'distance');
+  const sportOf = (id: string) => sportInfo(id)?.name ?? (type === 'race' ? 'Run' : 'Match');
+  // A name that was only made from the details stays blank, so it follows them when they change.
+  const auto0 = existing ? existing.title === planTitle(type, '', plan0, sportOf(plan0.sport || (type === 'match' ? 'volleyball' : 'running'))) : true;
+
+  const [title, setTitle] = useState(existing ? (auto0 ? '' : existing.title) : '');
+  const [kind, setKind] = useState(plan0.kind || SUBTYPES[type]?.[0] || '');
+  const [subject, setSubject] = useState(plan0.subject || subjects[0]);
+  const [sport, setSport] = useState(plan0.sport || (type === 'match' ? 'volleyball' : 'running'));
+  const [opp, setOpp] = useState(plan0.opp);
+  const [comp, setComp] = useState(plan0.comp);
+  const [where, setWhere] = useState(plan0.where);
+  const [km, setKm] = useState(plan0.km);
+  const [pieces, setPieces] = useState<string[]>(Array.isArray(existing?.event.data.pieces) ? (existing!.event.data.pieces as string[]) : []);
+  const startAt = existing ? existing.event.start : '16:00';
+  const [date, setDate] = useState(existing?.date ?? (typeof spec.date === 'string' ? spec.date : addDays(today, 1)));
+  const [allDay, setAllDay] = useState(startAt === null);
+  const [start, setStart] = useState(startAt ?? '16:00');
+  const [end, setEnd] = useState(existing?.event.end ?? shift(startAt ?? '16:00', type === 'match' || type === 'violin' ? 90 : 60));
+  const [error, setError] = useState<string | null>(null);
+
+  if (key && !existing) {
+    return (
+      <Sheet title="Coming up" onClose={closeSheet}>
+        <p className="i-note">That day isn’t on the calendar any more.</p>
+      </Sheet>
+    );
+  }
+  if (existing?.event.repeat) {
+    return (
+      <Sheet title={existing.title} onClose={closeSheet}>
+        <p className="i-note">This one repeats, so it’s changed from the Calendar.</p>
+        <button type="button" className="i-btn i-btn--sig" onClick={() => openSheet({ type: 'event', key: existing.key })}>
+          Open in the Calendar
+        </button>
+      </Sheet>
+    );
+  }
+
+  const fields: Partial<Plan> = {
+    kind: SUBTYPES[type] ? kind : '',
+    where,
+    comp: type === 'match' ? comp : '',
+    opp: type === 'match' || type === 'chess' ? opp : '',
+    sport: type === 'match' || type === 'race' ? sport : '',
+    km: type === 'race' ? km.replace(',', '.').replace(/[^\d.]/g, '') : '',
+    subject: type === 'test' ? subject : '',
+  };
+  const made = planTitle(type, '', fields, sportOf(sport));
+  const needsName = type !== 'match' && type !== 'test' && type !== 'race';
+  const save = () => {
+    setError(null);
+    if (!existing && date < today) return setError('Pick today or a day ahead. For a day that has passed, log the result instead.');
+    if (!allDay && end <= start) return setError('It has to end after it starts.');
+    const err = savePlan({ type, title: planTitle(type, title, fields, sportOf(sport)), date, start: allDay ? null : start, end: allDay ? null : end, plan: fields, pieces: type === 'violin' ? pieces : [] }, existing?.event.id);
+    if (err) return setError(err);
+    if (!existing) toast(`${info.one} added to Coming up`);
+    closeSheet();
+  };
+  const remove = () => {
+    if (!existing) return;
+    deleteEvent(existing.event.id);
+    closeSheet();
+  };
+  const placeholders: Record<string, string> = { violin: 'Winter concert', race: 'Sundown half marathon', chess: 'Singapore Rapid Open', talk: 'EPQ presentation', other: 'Science olympiad' };
+
+  return (
+    <Sheet
+      title={existing ? `Plan: ${existing.title}` : `Plan a ${info.one.toLowerCase()}`}
+      onClose={closeSheet}
+      accent={PLAN_EVENT[type].section ?? undefined}
+      footer={
+        <>
+          {existing && (
+            <button type="button" className="i-btn i-btn--danger" onClick={remove}>
+              Delete
+            </button>
+          )}
+          <button type="button" className="i-btn i-btn--sig i-btn--block" onClick={save} disabled={needsName && !title.trim()}>
+            {existing ? 'Save' : 'Add to Coming up'}
+          </button>
+        </>
+      }
+    >
+      {SUBTYPES[type] && <Picks label={type === 'test' ? 'What kind of test' : 'What kind'} value={kind} onChange={setKind} options={SUBTYPES[type]!.map((x) => ({ id: x, label: x }))} />}
+      {type === 'test' && <Picks label="Subject" value={subject} onChange={setSubject} options={[...new Set([...subjects, subject])].map((x) => ({ id: x, label: x }))} />}
+      {type === 'match' && <Picks label="Sport" value={sport} onChange={setSport} options={court.map((x) => ({ id: x.id, label: x.name }))} />}
+      {type === 'race' && <Picks label="Sport" value={sport} onChange={setSport} options={distance.map((x) => ({ id: x.id, label: x.name }))} />}
+
+      <Field label={needsName ? 'Name' : 'Name · optional'}>
+        <input className="i-input" data-autofocus value={title} onChange={(e) => setTitle(e.target.value)} placeholder={needsName ? placeholders[type] : made} maxLength={120} />
+      </Field>
+
+      {type === 'match' && (
+        <div className="stg-two">
+          <Field label="Against · optional">
+            <input className="i-input" value={opp} onChange={(e) => setOpp(e.target.value)} placeholder="Team or player" maxLength={80} />
+          </Field>
+          <Field label="Competition · optional">
+            <input className="i-input" value={comp} onChange={(e) => setComp(e.target.value)} placeholder="Inter-school league" maxLength={80} />
+          </Field>
+        </div>
+      )}
+      {type === 'chess' && (
+        <Field label="Opponent · optional">
+          <input className="i-input" value={opp} onChange={(e) => setOpp(e.target.value)} maxLength={80} />
+        </Field>
+      )}
+      {type === 'race' && (
+        <Field label="Distance (km) · optional">
+          <input className="i-input" inputMode="decimal" value={km} onChange={(e) => setKm(e.target.value)} placeholder="21.1" />
+        </Field>
+      )}
+      <Field label={type === 'talk' ? 'Audience or where · optional' : 'Where · optional'}>
+        <input className="i-input" value={where} onChange={(e) => setWhere(e.target.value)} placeholder={type === 'match' ? 'Court 2, away' : ''} maxLength={120} />
+      </Field>
+      {type === 'violin' && <PiecePicks label="What you’ll play" value={pieces} onChange={setPieces} />}
+
+      <TimeFields {...{ date, setDate, allDay, setAllDay, start, setStart, end, setEnd }} />
       {error && (
         <p className="i-error" role="alert">
           {error}
@@ -516,4 +677,5 @@ function PrepSheet({ spec }: { spec: SheetSpec }) {
 
 registerSheet('stage-pick', PickSheet);
 registerSheet('stage-log', LogSheet);
+registerSheet('stage-plan', PlanSheet);
 registerSheet('stage-prep', PrepSheet);

@@ -372,6 +372,85 @@ export function eventType(ev: { kind: string; section: string | null; title: str
   return 'other';
 }
 
+// ─── planning ahead ─────────────────────────────────────────────────────────
+
+/** What you know before the day: kept on the calendar event (`data.plan`) and used to fill the log sheet in later. */
+export interface Plan {
+  kind: string;
+  where: string;
+  opp: string;
+  comp: string;
+  sport: string;
+  km: string;
+  subject: string;
+}
+export const PLAN_KEYS: (keyof Plan)[] = ['kind', 'where', 'opp', 'comp', 'sport', 'km', 'subject'];
+
+/** The calendar kind and section each Stage kind is put under, so the Calendar and the other pages see it too. */
+export const PLAN_EVENT: Record<Exclude<StageType, 'maths'>, { kind: 'performance' | 'exam' | 'competition'; section: 'violin' | 'study' | 'sports' | 'chess' | null }> = {
+  violin: { kind: 'performance', section: 'violin' },
+  test: { kind: 'exam', section: 'study' },
+  match: { kind: 'competition', section: 'sports' },
+  race: { kind: 'competition', section: 'sports' },
+  chess: { kind: 'competition', section: 'chess' },
+  talk: { kind: 'performance', section: null },
+  other: { kind: 'competition', section: null },
+};
+
+export function planOf(d: Record<string, unknown> | undefined): Plan {
+  const p = (d?.plan && typeof d.plan === 'object' ? d.plan : {}) as Record<string, unknown>;
+  const out = {} as Plan;
+  for (const k of PLAN_KEYS) out[k] = str(p[k], 120);
+  return out;
+}
+
+/** The plan as stored: only the fields that have something in them. */
+export function planData(p: Partial<Plan>): Record<string, string> {
+  const out: Record<string, string> = {};
+  for (const k of PLAN_KEYS) {
+    const v = str(p[k], 120);
+    if (v) out[k] = v;
+  }
+  return out;
+}
+
+/** A name for the calendar when you didn't type one: "Volleyball vs Tanglin", "Physics test". */
+export function planTitle(type: StageType, typed: string, p: Partial<Plan>, sportName: string): string {
+  const t = typed.trim();
+  if (t) return t.slice(0, 120);
+  const opp = str(p.opp, 80);
+  if (type === 'match') return opp ? `${sportName} vs ${opp}` : `${sportName} match`;
+  if (type === 'test') {
+    const subject = str(p.subject, 40);
+    const kind = str(p.kind, 30) || 'Test';
+    return subject ? `${subject} ${kind.toLowerCase()}` : kind;
+  }
+  if (type === 'chess') return opp ? `Chess vs ${opp}` : 'Chess game';
+  if (type === 'race') return str(p.km, 10) ? `${str(p.km, 10)} km ${sportName.toLowerCase()}` : sportName;
+  return `${STAGE_TYPES[type].one}`;
+}
+
+/** One line of what's planned: "vs Tanglin · Inter-school league · Court 2 · 16:00". */
+export function planLine(type: StageType, p: Plan, start: string | null): string {
+  const bits: string[] = [];
+  if (type === 'match' && p.opp) bits.push(`vs ${p.opp}`);
+  if (type === 'chess' && p.opp) bits.push(`vs ${p.opp}`);
+  if (type === 'race' && p.km) bits.push(`${p.km} km`);
+  if (type === 'test' && p.subject) bits.push(p.subject);
+  if (p.kind && type !== 'match' && type !== 'race') bits.push(p.kind);
+  if (p.comp) bits.push(p.comp);
+  if (p.where) bits.push(p.where);
+  if (start) bits.push(start);
+  return bits.join(' · ');
+}
+
+/** How long a match is planned for, in minutes, if the event has a start and an end. */
+export function plannedMinutes(start: string | null, end: string | null): number | null {
+  if (!start || !end) return null;
+  const m = +end.slice(0, 2) * 60 + +end.slice(3) - (+start.slice(0, 2) * 60 + +start.slice(3));
+  return m > 0 && m <= 480 ? m : null;
+}
+
 export interface Prep {
   event: string;
   ticks: string[];

@@ -2,7 +2,8 @@ import { addDays, shortDay } from '../../domain/log/dates';
 import { formatMinutes } from '../../domain/log/duration';
 
 /** Today / yesterday / two days ago, or any earlier day. */
-export function DayPick({ value, onChange, today }: { value: string; onChange: (d: string) => void; today: string }) {
+/** Today and the two days before, or any date. `ahead` also lets you pick a day that hasn't happened yet. */
+export function DayPick({ value, onChange, today, ahead = false }: { value: string; onChange: (d: string) => void; today: string; ahead?: boolean }) {
   return (
     <div className="i-field">
       <span className="i-lab">Day</span>
@@ -12,7 +13,7 @@ export function DayPick({ value, onChange, today }: { value: string; onChange: (
             {i === 0 ? 'Today' : i === 1 ? 'Yesterday' : shortDay(d)}
           </button>
         ))}
-        <input className="i-input" type="date" max={today} value={value} onChange={(e) => e.target.value && onChange(e.target.value)} aria-label="Another day" style={{ width: 'auto', minHeight: 42 }} />
+        <input className="i-input" type="date" max={ahead ? undefined : today} value={value} onChange={(e) => e.target.value && onChange(e.target.value)} aria-label="Another day" style={{ width: 'auto', minHeight: 42 }} />
       </div>
     </div>
   );

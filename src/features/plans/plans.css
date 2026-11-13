@@ -1,4 +1,4 @@
-/* ── Training plans (marathon in Sports, gym plan in Gym, a card on Home) ─────────────────────────
+/* ── Training plans (the marathon in Sports, a card on Home) ─────────────────────────
    Built on each section's tokens so the trail map and the iron warehouse keep their look; only the
    phase colours are the plan's own. Motion is transform/opacity only and stops under reduced motion. */
 
@@ -185,11 +185,6 @@
   font-weight: 700;
   color: var(--ok);
 }
-.pl-gymline {
-  margin: 0;
-  font-size: 13px;
-  color: var(--fg-2);
-}
 
 /* ── this week ── */
 .pl-week {
@@ -236,9 +231,6 @@
 .pl-dot--run {
   color: var(--c-sports, var(--sig));
   box-shadow: inset 0 0 0 1.5px currentColor;
-}
-.pl-dot--gym {
-  color: var(--fg-2);
 }
 .pl-dot--rest {
   color: var(--fg-3);
@@ -479,88 +471,6 @@ small.pl-court {
   font-size: 14px;
 }
 
-/* ── gym plan ── */
-.pl-gplan {
-  display: grid;
-  gap: 8px;
-}
-.pl-gkick {
-  font-family: var(--f-mono);
-  font-weight: 700;
-  font-size: 14px;
-  letter-spacing: 0.1em;
-  color: var(--sig);
-}
-.pl-glede {
-  margin: 0;
-  color: var(--fg-2);
-  font-size: 14px;
-}
-.pl-gplan .pl-grow {
-  display: grid;
-  grid-template-columns: 46px minmax(0, 1fr) auto;
-  align-items: center;
-  gap: 12px;
-}
-.pl-grow .i-row__t {
-  display: grid;
-  justify-items: start;
-  gap: 3px;
-}
-.pl-gday {
-  flex: none;
-  width: 46px;
-  text-align: center;
-  font-family: var(--f-label);
-  font-size: 15px;
-  padding: 6px 0;
-  border-radius: 2px;
-  background: var(--surf-3);
-  color: var(--fg);
-}
-.pl-grow.is-done .pl-gday {
-  background: var(--sig);
-  color: var(--sig-fg);
-}
-.pl-grow.is-today .pl-gday {
-  box-shadow: 0 0 0 2px var(--sig);
-}
-.pl-rules {
-  display: grid;
-  gap: 6px;
-  margin-top: 10px;
-  font-size: 13px;
-  line-height: 1.45;
-  color: var(--fg-2);
-}
-.pl-rules p {
-  margin: 0;
-  padding-left: 10px;
-  border-left: 3px solid var(--rule);
-}
-.pl-rules p.is-on {
-  border-left-color: var(--sig);
-  color: var(--fg);
-}
-.pl-rules b {
-  color: var(--fg);
-  margin-right: 4px;
-}
-.i-shell[data-sect='gym'] .pl-st--done {
-  color: #111;
-}
-.pl-plantag {
-  font-family: var(--f-mono);
-  font-weight: 700;
-  font-size: 11px;
-  letter-spacing: 0.06em;
-  padding: 1px 6px;
-  margin-right: 6px;
-  border-radius: 2px;
-  background: var(--sig);
-  color: var(--sig-fg);
-  vertical-align: 2px;
-}
 
 /* ── Home card ── */
 .pl-home {
@@ -655,7 +565,4 @@ small.pl-court {
   .pl-runner {
     animation: none;
   }
-}
-.pl-rules .i-link {
-  min-height: 0;
 }

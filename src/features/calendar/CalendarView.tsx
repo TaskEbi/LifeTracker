@@ -36,12 +36,12 @@ function PlanRows({ items }: { items: ReturnType<typeof usePlanDay> }) {
   return (
     <>
       {items.map(({ s, state }) => (
-        <button key={s.id} type="button" className="c-ev" style={accent(s.kind === 'run' ? 'sports' : 'gym')} onClick={() => navigate(s.kind === 'run' ? 'sports' : 'gym')}>
+        <button key={s.id} type="button" className="c-ev" style={accent('sports')} onClick={() => navigate('sports')}>
           <span className="i-mono i-small">PLAN</span>
           <span className={`c-stripe${state.status === 'done' ? '' : ' is-planned'}`} />
           <span className={`c-ti${state.status === 'missed' ? ' is-off' : ''}`}>
             {s.title}
-            <small>{s.kind === 'run' ? `marathon plan · ${s.km} km${s.optional ? ' · optional' : ''}` : `gym plan${s.adjust ? ` · ${s.adjust.note}` : ''}`}</small>
+            <small>{`marathon plan · ${s.km} km${s.optional ? ' · optional' : ''}`}</small>
           </span>
           <span className={`i-tag${state.status === 'done' ? ' i-tag--ok' : ''}`}>{STATUS_LABEL[state.status].toUpperCase()}</span>
         </button>
@@ -85,7 +85,7 @@ export function CalendarView() {
   const dayOcc = visible.filter((o) => o.date === sel);
   const dayLogs = (logged.get(sel) ?? []).filter((l) => show(l.section));
   const dayTasks = tasks.filter((t) => t.due === sel && show(t.section ?? null));
-  const planDay = usePlanDay(sel).filter((x) => show(x.s.kind === 'run' ? 'sports' : 'gym'));
+  const planDay = usePlanDay(sel).filter(() => show('sports'));
   const toggleFilter = (s: SectionId) => setFilter(filter.includes(s) ? filter.filter((x) => x !== s) : [...filter, s]);
   const go = (n: number) => {
     const m = addDays(monday, 7 * n);

@@ -10,6 +10,11 @@ import {
   nervesSplit,
   parseSets,
   parseTime,
+  planData,
+  planLine,
+  planOf,
+  plannedMinutes,
+  planTitle,
   predictionGap,
   prepOf,
   raceBests,
@@ -292,5 +297,35 @@ describe('violin repertoire', () => {
     expect(sortRepertoire(list, 'year').map((x) => x.title)).toEqual(['Bruch 1', 'Zigeunerweisen', 'Partita', 'Old']);
     expect(sortRepertoire(list, 'composer').map((x) => x.title)).toEqual(['Partita', 'Bruch 1', 'Zigeunerweisen', 'Old']);
     expect(sortRepertoire(list, 'title').map((x) => x.title)).toEqual(['Bruch 1', 'Old', 'Partita', 'Zigeunerweisen']);
+  });
+});
+
+describe('planning ahead', () => {
+  it('keeps only what was filled in, and reads it back from an event', () => {
+    expect(planData({ opp: ' Tanglin ', comp: '', where: 'Court 2', km: '' })).toEqual({ opp: 'Tanglin', where: 'Court 2' });
+    expect(planOf({ plan: { opp: 'Tanglin', sport: 'volleyball', junk: 1 } })).toEqual({ kind: '', where: '', opp: 'Tanglin', comp: '', sport: 'volleyball', km: '', subject: '' });
+    expect(planOf(undefined).opp).toBe('');
+    expect(planOf({ plan: 'nope' }).sport).toBe('');
+  });
+
+  it('names a day when you did not type one', () => {
+    expect(planTitle('match', '', { opp: 'Tanglin' }, 'Volleyball')).toBe('Volleyball vs Tanglin');
+    expect(planTitle('match', '', {}, 'Tennis')).toBe('Tennis match');
+    expect(planTitle('match', ' League final ', { opp: 'Tanglin' }, 'Volleyball')).toBe('League final');
+    expect(planTitle('test', '', { subject: 'Physics', kind: 'Mock' }, '')).toBe('Physics mock');
+    expect(planTitle('test', '', {}, '')).toBe('Test');
+    expect(planTitle('chess', '', { opp: 'Lee' }, '')).toBe('Chess vs Lee');
+    expect(planTitle('race', '', { km: '21.1' }, 'Running')).toBe('21.1 km running');
+    expect(planTitle('violin', '', {}, '')).toBe('Performance');
+  });
+
+  it('writes a one-line summary and a length', () => {
+    const p = planOf({ plan: { opp: 'Tanglin', comp: 'Inter-school league', where: 'Court 2' } });
+    expect(planLine('match', p, '16:00')).toBe('vs Tanglin · Inter-school league · Court 2 · 16:00');
+    expect(planLine('violin', planOf({ plan: { kind: 'Recital', where: 'Hall' } }), null)).toBe('Recital · Hall');
+    expect(planLine('race', planOf({ plan: { km: '10' } }), null)).toBe('10 km');
+    expect(plannedMinutes('16:00', '17:30')).toBe(90);
+    expect(plannedMinutes(null, '17:30')).toBeNull();
+    expect(plannedMinutes('16:00', '15:00')).toBeNull();
   });
 });

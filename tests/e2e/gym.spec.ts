@@ -1,44 +1,54 @@
 import { expect, test } from '@playwright/test';
 
-test('gym: template session survives a reload, check-in with pain, saved once', async ({ page }) => {
+test('gym: log a session by muscle group, see the statistics, edit it, saved once', async ({ page }) => {
   await page.goto('/gym');
-  await page.getByRole('button', { name: 'Add 3 starter templates' }).click();
-  await page.locator('.i-row').filter({ hasText: 'Lower A' }).getByRole('button', { name: 'Start' }).click();
-  await expect(page.getByRole('heading', { name: 'Lower A' })).toBeVisible();
+  await expect(page.getByText('Counts per group appear once a session has muscle groups.')).toBeVisible();
+  await expect(page.getByRole('button', { name: /Start|template/i })).toHaveCount(0);
 
-  await page.getByRole('button', { name: 'Goblet squat set 1 done' }).click();
-  await expect(page.getByRole('timer')).toBeVisible();
-  await page.getByRole('button', { name: 'Skip' }).click();
-  await page.getByRole('button', { name: 'Set 2 more weight' }).first().click();
-  await page.getByRole('button', { name: 'Goblet squat set 2 done' }).click();
+  await page.getByRole('button', { name: 'Log gym' }).first().click();
+  const sheet = page.getByRole('dialog', { name: 'Log gym' });
+  // A save needs at least one group
+  await sheet.getByRole('button', { name: 'Save' }).click();
+  await expect(sheet.getByRole('alert')).toContainText('Pick at least one muscle group');
 
-  // Swap the second exercise for today
-  await page.getByRole('button', { name: 'Swap' }).nth(1).click();
-  await page.getByRole('dialog', { name: 'Swap exercise' }).getByRole('button', { name: /Single-leg RDL/ }).click();
-  await expect(page.getByText('Instead of Romanian deadlift')).toBeVisible();
-
-  // A reload keeps the session (it lives on the device until finished)
-  await page.reload();
-  await expect(page.getByRole('heading', { name: 'Lower A' })).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Goblet squat set 2 done' })).toHaveAttribute('aria-pressed', 'true');
-  await expect(page.locator('.g-set').nth(1)).toContainText('26.5');
-
-  await page.getByRole('button', { name: 'Finish session' }).click();
-  const check = page.getByRole('dialog', { name: 'Check-in' });
-  await check.getByRole('group', { name: /Effort/ }).getByRole('button', { name: '7' }).click();
-  await check.getByRole('switch', { name: /Any pain/ }).click();
-  await check.getByLabel('Pain details').fill('Left shin after split squats');
-  await check.getByRole('button', { name: 'Save session' }).click();
+  const groups = sheet.getByRole('group', { name: 'Muscle groups' });
+  await groups.getByRole('button', { name: 'Chest' }).click();
+  await groups.getByRole('button', { name: 'Triceps' }).click();
+  await sheet.getByRole('group', { name: 'Effort (1 easy – 10 max)' }).getByRole('button', { name: '7' }).click();
+  await sheet.getByRole('switch', { name: /Any pain/ }).click();
+  await sheet.getByLabel('Pain details').fill('Left shoulder on the way down');
+  await sheet.getByRole('button', { name: 'Save' }).click();
 
   const reward = page.getByRole('dialog', { name: 'What you earned' });
-  await expect(reward.getByText('Lower A completed')).toBeVisible();
-  await expect(reward.getByText('2 sets done (capped at the plan)')).toBeVisible();
+  await expect(reward.getByText('Chest · Triceps completed')).toBeVisible();
   await expect(reward.getByText('Check-in recorded')).toBeVisible();
   await expect(reward.getByText(/Pain noted/)).toBeVisible();
   await reward.getByRole('button', { name: 'OK' }).click();
 
-  const history = page.locator('.i-row').filter({ hasText: 'pain noted: Left shin' });
+  // The statistics: chest and triceps hit once, back never
+  const table = page.getByRole('table', { name: 'Sessions per muscle group' });
+  const row = (name: string) => table.getByRole('row').filter({ has: page.getByRole('cell', { name, exact: true }) });
+  await expect(row('Chest')).toContainText('today');
+  await expect(row('Chest').getByRole('cell').nth(2)).toHaveText('1');
+  await expect(row('Triceps').getByRole('cell').nth(3)).toHaveText('1');
+  await expect(row('Back')).toContainText('never');
+
+  const history = page.locator('.i-row').filter({ hasText: 'pain noted: Left shoulder' });
   await expect(history).toHaveCount(1);
+  await expect(history).toContainText('Chest, Triceps');
+
+  // Edit: add Back, leave the rest
+  await history.click();
+  const edit = page.getByRole('dialog', { name: 'Edit gym session' });
+  await edit.getByRole('group', { name: 'Muscle groups' }).getByRole('button', { name: 'Back' }).click();
+  await edit.getByRole('button', { name: 'Save' }).click();
+  await expect(page.getByRole('dialog', { name: 'What you earned' })).toHaveCount(0);
+  await expect(page.locator('.i-row').filter({ hasText: 'Chest · Back · Triceps' })).toHaveCount(1);
+  await expect(row('Back').getByRole('cell').nth(3)).toHaveText('1');
+
+  // Still one session after a reload
+  await page.waitForTimeout(300);
   await page.reload();
-  await expect(page.locator('.i-row').filter({ hasText: 'pain noted: Left shin' })).toHaveCount(1);
+  await expect(page.locator('.i-row').filter({ hasText: 'Chest · Back · Triceps' })).toHaveCount(1);
+  await expect(page.getByRole('button', { name: 'Log gym' }).first()).toBeVisible();
 });

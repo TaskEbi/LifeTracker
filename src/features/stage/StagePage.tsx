@@ -17,6 +17,8 @@ import {
   MATCH_STATS,
   nervesSplit,
   OUTCOME_LABEL,
+  planLine,
+  planOf,
   predictionGap,
   PREP,
   raceBests,
@@ -144,6 +146,7 @@ export function StagePage() {
 
 function Now({ shows, days, today }: { shows: Show[]; days: Upcoming[]; today: string }) {
   const names = usePieceNames();
+  const [all, setAll] = useState(false);
   const ahead = days.filter((d) => d.date >= today && !d.result);
   const awaiting = days.filter((d) => d.date < today && !d.result && d.type !== 'maths');
   const year = shows.filter((s) => s.date.slice(0, 4) === today.slice(0, 4));
@@ -172,15 +175,15 @@ function Now({ shows, days, today }: { shows: Show[]; days: Upcoming[]; today: s
         </div>
       ))}
 
-      <H2 aside={ahead.length > 4 ? `${ahead.length} ahead` : undefined}>Coming up</H2>
+      <H2 aside={ahead.length > 4 ? <button type="button" className="i-link" onClick={() => setAll(!all)}>{all ? 'Show fewer' : `All ${ahead.length} →`}</button> : undefined}>Coming up</H2>
       {ahead.length ? (
         <div className="stg-marquee" aria-label="Coming up">
-          {ahead.slice(0, 4).map((d) => (
+          {(all ? ahead : ahead.slice(0, 4)).map((d) => (
             <ComingUp key={d.key} d={d} shows={shows} today={today} />
           ))}
         </div>
       ) : (
-        <p className="i-note">Nothing on the calendar. Add a concert, test, match or race with + Coming up and the Stage counts down to it.</p>
+        <p className="i-note">Nothing planned yet. Add a concert, test, match or race with + Coming up and the Stage counts down to it. When it’s over, tap it to log how it went.</p>
       )}
 
       {shows.length > 0 && (
@@ -230,6 +233,7 @@ function ComingUp({ d, shows, today }: { d: Upcoming; shows: Show[]; today: stri
   const list = PREP[d.type];
   const ticked = d.prep ? d.prep.ticks.filter((t) => list.some((x) => x.id === t)).length : 0;
   const last = lastNote(shows, d.type, d.date);
+  const line = planLine(d.type, planOf(d.event.data), null);
   return (
     <article className="stg-up" style={tc(d.type)} aria-label={d.title}>
       <div className="stg-up__top">
@@ -252,6 +256,7 @@ function ComingUp({ d, shows, today }: { d: Upcoming; shows: Show[]; today: stri
       <span className="lf-bar" style={{ '--p': `${(ticked / list.length) * 100}%` } as CSSProperties} aria-label={`Ready list ${ticked} of ${list.length}`}>
         <i />
       </span>
+      {line && <p className="stg-up__plan">{line}</p>}
       {d.prep?.goal && <p className="stg-up__goal">Aim: {d.prep.goal}</p>}
       {last && (
         <p className="stg-last">
@@ -267,11 +272,14 @@ function ComingUp({ d, shows, today }: { d: Upcoming; shows: Show[]; today: stri
             Maths page
           </button>
         ) : (
-          left === 0 && (
-            <button type="button" className="i-btn i-btn--sm i-btn--sig" onClick={() => openSheet({ type: 'stage-log', kind: d.type, event: d.key, date: d.date, title: d.title })}>
-              How did it go?
-            </button>
-          )
+          <button type="button" className="i-btn i-btn--sm" onClick={() => openSheet(d.event.repeat ? { type: 'event', key: d.key } : { type: 'stage-plan', key: d.key })}>
+            Edit plan
+          </button>
+        )}
+        {d.type !== 'maths' && left === 0 && (
+          <button type="button" className="i-btn i-btn--sm i-btn--sig" onClick={() => openSheet({ type: 'stage-log', kind: d.type, event: d.key, date: d.date, title: d.title })}>
+            How did it go?
+          </button>
         )}
       </div>
     </article>

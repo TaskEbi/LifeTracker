@@ -6,7 +6,7 @@ import { Burst, Caption, Ink, range, Seal, Stamp, type Css } from '../kit';
 import type { MomentFx, MomentFxMap } from './types';
 import './plans.css';
 
-const PLAN_NAME = { marathon: 'Marathon plan', gym: 'Gym plan' } as const;
+const PLAN_NAME = { marathon: 'Marathon plan' } as const;
 const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 const DAY_K = ['月', '火', '水', '木', '金', '土', '日'];
 /** Monday = 0. */
@@ -44,7 +44,7 @@ const planSession: MomentFx<'plan-session'> = {
                   return (
                     <span key={i} className="fx-ps__cell fx-ps__cell--today">
                       <span className="fx-ps__flip">
-                        <span className="fx-ps__face fx-ps__face--front">{m.plan === 'gym' ? '力' : '走'}</span>
+                        <span className="fx-ps__face fx-ps__face--front">走</span>
                         <span className="fx-ps__face fx-ps__face--back">
                           <b>修</b>
                         </span>

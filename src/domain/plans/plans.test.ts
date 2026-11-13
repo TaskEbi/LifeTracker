@@ -3,9 +3,8 @@ import type { LogEntry, LtDetail, SectionId } from '../../data/types';
 import { addDays, weekdayIndex } from '../log/dates';
 import { DEFAULT_SLEEP, DEFAULT_TARGETS } from '../prefs';
 import type { ProgressInput } from '../progress/engine';
-import { adjustExercises, carriedWeights, missingPlanWorkouts, PLAN_WORKOUTS } from './gym';
 import { courtNotes, fmtPace, marathonStatus, matchRuns, pacesFor, PHASES, PLAN_WEEKS, planWeeks, raceDate, riegel, STEP_BACK, weekOf, type LoggedRun } from './marathon';
-import { gymPlanWeek, planMoments } from './progress';
+import { planMoments } from './progress';
 import { DEFAULT_GOAL, DEFAULT_START, normalisePlans, type PlansState } from './types';
 
 const START = DEFAULT_START;
@@ -55,13 +54,11 @@ describe('marathon plan shape', () => {
     expect(weeks.filter((w) => w.stepBack).map((w) => w.n)).toEqual([4, 8, 12, 16, 20]);
   });
 
-  it('puts phases on the right weeks and keeps the gym out of the last two days', () => {
+  it('puts phases on the right weeks, with runs only (the gym plan is gone)', () => {
     expect(weeks.map((w) => w.phase.id).join(',')).toBe(['base', 'base', 'base', 'base', 'base', 'base', 'build', 'build', 'build', 'build', 'build', 'build', 'specific', 'specific', 'specific', 'specific', 'specific', 'specific', 'specific', 'peak', 'peak', 'taper', 'taper', 'taper'].join(','));
     expect(PHASES.reduce((a, p) => a + p.to - p.from + 1, 0)).toBe(24);
-    expect(weeks[23].gym.every((g) => g.day <= 3 && g.adjust?.maxSets === 2)).toBe(true);
-    expect(weeks[23].gym.some((g) => g.workout === 'athletic')).toBe(false);
-    expect(weeks[21].gym.find((g) => g.workout === 'athletic')!.adjust?.half).toBe(true);
-    expect(weeks[5].gym.map((g) => g.day)).toEqual([0, 2, 3]);
+    expect(weeks.every((w) => !('gym' in w))).toBe(true);
+    expect(weeks.map((w) => w.note ?? '').join(' ')).not.toMatch(/gym|athletic/i);
     // optional Friday runs only from week 9
     expect(weeks.slice(0, 8).some((w) => w.runs.some((r) => r.day === 4))).toBe(false);
     expect(weeks[8].runs.find((r) => r.day === 4)!.optional).toBe(true);
@@ -132,13 +129,13 @@ describe('week and phase status', () => {
   it('is done / partial / missed / now / upcoming', () => {
     const today = addDays(weeks[2].start, 2); // Wed of week 3
     const logs = [...runsFor(1), ...runsFor(2, [6, 5])];
-    const s = marathonStatus(PREF, logs, [], {}, today);
+    const s = marathonStatus(PREF, logs, today);
     expect(s.current).toBe(3);
     expect(s.week.get(1)!.status).toBe('done');
     expect(s.week.get(2)!.status).toBe('partial');
     expect(s.week.get(3)!.status).toBe('now');
     expect(s.week.get(4)!.status).toBe('upcoming');
-    expect(marathonStatus(PREF, [], [], {}, today).week.get(1)!.status).toBe('missed');
+    expect(marathonStatus(PREF, [], today).week.get(1)!.status).toBe('missed');
     expect(s.sessions.get('m3-1')!.status).toBe('missed');
     expect(s.sessions.get('m3-2')!.status).toBe('today');
   });
@@ -146,13 +143,13 @@ describe('week and phase status', () => {
   it('clears a phase when its last long run is done and ≥ 80% of its runs are', () => {
     const today = addDays(weeks[5].start, 6);
     const all = [1, 2, 3, 4, 5, 6].flatMap((n) => runsFor(n));
-    expect(marathonStatus(PREF, all, [], {}, today).phases[0].status).toBe('cleared');
+    expect(marathonStatus(PREF, all, today).phases[0].status).toBe('cleared');
     // 24 runs in base; dropping 4 midweek runs leaves 20/24 = 83%
     const some = [1, 2, 3, 4, 5, 6].flatMap((n) => runsFor(n, n <= 4 ? [2] : []));
-    expect(marathonStatus(PREF, some, [], {}, today).phases[0].status).toBe('cleared');
+    expect(marathonStatus(PREF, some, today).phases[0].status).toBe('cleared');
     const noLast = all.filter((r) => r.date !== weeks[5].runs.find((x) => x.long)!.date);
-    expect(marathonStatus(PREF, noLast, [], {}, today).phases[0].status).toBe('active');
-    expect(marathonStatus(PREF, noLast, [], {}, addDays(today, 1)).phases[0].status).toBe('over');
+    expect(marathonStatus(PREF, noLast, today).phases[0].status).toBe('active');
+    expect(marathonStatus(PREF, noLast, addDays(today, 1)).phases[0].status).toBe('over');
   });
 });
 
@@ -176,7 +173,7 @@ function input(rows: [LogEntry, LtDetail][], plans: PlansState, today: string): 
 }
 
 describe('planMoments', () => {
-  const plans: PlansState = { marathon: PREF, gym: { templates: { 'upper-a': 'tpl-a', 'upper-b': 'tpl-b', athletic: 'tpl-c' }, since: START } };
+  const plans: PlansState = { marathon: PREF };
   const w1 = weeks[0];
   const runRow = (day: number, km: number) => entry('sports', addDays(w1.start, day), { sport: 'running', km });
 
@@ -205,71 +202,34 @@ describe('planMoments', () => {
     expect(m.find((x) => x.type === 'plan-phase')).toEqual({ type: 'plan-phase', phase: 'Base', next: 'Build' });
   });
 
-  it('fires gym plan sessions for sessions from the plan template; changing the plan fires nothing', () => {
+  it('ignores gym sessions, and changing the plan fires nothing', () => {
     const today = addDays(w1.start, 0);
-    const gym = entry('gym', today, { name: 'Upper A · Strength', template: 'tpl-a', exercises: [] });
-    expect(planMoments(input([], plans, today), input([gym], plans, today))).toEqual([{ type: 'plan-session', plan: 'gym', title: 'Upper A · Strength', week: 1 }]);
+    const gym = entry('gym', today, { name: 'Chest · Triceps', template: null, exercises: [], muscles: ['chest', 'triceps'] });
+    expect(planMoments(input([], plans, today), input([gym], plans, today))).toEqual([]);
+    const tue = runRow(1, 7);
     const other = { ...plans, marathon: { ...PREF, start: addDays(START, 7) } };
-    expect(planMoments(input([gym], plans, today), input([gym], other, today))).toEqual([]);
-    expect(planMoments(input([], { marathon: null, gym: null }, today), input([gym], { marathon: null, gym: null }, today))).toEqual([]);
-  });
-});
-
-describe('gym plan', () => {
-  it('has the three workouts on Mon, Wed, Thu with little lower-body load', () => {
-    expect(PLAN_WORKOUTS.map((w) => [w.id, w.day])).toEqual([['upper-a', 0], ['athletic', 2], ['upper-b', 3]]);
-    const a = PLAN_WORKOUTS.find((w) => w.id === 'upper-a')!;
-    expect(a.exercises[0]).toMatchObject({ name: 'Bench press', sets: 4, reps: 5, rest: 150 });
-    expect(PLAN_WORKOUTS.flatMap((w) => w.exercises).some((e) => /squat|deadlift|lunge|leg press/i.test(e.name))).toBe(false);
-  });
-  it('only creates what is missing (idempotent)', () => {
-    expect(missingPlanWorkouts(undefined, new Set())).toHaveLength(3);
-    const stored = { 'upper-a': 'a', 'upper-b': 'b', athletic: 'c' };
-    expect(missingPlanWorkouts(stored, new Set(['a', 'b', 'c']))).toHaveLength(0);
-    expect(missingPlanWorkouts(stored, new Set(['a', 'c'])).map((w) => w.id)).toEqual(['upper-b']);
-  });
-  it('halves Athletic and caps sets for the taper', () => {
-    const ath = PLAN_WORKOUTS.find((w) => w.id === 'athletic')!.exercises;
-    const half = adjustExercises(ath, { half: true, note: '' });
-    expect(half.some((e) => /box jump/i.test(e.name))).toBe(false);
-    expect(half.find((e) => e.name === 'Pogo hops')!.sets).toBe(2);
-    expect(adjustExercises(PLAN_WORKOUTS[0].exercises, { maxSets: 2, note: '' }).every((e) => e.sets <= 2)).toBe(true);
-  });
-  it('carries the last session’s weights forward', () => {
-    const ex = PLAN_WORKOUTS[0].exercises;
-    const out = carriedWeights(ex, [
-      { date: '2026-11-02', template: 'tpl', exercises: [{ name: 'Bench press', sets: [{ weight: 60, done: true }, { weight: 62.5, done: true }] }] },
-      { date: '2026-11-09', template: 'tpl', exercises: [{ name: 'Bench press', sets: [{ weight: 65, done: true }, { weight: 70, done: false }] }] },
-      { date: '2026-11-10', template: 'other', exercises: [{ name: 'Bench press', sets: [{ weight: 100, done: true }] }] },
-    ], 'tpl');
-    expect(out[0].weight).toBe(65);
-    expect(out[1].weight).toBe(ex[1].weight);
-  });
-  it('numbers its own weeks without a marathon plan, and uses the plan’s inside it', () => {
-    const alone: PlansState = { marathon: null, gym: { templates: {}, since: '2026-10-26' } };
-    const w = gymPlanWeek(alone, '2026-11-09', [], '2026-11-10');
-    expect([w.week, w.of, w.sessions.length]).toEqual([3, 0, 3]);
-    const race = gymPlanWeek({ marathon: PREF, gym: alone.gym }, weeks[23].start, [], '2026-10-30');
-    expect([race.week, race.of, race.sessions.length]).toEqual([24, 24, 2]);
+    expect(planMoments(input([tue], plans, addDays(w1.start, 1)), input([tue], other, addDays(w1.start, 1)))).toEqual([]);
+    expect(planMoments(input([], { marathon: null }, today), input([tue], { marathon: null }, today))).toEqual([]);
   });
 });
 
 describe('court notes', () => {
-  it('flags a quality run or Athletic on or the day before a court day', () => {
+  it('flags a quality run on or the day before a court day', () => {
     const w = weeks[4];
-    const notes = courtNotes([...w.runs, ...w.gym], new Set([addDays(w.start, 2)])); // court on Wed
-    expect(notes.map((x) => x.id).sort()).toEqual(['g5-athletic', 'm5-1']);
+    const notes = courtNotes(w.runs, new Set([addDays(w.start, 2)])); // court on Wed
+    expect(notes.map((x) => x.id)).toEqual(['m5-1']);
   });
 });
 
 describe('normalisePlans', () => {
   it('rejects junk', () => {
-    for (const j of [null, 1, 'x', [], { marathon: 5 }, { marathon: { start: 'soon' } }, { gym: [] }]) expect(normalisePlans(j)).toEqual({ marathon: null, gym: null });
+    for (const j of [null, 1, 'x', [], { marathon: 5 }, { marathon: { start: 'soon' } }, { gym: [] }]) expect(normalisePlans(j)).toEqual({ marathon: null });
   });
   it('keeps good values, snaps the start to Monday and fixes a bad goal', () => {
-    const p = normalisePlans({ marathon: { start: '2026-11-04', goal: '9:99' }, gym: { templates: { 'upper-a': 'id1', bogus: 'x', athletic: 7 }, since: 'nope' } });
-    expect(p.marathon).toEqual({ start: '2026-11-02', goal: '4:10:00', half: null });
-    expect(p.gym).toEqual({ templates: { 'upper-a': 'id1' }, since: null });
+    // a `gym` key stored by an older version (the gym plan) is dropped
+    const p = normalisePlans({ marathon: { start: '2026-11-04', goal: '9:99' }, gym: { templates: { 'upper-a': 'id1' }, since: '2026-11-02' } });
+    expect(p).toEqual({ marathon: { start: '2026-11-02', goal: '4:10:00', half: null } });
+    expect(normalisePlans({ gym: { templates: {}, since: null } })).toEqual({ marathon: null });
     expect(normalisePlans({ marathon: { start: START, goal: '3:59', half: '1:56:00' } }).marathon).toEqual({ start: START, goal: '3:59:00', half: '1:56:00' });
     expect(normalisePlans({ marathon: { start: START, goal: '1:00:00' } }).marathon!.goal).toBe('4:10:00');
   });

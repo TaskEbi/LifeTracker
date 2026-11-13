@@ -12,8 +12,9 @@ import type { LtEvent, LtRecord } from '../../data/types';
 import { occurrences } from '../../domain/calendar/occurrences';
 import { addDays } from '../../domain/log/dates';
 import { sittingOf } from '../../domain/maths/model';
-import { byNewest, eventType, prepOf, reflectionData, REFLECTION_KEYS, showOfMark, showOfRecord, showOfSitting, showOfSport, type Prep, type Reflection, type Show, type ShowType, type StageType } from '../../domain/stage/model';
+import { byNewest, eventType, planData, PLAN_EVENT, prepOf, reflectionData, REFLECTION_KEYS, showOfMark, showOfRecord, showOfSitting, showOfSport, type Plan, type Prep, type Reflection, type Show, type ShowType, type StageType } from '../../domain/stage/model';
 import { useStore } from '../../lib/createStore';
+import { createEvent, reschedule, updateEventInfo } from '../calendar/actions';
 import { nightsFrom } from '../sleep/model';
 import { sportInfo, type SportDetail } from '../sports/model';
 import { isStudyDetail, subjectsOf, type StudyDetail } from '../study/model';
@@ -196,4 +197,60 @@ export function savePrep(key: string, p: Omit<Prep, 'event'>) {
     ? { ...prev, data: value, deleted_at: null, updated_at: t }
     : { id, section: SECTION, kind: 'pf_prep', data: value, sort_order: 0, archived_at: null, created_at: t, updated_at: t, deleted_at: null };
   commit('lt_records', [row]);
+}
+
+// ─── planning ahead ─────────────────────────────────────────────────────────
+
+export interface PlanForm {
+  type: Exclude<StageType, 'maths'>;
+  title: string;
+  date: string;
+  /** null for an all-day plan. */
+  start: string | null;
+  end: string | null;
+  plan: Partial<Plan>;
+  pieces: string[];
+}
+
+/** One line for the calendar's note: what you'd see there at a glance. */
+function planNote(f: PlanForm): string {
+  return [f.plan.opp && `vs ${f.plan.opp}`, f.plan.comp, f.plan.where].filter(Boolean).join(' · ').slice(0, 500);
+}
+
+/**
+ * Put a day ahead on the calendar (so the Calendar, Violin, Study and Sports pages see it too) with what you know about it.
+ * The Stage counts down to it and fills the log sheet in from it afterwards. A plan for a day that already
+ * has an event edits that event. Returns an error or null.
+ */
+export function savePlan(f: PlanForm, eventId?: string | null): string | null {
+  const at = PLAN_EVENT[f.type];
+  const fields = { title: f.title, section: at.section, kind: at.kind, note: planNote(f) };
+  const prevEvent = eventId ? data.get().lt_events.get(eventId) : undefined;
+  const extra = { stage: f.type, plan: planData(f.plan), ...(f.type === 'violin' && f.pieces.length ? { pieces: f.pieces } : {}) };
+  if (prevEvent && !prevEvent.deleted_at) {
+    // Keep anything else the event carries, drop what this sheet owns.
+    const { pieces: _p, plan: _l, stage: _s, ...rest } = prevEvent.data;
+    const err = updateEventInfo(prevEvent.id, { ...fields, data: { ...rest, ...extra } });
+    if (err) return err;
+    if (f.date !== prevEvent.date || f.start !== prevEvent.start || f.end !== prevEvent.end) {
+      if (f.start && f.end && f.end <= f.start) return 'It has to end after it starts.';
+      const from = `${prevEvent.id}@${prevEvent.date}`;
+      reschedule(prevEvent.id, prevEvent.date, { date: f.date, start: f.start, end: f.end }, 'one');
+      // A one-off's key includes its day, so the ready list moves with it.
+      if (f.date !== prevEvent.date) moveKey(from, `${prevEvent.id}@${f.date}`);
+    }
+    return null;
+  }
+  const made = createEvent({ ...fields, date: f.date, start: f.start, end: f.end, repeat: null, count: null, data: extra });
+  return 'error' in made ? made.error : null;
+}
+
+/** Carry the ready list and aim from one occurrence key to another. */
+function moveKey(from: string, to: string) {
+  const row = data.get().lt_records.get(prepId(from));
+  if (!row || row.deleted_at) return;
+  const t = new Date().toISOString();
+  const target = data.get().lt_records.get(prepId(to));
+  const moved: LtRecord = { ...(target ?? row), id: prepId(to), data: { ...row.data, event: to }, deleted_at: null, updated_at: t, ...(target ? {} : { created_at: t }) };
+  commit('lt_records', [moved, { ...row, deleted_at: t, updated_at: t }]);
 }

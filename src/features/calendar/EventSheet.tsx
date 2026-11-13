@@ -24,7 +24,7 @@ const KINDS: { id: EventKind; label: string }[] = [
 ];
 const DURATIONS = [30, 45, 60, 90, 120, 180];
 const durLabel = (m: number) => (m < 60 ? `${m}m` : `${m / 60}h`.replace('.5h', '½h'));
-const shift = (t: string, m: number) => {
+export const shift = (t: string, m: number) => {
   const v = (((+t.slice(0, 2) * 60 + +t.slice(3)) + m) % 1440 + 1440) % 1440;
   return `${String(Math.floor(v / 60)).padStart(2, '0')}:${String(v % 60).padStart(2, '0')}`;
 };
@@ -83,7 +83,7 @@ function TimeInput({ value, label, onChange }: { value: string; label: string; o
   return <input className="c-time" type="time" step={300} value={value} aria-label={label} onChange={(e) => /^\d\d:\d\d$/.test(e.target.value) && onChange(e.target.value)} />;
 }
 
-function TimeFields({ date, setDate, allDay, setAllDay, start, setStart, end, setEnd }: {
+export function TimeFields({ date, setDate, allDay, setAllDay, start, setStart, end, setEnd }: {
   date: string; setDate: (v: string) => void; allDay: boolean; setAllDay: (v: boolean) => void;
   start: string; setStart: (v: string) => void; end: string; setEnd: (v: string) => void;
 }) {

@@ -1,5 +1,5 @@
 /**
- * Training plans: the user's marathon build and gym split. Plan content is fixed in code
+ * Training plans: the user's marathon build. Plan content is fixed in code
  * (src/domain/plans); what's stored is only the choice and dates, in lt_prefs 'plans'.
  */
 import { isDate, weekStart } from '../log/dates';
@@ -12,17 +12,10 @@ export interface MarathonPlanPref {
   /** A recent half-marathon time (h:mm:ss), for the prediction shown next to the goal. */
   half: string | null;
 }
-export interface GymPlanPref {
-  /** Stored gym_template ids made from the plan, by plan workout id. */
-  templates: Record<string, string>;
-  /** Monday of the week the plan was taken up (numbers its weeks when there's no marathon plan). */
-  since: string | null;
-}
 export interface PlansState {
   marathon: MarathonPlanPref | null;
-  gym: GymPlanPref | null;
 }
-export const DEFAULT_PLANS: PlansState = { marathon: null, gym: null };
+export const DEFAULT_PLANS: PlansState = { marathon: null };
 
 export const DEFAULT_START = '2026-11-02';
 export const DEFAULT_GOAL = '4:10:00';
@@ -30,8 +23,6 @@ export const DEFAULT_HALF = '1:56:00';
 /** Goal times the plan's paces make sense for. */
 export const GOAL_MIN = 2 * 3600 + 45 * 60;
 export const GOAL_MAX = 6 * 3600;
-export const PLAN_WORKOUT_IDS = ['upper-a', 'upper-b', 'athletic'] as const;
-export type PlanWorkoutId = (typeof PLAN_WORKOUT_IDS)[number];
 
 /** "4:10:00", "4:10" (h:mm) or "1:56:30" → seconds; null if it isn't a time. */
 export function parseHms(s: unknown): number | null {
@@ -68,15 +59,6 @@ export function normalisePlans(raw: unknown): PlansState {
       half: m.half === null ? null : halfOk(m.half) ? fmtHms(parseHms(m.half)!) : null,
     };
   }
-  let gym: GymPlanPref | null = null;
-  if (obj(raw.gym)) {
-    const templates: Record<string, string> = {};
-    const t = obj(raw.gym.templates) ? raw.gym.templates : {};
-    for (const id of PLAN_WORKOUT_IDS) {
-      const v = t[id];
-      if (typeof v === 'string' && v.length > 0 && v.length <= 64) templates[id] = v;
-    }
-    gym = { templates, since: isDate(raw.gym.since) ? weekStart(raw.gym.since as string) : null };
-  }
-  return marathon === null && gym === null ? DEFAULT_PLANS : { marathon, gym };
+  // An old stored `gym` key (the gym plan, now gone) is dropped here and on the next save.
+  return marathon === null ? DEFAULT_PLANS : { marathon };
 }

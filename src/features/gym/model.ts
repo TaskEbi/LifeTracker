@@ -1,32 +1,35 @@
 /**
- * Gym: templates (lt_records kind 'gym_template'), a session in progress (on this device only),
- * and finished sessions (a Daily Log entry + lt_details with every set and the check-in).
- * The starter templates are placeholders to show the sheet, not a training prescription.
+ * Gym: a finished session is a Daily Log entry (the time) plus lt_details with the same id (the
+ * muscle groups you hit and an optional check-in). There is no plan and no template: you pick the
+ * groups, and the statistics are worked out from the sessions (nothing is stored for them).
+ *
+ * Older sessions, logged when the gym had templates, carry `exercises` with sets and weights and
+ * no `muscles`. They stay in the history and the bar tools; they don't count toward the groups.
+ * New sessions keep `exercises: []` so XP, quests and achievements (which look for that array)
+ * treat them as gym sessions without any change.
  */
-import type { LtRecord } from '../../data/types';
 import type { SectionEntry } from '../../data/lt';
+import { dayCount } from '../../domain/log/dates';
 
-export interface PlanExercise {
-  name: string;
-  sets: number;
-  reps: number;
-  /** 's' for timed holds (reps are seconds). */
-  unit?: 's';
-  /** kg; 0 = bodyweight. */
-  weight: number;
-  rest: number;
-  alts: string[];
-}
+export const MUSCLES = [
+  { id: 'chest', name: 'Chest' },
+  { id: 'back', name: 'Back' },
+  { id: 'shoulders', name: 'Shoulders' },
+  { id: 'biceps', name: 'Biceps' },
+  { id: 'triceps', name: 'Triceps' },
+  { id: 'forearms', name: 'Forearms' },
+  { id: 'core', name: 'Core' },
+  { id: 'glutes', name: 'Glutes' },
+  { id: 'quads', name: 'Quads' },
+  { id: 'hamstrings', name: 'Hamstrings' },
+  { id: 'calves', name: 'Calves' },
+] as const;
+export type MuscleId = (typeof MUSCLES)[number]['id'];
 
-export interface Template {
-  id: string;
-  name: string;
-  focus: string;
-  estimate: number;
-  exercises: PlanExercise[];
-  archived: boolean;
-}
+const IDS: ReadonlySet<string> = new Set(MUSCLES.map((m) => m.id));
+export const muscleName = (id: string) => MUSCLES.find((m) => m.id === id)?.name ?? id;
 
+/** Old sessions only. */
 export interface SetLog {
   reps: number;
   weight: number;
@@ -43,7 +46,9 @@ export interface ExerciseLog {
 export interface GymDetail {
   name: string;
   template: string | null;
+  /** Empty on new sessions. */
   exercises: ExerciseLog[];
+  muscles?: MuscleId[];
   effort?: number | null;
   soreness?: number | null;
   pain?: boolean;
@@ -56,98 +61,95 @@ export function isGymDetail(d: unknown): d is GymDetail {
   return !!g && typeof g.name === 'string' && Array.isArray(g.exercises);
 }
 
-const num = (v: unknown, lo: number, hi: number, d: number) => (Number.isFinite(v) && (v as number) >= lo && (v as number) <= hi ? (v as number) : d);
-
-export function templateOf(r: LtRecord): Template {
-  const d = r.data as Partial<Template>;
-  return {
-    id: r.id,
-    name: typeof d.name === 'string' && d.name ? d.name : 'Workout',
-    focus: typeof d.focus === 'string' ? d.focus : '',
-    estimate: num(d.estimate, 10, 240, 60),
-    exercises: (Array.isArray(d.exercises) ? d.exercises : []).map((e: Partial<PlanExercise>) => ({
-      name: typeof e.name === 'string' && e.name ? e.name : 'Exercise',
-      sets: num(e.sets, 1, 12, 3),
-      reps: num(e.reps, 1, 300, 8),
-      unit: e.unit === 's' ? 's' : undefined,
-      weight: num(e.weight, 0, 500, 0),
-      rest: num(e.rest, 0, 600, 90),
-      alts: Array.isArray(e.alts) ? e.alts.filter((a): a is string => typeof a === 'string') : [],
-    })),
-    archived: !!r.archived_at,
-  };
+/** The muscle groups a session recorded, in the order of MUSCLES, without junk or repeats. */
+export function musclesOf(d: unknown): MuscleId[] {
+  const raw = (d as { muscles?: unknown } | null)?.muscles;
+  if (!Array.isArray(raw)) return [];
+  const set = new Set(raw.filter((x): x is string => typeof x === 'string' && IDS.has(x)));
+  return MUSCLES.filter((m) => set.has(m.id)).map((m) => m.id);
 }
 
-/** Placeholder templates for an intermediate lifter, to adjust freely. Not a personalised plan. */
-export const STARTER_TEMPLATES: Omit<Template, 'id' | 'archived'>[] = [
-  {
-    name: 'Upper A', focus: 'Push and pull', estimate: 70, exercises: [
-      { name: 'Bench press', sets: 4, reps: 6, weight: 50, rest: 120, alts: ['Dumbbell bench press', 'Machine chest press', 'Weighted push-up'] },
-      { name: 'One-arm dumbbell row', sets: 3, reps: 10, weight: 22, rest: 90, alts: ['Seated cable row', 'Chest-supported row'] },
-      { name: 'Overhead press', sets: 3, reps: 8, weight: 30, rest: 90, alts: ['Seated dumbbell press', 'Landmine press'] },
-      { name: 'Lat pulldown', sets: 3, reps: 10, weight: 45, rest: 75, alts: ['Assisted pull-up', 'Chin-up'] },
-      { name: 'Face pull', sets: 3, reps: 15, weight: 15, rest: 60, alts: ['Band pull-apart', 'Reverse fly'] },
-      { name: 'Plank', sets: 3, reps: 40, unit: 's', weight: 0, rest: 45, alts: ['Dead bug', 'Side plank'] },
-    ],
-  },
-  {
-    name: 'Lower A', focus: 'Legs and trunk', estimate: 65, exercises: [
-      { name: 'Goblet squat', sets: 3, reps: 8, weight: 24, rest: 120, alts: ['Leg press', 'Box squat'] },
-      { name: 'Romanian deadlift', sets: 3, reps: 8, weight: 50, rest: 120, alts: ['Single-leg RDL', 'Cable pull-through'] },
-      { name: 'Bulgarian split squat', sets: 3, reps: 10, weight: 12, rest: 90, alts: ['Reverse lunge', 'Step-up'] },
-      { name: 'Hip thrust', sets: 3, reps: 10, weight: 60, rest: 90, alts: ['Glute bridge', 'Back extension'] },
-      { name: 'Tibialis raise', sets: 2, reps: 15, weight: 0, rest: 45, alts: ['Toe walks', 'Banded dorsiflexion'] },
-      { name: 'Dead bug', sets: 3, reps: 10, weight: 0, rest: 45, alts: ['Bird dog', 'Hollow hold'] },
-    ],
-  },
-  {
-    name: 'Full body', focus: 'Strength mix', estimate: 75, exercises: [
-      { name: 'Trap-bar deadlift', sets: 3, reps: 5, weight: 80, rest: 150, alts: ['Romanian deadlift', 'Kettlebell deadlift'] },
-      { name: 'Incline dumbbell press', sets: 3, reps: 10, weight: 18, rest: 90, alts: ['Push-up', 'Machine incline press'] },
-      { name: 'Chin-up', sets: 3, reps: 6, weight: 0, rest: 120, alts: ['Lat pulldown', 'Inverted row'] },
-      { name: 'Split squat', sets: 3, reps: 8, weight: 10, rest: 90, alts: ['Goblet squat', 'Step-up'] },
-      { name: 'Pallof press', sets: 3, reps: 12, weight: 10, rest: 45, alts: ['Side plank', 'Suitcase carry'] },
-    ],
-  },
-];
+/** The groups as a title: "Chest · Triceps", or the first three and a count. "Gym" when none. */
+export function sessionName(muscles: MuscleId[]): string {
+  if (!muscles.length) return 'Gym';
+  const names = muscles.map(muscleName);
+  return names.length <= 3 ? names.join(' · ') : `${names.slice(0, 3).join(' · ')} +${names.length - 3}`;
+}
 
-/** A fresh session from a template, every set not yet done. */
-export function startFrom(t: Template): GymDetail {
+/** The detail saved for a new or edited session; keeps whatever an older session had besides. */
+export function detailFor(picked: MuscleId[], check: { effort: number | null; soreness: number | null; pain: boolean; painNote: string }, prev?: GymDetail | null): GymDetail {
+  const muscles = musclesOf({ muscles: picked }); // the app's order, whatever order they were tapped in
   return {
-    name: t.name,
-    template: t.id,
-    exercises: t.exercises.map((e) => ({ name: e.name, unit: e.unit, rest: e.rest, alts: [...e.alts], swappedFrom: null, sets: Array.from({ length: e.sets }, () => ({ reps: e.reps, weight: e.weight, done: false })) })),
+    ...(prev ?? {}),
+    name: muscles.length ? sessionName(muscles) : prev?.exercises.length ? prev.name : 'Gym',
+    template: prev?.template ?? null,
+    exercises: prev?.exercises ?? [],
+    muscles,
+    effort: check.effort,
+    soreness: check.soreness,
+    pain: check.pain,
+    painNote: check.pain ? check.painNote.trim().slice(0, 200) : '',
   };
 }
 
 export const setsDone = (d: GymDetail) => d.exercises.reduce((n, e) => n + e.sets.filter((s) => s.done).length, 0);
-export const setsTotal = (d: GymDetail) => d.exercises.reduce((n, e) => n + e.sets.length, 0);
 
-/** Heaviest completed set per session for one exercise, oldest first (only sessions that did it). */
-export function progression(sessions: GymSession[], exercise: string): { date: string; weight: number }[] {
-  const out: { date: string; weight: number }[] = [];
-  for (const s of sessions) {
-    if (!isGymDetail(s.detail)) continue;
-    const ex = s.detail.exercises.find((e) => e.name === exercise);
-    const done = ex?.sets.filter((x) => x.done) ?? [];
-    if (done.length) out.push({ date: s.entry.date, weight: Math.max(...done.map((x) => x.weight)) });
-  }
-  return out.sort((a, b) => a.date.localeCompare(b.date));
+// ─── statistics ─────────────────────────────────────────────────────────────
+
+export interface MuscleStat {
+  id: MuscleId;
+  name: string;
+  /** Sessions that hit it: the last 7 days (today included), the last 28 days, and ever. */
+  week: number;
+  month: number;
+  total: number;
+  /** The most recent day it was hit, and how many days ago that was (0 = today). */
+  last: string | null;
+  daysAgo: number | null;
+}
+export interface GymStats {
+  muscles: MuscleStat[];
+  /** Sessions that recorded muscle groups, and those that predate it. */
+  tagged: number;
+  untagged: number;
 }
 
-/** Exercises with at least two weighted sessions, most recent first: the ones a trend makes sense for. */
-export function trackedExercises(sessions: GymSession[]): string[] {
-  const seen = new Map<string, { n: number; last: string }>();
+/** Per-group counts from the sessions up to `today`. Pure; a session counts once per group however many it lists. */
+export function gymStats(sessions: GymSession[], today: string): GymStats {
+  const by = new Map<MuscleId, { week: number; month: number; total: number; last: string | null }>(MUSCLES.map((m) => [m.id, { week: 0, month: 0, total: 0, last: null }]));
+  let tagged = 0;
+  let untagged = 0;
   for (const s of sessions) {
-    if (!isGymDetail(s.detail)) continue;
-    for (const e of s.detail.exercises) {
-      if (!e.sets.some((x) => x.done && x.weight > 0)) continue;
-      const v = seen.get(e.name) ?? { n: 0, last: '' };
-      seen.set(e.name, { n: v.n + 1, last: s.entry.date > v.last ? s.entry.date : v.last });
+    if (s.entry.date > today) continue;
+    const ms = musclesOf(s.detail);
+    if (!ms.length) {
+      untagged++;
+      continue;
+    }
+    tagged++;
+    const ago = dayCount(s.entry.date, today) - 1;
+    for (const id of ms) {
+      const v = by.get(id)!;
+      v.total++;
+      if (ago < 7) v.week++;
+      if (ago < 28) v.month++;
+      if (!v.last || s.entry.date > v.last) v.last = s.entry.date;
     }
   }
-  return [...seen].filter(([, v]) => v.n >= 2).sort((a, b) => b[1].last.localeCompare(a[1].last)).map(([k]) => k);
+  return {
+    tagged,
+    untagged,
+    muscles: MUSCLES.map((m) => {
+      const v = by.get(m.id)!;
+      return { id: m.id, name: m.name, ...v, daysAgo: v.last ? dayCount(v.last, today) - 1 : null };
+    }),
+  };
 }
 
-/** A lower-body day the day before (or of) a court or running session: worth a second look. */
-export const legsHeavy = (t: Template) => /leg|lower|squat|full/i.test(`${t.name} ${t.focus}`);
+/** Groups not hit for a week or more, or never, once there is any muscle data at all; longest-neglected first. */
+export function overdue(stats: GymStats, days = 7): MuscleStat[] {
+  if (!stats.tagged) return [];
+  return stats.muscles
+    .filter((m) => m.daysAgo === null || m.daysAgo >= days)
+    .sort((a, b) => (b.daysAgo ?? 9999) - (a.daysAgo ?? 9999));
+}

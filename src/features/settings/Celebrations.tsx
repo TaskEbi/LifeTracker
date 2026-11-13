@@ -1,7 +1,7 @@
 import { RARITIES, rarityOf } from '../../domain/bucket/rarity';
 import { useMemo } from 'react';
 import { loadSectionFonts } from '../../app/sectionLook';
-import { getSleepSchedule, progressInput, sectionRecords, useAchievements, useBoss, useProgress, useQuests, useTargets, useToday } from '../../data/lt';
+import { getSleepSchedule, progressInput, useAchievements, useBoss, useProgress, useQuests, useTargets, useToday } from '../../data/lt';
 import { data } from '../../data/store';
 import type { SectionId } from '../../data/types';
 import { TIERS, type Achievement } from '../../domain/progress/achievements';
@@ -11,7 +11,6 @@ import { useStore } from '../../lib/createStore';
 import { Toggle } from '../../ui/i/bits';
 import { celebrate, setFxMode, setFxPrefs, useFxMode, useFxPrefs, type Celebration, type FxMode } from '../../ui/i/fx/celebrate';
 import { bucketItems } from '../bucket/actions';
-import { STARTER_TEMPLATES, templateOf } from '../gym/model';
 import { specialFor } from '../../app/specialMoments';
 import { hqOf } from '../hq/store';
 import { hourIn } from '../../domain/fun/season';
@@ -63,10 +62,8 @@ export function Celebrations() {
     const pv = <T extends Celebration>(c: T) => ({ ...c, preview: true }) as T;
     const moment = (m: Extract<Celebration, { kind: 'moment' }>['moment']): Celebration => ({ kind: 'moment', moment: m, preview: true });
 
-    // a real weighted exercise from your gym templates
-    const templates = sectionRecords(st, 'gym', 'gym_template').map(templateOf);
-    const realEx = templates.flatMap((t) => t.exercises).find((e) => e.weight > 0);
-    const ex = realEx ?? STARTER_TEMPLATES[0].exercises[0];
+    // a made-up lift: gym sessions record muscle groups now, not weights
+    const ex = { name: 'Bench press', weight: 50, reps: 6 };
     const chapter = [...activeDays(progressInput(st, today))].filter((d) => d <= today).length || 1;
     const rank = rankFor(level);
     const nextRank = RANKS.find((r) => r.level > level)?.name ?? 'Legend';
@@ -132,7 +129,7 @@ export function Celebrations() {
       {
         name: 'Records',
         items: [
-          { label: `PR lift · ${ex.name}`, sample: !realEx, c: moment({ type: 'pr-lift', exercise: ex.name, weight: ex.weight + 2.5, reps: ex.reps, previous: ex.weight }) },
+          { label: `PR lift · ${ex.name}`, sample: true, c: moment({ type: 'pr-lift', exercise: ex.name, weight: ex.weight + 2.5, reps: ex.reps, previous: ex.weight }) },
           { label: 'PR run · 10K', sample: true, c: moment({ type: 'pr-run', distance: '10k', pace: '4:52', previous: '5:03' }) },
           { label: 'Longest run', sample: true, c: moment({ type: 'long-run', km: 24.3, previous: 21.1 }) },
           { label: 'Distance · 500 km', sample: true, c: moment({ type: 'distance', km: 500 }) },
@@ -143,7 +140,7 @@ export function Celebrations() {
         name: 'Plans',
         items: [
           { label: 'Plan session', sample: true, c: moment({ type: 'plan-session', plan: 'marathon', title: 'Easy run · 8 km', week: 3 }) },
-          { label: 'Plan week', sample: true, c: moment({ type: 'plan-week', plan: 'gym', week: 4, of: 12 }) },
+          { label: 'Plan week', sample: true, c: moment({ type: 'plan-week', plan: 'marathon', week: 4, of: 24 }) },
           { label: 'Plan phase', sample: true, c: moment({ type: 'plan-phase', phase: 'Base', next: 'Build' }) },
         ],
       },

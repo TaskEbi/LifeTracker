@@ -28,8 +28,8 @@ export type Moment =
   /** A marathon-length run logged; time as h:mm. */
   | { type: 'race'; km: number; time: string }
   /** A planned workout done; plan week/phase finished. */
-  | { type: 'plan-session'; plan: 'marathon' | 'gym'; title: string; week: number }
-  | { type: 'plan-week'; plan: 'marathon' | 'gym'; week: number; of: number }
+  | { type: 'plan-session'; plan: 'marathon'; title: string; week: number }
+  | { type: 'plan-week'; plan: 'marathon'; week: number; of: number }
   | { type: 'plan-phase'; phase: string; next: string | null }
   /** Day streak reached a milestone. */
   | { type: 'streak'; days: number }

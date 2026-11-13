@@ -4,9 +4,7 @@
  * fixed in code; whether a session is done is derived from what's logged (nothing stored).
  */
 import { addDays, weekdayIndex } from '../log/dates';
-import type { GymAdjust } from './gym';
-import { PLAN_WORKOUTS } from './gym';
-import { DEFAULT_GOAL, parseHms, type MarathonPlanPref, type PlanWorkoutId } from './types';
+import { DEFAULT_GOAL, parseHms, type MarathonPlanPref } from './types';
 
 export const PLAN_WEEKS = 24;
 export const MARATHON_KM = 42.195;
@@ -89,17 +87,7 @@ export interface PlanRun {
   /** Counts toward the kilometres, not toward the week being done. */
   optional: boolean;
 }
-export interface PlanGym {
-  kind: 'gym';
-  id: string;
-  week: number;
-  day: number;
-  date: string;
-  workout: PlanWorkoutId;
-  title: string;
-  adjust?: GymAdjust;
-}
-export type PlanSession = PlanRun | PlanGym;
+export type PlanSession = PlanRun;
 export interface PlanWeek {
   n: number;
   start: string;
@@ -108,7 +96,6 @@ export interface PlanWeek {
   /** Planned running km. */
   km: number;
   runs: PlanRun[];
-  gym: PlanGym[];
   note?: string;
 }
 
@@ -151,9 +138,9 @@ const WEEK_NOTES: Record<number, string> = {
   17: 'First 32 km. Practise race-morning breakfast and gels.',
   19: 'The key session of the plan: 32 km with the last 10 at marathon pace.',
   20: 'Step-back week in kilometres, but Sunday has 14 km at marathon pace.',
-  22: 'Taper starts: running drops about a quarter, the Athletic day is halved.',
+  22: 'Taper starts: running drops about a quarter.',
   23: 'Taper: less again. Sleep is training now.',
-  24: 'Race week. Short and sharp, then rest. No gym in the two days before the race.',
+  24: 'Race week. Short and sharp, then rest.',
 };
 
 function describe(spec: RunSpec, p: Paces, goal: string): { title: string; desc: string } {
@@ -197,15 +184,6 @@ function describe(spec: RunSpec, p: Paces, goal: string): { title: string; desc:
 }
 const fmtHms = (sec: number) => `${Math.floor(sec / 3600)}:${String(Math.floor((sec % 3600) / 60)).padStart(2, '0')}`;
 
-function gymFor(week: number): { workout: PlanWorkoutId; day: number; adjust?: GymAdjust }[] {
-  const base = PLAN_WORKOUTS.map((w) => ({ workout: w.id, day: w.day }));
-  if (week <= 21) return base;
-  if (week <= 23)
-    return base.map((g) => (g.workout === 'athletic' ? { ...g, adjust: { half: true, note: 'Taper: half the sets, no box jumps.' } } : g));
-  // Race week: upper days at two sets each, no Athletic, nothing in the last two days.
-  return base.filter((g) => g.workout !== 'athletic').map((g) => ({ ...g, adjust: { maxSets: 2, note: 'Race week: 2 sets per exercise, nothing heavy.' } }));
-}
-
 /** The whole plan for a start Monday and goal. */
 export function planWeeks(pref: Pick<MarathonPlanPref, 'start' | 'goal'>): PlanWeek[] {
   const p = pacesFor(pref.goal);
@@ -216,8 +194,7 @@ export function planWeeks(pref: Pick<MarathonPlanPref, 'start' | 'goal'>): PlanW
       const { title, desc } = describe(s, p, pref.goal);
       return { kind: 'run', id: `m${n}-${s[0]}`, week: n, day: s[0], date: addDays(start, s[0]), type: s[1], title, km: s[2], desc, long: s[0] === 6, optional: s[0] === 4 && s[1] === 'easy' };
     });
-    const gym: PlanGym[] = gymFor(n).map((g) => ({ kind: 'gym', id: `g${n}-${g.workout}`, week: n, day: g.day, date: addDays(start, g.day), workout: g.workout, title: PLAN_WORKOUTS.find((w) => w.id === g.workout)!.name, ...(g.adjust ? { adjust: g.adjust } : {}) }));
-    return { n, start, phase: phaseOf(n), stepBack: STEP_BACK.includes(n), km: Math.round(runs.reduce((a, r) => a + r.km, 0) * 10) / 10, runs, gym, ...(WEEK_NOTES[n] ? { note: WEEK_NOTES[n] } : {}) };
+    return { n, start, phase: phaseOf(n), stepBack: STEP_BACK.includes(n), km: Math.round(runs.reduce((a, r) => a + r.km, 0) * 10) / 10, runs, ...(WEEK_NOTES[n] ? { note: WEEK_NOTES[n] } : {}) };
   });
 }
 
@@ -235,12 +212,6 @@ export interface LoggedRun {
   date: string;
   /** null when the run was logged without a distance. */
   km: number | null;
-}
-export interface LoggedGym {
-  id: string;
-  date: string;
-  template: string | null;
-  name: string;
 }
 export type SessionStatus = 'done' | 'missed' | 'today' | 'upcoming';
 export interface SessionState {
@@ -281,22 +252,6 @@ export function matchRuns(week: Pick<PlanWeek, 'start' | 'runs'>, logged: Logged
     pairs.sort((x, y) => x.d - y.d || x.p.day - y.p.day || x.r.date.localeCompare(y.r.date));
     for (const { p, r } of pairs) if (!out.has(p.id) && !used.has(r.id)) take(p.id, r);
   }
-  return out;
-}
-
-/** Planned gym workouts of one week → the finished gym session made from that workout's template (or with its name). */
-export function matchGym(start: string, planned: PlanGym[], logged: LoggedGym[], templates: Record<string, string>): Map<string, LoggedGym> {
-  const out = new Map<string, LoggedGym>();
-  const pool = logged.filter((g) => inWeek(start, g.date)).sort((a, b) => a.date.localeCompare(b.date) || a.id.localeCompare(b.id));
-  const used = new Set<string>();
-  const name = (w: PlanWorkoutId) => PLAN_WORKOUTS.find((x) => x.id === w)!.name.toLowerCase();
-  const isIt = (p: PlanGym, g: LoggedGym) => (templates[p.workout] && g.template === templates[p.workout]) || g.name.trim().toLowerCase() === name(p.workout);
-  for (const pass of [true, false])
-    for (const p of planned) {
-      if (out.has(p.id)) continue;
-      const hit = pool.find((g) => !used.has(g.id) && isIt(p, g) && (!pass || g.date === p.date));
-      if (hit) (out.set(p.id, hit), used.add(hit.id));
-    }
   return out;
 }
 
@@ -342,7 +297,7 @@ export function weekStatus(start: string, done: number, of: number, today: strin
 export const PHASE_CLEAR = 0.8;
 
 /** Everything about the marathon plan for what's logged, as of `today`. */
-export function marathonStatus(pref: MarathonPlanPref, runs: LoggedRun[], gyms: LoggedGym[], templates: Record<string, string>, today: string): MarathonStatus {
+export function marathonStatus(pref: MarathonPlanPref, runs: LoggedRun[], today: string): MarathonStatus {
   const weeks = planWeeks(pref);
   const sessions = new Map<string, SessionState>();
   const week = new Map<number, WeekState>();
@@ -351,11 +306,6 @@ export function marathonStatus(pref: MarathonPlanPref, runs: LoggedRun[], gyms: 
     for (const r of w.runs) {
       const hit = m.get(r.id);
       sessions.set(r.id, stateOf(r.date, today, hit && { id: hit.id, date: hit.date, km: hit.km }));
-    }
-    const g = matchGym(w.start, w.gym, gyms, templates);
-    for (const s of w.gym) {
-      const hit = g.get(s.id);
-      sessions.set(s.id, stateOf(s.date, today, hit && { id: hit.id, date: hit.date }));
     }
     const req = w.runs.filter((r) => !r.optional);
     const done = req.filter((r) => sessions.get(r.id)!.status === 'done').length;
@@ -380,19 +330,17 @@ export function marathonStatus(pref: MarathonPlanPref, runs: LoggedRun[], gyms: 
 // ─── court sessions ─────────────────────────────────────────────────────────
 
 /**
- * A quality run or the Athletic day on the same day as, or the day before, a volleyball/tennis
- * session: worth a look (move one, or keep it easy).
+ * A quality run on the same day as, or the day before, a volleyball/tennis session: worth a look
+ * (move one, or keep it easy).
  */
 export function courtNotes(sessions: PlanSession[], courtDays: Set<string>): { id: string; date: string; text: string }[] {
   const out: { id: string; date: string; text: string }[] = [];
   for (const s of sessions) {
-    const hard = s.kind === 'gym' ? s.workout === 'athletic' : QUALITY.includes(s.type) || s.type === 'tuneup' || s.type === 'race';
-    if (!hard) continue;
+    if (!(QUALITY.includes(s.type) || s.type === 'tuneup' || s.type === 'race')) continue;
     const same = courtDays.has(s.date);
     const before = courtDays.has(addDays(s.date, 1));
     if (!same && !before) continue;
-    const what = s.kind === 'gym' ? 'The Athletic day' : s.title;
-    out.push({ id: s.id, date: s.date, text: `${what} is ${same ? 'on a court day' : 'the day before a court session'}. Move one of them, or keep ${s.kind === 'gym' ? 'the jumps light' : 'it easy'} — jumping and quality running both load the same legs.` });
+    out.push({ id: s.id, date: s.date, text: `${s.title} is ${same ? 'on a court day' : 'the day before a court session'}. Move one of them, or keep it easy — jumping and quality running both load the same legs.` });
   }
   return out;
 }

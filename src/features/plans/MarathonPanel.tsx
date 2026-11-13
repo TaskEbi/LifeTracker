@@ -63,13 +63,13 @@ function SessionRow({ s, st, goal, court }: { s: PlanSession; st: SessionState |
     <div className={`pl-sess is-${status}`}>
       <span className="pl-sess__d i-mono">{DAY_NAMES[s.day]} {+s.date.slice(8)}</span>
       <span className="pl-sess__t">
-        <b>{s.kind === 'run' ? s.title : `${s.title}${s.adjust ? ' (lighter)' : ''}`}</b>
-        <small>{s.kind === 'run' ? `${s.optional ? 'Optional · ' : ''}${s.desc}` : s.adjust?.note ?? 'Gym plan · exercises in the Gym channel'}</small>
+        <b>{s.title}</b>
+        <small>{`${s.optional ? 'Optional · ' : ''}${s.desc}`}</small>
         {st?.by && st.by.date !== s.date && <small className="pl-moved">Logged {shortDay(st.by.date)}{st.by.km ? ` · ${st.by.km} km` : ''}</small>}
         {court && <small className="pl-court">{court}</small>}
       </span>
       <span className={`pl-st pl-st--${status}`}>{STATUS_LABEL[status]}</span>
-      {s.kind === 'run' && status !== 'done' && status !== 'upcoming' && (
+      {status !== 'done' && status !== 'upcoming' && (
         <button type="button" className="i-btn i-btn--sm" onClick={() => (closeSheet(), logRun(s, goal))}>
           Log
         </button>
@@ -85,7 +85,7 @@ function WeekSheet({ spec }: { spec: SheetSpec }) {
   const w = m?.weeks[n - 1];
   if (!m || !w || !v.plans.marathon) return null;
   const ws = m.week.get(n)!;
-  const notes = courtNotes([...w.runs, ...w.gym], v.courtDays);
+  const notes = courtNotes(w.runs, v.courtDays);
   return (
     <Sheet title={`Week ${n} of ${PLAN_WEEKS}`} onClose={closeSheet} accent="sports">
       <p className="pl-wkhead" style={phaseStyle(w.phase.id)}>
@@ -95,8 +95,8 @@ function WeekSheet({ spec }: { spec: SheetSpec }) {
       </p>
       {w.note && <p className="i-note">{w.note}</p>}
       <div className="pl-sesslist">
-        {[...w.runs, ...w.gym]
-          .sort((a, b) => a.day - b.day || (a.kind === 'run' ? -1 : 1))
+        {[...w.runs]
+          .sort((a, b) => a.day - b.day)
           .map((s) => (
             <SessionRow key={s.id} s={s} st={m.sessions.get(s.id)} goal={v.plans.marathon!.goal} court={notes.find((x) => x.id === s.id)?.text} />
           ))}
@@ -155,15 +155,15 @@ function WeekStrip({ w, m, today, court }: { w: PlanWeek; m: MarathonStatus; tod
     <div className="pl-week">
       {DAY_NAMES.map((dn, d) => {
         const date = addDays(w.start, d);
-        const ss: PlanSession[] = [...w.runs.filter((r) => r.day === d), ...w.gym.filter((g) => g.day === d)];
+        const ss: PlanSession[] = w.runs.filter((r) => r.day === d);
         return (
           <button key={d} type="button" className={`pl-day${date === today ? ' is-now' : ''}`} onClick={() => openSheet({ type: 'plan-week', week: w.n })} aria-label={`${dn} ${shortDay(date)}: ${ss.map((s) => `${s.title} ${STATUS_LABEL[m.sessions.get(s.id)?.status ?? 'upcoming']}`).join(', ') || 'rest'}`}>
             <span className="i-mono">{dn}</span>
             <b>{+date.slice(8)}</b>
             {ss.length ? (
               ss.map((s) => (
-                <span key={s.id} className={`pl-dot pl-dot--${s.kind} is-${m.sessions.get(s.id)?.status ?? 'upcoming'}`}>
-                  {s.kind === 'run' ? (s.type === 'race' ? 'RACE' : `${s.km}`) : s.workout === 'athletic' ? 'ATH' : s.workout === 'upper-a' ? 'UP A' : 'UP B'}
+                <span key={s.id} className={`pl-dot pl-dot--run is-${m.sessions.get(s.id)?.status ?? 'upcoming'}`}>
+                  {s.type === 'race' ? 'RACE' : `${s.km}`}
                 </span>
               ))
             ) : (
@@ -254,7 +254,7 @@ function StartCard({ today }: { today: string }) {
       <span className="pl-kick">走 · 24-week plan</span>
       <h2 className="pl-title">Marathon plan</h2>
       <p className="pl-lede">
-        Base → Build → Marathon-specific → Peak → Taper. Four runs a week (five from week 9), a step-back every fourth week, long runs to 32 km, a half-marathon tune-up in week 12, gym on Mon and Thu, plyos and reaction on Wed.
+        Base → Build → Marathon-specific → Peak → Taper. Four runs a week (five from week 9), a step-back every fourth week, long runs to 32 km, a half-marathon tune-up in week 12.
       </p>
       <label className="i-kv">
         <span>Week 1 starts</span>
@@ -293,10 +293,9 @@ export function MarathonPanel() {
   const shown = wk ?? (m.current === 0 ? m.weeks[0] : m.weeks[PLAN_WEEKS - 1]);
   const phase = wk?.phase ?? null;
   const todayRuns = wk ? wk.runs.filter((r) => r.date === v.today) : [];
-  const todayGym = wk ? wk.gym.filter((g) => g.date === v.today) : [];
   const allSessions = m.weeks.flatMap((w) => w.runs);
   const next = allSessions.find((r) => r.date >= v.today && m.sessions.get(r.id)?.status !== 'done');
-  const notes = courtNotes([...shown.runs, ...shown.gym], v.courtDays);
+  const notes = courtNotes(shown.runs, v.courtDays);
   const ws = m.week.get(shown.n)!;
   const ph = m.phases.find((x) => x.phase.id === (phase ?? shown.phase).id)!;
   const halfSec = pref.half ? parseHms(pref.half) : null;
@@ -321,7 +320,7 @@ export function MarathonPanel() {
 
       {m.current <= PLAN_WEEKS && (
         <div className="i-pnl pl-today">
-          <span className="i-lab">{m.current === 0 ? `First run · ${shortDay(next?.date ?? pref.start)}` : todayRuns.length ? `Today · ${shortDay(v.today)}` : `Today · ${todayGym.length ? 'gym day' : 'rest day'}`}</span>
+          <span className="i-lab">{m.current === 0 ? `First run · ${shortDay(next?.date ?? pref.start)}` : todayRuns.length ? `Today · ${shortDay(v.today)}` : 'Today · rest day'}</span>
           {(todayRuns.length ? todayRuns : next ? [next] : []).slice(0, 1).map((r) => {
             const st = m.sessions.get(r.id)!;
             const isToday = r.date === v.today;
@@ -348,12 +347,7 @@ export function MarathonPanel() {
               </div>
             );
           })}
-          {todayGym.map((g) => (
-            <p key={g.id} className="pl-gymline">
-              Also today: <b>{g.title}</b> (gym plan{m.sessions.get(g.id)!.status === 'done' ? ', done' : ''}){g.adjust ? ` · ${g.adjust.note}` : ''}
-            </p>
-          ))}
-          {!todayRuns.length && !todayGym.length && m.current > 0 && <p className="i-note">Rest is part of the plan. Court practice today is fine; keep it relaxed if a quality run is tomorrow.</p>}
+          {!todayRuns.length && m.current > 0 && <p className="i-note">Rest is part of the plan. Court practice today is fine; keep it relaxed if a quality run is tomorrow.</p>}
         </div>
       )}
 

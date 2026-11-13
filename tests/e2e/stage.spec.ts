@@ -45,10 +45,10 @@ test('stage: a test, a day coming up with its ready list, a match, and both kept
   await page.goto('/stage');
   await page.getByRole('button', { name: '+ Coming up' }).click();
   await dialog(page, 'What’s coming up?').getByRole('button', { name: /^Test/ }).click();
-  const ev = dialog(page, 'New event');
-  await ev.getByLabel('Title').fill('Physics mock');
+  const ev = dialog(page, 'Plan a test');
+  await ev.getByLabel('Name · optional').fill('Physics mock');
   await ev.getByLabel('Day').fill('2026-11-14');
-  await ev.getByRole('button', { name: 'Add to calendar' }).click();
+  await ev.getByRole('button', { name: 'Add to Coming up' }).click();
   const up = page.getByRole('article', { name: 'Physics mock' });
   await expect(up).toContainText('3');
   await expect(up).toContainText('Show working for every step');
@@ -87,6 +87,59 @@ test('stage: a test, a day coming up with its ready list, a match, and both kept
   await page.goto('/stage/all');
   await expect(page.getByRole('button', { name: /Match: vs Tanglin/ })).toBeVisible();
   await expect(page.getByRole('button', { name: /Test: SHM test 1/ })).toBeVisible();
+});
+
+test('stage: plan a match and a concert ahead, then log them once they have happened', async ({ page }) => {
+  await page.goto('/stage');
+
+  // A match for later today, with who, what and where.
+  await page.getByRole('button', { name: '+ Coming up' }).click();
+  await dialog(page, 'What’s coming up?').getByRole('button', { name: /^Match/ }).click();
+  const plan = dialog(page, 'Plan a match');
+  await plan.getByLabel('Against · optional').fill('Tanglin');
+  await plan.getByLabel('Competition · optional').fill('Inter-school league');
+  await plan.getByLabel('Where · optional').fill('Court 2');
+  await plan.getByLabel('Day').fill('2026-11-11');
+  await plan.getByRole('button', { name: 'Add to Coming up' }).click();
+  const card = page.getByRole('article', { name: 'Volleyball vs Tanglin' });
+  await expect(card).toContainText('vs Tanglin · Inter-school league · Court 2');
+  await expect(page.locator('.stg-count')).toContainText('TODAY');
+
+  // The plan can be changed before the day; the title follows the details.
+  await card.getByRole('button', { name: 'Edit plan' }).click();
+  const edit = dialog(page, 'Plan: Volleyball vs Tanglin');
+  await edit.getByLabel('Against · optional').fill('Dover');
+  await edit.getByRole('button', { name: 'Save' }).click();
+  const moved = page.getByRole('article', { name: 'Volleyball vs Dover' });
+  await expect(moved).toBeVisible();
+
+  // After it: one tap, with the plan filled in. No result was needed in advance.
+  await moved.getByRole('button', { name: 'How did it go?' }).click();
+  const log = dialog(page, 'Log a match');
+  await expect(log.getByLabel('Against')).toHaveValue('Dover');
+  await expect(log.getByLabel('Competition · optional')).toHaveValue('Inter-school league');
+  await log.getByLabel('Sets · optional (yours first)').fill('25-20, 25-22');
+  await log.getByRole('button', { name: 'Save' }).click();
+  await page.getByRole('dialog', { name: 'What you earned' }).getByRole('button', { name: 'OK' }).click();
+  await expect(page.getByLabel('Lately')).toContainText('vs Dover');
+  await expect(page.getByRole('article', { name: 'Volleyball vs Dover' })).toHaveCount(0);
+
+  // A concert weeks away, planned from the Log sheet by picking a day ahead.
+  await page.getByRole('button', { name: '+ Log a result' }).first().click();
+  await dialog(page, 'What was it?').getByRole('button', { name: /^Performance/ }).click();
+  const concert = dialog(page, 'Log a performance');
+  await concert.getByLabel('What it was').fill('Winter concert');
+  await concert.getByLabel('Another day').fill('2026-12-05');
+  await expect(concert.getByText('still ahead')).toBeVisible();
+  await concert.getByRole('button', { name: 'Add to Coming up' }).click();
+  const up = page.getByRole('article', { name: 'Winter concert' });
+  await expect(up).toContainText('24');
+  await expect(page.getByLabel('Lately')).not.toContainText('Winter concert');
+
+  // It is on the calendar too, as a performance.
+  await page.waitForTimeout(300);
+  await page.goto('/violin');
+  await expect(page.getByRole('button', { name: /Winter concert/ })).toBeVisible();
 });
 
 test('violin: past repertoire in one go, a performance with its pieces, and the trophy shelf', async ({ page }) => {

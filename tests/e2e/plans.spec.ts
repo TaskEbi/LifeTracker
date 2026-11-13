@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 
-test('marathon plan: start it, see today’s run, log it, see it done; gym plan makes 3 templates once', async ({ page }) => {
+test('marathon plan: start it, see today’s run, log it, see it done; the Gym page has no plan', async ({ page }) => {
   // Tuesday of week 1 of a plan starting Monday 2 Nov 2026.
   await page.clock.install({ time: new Date('2026-11-03T09:00:00+09:00') });
   await page.goto('/sports');
@@ -26,6 +26,7 @@ test('marathon plan: start it, see today’s run, log it, see it done; gym plan 
   await page.getByRole('button', { name: /^Week 1: 33 km/ }).click();
   const week = page.getByRole('dialog', { name: 'Week 1 of 24' });
   await expect(week.locator('.pl-sess.is-done')).toHaveCount(1);
+  await expect(week.locator('.pl-sess')).toHaveCount(4); // four runs, no gym days
   await week.getByRole('button', { name: 'Close' }).click();
 
   // Home shows today's plan, done.
@@ -35,16 +36,9 @@ test('marathon plan: start it, see today’s run, log it, see it done; gym plan 
   await expect(card).toContainText('Done');
   await expect(card).toContainText('D-166');
 
-  // Gym plan: one tap makes the three templates, tagged, and they stay three.
+  // The gym has no plan any more: no plan panel, no templates, and the marathon week has no gym days.
   await page.goto('/gym');
-  await page.getByRole('button', { name: 'Use my gym plan' }).click();
-  const tags = page.locator('.pl-plantag');
-  await expect(tags).toHaveCount(3);
-  await expect(tags.first()).toContainText('Mon');
-  await expect(page.getByRole('region', { name: 'My gym plan' })).toContainText('Upper B · Volume');
+  await expect(page.getByRole('region', { name: 'My gym plan' })).toHaveCount(0);
   await expect(page.getByRole('button', { name: 'Use my gym plan' })).toHaveCount(0);
-  // Let IndexedDB finish the writes before reloading.
-  await page.waitForTimeout(1000);
-  await page.reload();
-  await expect(page.locator('.pl-plantag')).toHaveCount(3);
+  await expect(page.getByRole('button', { name: 'Log gym' }).first()).toBeVisible();
 });

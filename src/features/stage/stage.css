@@ -270,6 +270,11 @@
 .stg-up .lf-bar i {
   background: var(--tc);
 }
+.stg-up__plan {
+  margin: 0;
+  font-size: 13px;
+  color: var(--fg-1, var(--fg-2));
+}
 .stg-up__goal {
   margin: 0;
   font-size: 13px;
