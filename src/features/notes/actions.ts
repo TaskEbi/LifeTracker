@@ -1,7 +1,8 @@
 /**
- * Study notes: which sections you've ticked as understood. One `nt_read` row per topic
- * (lt_records, study section, no migration), with an id derived from the topic so two devices
- * ticking the same topic write the same row. No content import here: Study and Home use this.
+ * Study notes: which sections you've ticked as understood, and how well you know each flash
+ * card. One `nt_read` row and one `nt_card` row per topic (lt_records, study section, no
+ * migration), with ids derived from the topic so two devices write the same rows. No content
+ * import here: Study and Home use this.
  */
 import { sectionRecords } from '../../data/lt';
 import { pairId } from '../../data/logActions';
@@ -46,10 +47,77 @@ export function setSection(topic: string, sec: string, on: boolean) {
   commit('lt_records', [row]);
 }
 
+// ── flash cards ──
+
+export const CARD_KIND = 'nt_card';
+const TOP_BOX = 5;
+
+/** Card id (`<topic>#<key>`) → its box and the day it is next due. */
+export type CardMarks = Map<string, { box: number; due: string }>;
+
+const isDay = (x: unknown): x is string => typeof x === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(x);
+
+/** A row's `cards` is `{ <key>: [box, due] }`; anything else in it is skipped. */
+function readCards(raw: unknown): [string, number, string][] {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return [];
+  const out: [string, number, string][] = [];
+  for (const [key, v] of Object.entries(raw as Record<string, unknown>)) {
+    if (!Array.isArray(v)) continue;
+    const [box, due] = v as unknown[];
+    if (typeof box === 'number' && Number.isInteger(box) && box >= 1 && box <= TOP_BOX && isDay(due)) out.push([key, box, due]);
+  }
+  return out;
+}
+
+export function cardsIn(st: DataState): CardMarks {
+  const out: CardMarks = new Map();
+  for (const r of sectionRecords(st, SECTION, CARD_KIND)) {
+    const { topic, cards } = r.data;
+    if (typeof topic !== 'string') continue;
+    for (const [key, box, due] of readCards(cards)) out.set(`${topic}#${key}`, { box, due });
+  }
+  return out;
+}
+
+/** Keeps one card's mark in its topic's row. */
+export function markCard(topic: string, key: string, mark: { box: number; due: string }) {
+  const id = pairId('nt:card', topic);
+  const prev = data.get().lt_records.get(id);
+  const live = prev && !prev.deleted_at ? prev : undefined;
+  const cards: Record<string, [number, string]> = {};
+  for (const [k, box, due] of readCards(live?.data.cards)) cards[k] = [box, due];
+  cards[key] = [mark.box, mark.due];
+  const t = new Date().toISOString();
+  const value = { topic, cards };
+  const row: LtRecord = prev
+    ? { ...prev, data: value, deleted_at: null, updated_at: t }
+    : { id, section: SECTION, kind: CARD_KIND, data: value, sort_order: 0, archived_at: null, created_at: t, updated_at: t, deleted_at: null };
+  commit('lt_records', [row]);
+}
+
+/** Forgets every mark for these topics, so their cards are new again. */
+export function resetCards(topics: readonly string[]) {
+  const t = new Date().toISOString();
+  const rows: LtRecord[] = [];
+  for (const topic of topics) {
+    const prev = data.get().lt_records.get(pairId('nt:card', topic));
+    if (prev && !prev.deleted_at) rows.push({ ...prev, deleted_at: t, updated_at: t });
+  }
+  if (rows.length) commit('lt_records', rows);
+}
+
+/** Cards due today or earlier, counted from the marks alone. */
+export function cardsDue(marks: CardMarks, today: string): number {
+  let n = 0;
+  for (const m of marks.values()) if (m.due <= today) n++;
+  return n;
+}
+
 /** The line under the door on Study and Home. */
-export function notesLine(read: NotesRead): string {
+export function notesLine(read: NotesRead, due = 0): string {
   let secs = 0;
   for (const s of read.values()) secs += s.size;
-  if (!secs) return 'Physics · Maths · Further Maths · Computer Science, topic by topic';
-  return `${secs} ${secs === 1 ? 'section' : 'sections'} understood across ${read.size} ${read.size === 1 ? 'topic' : 'topics'}`;
+  const cards = due ? `${due} ${due === 1 ? 'flash card' : 'flash cards'} due` : '';
+  if (!secs) return cards || 'Physics · Maths · Further Maths · Computer Science, topic by topic';
+  return `${secs} ${secs === 1 ? 'section' : 'sections'} understood across ${read.size} ${read.size === 1 ? 'topic' : 'topics'}${cards ? ` · ${cards}` : ''}`;
 }

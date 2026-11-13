@@ -1,5 +1,6 @@
 /** Further Maths: Pearson Edexcel International A Level, AS unit F1 (WFM01). */
 import { code, f, fig, ol, sec, tbl, tip, topic, trap, ul, type NoteSubject } from '../types';
+import { FURTHER_A2 } from './further2';
 
 const f1 = [
   topic(
@@ -191,5 +192,5 @@ export const FURTHER: NoteSubject = {
   study: 'Further Maths',
   board: 'Edexcel International A Level',
   hue: 280,
-  units: [{ id: 'f1', code: 'WFM01', name: 'Further Pure Mathematics 1', topics: f1 }],
+  units: [{ id: 'f1', code: 'WFM01', name: 'Further Pure Mathematics 1', topics: f1 }, ...FURTHER_A2],
 };

@@ -7,14 +7,14 @@ test('past papers: tick and score a paper, hard questions, booklets and retries'
   await expect(page).toHaveURL(/\/study\/papers$/);
   await expect(page.getByRole('heading', { level: 1, name: 'Past papers' })).toBeVisible();
 
-  // Physics Unit 1: every session to October 2021, nothing later
+  // Physics Unit 1: every session listed, the recent ones too
   const u1 = page.getByRole('list', {
     name: 'Unit 1 · Mechanics and Materials papers',
   });
   await expect(u1.getByRole('link', { name: 'Unit 1 Jan 2019 question paper' })).toHaveAttribute('href', /Unit-1\/QP\/January%202019%20\(IAL\)%20QP\.pdf$/);
   await expect(u1.getByRole('link', { name: 'Unit 1 Jan 2019 examiner report' })).toHaveAttribute('href', /WPH11_01_pef_20190307\.pdf$/);
   await expect(u1.getByText('Oct 2021')).toBeVisible();
-  await expect(u1.getByText('Jan 2022')).toHaveCount(0);
+  await expect(u1.getByText('Jan 2022')).toBeVisible();
 
   // a quick tick, then a score through the sheet, which also logs the time in Study
   await u1.getByRole('checkbox', { name: 'Unit 1 Jan 2019 done' }).click();

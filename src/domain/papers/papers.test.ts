@@ -108,7 +108,9 @@ describe('progress', () => {
   });
 
   it('keeps the newest papers for mocks', () => {
-    expect(newestForMocks(u1, new Map([mark('WPH11|October 2021')]), 2)).toEqual(['WPH11|January 2021', 'WPH11|June 2021']);
+    const real = u1.filter((p) => !p.session.startsWith('Specimen'));
+    const newest = real[real.length - 1];
+    expect(newestForMocks(u1, new Map([mark(newest.id)]), 2)).toEqual(real.slice(-3, -1).map((p) => p.id));
   });
 
   it('reads paper rows defensively', () => {

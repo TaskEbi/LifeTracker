@@ -1,5 +1,6 @@
 /** Physics: Pearson Edexcel International A Level, AS units WPH11–WPH13. */
 import { f, fig, h, ol, sec, tbl, tip, topic, trap, ul, type NoteSubject } from '../types';
+import { PHYSICS_A2 } from './physics2';
 
 const u1 = [
   topic(
@@ -453,5 +454,6 @@ export const PHYSICS: NoteSubject = {
     { id: 'wph11', code: 'WPH11', name: 'Unit 1 · Mechanics and Materials', topics: u1 },
     { id: 'wph12', code: 'WPH12', name: 'Unit 2 · Waves and Electricity', topics: u2 },
     { id: 'wph13', code: 'WPH13', name: 'Unit 3 · Practical Skills I', topics: u3 },
+    ...PHYSICS_A2,
   ],
 };

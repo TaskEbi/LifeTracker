@@ -52,7 +52,7 @@ export function papersLine(s: PapersState, today: string): string {
   const hard = [...s.hard.values()].filter((m) => m.state === 'done').length;
   const due = dueCount(s, today);
   const parts = [
-    done ? `${done} ${done === 1 ? 'paper' : 'papers'} done` : 'Every paper to 2021, ticked off as you go',
+    done ? `${done} ${done === 1 ? 'paper' : 'papers'} done` : 'Every paper, ticked off as you go',
     hard ? `${hard} hard ${hard === 1 ? 'question' : 'questions'}` : null,
     due ? `${due} to retry today` : null,
   ];

@@ -1,10 +1,10 @@
-// Builds src/domain/papers/catalogue.ts: every past paper (2021 and earlier) for the user's units,
+// Builds src/domain/papers/catalogue.ts: every past paper listed for the user's units,
 // from Physics & Maths Tutor's pages, plus examiner reports for IAL Physics and the topic-question
 // booklets. Every link it writes was listed on those pages when the script ran.
 // Run: node scripts/papers-catalogue.mjs
 import { writeFileSync } from 'node:fs';
 
-const LAST_YEAR = 2021;
+const LAST_YEAR = 2026;
 const UA = { 'User-Agent': 'Mozilla/5.0 (paper list builder)' };
 const cache = new Map();
 async function page(url) {

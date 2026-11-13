@@ -1,5 +1,6 @@
 /** Maths: Pearson Edexcel International A Level, AS units P1, P2, M1 and S1. */
 import { f, fig, ol, sec, tbl, tip, topic, trap, ul, type NoteSubject } from '../types';
+import { MATHS_A2 } from './maths2';
 
 const p1 = [
   topic(
@@ -616,6 +617,7 @@ export const MATHS: NoteSubject = {
     { id: 'p2', code: 'WMA12', name: 'Pure Mathematics 2', topics: p2 },
     { id: 'm1', code: 'WME01', name: 'Mechanics 1', topics: m1 },
     { id: 's1', code: 'WST01', name: 'Statistics 1', topics: s1 },
+    ...MATHS_A2,
   ],
 };
 

@@ -1,5 +1,6 @@
 /** Computer Science: Cambridge International AS Level 9618, topics 1–12 (Papers 1 and 2). */
 import { code, f, fig, h, ol, sec, tbl, tip, topic, trap, ul, type NoteSubject } from '../types';
+import { CS_A2 } from './cs2';
 
 const SITE = 'https://csrevisiontopic2.netlify.app';
 
@@ -304,5 +305,6 @@ export const CS: NoteSubject = {
   units: [
     { id: 'p1', code: 'Paper 1', name: 'Theory Fundamentals', topics: theory },
     { id: 'p2', code: 'Paper 2', name: 'Problem-solving and Programming', topics: practical },
+    ...CS_A2,
   ],
 };

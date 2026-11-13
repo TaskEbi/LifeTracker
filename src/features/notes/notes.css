@@ -1843,6 +1843,370 @@
 }
 
 /* ── narrower screens ── */
+/* ── study tools: flash cards, formula sheet, glossary, tips ── */
+.nt-segs {
+  display: inline-flex;
+  border: 1px solid var(--nt-hair-strong);
+  max-width: 100%;
+}
+.nt-segs button {
+  border: 0;
+  border-right: 1px solid var(--nt-hair-strong);
+  background: transparent;
+  padding: 6px 11px;
+  min-height: 32px;
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  white-space: nowrap;
+  transition:
+    background 0.2s,
+    color 0.2s;
+}
+.nt-segs button:last-child {
+  border-right: 0;
+}
+.nt-segs button[aria-pressed='true'] {
+  background: var(--nt-ink);
+  color: var(--nt-paper);
+}
+.nt-stage__info .nt-segs {
+  position: absolute;
+  top: -7px;
+  right: 0;
+  background: color-mix(in srgb, var(--nt-paper) 80%, transparent);
+}
+.nt-stage__info .nt-segs button {
+  min-height: 30px;
+  padding: 4px 10px;
+  font-size: 11px;
+}
+.nt-opts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px 28px;
+  margin-top: 22px;
+}
+.nt-opts--tight {
+  margin: 12px 0 4px;
+}
+.nt-opt {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+  justify-items: start;
+}
+.nt-tool {
+  padding-block: 34px 70px;
+  min-height: calc(100svh - var(--nt-nav) - 80px);
+}
+.nt-thead h1 {
+  font-family: var(--nt-display);
+  font-size: clamp(46px, 9vw, 108px);
+  text-transform: uppercase;
+  letter-spacing: -0.03em;
+  line-height: 0.88;
+  margin: 8px 0 14px;
+  animation: nt-wipe-in 0.7s cubic-bezier(0.6, 0, 0.2, 1) both;
+}
+.nt-thead p {
+  max-width: 62ch;
+  font-size: 15px;
+  color: var(--nt-ink-2);
+  margin: 0;
+}
+.nt-thead .nt-thead__k {
+  font-family: var(--nt-mono);
+  font-size: 12px;
+  color: var(--nt-muted);
+}
+.nt-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 22px;
+  margin-top: 22px;
+  border-bottom: 1px solid var(--nt-hair-strong);
+}
+.nt-tabs a {
+  font-family: var(--nt-display);
+  font-size: 24px;
+  text-transform: uppercase;
+  letter-spacing: -0.02em;
+  text-decoration: none;
+  padding: 6px 0 4px;
+  color: var(--nt-muted);
+  border-bottom: 3px solid transparent;
+  margin-bottom: -1px;
+}
+.nt-tabs a.is-cur {
+  color: var(--nt-ink);
+  border-bottom-color: var(--nt-ink);
+}
+.nt-tnote {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 6px 18px;
+  margin: 18px 0 0;
+  font-size: 13px;
+  color: var(--nt-muted);
+}
+.nt-keys {
+  font-family: var(--nt-mono);
+  font-size: 11px;
+}
+.nt-link {
+  background: transparent;
+  border: 0;
+  padding: 6px 0;
+  font-size: 13px;
+  color: var(--nt-ink-2);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+.nt-coverbtn {
+  display: block;
+  margin: -4px 0 6px;
+}
+.nt-cover {
+  display: block;
+  width: 100%;
+  text-align: left;
+  border: 1px dashed var(--nt-hair-strong);
+  background: repeating-linear-gradient(-45deg, transparent 0 7px, var(--nt-paper-2) 7px 14px);
+  padding: 10px 12px;
+  min-height: 44px;
+  font-size: 12.5px;
+  color: var(--nt-muted);
+  cursor: pointer;
+}
+.nt-cover:hover {
+  color: var(--nt-ink);
+}
+.nt-feat--low {
+  min-height: 120px;
+}
+
+/* a sitting of flash cards */
+.nt-sit {
+  max-width: 760px;
+}
+.nt-sit__bar {
+  margin: 22px 0 14px;
+}
+.nt-card {
+  perspective: 1400px;
+  animation: nt-card-in 0.4s var(--nt-ease) both;
+}
+.nt-card__in {
+  display: grid;
+  transform-style: preserve-3d;
+  transition: transform 0.55s var(--nt-ease);
+}
+.nt-card.is-flipped .nt-card__in {
+  transform: rotateY(180deg);
+}
+.nt-card__face {
+  grid-area: 1 / 1;
+  min-height: min(52svh, 380px);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 20px 20px 22px;
+  border: 1px solid var(--nt-hair-strong);
+  background-color: var(--nt-paper);
+  box-shadow: 6px 6px 0 var(--nt-paper-3);
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+}
+.nt-card__back {
+  transform: rotateY(180deg);
+  background-color: var(--nt-paper-2);
+}
+/* the face turned away is hidden outright half-way through the turn, so nothing depends on
+   backface-visibility (WebKit drops it when an ancestor is flattened) */
+.nt-card__face {
+  transition: visibility 0s 0.2s;
+}
+.nt-card.is-flipped .nt-card__front,
+.nt-card:not(.is-flipped) .nt-card__back {
+  visibility: hidden;
+  pointer-events: none;
+}
+.nt-card__q {
+  font-family: var(--nt-display);
+  font-size: clamp(34px, 7vw, 60px);
+  line-height: 0.98;
+  letter-spacing: -0.02em;
+  margin: auto 0 0;
+  text-wrap: balance;
+  overflow-wrap: anywhere;
+}
+.nt-card__ask {
+  font-size: 13.5px;
+  color: var(--nt-muted);
+  margin-bottom: auto;
+}
+.nt-card__a {
+  font-size: 19px;
+  line-height: 1.45;
+  margin: auto 0;
+}
+.nt-card__f {
+  margin: auto 0;
+  background: var(--nt-paper);
+}
+.nt-card__btns {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+.nt-card .nt-ruled {
+  min-height: 48px;
+}
+.nt-card .nt-ruled:disabled {
+  cursor: default;
+}
+.nt-ruled--no {
+  border-color: var(--nt-accent);
+  color: var(--nt-accent);
+}
+.nt-ruled--no:hover,
+.nt-ruled--no:active {
+  background: var(--nt-accent);
+  color: var(--nt-paper);
+}
+.nt-done {
+  margin-top: 26px;
+  padding: 26px 0 30px;
+  border-top: 3px solid var(--nt-ink);
+  border-bottom: 3px solid var(--nt-ink);
+}
+.nt-done h2 {
+  font-family: var(--nt-display);
+  font-size: clamp(38px, 7vw, 68px);
+  text-transform: uppercase;
+  letter-spacing: -0.03em;
+  line-height: 0.9;
+  margin-bottom: 10px;
+}
+.nt-done .nt-btns {
+  justify-content: flex-start;
+  margin-top: 18px;
+}
+@keyframes nt-card-in {
+  from {
+    opacity: 0;
+    translate: 0 14px;
+  }
+}
+
+/* the formula sheet */
+.nt-fsheet {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0 40px;
+  align-items: start;
+}
+.nt-fsheet__t {
+  padding: 18px 0 6px;
+  border-bottom: 1px solid var(--nt-hair);
+}
+.nt-fsheet__t h3 {
+  font-family: var(--nt-display);
+  font-size: 28px;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  margin-bottom: 10px;
+}
+.nt-fsheet__t h3 a {
+  text-decoration: none;
+}
+.nt-fsheet__t h3 a:hover {
+  text-decoration: underline;
+}
+.nt-fsheet__t .nt-n {
+  display: block;
+  margin-bottom: 4px;
+}
+.nt-fsheet__g {
+  margin-bottom: 12px;
+}
+.nt-fsheet__g .nt-f {
+  margin: 6px 0 0;
+  font-size: 20px;
+}
+.nt-fsheet__g .nt-cover {
+  margin-top: 6px;
+}
+
+/* the glossary */
+.nt-find {
+  display: block;
+  width: 100%;
+  margin-top: 22px;
+  border: 0;
+  border-bottom: 2px solid var(--nt-ink);
+  background: transparent;
+  padding: 10px 0;
+  font: 400 24px/1.1 var(--nt-display);
+  color: var(--nt-ink);
+  border-radius: 0;
+  -webkit-appearance: none;
+  appearance: none;
+}
+.nt-gloss {
+  display: grid;
+  grid-template-columns: 70px minmax(0, 1fr);
+  gap: 0 18px;
+  margin-top: 22px;
+}
+.nt-gloss h3 {
+  font-family: var(--nt-display);
+  font-size: 64px;
+  line-height: 0.8;
+  position: sticky;
+  top: calc(var(--nt-nav) + 14px);
+  align-self: start;
+}
+.nt-gloss .nt-terms {
+  margin: 0;
+}
+.nt-gloss__src {
+  display: block;
+  margin-top: 6px;
+  font-family: var(--nt-mono);
+  font-size: 11px;
+  color: var(--nt-muted);
+  text-decoration: none;
+}
+.nt-gloss__src:hover {
+  color: var(--nt-ink);
+  text-decoration: underline;
+}
+
+/* tips and mistakes */
+.nt-tips {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0 40px;
+}
+.nt-tips__i {
+  padding: 16px 0 14px;
+  border-bottom: 1px solid var(--nt-hair);
+}
+.nt-tips__i p {
+  margin: 6px 0 0;
+  font-size: 15.5px;
+}
+.nt-tips__i--trap .nt-tag {
+  color: var(--nt-warn);
+}
+
 @media (max-width: 1000px) {
   .nt-body {
     grid-template-columns: minmax(0, 1fr);
@@ -1893,6 +2257,28 @@
   .nt-terms,
   .nt-feats {
     grid-template-columns: minmax(0, 1fr);
+  }
+  .nt-fsheet,
+  .nt-tips,
+  .nt-gloss {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .nt-gloss h3 {
+    position: static;
+    font-size: 44px;
+    margin-bottom: 8px;
+  }
+  .nt-tabs a {
+    font-size: 20px;
+  }
+  .nt-keys {
+    display: none;
+  }
+  .nt-feat--low {
+    min-height: 0;
+  }
+  .nt-card__face {
+    padding: 16px 14px 18px;
   }
   .nt-callout {
     grid-template-columns: minmax(0, 1fr);

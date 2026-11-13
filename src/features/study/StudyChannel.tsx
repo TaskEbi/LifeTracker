@@ -23,8 +23,8 @@ import { EPQ_KANJI, EpqPage, epqLine, useEpq } from '../epq/EpqPage';
 import './theme.css';
 import { PAPERS_KANJI, usePapers } from '../papers/door';
 import { papersLine } from '../papers/actions';
-import { notesLine } from '../notes/actions';
-import { NOTES_KANJI, useNotes } from '../notes/door';
+import { cardsDue, notesLine } from '../notes/actions';
+import { NOTES_KANJI, useCards, useNotes } from '../notes/door';
 
 // The paper list is large, so the page loads in its own chunk.
 const PapersPage = lazy(() => import('../papers/PapersPage'));
@@ -243,9 +243,11 @@ function PapersDoor() {
   );
 }
 
-/** The way into the study notes: topic-by-topic notes for every subject. */
+/** The way into the study notes: topic-by-topic notes for every subject, and their flash cards. */
 function NotesDoor() {
   const read = useNotes();
+  const cards = useCards();
+  const today = useToday();
   return (
     <button type="button" className="epq-door" onClick={() => navigate('study', ['notes'])}>
       <span className="epq-door__k" aria-hidden="true">
@@ -253,7 +255,7 @@ function NotesDoor() {
       </span>
       <span className="epq-door__t">
         <b>Study notes</b>
-        <small>{notesLine(read)}</small>
+        <small>{notesLine(read, cardsDue(cards, today))}</small>
       </span>
       <span aria-hidden="true">▶</span>
     </button>

@@ -1,5 +1,5 @@
 /**
- * Study notes: compact revision notes for every topic of the AS units, written in a small
+ * Study notes: compact revision notes for every topic of the AS and A2 units, written in a small
  * markup so the content files stay short. See `markup.ts` for the inline syntax.
  */
 export type SubjectId = 'physics' | 'maths' | 'further' | 'cs';
@@ -42,6 +42,8 @@ export interface NoteUnit {
   id: string;
   code: string;
   name: string;
+  /** An A2 unit: shown after the AS units, which are the ones being sat this year. */
+  a2?: boolean;
   topics: NoteTopic[];
 }
 

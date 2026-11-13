@@ -1,18 +1,23 @@
 /**
- * 講 Study notes, at /study/notes: compact notes for every topic of the AS units in Physics,
- * Maths, Further Maths and Computer Science. The look follows the CS revision site: topics are
- * discs on a diagonal stage, a topic opens like a film's credits page and then reads as notes.
- * /study/notes · /study/notes/<subject> · /study/notes/<subject>/<topic>
+ * 講 Study notes, at /study/notes: compact notes for every topic of the AS and A2 units in
+ * Physics, Maths, Further Maths and Computer Science. The look follows the CS revision site:
+ * topics are discs on a diagonal stage, a topic opens like a film's credits page and then reads
+ * as notes. The study tools made from the notes (flash cards, formula sheet, glossary, tips and
+ * mistakes) are in Tools.tsx.
+ * /study/notes · /study/notes/<subject> · /study/notes/<subject>/<topic> · /study/notes/<tool>/…
  */
-import { useEffect, useMemo, useRef, useState, type CSSProperties, type MouseEvent as ReactMouseEvent, type ReactNode, type RefObject } from 'react';
+import { useEffect, useMemo, useRef, useState, type CSSProperties, type MouseEvent as ReactMouseEvent, type ReactNode } from 'react';
 import { navigate, useRoute } from '../../app/router';
 import { openSheet } from '../../app/sheets';
-import { findTopic, minutesOf, NOTE_SUBJECTS, searchNotes, subjectById, subjectProgress, TERMS_ID, topicProgress, topicsOf, type Block, type NoteSubject, type NoteTopic, type NoteUnit, type SubjectId } from '../../domain/notes';
-import { parseInline, type Inline } from '../../domain/notes/markup';
-import { setSection, type NotesRead } from './actions';
+import { findTopic, minutesOf, NOTE_SUBJECTS, searchNotes, subjectById, subjectProgress, TERMS_ID, topicProgress, topicsOf, type NoteSubject, type NoteTopic, type NoteUnit, type SubjectId } from '../../domain/notes';
+import { useToday } from '../../data/lt';
+import { countTopics, deck, deckStats, glossary, nextUp, unitsAt } from '../../domain/notes/tools';
+import { setSection, type CardMarks, type NotesRead } from './actions';
 import { discFace, discHtml, hashOf, posterArt, tear } from './art';
-import { useNotes } from './door';
-import { Fig } from './figs';
+import { useCards, useNotes } from './door';
+import { A, BlockView, Foot, pad, R, reduced, useReveal, vars } from './parts';
+import { useNotesPrefs } from './prefs';
+import { CardsHome, CardsSession, FormulaSheet, GlossaryView, isTool, LevelPick, TipsView, TOOL_NAME } from './Tools';
 import './notes.css';
 
 const TAGLINE: Record<SubjectId, string> = {
@@ -22,10 +27,6 @@ const TAGLINE: Record<SubjectId, string> = {
   cs: 'From bits to databases to code.',
 };
 
-const pad = (n: number) => String(n).padStart(2, '0');
-const reduced = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
-const vars = (v: Record<string, string | number>) => v as CSSProperties;
-
 let fontsAsked = false;
 function loadFonts() {
   if (fontsAsked) return;
@@ -34,153 +35,6 @@ function loadFonts() {
   link.rel = 'stylesheet';
   link.href = 'https://fonts.googleapis.com/css2?family=Geist:wght@300..900&family=Geist+Mono:wght@400;500&family=Instrument+Serif:ital@0;1&display=swap';
   document.head.appendChild(link);
-}
-
-// ── links ──
-
-function A({ to, className, children, label }: { to: string[]; className?: string; children: ReactNode; label?: string }) {
-  const onClick = (e: ReactMouseEvent) => {
-    if (e.metaKey || e.ctrlKey || e.shiftKey || e.button) return;
-    e.preventDefault();
-    navigate('study', to);
-  };
-  return (
-    <a href={`/study/${to.join('/')}`} className={className} onClick={onClick} aria-label={label}>
-      {children}
-    </a>
-  );
-}
-
-// ── text ──
-
-function inl(nodes: Inline[]): ReactNode {
-  return nodes.map((n, i) => {
-    if (typeof n === 'string') return n;
-    if (n.k === 'code') return <code key={i}>{n.t}</code>;
-    if (n.k === 'b') return <strong key={i}>{inl(n.c)}</strong>;
-    return n.k === 'sup' ? <sup key={i}>{inl(n.c)}</sup> : <sub key={i}>{inl(n.c)}</sub>;
-  });
-}
-const R = ({ t }: { t: string }) => <>{inl(parseInline(t))}</>;
-
-function BlockView({ b }: { b: Block }) {
-  if (typeof b === 'string')
-    return (
-      <p>
-        <R t={b} />
-      </p>
-    );
-  switch (b.k) {
-    case 'h':
-      return <h3>{b.t}</h3>;
-    case 'ul':
-      return (
-        <ul>
-          {b.items.map((x, i) => (
-            <li key={i}>
-              <R t={x} />
-            </li>
-          ))}
-        </ul>
-      );
-    case 'ol':
-      return (
-        <ol className="nt-steps">
-          {b.items.map((x, i) => (
-            <li key={i}>
-              <span>
-                <R t={x} />
-              </span>
-            </li>
-          ))}
-        </ol>
-      );
-    case 'f':
-      return (
-        <div className="nt-f" data-rv="">
-          {b.lines.map((l, i) => (
-            <div key={i} style={vars({ '--i': i })}>
-              <R t={l} />
-            </div>
-          ))}
-        </div>
-      );
-    case 'tbl':
-      return (
-        <div className="nt-tbl">
-          <table>
-            <thead>
-              <tr>
-                {b.head.map((x, i) => (
-                  <th key={i} scope="col">
-                    <R t={x} />
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {b.rows.map((r, i) => (
-                <tr key={i}>
-                  {r.map((x, j) => (
-                    <td key={j}>
-                      <R t={x} />
-                    </td>
-                  ))}
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      );
-    case 'tip':
-    case 'trap':
-      return (
-        <div className={`nt-callout nt-callout--${b.k}`} data-rv="">
-          <div className="nt-tag">
-            {b.k === 'tip' ? 'Examiner’s tip' : 'Common mistake'}
-            {b.k === 'tip' && (
-              <span className="nt-stars" aria-hidden="true">
-                ★★★★★
-              </span>
-            )}
-          </div>
-          <div>
-            <p>
-              <R t={b.t} />
-            </p>
-          </div>
-        </div>
-      );
-    case 'code':
-      return <pre className="nt-code">{b.t}</pre>;
-    case 'fig':
-      return <Fig id={b.id} cap={b.cap} />;
-  }
-}
-
-// ── hooks ──
-
-/** Adds .is-in to every [data-rv] under the root as it scrolls into view. */
-function useReveal(root: RefObject<HTMLElement | null>, key: string) {
-  useEffect(() => {
-    const els = [...(root.current?.querySelectorAll<HTMLElement>('[data-rv]') ?? [])];
-    if (typeof IntersectionObserver !== 'function' || reduced()) {
-      els.forEach((el) => el.classList.add('is-in'));
-      return;
-    }
-    const io = new IntersectionObserver(
-      (entries) => {
-        for (const en of entries)
-          if (en.isIntersecting) {
-            en.target.classList.add('is-in');
-            io.unobserve(en.target);
-          }
-      },
-      { rootMargin: '0px 0px -6% 0px' },
-    );
-    els.forEach((el) => io.observe(el));
-    return () => io.disconnect();
-  }, [root, key]);
 }
 
 // ── the stage of discs ──
@@ -198,7 +52,7 @@ interface StageItem {
 const stageIdx = new Map<string, number>();
 let fromDisc = false;
 
-function Stage({ id, heading, items, credit }: { id: string; heading: string; items: StageItem[]; credit: string }) {
+function Stage({ id, heading, items, credit, tools }: { id: string; heading: string; items: StageItem[]; credit: string; tools?: ReactNode }) {
   const [idx, setIdx] = useState(() => Math.min(items.length - 1, stageIdx.get(id) ?? 0));
   const [leaving, setLeaving] = useState<number | null>(null);
   const stage = useRef<HTMLElement>(null);
@@ -371,6 +225,7 @@ function Stage({ id, heading, items, credit }: { id: string; heading: string; it
     <section className={`nt-stage${leaving != null ? ' is-leaving' : ''}`} ref={stage} aria-label={heading}>
       <div className="nt-stage__info">
         <h1>{heading}</h1>
+        {tools}
         <div key={cur.key} className="nt-stage__now">
           <h2>{cur.title}</h2>
           <table className="nt-meta">
@@ -465,20 +320,16 @@ function IdxRow({ to, r, title, covers, pct, i }: { to: string[]; r: string; tit
   );
 }
 
-function Foot({ left, right }: { left: string; right: string }) {
-  return (
-    <footer className="nt-foot nt-wrap">
-      <span>{left}</span>
-      <span>{right}</span>
-    </footer>
-  );
-}
-
 // ── home: the four subjects ──
 
-function HomeView({ read }: { read: NotesRead }) {
+function HomeView({ read, marks }: { read: NotesRead; marks: CardMarks }) {
   const root = useRef<HTMLDivElement>(null);
-  useReveal(root, 'home');
+  const today = useToday();
+  const { level } = useNotesPrefs();
+  useReveal(root, `home:${level}`);
+  const cards = useMemo(() => deckStats(deck(), marks, today), [marks, today]);
+  const terms = useMemo(() => glossary().length, []);
+  const next = useMemo(() => nextUp(read, level === 'all' ? 'as' : level), [read, level]);
   const stats = useMemo(() => NOTE_SUBJECTS.map((s) => ({ s, p: subjectProgress(s, read) })), [read]);
   const items = useMemo<StageItem[]>(
     () =>
@@ -488,12 +339,13 @@ function HomeView({ read }: { read: NotesRead }) {
         ref: s.board,
         rows: [
           ['Board', s.board],
-          ['Units', s.units.map((u) => u.code).join(' · ')],
+          ['AS units', unitsAt(s, 'as').map((u) => u.code).join(' · ')],
+          ['A2 units', unitsAt(s, 'a2').map((u) => u.code).join(' · ')],
           ['Topics', String(p.topics)],
           ['Understood', `${p.pct}% · ${p.done} of ${p.topics} topics`],
         ],
         hook: TAGLINE[s.id],
-        face: discFace(s.id, s.hue, s.name, s.units.map((u) => u.code).join(' ')),
+        face: discFace(s.id, s.hue, s.name, unitsAt(s, 'as').map((u) => u.code).join(' ')),
         to: ['notes', s.id],
       })),
     [stats],
@@ -501,20 +353,75 @@ function HomeView({ read }: { read: NotesRead }) {
   const total = stats.reduce((a, x) => a + x.p.topics, 0);
   return (
     <div ref={root}>
-      <Stage id="home" heading="Study notes" items={items} credit="AS units · 2026–27" />
+      <Stage id="home" heading="Study notes" items={items} credit="AS and A2 units" />
       <section className="nt-lower nt-wrap">
         <div className="nt-wrap__in">
           <div className="nt-sect" data-rv="">
             <h2>The Index</h2>
             <span className="nt-lbl">
-              {NOTE_SUBJECTS.length} subjects · {total} topics
+              {NOTE_SUBJECTS.length} subjects · {total} topics · {countTopics('as')} AS, {countTopics('a2')} A2
             </span>
           </div>
           {stats.map(({ s, p }, i) => (
             <div key={s.id} data-rv="">
-              <IdxRow to={['notes', s.id]} r={pad(i + 1)} title={s.name} covers={`${s.board} · ${s.units.map((u) => u.name.replace(/^Unit \d · /, '')).join(' · ')}`} pct={p.pct} i={i} />
+              <IdxRow to={['notes', s.id]} r={pad(i + 1)} title={s.name} covers={`${s.board} · ${s.units.map((u) => u.code).join(' · ')}`} pct={p.pct} i={i} />
             </div>
           ))}
+          {next.length > 0 && (
+            <>
+              <div className="nt-sect nt-sect--gap" data-rv="">
+                <h2>Up Next</h2>
+                <span className="nt-lbl">The first topic you haven’t finished</span>
+              </div>
+              <div className="nt-opts nt-opts--tight" data-rv="">
+                <div className="nt-opt">
+                  <span className="nt-lbl">Level</span>
+                  <LevelPick />
+                </div>
+              </div>
+              {next.map((n, i) => (
+                <div key={n.subject.id} data-rv="">
+                  <IdxRow to={['notes', n.subject.id, n.topic.id]} r={pad(i + 1)} title={n.topic.title} covers={`${n.subject.name} · ${n.topic.ref} · ${n.read ? `${n.read} of ${n.total} sections understood` : 'not started'}`} pct={Math.round((n.read / n.total) * 100)} i={i} />
+                </div>
+              ))}
+            </>
+          )}
+          <div className="nt-sect nt-sect--gap" data-rv="">
+            <h2>Study Tools</h2>
+            <span className="nt-lbl">Made from these notes</span>
+          </div>
+          <div className="nt-feats" data-rv="">
+            <A className="nt-feat" to={['notes', 'cards']}>
+              <span className="nt-lbl">Remember</span>
+              <h3>Flash cards</h3>
+              <p>A card for every key term and set of formulas. The ones you miss come back sooner.</p>
+              <span className="nt-feat__k">{cards.due ? `${cards.due} due today →` : `${cards.total} cards →`}</span>
+            </A>
+            <A className="nt-feat" to={['notes', 'formulas']}>
+              <span className="nt-lbl">Look up</span>
+              <h3>Formula sheet</h3>
+              <p>Every formula by topic, with a cover so you can test yourself.</p>
+              <span className="nt-feat__k">Formulas →</span>
+            </A>
+            <A className="nt-feat" to={['notes', 'glossary']}>
+              <span className="nt-lbl">Define</span>
+              <h3>Glossary</h3>
+              <p>Every key term from A to Z, searchable, with the topic it comes from.</p>
+              <span className="nt-feat__k">{terms} terms →</span>
+            </A>
+            <A className="nt-feat" to={['notes', 'tips']}>
+              <span className="nt-lbl">Avoid</span>
+              <h3>Tips and mistakes</h3>
+              <p>The examiner’s tips and the common mistakes, gathered for the night before.</p>
+              <span className="nt-feat__k">Read the list →</span>
+            </A>
+            <button type="button" className="nt-feat" onClick={() => openSheet({ type: 'focus' })}>
+              <span className="nt-lbl">Concentrate</span>
+              <h3>Focus timer</h3>
+              <p>Time a session with nothing else on screen, then log it to Study.</p>
+              <span className="nt-feat__k">Opens the timer</span>
+            </button>
+          </div>
           <div className="nt-sect nt-sect--gap" data-rv="">
             <h2>The Toolkit</h2>
             <span className="nt-lbl">Elsewhere in Study</span>
@@ -523,7 +430,7 @@ function HomeView({ read }: { read: NotesRead }) {
             <A className="nt-feat" to={['papers']}>
               <span className="nt-lbl">Practise</span>
               <h3>Past papers</h3>
-              <p>Every paper to 2021 with mark schemes, scores and mocks kept back.</p>
+              <p>Every paper with mark schemes, scores and mocks kept back.</p>
               <span className="nt-feat__k">Papers →</span>
             </A>
             <A className="nt-feat" to={['papers', 'hard']}>
@@ -550,8 +457,10 @@ function HomeView({ read }: { read: NotesRead }) {
 
 function SubjectView({ subject, read }: { subject: NoteSubject; read: NotesRead }) {
   const root = useRef<HTMLDivElement>(null);
-  useReveal(root, subject.id);
-  const rows = useMemo(() => subject.units.flatMap((unit) => unit.topics.map((topic) => ({ unit, topic, mins: minutesOf(topic) }))), [subject]);
+  const { level } = useNotesPrefs();
+  useReveal(root, `${subject.id}:${level}`);
+  const units = useMemo(() => unitsAt(subject, level), [subject, level]);
+  const rows = useMemo(() => units.flatMap((unit) => unit.topics.map((topic) => ({ unit, topic, mins: minutesOf(topic) }))), [units]);
   const items = useMemo<StageItem[]>(
     () =>
       rows.map(({ unit, topic, mins }) => {
@@ -561,7 +470,7 @@ function SubjectView({ subject, read }: { subject: NoteSubject; read: NotesRead 
           title: topic.title,
           ref: topic.ref,
           rows: [
-            ['Unit', unit.code],
+            ['Unit', `${unit.code} · ${unit.a2 ? 'A2' : 'AS'}`],
             ['Covers', topic.covers.split(' · ').slice(0, 3).join(', ')],
             ['Key terms', String(topic.terms.length)],
             ['Reading time', `${mins} min`],
@@ -577,15 +486,15 @@ function SubjectView({ subject, read }: { subject: NoteSubject; read: NotesRead 
   let n = 0;
   return (
     <div ref={root}>
-      <Stage id={subject.id} heading={subject.name} items={items} credit={subject.board} />
+      <Stage key={level} id={`${subject.id}:${level}`} heading={subject.name} items={items} credit={subject.board} tools={<LevelPick />} />
       <section className="nt-lower nt-wrap">
         <div className="nt-wrap__in">
-          {subject.units.map((unit, ui) => (
+          {units.map((unit, ui) => (
             <div key={unit.id}>
               <div className={`nt-sect${ui ? ' nt-sect--gap' : ''}`} data-rv="">
                 <h2>{unit.name.replace(/^Unit \d · /, '')}</h2>
                 <span className="nt-lbl">
-                  {unit.code} · {unit.topics.length} topics
+                  {unit.code} · {unit.a2 ? 'A2' : 'AS'} · {unit.topics.length} topics
                 </span>
               </div>
               {unit.topics.map((t) => (
@@ -595,6 +504,27 @@ function SubjectView({ subject, read }: { subject: NoteSubject; read: NotesRead 
               ))}
             </div>
           ))}
+          <div className="nt-sect nt-sect--gap" data-rv="">
+            <h2>Study Tools</h2>
+            <span className="nt-lbl">{subject.name}</span>
+          </div>
+          <div className="nt-feats" data-rv="">
+            <A className="nt-feat nt-feat--low" to={['notes', 'cards', subject.id]}>
+              <span className="nt-lbl">Remember</span>
+              <h3>Flash cards</h3>
+              <span className="nt-feat__k">Start a sitting →</span>
+            </A>
+            <A className="nt-feat nt-feat--low" to={['notes', 'formulas', subject.id]}>
+              <span className="nt-lbl">Look up</span>
+              <h3>Formula sheet</h3>
+              <span className="nt-feat__k">Formulas →</span>
+            </A>
+            <A className="nt-feat nt-feat--low" to={['notes', 'tips', subject.id]}>
+              <span className="nt-lbl">Avoid</span>
+              <h3>Tips and mistakes</h3>
+              <span className="nt-feat__k">Read the list →</span>
+            </A>
+          </div>
         </div>
       </section>
       <Foot left={`${subject.board} · ${subject.name}`} right="A study edition for one student" />
@@ -627,6 +557,8 @@ function TopicView({ subject, unit, topic, index, read }: { subject: NoteSubject
   const root = useRef<HTMLDivElement>(null);
   const bar = useRef<HTMLElement>(null);
   const [cur, setCur] = useState(TERMS_ID);
+  const [cover, setCover] = useState(false);
+  const [peeked, setPeeked] = useState<ReadonlySet<string>>(new Set());
   const [intro] = useState(() => {
     const f = fromDisc;
     fromDisc = false;
@@ -706,7 +638,7 @@ function TopicView({ subject, unit, topic, index, read }: { subject: NoteSubject
             <div className="nt-credits__t">
               <small>Board</small>
               {subject.board} <small>Unit</small>
-              {unit.code} · {unit.name.replace(/^Unit \d · /, '')}
+              {unit.code} · {unit.name.replace(/^Unit \d · /, '')} ({unit.a2 ? 'A2' : 'AS'})
               <br />
               <small>Covers</small>
               {topic.covers}
@@ -739,6 +671,9 @@ function TopicView({ subject, unit, topic, index, read }: { subject: NoteSubject
               <button type="button" className="nt-ruled" style={vars({ '--i': 0 })} onClick={() => scrollTo(TERMS_ID)}>
                 Start reading
               </button>
+              <A className="nt-ruled" to={['notes', 'cards', subject.id, topic.id]}>
+                Flash cards
+              </A>
               <A className="nt-ruled" to={['papers']}>
                 Past papers
               </A>
@@ -789,6 +724,10 @@ function TopicView({ subject, unit, topic, index, read }: { subject: NoteSubject
               ))}
             </ol>
             <div className="nt-toc__tools">
+              <A to={['notes', 'cards', subject.id, topic.id]}>
+                <span>Flash cards for this topic</span>
+                <span aria-hidden="true">→</span>
+              </A>
               <A to={['papers']}>
                 <span>Past papers</span>
                 <span aria-hidden="true">→</span>
@@ -811,12 +750,29 @@ function TopicView({ subject, unit, topic, index, read }: { subject: NoteSubject
               <h2>
                 <span className="nt-n">{topic.ref} · 01</span>Key terms
               </h2>
+              <button
+                type="button"
+                className="nt-link nt-coverbtn"
+                aria-pressed={cover}
+                onClick={() => {
+                  setCover((c) => !c);
+                  setPeeked(new Set());
+                }}
+              >
+                {cover ? 'Show the definitions' : 'Cover the definitions and test yourself'}
+              </button>
               <dl className="nt-terms">
                 {topic.terms.map((k) => (
                   <div key={k.t}>
                     <dt>{k.t}</dt>
                     <dd>
-                      <R t={k.d} />
+                      {cover && !peeked.has(k.t) ? (
+                        <button type="button" className="nt-cover" onClick={() => setPeeked((s) => new Set(s).add(k.t))} aria-label={`Show the definition of ${k.t}`}>
+                          Say it, then tap to check
+                        </button>
+                      ) : (
+                        <R t={k.d} />
+                      )}
                     </dd>
                   </div>
                 ))}
@@ -915,9 +871,30 @@ export default function NotesPage() {
   const route = useRoute();
   const [, sub, top] = route.rest;
   const read = useNotes();
+  const marks = useCards();
   useEffect(loadFonts, []);
   const subject = sub ? subjectById(sub) : undefined;
   const ref = subject && top ? findTopic(subject.id, top) : undefined;
+  if (isTool(sub)) {
+    const of = top ? subjectById(top) : undefined;
+    const sitting = sub === 'cards' && (top === 'all' || !!of);
+    const topicOf = sitting && of && route.rest[3] ? findTopic(of.id, route.rest[3]) : undefined;
+    return (
+      <div className="nt">
+        {sitting ? (
+          <>
+            <TopBar back={topicOf ? ['notes', topicOf.subject.id, topicOf.topic.id] : ['notes', 'cards']} backLabel={topicOf ? 'Notes' : 'Decks'} crumb="Flash cards" />
+            <CardsSession key={`${top}/${topicOf?.topic.id ?? ''}`} scope={top!} topicId={topicOf?.topic.id} marks={marks} />
+          </>
+        ) : (
+          <>
+            <TopBar back={['notes']} backLabel="Notes" crumb={TOOL_NAME[sub]} />
+            {sub === 'cards' ? <CardsHome marks={marks} /> : sub === 'formulas' ? <FormulaSheet subject={of ?? NOTE_SUBJECTS[0]} /> : sub === 'glossary' ? <GlossaryView /> : <TipsView subject={of ?? NOTE_SUBJECTS[0]} />}
+          </>
+        )}
+      </div>
+    );
+  }
   return (
     <div className="nt">
       {ref ? (
@@ -933,7 +910,7 @@ export default function NotesPage() {
       ) : (
         <>
           <TopBar back={[]} backLabel="Study" crumb="Notes" />
-          <HomeView read={read} />
+          <HomeView read={read} marks={marks} />
         </>
       )}
     </div>

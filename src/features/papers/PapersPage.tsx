@@ -1,5 +1,5 @@
 /**
- * 卷 Past papers, at /study/papers: every paper to 2021 for Physics, Maths, Further Maths and
+ * 卷 Past papers, at /study/papers: every paper for Physics, Maths, Further Maths and
  * Computer Science with ticks, scores and mock papers kept back; the hardest AS Physics questions
  * by topic from the examiner reports; topic-question booklets; and a retry list for anything
  * you got wrong, spaced 2, 7 and 21 days apart.
@@ -146,7 +146,7 @@ function Head({ s, today, due, meters }: { s: PapersState; today: string; due: n
           {PAPERS_KANJI}
         </span>
         <span className="epq-head__t">
-          <small>A-level · papers to {LAST_YEAR}</small>
+          <small>A-level · every paper to {LAST_YEAR}</small>
           <h1>Past papers</h1>
           {meters && <p>Tick what you’ve done, score it, keep the newest for mocks, and come back to what you got wrong.</p>}
         </span>
