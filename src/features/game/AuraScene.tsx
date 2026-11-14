@@ -8,6 +8,7 @@ import { AURA_TIERS, AURAS, oddsText, type Aura } from '../../domain/game/aura';
 import { bloom, reducedMotion, useCanvasLoop } from './AuraCanvas';
 import { drawAura, drawBolt, gearPath, hash } from './auraFx';
 import { PRELUDES } from './auraLooks';
+import { omenSign } from './auraOmens';
 import { drawPrelude } from './auraPreludes';
 
 const TAU = Math.PI * 2;
@@ -254,6 +255,8 @@ function drawScene(ctx: C2, a: Aura, t: number, w: number, h: number, wind: numb
 
   if (u < 0) {
     const p = t / wind;
+    // The tier's omen (the same one the dial's stage began), then what only this aura does.
+    if (a.id !== 'lastbolt') omenSign(ctx, a.tier, p, t, { w, h, cx, cy, S }, AURA_TIERS[a.tier].color, 0.7, true);
     ctx.save();
     prelude(ctx, a, p, t, w, h, cx, cy, S);
     ctx.restore();

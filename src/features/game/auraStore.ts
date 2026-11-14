@@ -46,6 +46,8 @@ export interface Hit {
   hand: boolean;
   /** How many rolls the turn was. */
   of: number;
+  /** It put a scene on the list (so the stage's wind-up leads into it). */
+  scene: boolean;
 }
 
 interface Live {
@@ -60,9 +62,14 @@ interface Live {
   replay: string | null;
   /** When the dial can next be pulled by hand. */
   coolUntil: number;
+  /** Scenes wait until this moment (ms) while the stage winds up a rare roll. */
+  hold: number;
 }
 
-export const aura = createStore<Live>({ save: freshAura(Date.now()), ready: false, away: null, tape: [], fresh: [], replay: null, coolUntil: 0 });
+export const aura = createStore<Live>({ save: freshAura(Date.now()), ready: false, away: null, tape: [], fresh: [], replay: null, coolUntil: 0, hold: 0 });
+
+/** The stage is winding up a rare roll: its scene waits until then (0 lets it go now). */
+export const holdScenes = (until: number) => aura.set({ hold: until });
 
 let written: { row: LtRecord; at: number } | null = null;
 let dirty = false;
@@ -118,7 +125,14 @@ function hail(batch: Batch) {
   toast(quiet.length === 1 ? `New aura: ${quiet[0]!.name} (${oddsText(quiet[0]!)}). +${cogs} gold cog${cogs === 1 ? '' : 's'}.` : `${quiet.length} new auras. +${cogs} gold cogs.`);
 }
 
-const hitOf = (batch: Batch, hand: boolean): Hit | null => (batch.best ? { n: ++hitN, id: batch.best, fresh: batch.fresh.includes(batch.best), hand, of: batch.rolls } : null);
+/**
+ * A roll with a scene, rolled in the room: hold the scene a moment, so it doesn't flash up before the
+ * stage starts winding up (which then holds it for as long as the wind-up takes).
+ */
+const holdFor = (hit: Hit | null): Partial<Live> => (hit?.scene && inRoom() ? { hold: Date.now() + 400 } : {});
+
+const hitOf = (batch: Batch, hand: boolean, queued: string[]): Hit | null =>
+  batch.best ? { n: ++hitN, id: batch.best, fresh: batch.fresh.includes(batch.best), hand, of: batch.rolls, scene: batch.save.queue.includes(batch.best) && !queued.includes(batch.best) } : null;
 
 /** Read the saved row (or start new) and roll for the time away. */
 function load() {
@@ -172,9 +186,9 @@ function tick() {
   const { save, away, batch } = settleAura(live.save, Date.now(), ctx());
   if (save === live.save) return;
   if (!batch) return void aura.set({ save });
-  const hit = hitOf(batch, false);
+  const hit = hitOf(batch, false, live.save.queue);
   hail(batch);
-  put(save, { tape: hit ? [...live.tape.slice(-7), hit] : live.tape, fresh: batch.fresh.length ? [...live.fresh, ...batch.fresh] : live.fresh, ...(away ? { away } : {}) }, batch.fresh.length > 0 || save.queue !== live.save.queue);
+  put(save, { tape: hit ? [...live.tape.slice(-7), hit] : live.tape, fresh: batch.fresh.length ? [...live.fresh, ...batch.fresh] : live.fresh, ...(away ? { away } : {}), ...holdFor(hit) }, batch.fresh.length > 0 || save.queue !== live.save.queue);
 }
 
 /** Roll live while the room is on screen. */
@@ -204,9 +218,9 @@ export function pullDial(): boolean {
   // The first pull starts the clock: nothing rolls on its own before it.
   const base = live.save.rolls ? settleAura(live.save, now, ctx()).save : { ...live.save, at: now };
   const batch = pull(base, ctx());
-  const hit = hitOf(batch, true);
+  const hit = hitOf(batch, true, base.queue);
   hail(batch);
-  put(batch.save, { tape: hit ? [...live.tape.slice(-7), hit] : live.tape, fresh: [...live.fresh, ...batch.fresh], coolUntil: now + PULL_COOLDOWN_MS }, batch.fresh.length > 0 || batch.save.queue !== live.save.queue || !live.save.rolls);
+  put(batch.save, { tape: hit ? [...live.tape.slice(-7), hit] : live.tape, fresh: [...live.fresh, ...batch.fresh], coolUntil: now + PULL_COOLDOWN_MS, ...holdFor(hit) },batch.fresh.length > 0 || batch.save.queue !== live.save.queue || !live.save.rolls);
   return true;
 }
 
@@ -241,14 +255,19 @@ export function sceneDone() {
   const live = aura.get();
   if (live.replay) return aura.set({ replay: null });
   const id = live.save.queue[0];
-  if (id) put(watched(live.save, id), {}, true);
+  if (!id) return;
+  // Written at once, so a scene watched just before the app is shut doesn't come back.
+  put(watched(live.save, id), {}, true);
+  persistAura();
 }
 
 /** Skip every scene that's waiting. */
 export function skipScenes() {
   const live = aura.get();
   if (live.replay) aura.set({ replay: null });
-  if (live.save.queue.length) put({ ...live.save, queue: [] }, {}, true);
+  if (!live.save.queue.length) return;
+  put({ ...live.save, queue: [] }, {}, true);
+  persistAura();
 }
 
 /** Watch a scene again. Only for an aura you've rolled. */

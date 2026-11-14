@@ -106,8 +106,19 @@ test('aura dial: a rare aura rolled while away plays its scene when the app is o
   await clearScenes(page);
   await expect(page.getByRole('dialog')).toHaveCount(0);
 
-  // Watched scenes don't come back.
-  await page.waitForTimeout(700);
+  // Watched scenes don't come back (once the emptied list has reached IndexedDB).
+  const emptied = await page.evaluate(async () => {
+    const store = await import('/src/data/store.ts' as string);
+    const st = await import('/src/features/game/auraStore.ts' as string);
+    for (let i = 0; i < 50; i++) {
+      const rows: { id: string; data: { queue?: string[] } }[] = (await store.currentSession()?.db.getAll('lt_records')) ?? [];
+      const row = rows.find((r) => r.id === st.AURA_ROW);
+      if (row && !row.data.queue?.length) return true;
+      await new Promise((r) => setTimeout(r, 100));
+    }
+    return false;
+  });
+  expect(emptied).toBe(true);
   await page.goto('/');
   await expect(page.getByRole('button', { name: 'Focus mode' }).or(page.locator('.h-focus'))).toBeVisible();
   await page.waitForTimeout(800);
@@ -131,6 +142,33 @@ test('aura dial: a rare aura rolled while away plays its scene when the app is o
   // Common auras have no scene to watch.
   await page.getByRole('button', { name: /^Dust, 1 in 2/ }).click();
   await expect(page.getByRole('button', { name: 'Watch its scene' })).toHaveCount(0);
+});
+
+test('aura dial: a rare roll winds up on the stage in its tier’s own way, then its scene plays', async ({ page }) => {
+  await seed(page, { queue: [] });
+  await page.goto('/hangar/works/aura');
+  await clearScenes(page);
+  await page.locator('.au-away').getByRole('button', { name: 'Back to the dial' }).click();
+  // Land a Torii (Legendary) as if the dial had just rolled it, with its scene on the list.
+  await page.evaluate(async () => {
+    const st = await import('/src/features/game/auraStore.ts' as string);
+    const live = st.aura.get();
+    st.aura.set({ save: { ...live.save, queue: ['torii'] }, tape: [...live.tape, { n: 99_999, id: 'torii', fresh: false, hand: true, of: 1, scene: true }], hold: Date.now() + 400 });
+  });
+  // The reel spins, then the stage goes quiet and shakes: the scene waits for it.
+  await expect(page.locator('.au-reel')).toBeVisible();
+  await expect(page.locator('.au-stage[data-omen="4"]')).toBeVisible();
+  await expect(page.locator('.au-reel')).toContainText('The Works goes quiet');
+  await expect(page.getByRole('dialog')).toHaveCount(0);
+  const scene = page.getByRole('dialog', { name: 'Aura rolled: Torii' });
+  await expect(scene).toBeVisible({ timeout: 6000 });
+  // Underneath, the stage has landed on it.
+  await expect(page.locator('.au-hit.is-big')).toContainText('Torii');
+  await expect(page.locator('.au-hit__stamp')).toHaveText('Legendary');
+  await expect(page.locator('.au-stage[data-omen]')).toHaveCount(0);
+  await scene.getByRole('button', { name: 'Skip', exact: true }).click();
+  await scene.getByRole('button', { name: /^(Continue|Next)/ }).click();
+  await clearScenes(page);
 });
 
 test('aura dial: time away is rolled when the room is opened, and incense burns by the roll', async ({ page }) => {

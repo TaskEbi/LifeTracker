@@ -4,7 +4,7 @@
  * you haven't rolled show their odds and nothing else. Logic in domain/game/aura.ts, saving in
  * auraStore.ts, drawing in auraFx.ts.
  */
-import { useState, type CSSProperties } from 'react';
+import { useRef, useState, type CSSProperties } from 'react';
 import { useProgress } from '../../data/lt';
 import { CHASSIS } from '../../domain/game/catalog';
 import {
@@ -46,7 +46,8 @@ import { chassisMk } from '../../domain/game/wallet';
 import { H2 } from '../../ui/i/bits';
 import { Robot } from '../../ui/i/bots/Robot';
 import { AuraCanvas } from './AuraCanvas';
-import { buyAuraUp, dismissAuraAway, lightIncense, pullDial, replayScene, useAura, useAuraRoom, wearAura } from './auraStore';
+import { AuraRoll, planOf, spotLen, type Plan } from './AuraRoll';
+import { buyAuraUp, dismissAuraAway, lightIncense, pullDial, replayScene, useAura, useAuraRoom, wearAura, type Hit } from './auraStore';
 import { useGame, useLoadout } from './store';
 import { useWorks } from './worksStore';
 import './aura.css';
@@ -54,6 +55,24 @@ import './aura.css';
 const MOTE = '粒';
 const x = (n: number) => `×${n >= 100 ? fmt(n) : n >= 10 ? n.toFixed(1) : n.toFixed(2)}`;
 const tierStyle = (a: Aura) => ({ '--a': AURA_TIERS[a.tier].color, '--au': a.c }) as CSSProperties;
+
+/**
+ * Which roll the stage is showing. A newer roll takes over, except while a rarer (or as rare) one is
+ * still winding up or landing: the newer one goes on the tape only.
+ */
+function useSpot(hit: Hit | undefined, step: number) {
+  const ref = useRef<{ hit: Hit; plan: Plan; until: number } | null>(null);
+  const cur = ref.current;
+  if (hit && hit.n !== cur?.hit.n) {
+    const a = auraById(hit.id);
+    const now = performance.now();
+    if (a && !(cur && now < cur.until && a.tier <= cur.plan.tier)) {
+      const plan = planOf(a, hit, step);
+      ref.current = { hit, plan, until: now + spotLen(plan) * 1000 };
+    }
+  }
+  return ref.current;
+}
 
 /** The top of the room: your robot in the aura it wears, the dial's count, and the pull. */
 export function AuraStage({ ext }: { ext: Ext }) {
@@ -64,15 +83,15 @@ export function AuraStage({ ext }: { ext: Ext }) {
   const p = useProgress();
   const s = live.save;
   const worn = auraById(s.worn);
-  const hit = live.tape[live.tape.length - 1];
-  const hitAura = auraById(hit?.id);
   const ch = CHASSIS.find((c) => c.id === bot.chassis);
   const mk = ch ? chassisMk(g.wallet, ch.id) || 1 : undefined;
   const step = intervalOf(s);
   const rps = rollsPerSecond(s);
   const multi = multiOf(s);
+  const spot = useSpot(live.tape[live.tape.length - 1], step);
+  const [omen, setOmen] = useState(0);
   return (
-    <div className="au-stage" style={{ '--au': worn?.c ?? '#8b8fa3' } as CSSProperties}>
+    <div className="au-stage" data-omen={omen || undefined} style={{ '--au': worn?.c ?? '#8b8fa3' } as CSSProperties}>
       <AuraCanvas id={worn?.id} pass="back" className="au-stage__fx" />
       <div className="au-bot i-drone" aria-hidden="true">
         <Robot stage={p.overall.stage} look={bot} mk={mk} label={false} />
@@ -88,17 +107,7 @@ export function AuraStage({ ext }: { ext: Ext }) {
         </p>
       </div>
       <p className="au-worn">{worn ? `Wearing ${worn.name}` : s.rolls ? 'No aura on. Choose one in the index.' : 'Pull the dial once and it keeps rolling on its own.'}</p>
-      {hit && hitAura && (
-        <p key={hit.n} className={`au-hit${hitAura.tier >= SCENE_TIER ? ' is-big' : ''}`} style={tierStyle(hitAura)}>
-          <span aria-hidden="true">{hitAura.kanji}</span>
-          <b>{hitAura.name}</b>
-          <small>
-            {oddsText(hitAura)}
-            {hit.of > 1 ? ` · best of ${fmt(hit.of)}` : ''}
-            {hit.fresh ? ' · new' : ''}
-          </small>
-        </p>
-      )}
+      {spot && <AuraRoll key={spot.hit.n} hit={spot.hit} plan={spot.plan} s={s} onOmen={setOmen} />}
       <button type="button" className="au-roll" aria-label="Roll the dial" onClick={pullDial}>
         <b>Roll</b>
         <small>your hand: luck {x(handMult(s))}</small>

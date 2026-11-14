@@ -117,12 +117,234 @@
   line-height: 1.15;
 }
 .au-hit.is-big {
+  padding: 8px 16px 7px 10px;
   box-shadow: 0 0 22px var(--a), inset 0 0 0 1px var(--a);
+  animation: au-land 0.6s cubic-bezier(0.2, 1.6, 0.4, 1) both;
+}
+.au-hit.is-big span {
+  font-size: 32px;
+  text-shadow: 0 0 12px var(--au);
+}
+.au-hit.is-big b {
+  font-size: 15px;
+}
+.au-hit__stamp {
+  position: absolute;
+  top: -9px;
+  left: 50%;
+  padding: 1px 9px;
+  border-radius: 9px;
+  background: var(--a);
+  color: #0b0a14;
+  font-size: 10px;
+  font-style: normal;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  transform: translateX(-50%);
+}
+/* A light sweeping across the pill, from Rare up; faster and brighter the rarer. */
+.au-hit.is-big::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(105deg, transparent 35%, rgb(255 255 255 / 0.55) 50%, transparent 65%) no-repeat;
+  background-size: 250% 100%;
+  animation: au-sweep 2.4s 0.4s ease-in-out infinite;
+  pointer-events: none;
+}
+.au-hit.t3 {
+  animation-name: au-land-hard;
+}
+.au-hit.t4::after {
+  animation-duration: 1.6s;
+}
+.au-hit.t4 b {
+  color: #fde68a;
+}
+.au-hit.t5 b {
+  animation: au-split 1.4s steps(1) infinite;
+}
+.au-hit.t5::after {
+  animation-duration: 1.2s;
 }
 @keyframes au-hit {
   from {
     transform: translateX(-50%) scale(0.7);
     opacity: 0;
+  }
+}
+@keyframes au-land {
+  from {
+    transform: translateX(-50%) scale(1.8);
+    opacity: 0;
+  }
+}
+@keyframes au-land-hard {
+  0% {
+    transform: translateX(-50%) scale(2.2) rotate(-4deg);
+    opacity: 0;
+  }
+  55% {
+    transform: translateX(-50%) scale(0.92) rotate(1deg);
+    opacity: 1;
+  }
+}
+@keyframes au-sweep {
+  from {
+    background-position: 130% 0;
+  }
+  50%,
+  to {
+    background-position: -30% 0;
+  }
+}
+@keyframes au-split {
+  0%,
+  86% {
+    text-shadow: none;
+  }
+  88% {
+    text-shadow: -2px 0 #f43f5e, 2px 0 #22d3ee;
+  }
+  94% {
+    text-shadow: 2px 0 #f43f5e, -2px 0 #22d3ee;
+  }
+}
+
+/* The reel: auras you have already rolled going by until it lands. */
+.au-reel {
+  position: absolute;
+  top: 70px;
+  left: 50%;
+  z-index: 5;
+  display: grid;
+  justify-items: center;
+  gap: 4px;
+  max-width: calc(100% - 20px);
+  margin: 0;
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+.au-reel__face {
+  --f: #8b8fa3;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  max-width: 100%;
+  padding: 5px 14px 5px 10px;
+  overflow: hidden;
+  border: 1px solid rgb(255 255 255 / 0.25);
+  border-radius: 20px;
+  background: rgb(10 8 18 / 0.86);
+  white-space: nowrap;
+  animation: au-tick 0.09s ease-out both;
+}
+.au-reel__face i {
+  color: var(--f);
+  font: 400 22px/1 'RocknRoll One', var(--f-body);
+  font-style: normal;
+}
+.au-reel__face b {
+  overflow: hidden;
+  font-size: 13.5px;
+  text-overflow: ellipsis;
+}
+.au-reel small {
+  color: var(--a);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  white-space: nowrap;
+  text-shadow: 0 0 8px var(--a), 0 1px 3px #000;
+  animation: au-blink 0.7s ease-in-out infinite alternate;
+}
+@keyframes au-tick {
+  from {
+    transform: translateY(-55%);
+    opacity: 0.2;
+  }
+}
+/* The fake stop: it settles on something common, a beat too long. */
+.au-reel.is-fake .au-reel__face {
+  animation: au-settle 0.3s ease-out both;
+}
+@keyframes au-settle {
+  from {
+    transform: translateY(-30%);
+  }
+  60% {
+    transform: translateY(6%);
+  }
+}
+.au-reel.t2.is-omen .au-reel__face {
+  border-color: var(--a);
+  box-shadow: 0 0 16px var(--a);
+  animation-duration: 0.22s;
+}
+.au-reel.t3.is-omen .au-reel__face {
+  border-color: var(--a);
+  box-shadow: 0 0 18px var(--a);
+  animation: au-strain 0.09s linear infinite;
+}
+.au-reel.t4.is-omen .au-reel__face {
+  animation: au-fade 0.6s ease-in both;
+}
+@keyframes au-fade {
+  to {
+    transform: scale(0.7);
+    opacity: 0;
+  }
+}
+.au-reel.t5.is-omen .au-reel__face {
+  border-color: #f43f5e;
+  box-shadow: -3px 0 0 #f43f5e, 3px 0 0 #22d3ee;
+  font-family: ui-monospace, Menlo, Consolas, monospace;
+  animation: au-strain 0.06s linear infinite;
+}
+@keyframes au-strain {
+  25% {
+    translate: 2px -1px;
+  }
+  50% {
+    translate: -2px 1px;
+  }
+  75% {
+    translate: 1px 1px;
+  }
+}
+
+/* The omen over the stage, and the stage shaking under it (Epic and up). */
+.au-omen {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+.au-stage[data-omen] {
+  --q: 1.5px;
+  animation: au-quake 0.12s linear infinite;
+}
+.au-stage[data-omen='4'] {
+  --q: 1px;
+  animation-duration: 0.2s;
+}
+.au-stage[data-omen='5'] {
+  --q: 3px;
+  animation-duration: 0.08s;
+}
+@keyframes au-quake {
+  25% {
+    translate: var(--q) 0;
+  }
+  50% {
+    translate: 0 calc(var(--q) * -1);
+  }
+  75% {
+    translate: calc(var(--q) * -1) 0;
   }
 }
 .au-roll {
@@ -478,6 +700,10 @@ button.au-card {
 }
 @media (prefers-reduced-motion: reduce) {
   .au-hit,
+  .au-hit::after,
+  .au-hit b,
+  .au-reel *,
+  .au-stage[data-omen],
   .au-turn,
   .au-scene,
   .au-scene__card *,

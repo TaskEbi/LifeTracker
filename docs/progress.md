@@ -524,3 +524,13 @@ Asked for: about 100 more auras, with the rare ones really detailed and high qua
 - **Balance:** with more auras to find, each one now adds 1% luck (was 2%) and 0.5% to the Works' machines (was 1%). Gold cogs from the index come to 1,371 in all. Odds of the first thirty are unchanged.
 - **Data:** nothing new stored; a save from before reads back as it was. No migration.
 - Verified: 822 unit/DB tests, typecheck, `aura.spec.ts` and `works.spec.ts` in WebKit at iPhone size. Every aura was drawn at three moments and every wind-up at four with no errors, and contact sheets of all six tiers were looked at (which led to redrawing the wings, softening the sea's edges and turning down glare). Not tried on a real iPhone: the mythic auras draw a lot each frame and their frame rate on a phone is not measured.
+
+## M49 · Rare rolls feel different (done)
+Asked for: the rolling animation of rare auras to be different from the others and feel special.
+- **Every roll spins a reel** on the dial's stage of auras you've already rolled (never one you haven't), slowing onto the result. A dial turning faster than every 1.2 s shows common and uncommon rolls straight away unless you pulled it yourself.
+- **Rare and above take the stage**, each tier its own way (`src/features/game/auraOmens.ts`, run by `AuraRoll.tsx`): **Rare** shimmers (rings closing in, sparkles, "Something rare…"); **Epic** stops on a common aura, then the dial "fights back" and purple lightning strikes; **Legendary** fades the reel, the room goes dark and pillars of gold rise round a halo; **Mythic** scrambles the name, the picture glitches and a tear opens down the middle with a heartbeat. The stage shakes from Epic up. It lands with a flash, rings and sparks; the pill gets a tier stamp and a light sweeping across it (split colours for Mythic). Phones that can vibrate buzz harder by tier.
+- **Into the scene:** if the roll has a full-screen scene, it waits until the stage's wind-up ends and starts from there, and the scene's own wind-up carries the same tier omen under the aura's own. While a rare roll is on the stage, commoner rolls go only to the tape.
+- Reduced motion: no reel or omen, the result shows at once.
+- A watched scene is now written at once, so shutting the app straight after can't bring it back.
+- **Data:** nothing new stored. No migration.
+- Verified: 822 unit/DB tests, typecheck, `aura.spec.ts` (new test: a Legendary winds up on the stage, the scene waits for it, then it has landed underneath) twice over, `works.spec.ts`, `hangar.spec.ts`, `mastery.spec.ts` in WebKit at iPhone size. Each tier was captured frame by frame with a slowed clock and looked at. Not tried on a real iPhone.
