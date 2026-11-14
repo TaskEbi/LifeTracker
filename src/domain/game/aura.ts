@@ -428,8 +428,8 @@ export interface Batch {
   best: string | null;
 }
 
-/** Whether rolling this deserves its scene: new, or still a long shot at the luck you have. */
-export const showy = (a: Aura, isNew: boolean, luck: number) => a.tier >= SCENE_TIER && (isNew || a.odds / luck >= 1_000);
+/** Whether rolling this deserves its scene: only the first time (after that it lands quietly; the index can replay it). */
+export const showy = (a: Aura, isNew: boolean) => a.tier >= SCENE_TIER && isNew;
 
 /** Make `rolls` rolls. `hand` marks them as your own (stronger, and counted). */
 export function rollBatch(s: AuraSave, rolls: number, ctx: Ctx, hand = false): Batch {
@@ -468,7 +468,6 @@ export function rollBatch(s: AuraSave, rolls: number, ctx: Ctx, hand = false): B
   const first = { ...s.first };
   const fresh: string[] = [];
   const scenes: string[] = [];
-  const plain = luckOf(s, ctx.ext);
   let motes = 0;
   let best: string | null = null;
   for (let i = AURAS.length - 1; i >= 0; i--) {
@@ -484,7 +483,7 @@ export function rollBatch(s: AuraSave, rolls: number, ctx: Ctx, hand = false): B
       first[a.id] = ctx.day;
     }
     got[a.id] = (got[a.id] ?? 0) + k;
-    if (showy(a, isNew, plain)) scenes.push(a.id);
+    if (showy(a, isNew)) scenes.push(a.id);
   }
   motes = Math.floor(motes * sieveMult(s));
   // New scenes go in rarest first, behind anything already waiting.

@@ -155,6 +155,8 @@ export interface Show extends Reflection {
   place: number | null;
   /** Percent, for tests and contests. */
   pct: number | null;
+  /** A test sat but not marked yet: no score until it comes back. */
+  pending: boolean;
   /** Predicted percent, for tests. */
   predict: number | null;
   /** The calendar occurrence it was for. */
@@ -207,6 +209,7 @@ const blank = (id: string, type: StageType, source: Show['source'], date: string
   outcome: null,
   place: null,
   pct: null,
+  pending: false,
   predict: null,
   event: str(d.event, 200) || null,
   where: '',
@@ -242,19 +245,27 @@ export function showOfRecord(r: LtRecord): Show | null {
   return s;
 }
 
-/** A Study mark with the Stage's extra fields. */
+/**
+ * A Study mark with the Stage's extra fields. A test logged before it's marked has no score yet
+ * (`score` null): it shows as waiting, and the Study page leaves it out until the score is in.
+ */
 export function showOfMark(r: LtRecord): Show | null {
   if (r.kind !== 'study_mark' || r.deleted_at) return null;
   const d = r.data ?? {};
   const score = num(d.score);
   const outOf = num(d.outOf);
-  if (typeof d.subject !== 'string' || score == null || outOf == null || outOf <= 0) return null;
+  if (typeof d.subject !== 'string' || (outOf != null && outOf <= 0) || (score != null && outOf == null)) return null;
   const s = blank(r.id, 'test', 'mark', day(d.date) ?? r.created_at.slice(0, 10), d);
   s.kind = d.subject;
   s.title = str(d.title, 80) || `${d.subject} test`;
-  s.pct = Math.round((score / outOf) * 100);
   const grade = str(d.grade, 12);
-  s.result = `${s.pct}%${grade ? ` · ${grade}` : ''}`;
+  if (score == null) {
+    s.pending = true;
+    s.result = grade || 'Score to come';
+  } else {
+    s.pct = Math.round((score / outOf!) * 100);
+    s.result = `${s.pct}%${grade ? ` · ${grade}` : ''}`;
+  }
   const p = num(d.predict);
   s.predict = p != null && p >= 0 && p <= 100 ? Math.round(p) : null;
   s.where = str(d.testKind, 40);

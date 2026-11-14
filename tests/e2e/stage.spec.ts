@@ -192,3 +192,36 @@ test('violin: past repertoire in one go, a performance with its pieces, and the 
   await page.goto('/violin');
   await expect(page.getByRole('button', { name: /Autumn recital/ })).toContainText('Distinction');
 });
+
+test('stage: a test saved before it is marked waits for its score', async ({ page }) => {
+  await page.goto('/stage');
+  await page.getByRole('button', { name: '+ Log a result' }).first().click();
+  await dialog(page, 'What was it?').getByRole('button', { name: /^Test/ }).click();
+  let log = dialog(page, 'Log a test');
+  await log.getByRole('group', { name: 'Subject' }).getByRole('button', { name: 'Physics', exact: true }).click();
+  await log.getByLabel('What it was · optional').fill('Waves test');
+  await log.getByLabel('Out of').fill('60');
+  await expect(log.getByText('Later', { exact: true })).toBeVisible();
+  await log.getByRole('button', { name: 'Save' }).click();
+  await expect(page.getByRole('note').filter({ hasText: 'Waves test' })).toContainText('waiting for its score');
+  await expect(page.getByLabel('Lately')).toContainText('Score to come');
+
+  // Not on Study until it has a score.
+  await page.waitForTimeout(300);
+  await page.goto('/study');
+  await expect(page.getByRole('button', { name: /Waves test/ })).toHaveCount(0);
+
+  // The score comes back.
+  await page.goto('/stage/tests');
+  await expect(page.getByRole('heading', { name: 'Waiting for a score' })).toBeVisible();
+  await page.getByRole('button', { name: /Waves test/ }).first().click();
+  log = page.getByRole('dialog');
+  await log.getByLabel('Score').fill('48');
+  await expect(log.getByText('80%')).toBeVisible();
+  await log.getByRole('button', { name: 'Save' }).click();
+  await expect(page.getByRole('heading', { name: 'Waiting for a score' })).toHaveCount(0);
+  await expect(page.getByRole('article', { name: 'Physics' })).toContainText('80%');
+  await page.waitForTimeout(300);
+  await page.goto('/study');
+  await expect(page.getByRole('button', { name: /Waves test/ })).toBeVisible();
+});

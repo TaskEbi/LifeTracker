@@ -165,6 +165,11 @@
 .stg-ticket.is-loss .stg-ticket__r b {
   color: var(--fg-2);
 }
+.stg-ticket.is-pending .stg-ticket__r b {
+  color: var(--fg-2);
+  font-style: italic;
+  font-weight: 500;
+}
 .stg-stars {
   font-size: 11px;
   letter-spacing: 1px;

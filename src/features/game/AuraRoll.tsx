@@ -4,7 +4,9 @@
  * time: the reel slows, the stage goes dark and the tier's omen plays (auraOmens.ts): Rare shimmers,
  * Epic fakes a stop on a common one and then lightning strikes, Legendary goes quiet and pillars of
  * gold rise, Mythic glitches and tears open. Then it lands with a burst, or, if it has a scene, the
- * full-screen scene takes over from there. The reel only ever shows auras already rolled.
+ * full-screen scene takes over from there. All of that happens only the first time an aura is rolled:
+ * after that it lands like a common one, with no omen, burst, buzz or scene (the index can replay it).
+ * The reel only ever shows auras already rolled.
  */
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import { AURA_TIERS, AURAS, auraById, oddsText, SCENE_TIER, type Aura, type AuraSave } from '../../domain/game/aura';
@@ -20,6 +22,8 @@ export interface Plan {
   reel: number;
   fake: number;
   omen: number;
+  /** Rolled before: no omen, burst or buzz, just the result. */
+  quiet: boolean;
 }
 
 /** Seconds the landing burst lasts. */
@@ -27,20 +31,21 @@ const LAND = 1.1;
 
 export function planOf(a: Aura, hit: Hit, step: number): Plan {
   const t = a.tier;
-  if (reducedMotion()) return { tier: t, reel: 0, fake: 0, omen: 0 };
+  const quiet = t >= SCENE_TIER && !hit.fresh;
+  if (reducedMotion()) return { tier: t, reel: 0, fake: 0, omen: 0, quiet };
   // A dial turning faster than this shows common rolls straight away (unless you pulled it).
   const quick = step < 1.2 && !hit.hand;
-  if (t === 0) return { tier: t, reel: quick ? 0 : 0.4, fake: 0, omen: 0 };
-  if (t === 1) return { tier: t, reel: quick ? 0 : 0.6, fake: 0, omen: 0 };
-  if (t === 2) return { tier: t, reel: 0.7, fake: 0, omen: 1.0 };
-  if (t === 3) return { tier: t, reel: 0.6, fake: 0.55, omen: 1.2 };
-  if (t === 4) return { tier: t, reel: 0.6, fake: 0.45, omen: 1.9 };
-  return { tier: t, reel: 0.6, fake: 0.45, omen: 2.5 };
+  if (t === 0) return { tier: t, reel: quick ? 0 : 0.4, fake: 0, omen: 0, quiet };
+  if (t === 1 || quiet) return { tier: t, reel: quick ? 0 : 0.6, fake: 0, omen: 0, quiet };
+  if (t === 2) return { tier: t, reel: 0.7, fake: 0, omen: 1.0, quiet };
+  if (t === 3) return { tier: t, reel: 0.6, fake: 0.55, omen: 1.2, quiet };
+  if (t === 4) return { tier: t, reel: 0.6, fake: 0.45, omen: 1.9, quiet };
+  return { tier: t, reel: 0.6, fake: 0.45, omen: 2.5, quiet };
 }
 
 export const windOf = (p: Plan) => p.reel + p.fake + p.omen;
 /** How long a roll keeps the stage before a commoner one can take it over (seconds). */
-export const spotLen = (p: Plan) => windOf(p) + (p.tier >= SCENE_TIER ? 1.8 : 0);
+export const spotLen = (p: Plan) => windOf(p) + (p.tier >= SCENE_TIER && !p.quiet ? 1.8 : 0);
 
 interface Face {
   kanji: string;
@@ -83,7 +88,8 @@ type Phase = 'reel' | 'fake' | 'omen' | 'land';
 export function AuraRoll({ hit, plan, s, onOmen }: { hit: Hit; plan: Plan; s: AuraSave; onOmen: (tier: number) => void }) {
   const a = auraById(hit.id)!;
   const wind = windOf(plan);
-  const rare = plan.tier >= SCENE_TIER && wind > 0;
+  const big = plan.tier >= SCENE_TIER && !plan.quiet;
+  const rare = big && wind > 0;
   // The reel is chosen once, when the roll lands.
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const faces = useMemo(() => facesFor(s, a, hit.n), [hit.n]);
@@ -92,7 +98,7 @@ export function AuraRoll({ hit, plan, s, onOmen }: { hit: Hit; plan: Plan; s: Au
 
   useEffect(() => {
     if (wind === 0) {
-      buzz(plan.tier);
+      if (!plan.quiet) buzz(plan.tier);
       return;
     }
     const t0 = performance.now();
@@ -136,7 +142,7 @@ export function AuraRoll({ hit, plan, s, onOmen }: { hit: Hit; plan: Plan; s: Au
       if (phase !== lastPhase) {
         lastPhase = phase;
         onOmen(phase === 'omen' && plan.tier >= 3 ? plan.tier : 0);
-        if (phase === 'land') buzz(plan.tier);
+        if (phase === 'land' && !plan.quiet) buzz(plan.tier);
       }
       if (ctx && box) {
         ctx.clearRect(0, 0, box.w, box.h);
@@ -173,8 +179,8 @@ export function AuraRoll({ hit, plan, s, onOmen }: { hit: Hit; plan: Plan; s: Au
     <>
       {rare && <canvas ref={cv} className="au-omen" aria-hidden="true" />}
       {view.phase === 'land' ? (
-        <p className={`au-hit t${plan.tier}${plan.tier >= SCENE_TIER ? ' is-big' : ''}`} style={style}>
-          {plan.tier >= SCENE_TIER && <em className="au-hit__stamp">{tier.name}</em>}
+        <p className={`au-hit${big ? ` t${plan.tier} is-big` : ''}`} style={style}>
+          {big && <em className="au-hit__stamp">{tier.name}</em>}
           <span aria-hidden="true">{a.kanji}</span>
           <b>{a.name}</b>
           <small>

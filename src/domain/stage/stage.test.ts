@@ -53,6 +53,7 @@ const show = (p: Partial<Show>): Show => ({
   outcome: null,
   place: null,
   pct: null,
+  pending: false,
   predict: null,
   event: null,
   where: '',
@@ -87,6 +88,12 @@ describe('reading results from where they live', () => {
     expect(t).toMatchObject({ type: 'test', source: 'mark', kind: 'Physics', pct: 84, predict: 75, result: '84% · A' });
     expect(showOfMark(rec('study_mark', { subject: 'Physics', score: 4, outOf: 0 }))).toBeNull();
     expect(showOfMark(rec('study_mark', { subject: 'Maths', score: 30, outOf: 40, date: '2026-11-02' }))!.title).toBe('Maths test');
+    // Sat but not marked yet: no score, with or without the total.
+    const wait = showOfMark(rec('study_mark', { subject: 'Physics', score: null, outOf: 50, date: '2026-11-14', predict: 70 }))!;
+    expect(wait).toMatchObject({ pending: true, pct: null, predict: 70, result: 'Score to come' });
+    expect(showOfMark(rec('study_mark', { subject: 'Physics', score: null, outOf: null }))!.pending).toBe(true);
+    expect(showOfMark(rec('study_mark', { subject: 'Physics', score: 30 }))).toBeNull();
+    expect(t.pending).toBe(false);
   });
 
   it('turns sports sessions into matches and races, and leaves training alone', () => {

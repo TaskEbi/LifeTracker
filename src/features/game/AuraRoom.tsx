@@ -66,7 +66,8 @@ function useSpot(hit: Hit | undefined, step: number) {
   if (hit && hit.n !== cur?.hit.n) {
     const a = auraById(hit.id);
     const now = performance.now();
-    if (a && !(cur && now < cur.until && a.tier <= cur.plan.tier)) {
+    // A quiet repeat never keeps a first-time roll off the stage.
+    if (a && !(cur && now < cur.until && a.tier <= cur.plan.tier && !(cur.plan.quiet && hit.fresh))) {
       const plan = planOf(a, hit, step);
       ref.current = { hit, plan, until: now + spotLen(plan) * 1000 };
     }

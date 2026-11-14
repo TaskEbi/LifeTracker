@@ -155,8 +155,9 @@ export function saveShow(f: ShowForm, refl: Partial<Reflection>, id?: string | n
 export interface TestForm {
   subject: string;
   title: string;
-  score: number;
-  outOf: number;
+  /** Null while the test hasn't come back yet. */
+  score: number | null;
+  outOf: number | null;
   date: string;
   testKind: string;
   grade: string;

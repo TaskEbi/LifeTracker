@@ -210,9 +210,16 @@ function LogSheet({ spec }: { spec: SheetSpec }) {
     const pl = n(place);
     const placeV = pl != null && pl >= 1 ? Math.round(pl) : null;
     if (type === 'test') {
-      if (pct == null) return setError('A score between 0 and the total, please.');
+      // No score yet is fine: it waits on the Stage until the test comes back.
+      if (sc != null && pct == null) return setError('A score between 0 and the total, please.');
+      if (sc == null && score.trim()) return setError('The score as a number, or leave it blank for now.');
+      if (oo != null && oo <= 0) return setError('The total has to be more than 0.');
+      if (sc == null && outOf.trim() && oo == null) return setError('The total as a number, or leave it blank.');
       const pr = n(predict);
-      saveTest({ subject, title, score: sc!, outOf: oo!, date, testKind: kind, grade, predict: pr != null && pr >= 0 && pr <= 100 ? Math.round(pr) : null, event }, refl, editing?.id);
+      saveTest({ subject, title, score: sc, outOf: oo, date, testKind: kind, grade, predict: pr != null && pr >= 0 && pr <= 100 ? Math.round(pr) : null, event }, refl, editing?.id);
+      if (!editing) toast(sc == null ? 'Test saved: add the score when it comes back' : `${info.one} saved to the Stage`);
+      else if (editing.pending && sc != null) toast(`Score in: ${pct}%`);
+      return closeSheet();
     } else if (type === 'match') {
       if (!sets) return setError('Sets as scores like 25-21, 22-25.');
       const detail = { sport, type: 'match', opp: opp.trim().slice(0, 80), comp: where.trim().slice(0, 80), sets: sets.length ? sets : null, score: sets.length ? setsText(sets) : null, result: shownOutcome, stats: Object.keys(stats).length ? stats : null, event };
@@ -299,13 +306,14 @@ function LogSheet({ spec }: { spec: SheetSpec }) {
           </Field>
           <div className="stg-two">
             <Field label="Score">
-              <input className="i-input" inputMode="decimal" value={score} onChange={(e) => setScore(e.target.value)} />
+              <input className="i-input" inputMode="decimal" value={score} onChange={(e) => setScore(e.target.value)} placeholder="Not back yet" />
             </Field>
             <Field label="Out of">
               <input className="i-input" inputMode="decimal" value={outOf} onChange={(e) => setOutOf(e.target.value)} />
             </Field>
-            <b className="stg-pct" aria-live="polite">{pct != null ? `${pct}%` : '—'}</b>
+            <b className="stg-pct" aria-live="polite">{pct != null ? `${pct}%` : score.trim() ? '—' : 'Later'}</b>
           </div>
+          {!score.trim() && <p className="i-note">No score yet? Save it without one. It waits on the Stage until you add the score, and goes into Study once it has one.</p>}
           <div className="stg-two">
             <Field label="Grade · optional">
               <input className="i-input" value={grade} onChange={(e) => setGrade(e.target.value)} placeholder="A*" maxLength={12} />

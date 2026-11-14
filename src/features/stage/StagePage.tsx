@@ -79,7 +79,7 @@ function subLine(s: Show, names: Map<string, string>, extra?: string): string {
 function Ticket({ s, names, extra, badge }: { s: Show; names: Map<string, string>; extra?: string; badge?: string }) {
   const t = STAGE_TYPES[s.type];
   return (
-    <button type="button" className={`stg-ticket${s.outcome ? ` is-${s.outcome}` : ''}`} style={tc(s.type)} onClick={() => open(s)} aria-label={`${t.one}: ${s.title}, ${shortDay(s.date)}, ${s.result}`}>
+    <button type="button" className={`stg-ticket${s.outcome ? ` is-${s.outcome}` : ''}${s.pending ? ' is-pending' : ''}`} style={tc(s.type)} onClick={() => open(s)} aria-label={`${t.one}: ${s.title}, ${shortDay(s.date)}, ${s.result}`}>
       <span className="stg-ticket__stub" aria-hidden="true">
         <i>{t.k}</i>
         <small>{stamp(s.date)}</small>
@@ -149,6 +149,7 @@ function Now({ shows, days, today }: { shows: Show[]; days: Upcoming[]; today: s
   const [all, setAll] = useState(false);
   const ahead = days.filter((d) => d.date >= today && !d.result);
   const awaiting = days.filter((d) => d.date < today && !d.result && d.type !== 'maths');
+  const marking = shows.filter((s) => s.pending);
   const year = shows.filter((s) => s.date.slice(0, 4) === today.slice(0, 4));
   const rec = recordOf(year.filter((s) => s.type === 'match' || s.type === 'chess' || s.type === 'other'));
   const recentTests = shows.filter((s) => (s.type === 'test' || s.type === 'maths') && s.pct != null).slice(0, 5);
@@ -171,6 +172,16 @@ function Now({ shows, days, today }: { shows: Show[]; days: Upcoming[]; today: s
           </span>
           <button type="button" className="i-btn i-btn--sm i-btn--sig" onClick={() => openSheet({ type: 'stage-log', kind: d.type, event: d.key, date: d.date, title: d.title })}>
             Log it
+          </button>
+        </div>
+      ))}
+      {marking.map((s) => (
+        <div key={s.id} className="lf-nudge stg-await" role="note" style={tc('test')}>
+          <span>
+            <b>{s.title}</b> ({shortDay(s.date, today)}) is waiting for its score.
+          </span>
+          <button type="button" className="i-btn i-btn--sm i-btn--sig" onClick={() => open(s)}>
+            Add score
           </button>
         </div>
       ))}
@@ -326,8 +337,9 @@ function Tests({ shows, st }: { shows: Show[]; st: DataState }) {
   const names = usePieceNames();
   const tests = shows.filter((s) => s.type === 'test');
   const study = useMemo(() => studyMinutes(st), [st]);
-  if (!tests.length) return <Empty action="Log a test" onAction={() => openSheet({ type: 'stage-log', kind: 'test' })}>Log a test with your score and, if you like, your guess beforehand. Each subject gets a line over time, and the Stage checks how much you revised in the two weeks before.</Empty>;
+  if (!tests.length) return <Empty action="Log a test" onAction={() => openSheet({ type: 'stage-log', kind: 'test' })}>Log a test with your score (or without one, until it comes back) and, if you like, your guess beforehand. Each subject gets a line over time, and the Stage checks how much you revised in the two weeks before.</Empty>;
   const subjects = subjectSummaries(tests);
+  const marking = tests.filter((s) => s.pending);
   const gap = predictionGap(tests);
   const rev = revisionSplit(tests, study);
   return (
@@ -352,7 +364,17 @@ function Tests({ shows, st }: { shows: Show[]; st: DataState }) {
           )}
         </div>
       )}
-      <H2>By subject</H2>
+      {marking.length > 0 && (
+        <>
+          <H2>Waiting for a score</H2>
+          <div className="stg-tickets">
+            {marking.map((s) => (
+              <Ticket key={s.id} s={s} names={names} extra="tap to add the score" />
+            ))}
+          </div>
+        </>
+      )}
+      {subjects.length > 0 && <H2>By subject</H2>}
       <div className="stg-subjects">
         {subjects.map((x) => (
           <article key={x.subject} className="stg-subject" aria-label={x.subject}>

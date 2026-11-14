@@ -153,7 +153,7 @@ test('aura dial: a rare roll winds up on the stage in its tier’s own way, then
   await page.evaluate(async () => {
     const st = await import('/src/features/game/auraStore.ts' as string);
     const live = st.aura.get();
-    st.aura.set({ save: { ...live.save, queue: ['torii'] }, tape: [...live.tape, { n: 99_999, id: 'torii', fresh: false, hand: true, of: 1, scene: true }], hold: Date.now() + 400 });
+    st.aura.set({ save: { ...live.save, queue: ['torii'] }, tape: [...live.tape, { n: 99_999, id: 'torii', fresh: true, hand: true, of: 1, scene: true }], hold: Date.now() + 400 });
   });
   // The reel spins, then the stage goes quiet and shakes: the scene waits for it.
   await expect(page.locator('.au-reel')).toBeVisible();

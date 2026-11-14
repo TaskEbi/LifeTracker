@@ -163,12 +163,11 @@ describe('rolling', () => {
     expect(many.counts.steam).toBeGreaterThan(0);
   });
 
-  it('queues a scene for a rare aura when it is new or still a long shot', () => {
+  it('queues a scene for a rare aura only the first time it is rolled', () => {
     const maple = auraById('maple')!;
-    expect(showy(auraById('sakura')!, true, 1)).toBe(false);
-    expect(showy(maple, true, 500)).toBe(true);
-    expect(showy(maple, false, 1)).toBe(true);
-    expect(showy(maple, false, 3)).toBe(false);
+    expect(showy(auraById('sakura')!, true)).toBe(false);
+    expect(showy(maple, true)).toBe(true);
+    expect(showy(maple, false)).toBe(false);
     // A rigged source: every roll lands on the rarest.
     const b = rollBatch(started(), 3, ctx(1, { rng: () => 0 }));
     expect(b.save.queue).toEqual(['lastbolt']);
