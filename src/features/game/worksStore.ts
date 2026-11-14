@@ -40,6 +40,7 @@ import {
   type Milestone,
   type WorksLook,
 } from '../../domain/game/idle';
+import { auraCogs, auraFoundIn, worksBonus } from '../../domain/game/aura';
 import { itemName } from '../../domain/game/wallet';
 import { createStore, useStore } from '../../lib/createStore';
 import { GAME_SECTION, getGame, useGame, write } from './store';
@@ -56,9 +57,16 @@ export function extOf(st: DataState, today: string): Ext {
   const p = progressOf(st, today);
   const sections = new Set<string>();
   for (const e of p.events) if (e.date === today && e.xp > 0 && (SECTION_IDS as readonly string[]).includes(e.section)) sections.add(e.section);
-  const ext: Ext = { sections: sections.size, streak: p.streak.n, level: p.overall.level };
+  const ext: Ext = { sections: sections.size, streak: p.streak.n, level: p.overall.level, aura: worksBonus(auraFound(st).length) };
   extMemo = { st, today, ext };
   return ext;
+}
+
+/** Auras in the Aura Dial's index (its row is read here so the factory needn't load the dial). */
+const AURA_ROW_ID = pairId('gm', 'aura');
+export function auraFound(st: DataState): string[] {
+  const r = st.lt_records.get(AURA_ROW_ID);
+  return r && !r.deleted_at && r.kind === 'gm_aura' ? auraFoundIn(r.data) : [];
 }
 
 export const extNow = () => extOf(data.get(), ltToday());
@@ -270,6 +278,9 @@ export const buyEveryUpgrade = () => act((s) => { const r = buyAllUpgrades(s); r
 export const buyWorksPerk = (id: string) => act((s) => buyPerk(s, id));
 export const dismissAway = () => works.set({ away: null });
 
+/** Take bolts off the floor for something outside the factory (the Aura Dial's bolt feed). */
+export const spendBolts = (n: number) => n > 0 && act((s) => (s.bolts >= n ? { ...s, bolts: s.bolts - n } : null));
+
 export function rebuildWorks(): boolean {
   const ok = act((s, now) => rebuild(s, now));
   if (ok) persist();
@@ -309,7 +320,8 @@ export function summonCat() {
 export const useCogs = (): number => {
   const g = useGame();
   const save = useStore(works, (s) => s.save);
-  return useMemo(() => cogsOf(save, g.txs), [save, g.txs]);
+  const st = useStore(data, (s) => s);
+  return useMemo(() => cogsOf(save, g.txs) + auraCogs(auraFound(st)), [save, g.txs, st]);
 };
 
 /** Buy something at the counter. Once each; the row's id is the item, so two devices can't both pay. */
@@ -319,7 +331,7 @@ export function buyGood(item: string): boolean {
   if (!live.ready || price === undefined) return false;
   const g = getGame();
   if (g.wallet.items.has(item)) return false;
-  const have = cogsOf(live.save, g.txs);
+  const have = cogsOf(live.save, g.txs) + auraCogs(auraFound(data.get()));
   if (have < price) {
     toast(`Not yet: ${price - have} more gold cog${price - have === 1 ? '' : 's'}.`);
     return false;

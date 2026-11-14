@@ -9,6 +9,7 @@ import { useProgress } from '../../data/lt';
 import { CHASSIS, COSMETIC_NAME, cosmeticOf, RARITY, type CosmeticKind } from '../../domain/game/catalog';
 import {
   awayEff,
+  auraMult,
   awayHours,
   CAT_COGS_A_DAY,
   crateCogs,
@@ -46,6 +47,7 @@ import {
   type Ext,
   type IdleSave,
 } from '../../domain/game/idle';
+import { AuraRoom, AuraStage } from './AuraRoom';
 import { chassisMk } from '../../domain/game/wallet';
 import { H2 } from '../../ui/i/bits';
 import { Robot } from '../../ui/i/bots/Robot';
@@ -78,6 +80,7 @@ const ROOMS = [
   { id: 'plans', label: 'Rebuild', kanji: '図' },
   { id: 'counter', label: 'Counter', kanji: '歯' },
   { id: 'book', label: 'Records', kanji: '録' },
+  { id: 'aura', label: 'Auras', kanji: '霊' },
 ] as const;
 type RoomId = (typeof ROOMS)[number]['id'];
 
@@ -103,7 +106,7 @@ export default function WorksTab() {
   }
   return (
     <section className="wk" aria-label="The Works">
-      <Stage s={s} ext={ext} heat={live.heat} />
+      {room === 'aura' ? <AuraStage ext={ext} /> : <Stage s={s} ext={ext} heat={live.heat} />}
       {live.away && (
         <div className="wk-away" role="status">
           <b>While you were away</b>
@@ -127,7 +130,7 @@ export default function WorksTab() {
           </button>
         ))}
       </nav>
-      {room === 'tune' ? <Tune s={s} /> : room === 'plans' ? <Plans s={s} /> : room === 'counter' ? <Counter cogs={cogs} s={s} ext={ext} /> : room === 'book' ? <Book s={s} ext={ext} cogs={cogs} /> : <Floor s={s} ext={ext} />}
+      {room === 'aura' ? <AuraRoom ext={ext} /> : room === 'tune' ? <Tune s={s} /> : room === 'plans' ? <Plans s={s} /> : room === 'counter' ? <Counter cogs={cogs} s={s} ext={ext} /> : room === 'book' ? <Book s={s} ext={ext} cogs={cogs} /> : <Floor s={s} ext={ext} />}
     </section>
   );
 }
@@ -309,6 +312,12 @@ function Boosts({ s, ext }: { s: IdleSave; ext: Ext }) {
         <b>Blueprints {pct(printsMult(s))}</b>
         <small>{s.printsAll ? `${fmt(s.printsAll)} drawn` : 'From rebuilding'}</small>
       </li>
+      {auraMult(ext) > 1 && (
+        <li className="is-on">
+          <b>Auras {pct(auraMult(ext))}</b>
+          <small>+1% for each aura in the dial’s index</small>
+        </li>
+      )}
     </ul>
   );
 }
@@ -490,7 +499,7 @@ function Counter({ cogs, s, ext }: { cogs: number; s: IdleSave; ext: Ext }) {
     <>
       <H2 aside={<Cog n={cogs} />}>The counter</H2>
       <p className="i-note">
-        Everything here costs gold cogs, and it’s yours for good. Cogs come from milestones (Records), the daily crate ({crateCogs(s, ext)} today), the lucky cat ({catLeft} left today) and each rebuild ({REBUILD_COGS}). Robot gear bought here shows up in the Hangar’s wardrobe.
+        Everything here costs gold cogs, and it’s yours for good. Cogs come from milestones (Records), new auras on the dial (Auras), the daily crate ({crateCogs(s, ext)} today), the lucky cat ({catLeft} left today) and each rebuild ({REBUILD_COGS}). Robot gear bought here shows up in the Hangar’s wardrobe.
       </p>
       {KINDS.map((kind) => {
         const goods = ROBOT_GOODS.filter((x) => x.item.startsWith(`${kind}:`));

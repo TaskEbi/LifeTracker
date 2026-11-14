@@ -19,6 +19,7 @@ import { loadSectionFonts, type LookId } from './sectionLook';
 import { resolveTheme } from './theme';
 import { useSpecialMoments } from './specialMoments';
 
+import { AuraGate } from '../features/game/AuraGate';
 const Cabinet = lazy(() => import('../features/cabinet/CabinetChannel'));
 
 const pad2 = (n: number) => String(n).padStart(2, '0');
@@ -247,6 +248,7 @@ export function Shell() {
       <Toasts />
       <RewardOverlay />
       <CelebrationLayer />
+      <AuraGate />
       <Doors name={route.name} />
     </div>
   );

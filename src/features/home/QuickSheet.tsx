@@ -45,6 +45,7 @@ const CMDS: Cmd[] = [
   { id: 'arcade', label: 'arcade', hint: 'hangar · bingo · sugoroku · fishing', route: 'hangar', rest: ['arcade'] },
   { id: 'works', label: 'the works', hint: 'hangar · clicker · machines that work while you’re away', route: 'hangar', rest: ['works'] },
   { id: 'clicker', label: 'clicker game', hint: 'the works · turn the gear', route: 'hangar', rest: ['works'] },
+  { id: 'auras', label: 'aura dial', hint: 'the works · roll for auras · rng', route: 'hangar', rest: ['works', 'aura'] },
   { id: 'cogshop', label: 'cosmetics counter', hint: 'the works · spend gold cogs', route: 'hangar', rest: ['works', 'counter'] },
   { id: 'bingo', label: 'bingo', hint: 'arcade · this week’s card', route: 'hangar', rest: ['arcade', 'bingo'] },
   { id: 'sugoroku', label: 'sugoroku', hint: 'arcade · roll the dice', route: 'hangar', rest: ['arcade', 'board'] },

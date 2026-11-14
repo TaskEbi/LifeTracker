@@ -236,6 +236,8 @@ export interface Ext {
   streak: number;
   /** Overall level. */
   level: number;
+  /** What the Aura Dial's index adds (×1 with nothing in it). */
+  aura?: number;
 }
 
 export const NO_EXT: Ext = { sections: 0, streak: 0, level: 1 };
@@ -246,7 +248,8 @@ export const STREAK_MAX = 50;
 export const fuelMult = (e: Ext) => 1 + FUEL_PER_SECTION * Math.min(FUEL_MAX_SECTIONS, Math.max(0, e.sections));
 export const streakMult = (e: Ext) => 1 + Math.min(STREAK_MAX, Math.max(0, e.streak)) / 100;
 export const foremanMult = (e: Ext) => 1 + Math.max(0, e.level - 1) / 100;
-export const extMult = (e: Ext) => fuelMult(e) * streakMult(e) * foremanMult(e);
+export const auraMult = (e: Ext) => Math.max(1, e.aura ?? 1);
+export const extMult = (e: Ext) => fuelMult(e) * streakMult(e) * foremanMult(e) * auraMult(e);
 
 // ─── rates ──────────────────────────────────────────────────────────────────
 
