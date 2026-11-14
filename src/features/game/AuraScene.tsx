@@ -5,8 +5,10 @@
  */
 import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import { AURA_TIERS, AURAS, oddsText, type Aura } from '../../domain/game/aura';
-import { reducedMotion, useCanvasLoop } from './AuraCanvas';
+import { bloom, reducedMotion, useCanvasLoop } from './AuraCanvas';
 import { drawAura, drawBolt, gearPath, hash } from './auraFx';
+import { PRELUDES } from './auraLooks';
+import { drawPrelude } from './auraPreludes';
 
 const TAU = Math.PI * 2;
 /** Seconds of wind-up before the flash, by tier. */
@@ -231,6 +233,10 @@ function prelude(ctx: C2, a: Aura, p: number, t: number, w: number, h: number, c
       ctx.restore();
       return;
     }
+    default: {
+      const P = PRELUDES[a.id];
+      if (P) drawPrelude(ctx, P, a, p, t, w, h, cx, cy, S);
+    }
   }
 }
 
@@ -300,7 +306,62 @@ function drawScene(ctx: C2, a: Aura, t: number, w: number, h: number, wind: numb
     ctx.fillStyle = g;
     ctx.fillRect(0, 0, w, h);
     ctx.globalAlpha = 1;
-    drawAura(ctx, a.id, t, cx, cy, S * 0.2 * scale, 'both');
+    if (a.tier >= 4) {
+      // Slow rays behind a legendary, turning.
+      ctx.save();
+      ctx.globalCompositeOperation = 'lighter';
+      ctx.translate(cx, cy);
+      ctx.rotate(t * 0.12);
+      const rg = ctx.createLinearGradient(0, 0, S * 1.3, 0);
+      rg.addColorStop(0, a.c);
+      rg.addColorStop(1, 'transparent');
+      ctx.fillStyle = rg;
+      ctx.globalAlpha = 0.16 * clamp(u / 0.8);
+      const rn = a.tier >= 5 ? 20 : 12;
+      for (let i = 0; i < rn; i++) {
+        ctx.rotate(TAU / rn);
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.lineTo(S * 1.3, -S * 0.05);
+        ctx.lineTo(S * 1.3, S * 0.05);
+        ctx.closePath();
+        ctx.fill();
+      }
+      ctx.restore();
+    }
+    drawAura(ctx, a.id, t, cx, cy, S * (a.tier >= 4 ? 0.17 : 0.2) * scale, 'both');
+    if (a.tier >= 4 && u < 1.6) {
+      // A streak of light across the middle as it lands.
+      const f = 1 - u / 1.6;
+      ctx.save();
+      ctx.globalCompositeOperation = 'lighter';
+      const fg = ctx.createLinearGradient(0, 0, w, 0);
+      fg.addColorStop(0, 'transparent');
+      fg.addColorStop(0.5, '#ffffff');
+      fg.addColorStop(1, 'transparent');
+      ctx.fillStyle = fg;
+      ctx.globalAlpha = f * f;
+      ctx.fillRect(0, cy - S * 0.006 * (1 + f * 3), w, S * 0.012 * (1 + f * 3));
+      ctx.restore();
+    }
+    if (a.tier >= 5 && u < 0.45) {
+      // Speed lines for the rarest: black wedges closing in on the flash.
+      ctx.save();
+      ctx.translate(cx, cy);
+      ctx.fillStyle = '#000000';
+      ctx.globalAlpha = 1 - u / 0.45;
+      for (let i = 0; i < 40; i++) {
+        const ang = TAU * hash(i, 7);
+        const inner = S * (0.25 + 0.3 * hash(i, 8)) * (1 + u * 2);
+        ctx.beginPath();
+        ctx.moveTo(Math.cos(ang) * inner, Math.sin(ang) * inner);
+        ctx.lineTo(Math.cos(ang - 0.03) * S * 2, Math.sin(ang - 0.03) * S * 2);
+        ctx.lineTo(Math.cos(ang + 0.03) * S * 2, Math.sin(ang + 0.03) * S * 2);
+        ctx.closePath();
+        ctx.fill();
+      }
+      ctx.restore();
+    }
     ctx.strokeStyle = a.c;
     for (let k = 0; k < 2 + a.tier; k++) {
       const uu = u - k * 0.16;
@@ -334,6 +395,7 @@ function drawScene(ctx: C2, a: Aura, t: number, w: number, h: number, wind: numb
     }
   }
   ctx.restore();
+  bloom(ctx, u < 0 ? 0.3 : 0.4);
 }
 
 export function AuraScene({ aura: a, isNew, more, replay, onDone, onSkipAll }: { aura: Aura; isNew: boolean; more: number; replay: boolean; onDone: () => void; onSkipAll: () => void }) {

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { AURA_FX } from '../../features/game/auraFx';
+import { PRELUDES } from '../../features/game/auraLooks';
 import {
   AURA_AWAY_MS,
   AURA_TIERS,
@@ -49,13 +50,16 @@ const started = (over: Partial<AuraSave> = {}): AuraSave => ({ ...freshAura(0), 
 
 describe('the auras', () => {
   it('are listed commonest first, each with a look, and no two alike', () => {
-    expect(AURAS.length).toBe(30);
+    expect(AURAS.length).toBe(130);
     for (let i = 1; i < AURAS.length; i++) expect(AURAS[i].odds).toBeGreaterThan(AURAS[i - 1].odds);
     expect(new Set(AURAS.map((a) => a.id)).size).toBe(AURAS.length);
     expect(new Set(AURAS.map((a) => a.name)).size).toBe(AURAS.length);
     for (const a of AURAS) expect(AURA_FX[a.id]?.length, a.id).toBeGreaterThan(0);
     expect(Object.keys(AURA_FX).sort()).toEqual(AURAS.map((a) => a.id).sort());
-    expect(AURA_TIERS.map((_, t) => AURAS.filter((a) => a.tier === t).length)).toEqual([6, 4, 5, 5, 5, 5]);
+    // The rarer it is, the more it is built from; and every wind-up belongs to an aura with a scene.
+    for (const a of AURAS) if (a.tier >= 4) expect(AURA_FX[a.id].length, a.id).toBeGreaterThanOrEqual(4);
+    for (const id of Object.keys(PRELUDES)) expect(auraById(id)?.tier, id).toBeGreaterThanOrEqual(2);
+    expect(AURA_TIERS.map((_, t) => AURAS.filter((a) => a.tier === t).length)).toEqual([14, 18, 25, 27, 25, 21]);
   });
 
   it('are worth more motes the rarer they are', () => {
@@ -71,28 +75,31 @@ describe('luck', () => {
     expect(p.reduce((a, b) => a + b, 0)).toBeCloseTo(1, 10);
     expect(p[AURAS.length - 1]).toBeCloseTo(1e-9, 15);
     // Steam is 1 in 4 of the rolls nothing rarer took.
-    expect(p[1]).toBeGreaterThan(0.17);
-    expect(p[1]).toBeLessThan(0.22);
-    // At luck 100 nothing commoner than 1 in 125 can turn up.
+    const steam = AURAS.findIndex((a) => a.id === 'steam');
+    expect(p[steam]).toBeGreaterThan(0.1);
+    expect(p[steam]).toBeLessThan(0.25);
+    // At luck 100 the 1 in 96 aura is certain if nothing rarer hits, so nothing commoner turns up.
     const lucky = chances(100);
-    expect(lucky.slice(0, 5).every((v) => v === 0)).toBe(true);
-    expect(lucky[5]).toBeGreaterThan(0);
+    const floor = AURAS.findIndex((a) => a.odds === 96);
+    expect(lucky.slice(0, floor).every((v) => v === 0)).toBe(true);
+    expect(lucky[floor]).toBeGreaterThan(0);
     expect(lucky[AURAS.length - 1]).toBeCloseTo(1e-7, 12);
   });
 
   it('rolls one aura from a random source', () => {
     expect(rollOne(1, () => 0.999)).toBe(0);
     expect(AURAS[rollOne(1, () => 0)].id).toBe('lastbolt');
-    // Past the rarest 28, a 0.2 lands on Steam (1 in 4).
+    // Past everything rarer, a 0.2 lands on Steam (1 in 4).
+    const rarer = AURAS.filter((a) => a.odds > 4).length;
     let n = 0;
-    expect(AURAS[rollOne(1, () => (++n <= 28 ? 0.9 : 0.2))].id).toBe('steam');
+    expect(AURAS[rollOne(1, () => (++n <= rarer ? 0.9 : 0.2))].id).toBe('steam');
   });
 
   it('comes from charms, the index and the day', () => {
     const s = started();
     expect(luckOf(s, NO_EXT)).toBe(1);
     expect(luckOf({ ...s, ups: { luck: 2, feed: 1 } }, NO_EXT)).toBeCloseTo(1.12 * 1.12 * 1.1, 10);
-    expect(luckOf({ ...s, got: { dust: 3, steam: 1 } }, NO_EXT)).toBeCloseTo(1.04, 10);
+    expect(luckOf({ ...s, got: { dust: 3, steam: 1 } }, NO_EXT)).toBeCloseTo(1.02, 10);
     expect(luckOf(s, { sections: 2, streak: 10, level: 5 })).toBeCloseTo(1.3 * 1.1, 10);
   });
 
@@ -138,8 +145,8 @@ describe('rolling', () => {
     const b = rollBatch(started(), 2_000_000, ctx(3));
     expect(Object.values(b.counts).reduce((a, n) => a + n, 0)).toBe(2_000_000);
     // Steam is 1 in 4 of whatever isn't rarer; charged rolls shift it a little.
-    expect(b.counts.steam / 2_000_000).toBeGreaterThan(0.2);
-    expect(b.counts.steam / 2_000_000).toBeLessThan(0.3);
+    expect(b.counts.steam / 2_000_000).toBeGreaterThan(0.08);
+    expect(b.counts.steam / 2_000_000).toBeLessThan(0.2);
     expect(b.counts.sakura).toBeGreaterThan(1500);
     expect(b.counts.sakura).toBeLessThan(3000);
     expect(b.save.n).toBe(0);
@@ -276,9 +283,9 @@ describe('the save', () => {
     expect(auraFoundIn(null)).toEqual([]);
     expect(auraFoundIn({ got: { dust: 2, unicorn: 1, moss: 0, torii: 1 } }).sort()).toEqual(['dust', 'torii']);
     expect(auraCogs(['dust', 'torii'])).toBe(1 + 15);
-    expect(auraCogs(AURAS.map((a) => a.id))).toBe(6 * 1 + 4 * 2 + 5 * 4 + 5 * 8 + 5 * 15 + 5 * 30);
-    expect(worksBonus(10)).toBeCloseTo(1.1, 10);
-    expect(extMult({ ...NO_EXT, aura: worksBonus(10) })).toBeCloseTo(1.1, 10);
+    expect(auraCogs(AURAS.map((a) => a.id))).toBe(14 * 1 + 18 * 2 + 25 * 4 + 27 * 8 + 25 * 15 + 21 * 30);
+    expect(worksBonus(10)).toBeCloseTo(1.05, 10);
+    expect(extMult({ ...NO_EXT, aura: worksBonus(10) })).toBeCloseTo(1.05, 10);
     expect(extMult(NO_EXT)).toBe(1);
   });
 });

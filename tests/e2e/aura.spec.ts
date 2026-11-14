@@ -48,8 +48,8 @@ test('aura dial: roll, see only what you have rolled, buy an upgrade, and it sur
   await expect(page.getByText('Nothing rolled yet')).toBeVisible();
 
   // Nothing is in the index yet: every card is a question mark with only its odds.
-  await page.getByRole('button', { name: /^Index 0\/30/ }).click();
-  await expect(page.locator('.au-card.is-locked')).toHaveCount(30);
+  await page.getByRole('button', { name: /^Index 0\/130/ }).click();
+  await expect(page.locator('.au-card.is-locked')).toHaveCount(130);
   await expect(page.locator('.au-card canvas')).toHaveCount(0);
   await expect(page.getByText('The Last Bolt')).toHaveCount(0);
   await expect(page.getByLabel('Not rolled yet: Mythic, 1 in 1,000,000,000')).toBeVisible();
@@ -63,7 +63,7 @@ test('aura dial: roll, see only what you have rolled, buy an upgrade, and it sur
   await expect(page.locator('.au-tape li').first()).not.toHaveClass(/is-none/);
   const found = await page.locator('button.au-card').count();
   expect(found).toBeGreaterThan(0);
-  await expect(page.locator('.au-card.is-locked')).toHaveCount(30 - found);
+  await expect(page.locator('.au-card.is-locked')).toHaveCount(130 - found);
   await expect(page.locator('button.au-card canvas')).toHaveCount(found);
   await shot(page, 'index');
 

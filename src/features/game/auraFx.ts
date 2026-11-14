@@ -4,6 +4,8 @@
  * the index, a loop on the dial, a big one in a scene).
  */
 import { AURAS, AURA_TIERS } from '../../domain/game/aura';
+import { drawMore, moreShape, type MoreLayer, type MoreShape } from './auraFxMore';
+import { MORE_FX } from './auraLooks';
 
 const TAU = Math.PI * 2;
 /** A steady pseudo-random number in [0, 1) for particle `i`, channel `k`. */
@@ -13,11 +15,12 @@ export const hash = (i: number, k: number) => {
 };
 const frac = (x: number) => x - Math.floor(x);
 
-type Shape = 'dot' | 'puff' | 'spark' | 'petal' | 'leaf' | 'flake' | 'drop' | 'star' | 'glyph' | 'crane' | 'nut' | 'flame' | 'lantern' | 'bubble';
+export type Shape = MoreShape | 'dot' | 'puff' | 'spark' | 'petal' | 'leaf' | 'flake' | 'drop' | 'star' | 'glyph' | 'crane' | 'nut' | 'flame' | 'lantern' | 'bubble';
 
-type Layer =
+export type Layer =
+  | MoreLayer
   | { k: 'glow'; c: string; r: number; a: number; pulse?: boolean }
-  | { k: 'motes'; mode: 'rise' | 'fall' | 'orbit' | 'drift' | 'burst'; shape: Shape; c: string[]; n: number; size: number; speed: number; spread?: number; lit?: boolean; glyphs?: string; tilt?: number; rmin?: number; rmax?: number }
+  | { k: 'motes'; mode: 'rise' | 'fall' | 'orbit' | 'drift' | 'burst' | 'flow'; trail?: number; shape: Shape; c: string[]; n: number; size: number; speed: number; spread?: number; lit?: boolean; glyphs?: string; tilt?: number; rmin?: number; rmax?: number }
   | { k: 'ring'; c: string; r: number; w: number; tilt: number; spin: number; dash?: [number, number]; roll?: number }
   | { k: 'rays'; c: string; n: number; len: number; spin: number; a: number }
   | { k: 'bolts'; c: string; rate: number }
@@ -179,13 +182,14 @@ export const AURA_FX: Record<string, Layer[]> = {
     { k: 'motes', mode: 'rise', shape: 'spark', c: ['#ffd700', '#ffffff'], n: 24, size: 3.6, speed: 0.3, lit: true },
     { k: 'relic', c: '#ffd700' },
   ],
+  ...MORE_FX,
 };
 
 // ─── shapes ─────────────────────────────────────────────────────────────────
 
 type C2 = CanvasRenderingContext2D;
 
-function poly(ctx: C2, n: number, outer: number, inner: number) {
+export function poly(ctx: C2, n: number, outer: number, inner: number) {
   ctx.beginPath();
   for (let i = 0; i < n * 2; i++) {
     const r = i % 2 ? inner : outer;
@@ -329,13 +333,15 @@ function shape(ctx: C2, kind: Shape, s: number, c: string, t: number, i: number,
       ctx.fillRect(-s * 0.45, -s * 1.15, s * 0.9, s * 0.28);
       ctx.fillRect(-s * 0.45, s * 0.87, s * 0.9, s * 0.28);
       break;
+    default:
+      moreShape(ctx, kind, s, c, t, i, glyphs);
   }
 }
 
 // ─── layers ─────────────────────────────────────────────────────────────────
 
 /** Which half is being drawn: behind the robot, or in front of it. */
-type Pass = 'back' | 'front';
+export type Pass = 'back' | 'front';
 
 function drawLayer(ctx: C2, L: Layer, t: number, R: number, pass: Pass) {
   const back = pass === 'back';
@@ -358,47 +364,67 @@ function drawLayer(ctx: C2, L: Layer, t: number, R: number, pass: Pass) {
       const k = R / 100;
       if (L.lit) ctx.globalCompositeOperation = 'lighter';
       const base = ctx.globalAlpha;
+      const ghosts = L.trail ?? 0;
+      const spins = L.shape === 'petal' || L.shape === 'leaf' || L.shape === 'flake' || L.shape === 'nut' || L.shape === 'star' || L.shape === 'feather' || L.shape === 'shuriken' || L.shape === 'diamond' || L.shape === 'talisman' || L.shape === 'clover';
       for (let i = 0; i < L.n; i++) {
         const a = hash(i, 1);
         const b = hash(i, 2);
         const c = hash(i, 3);
         const d = hash(i, 4);
-        let x = 0;
-        let y = 0;
-        let alpha = 1;
-        let front = true;
-        if (L.mode === 'rise' || L.mode === 'fall') {
-          const p = frac(t * L.speed * (0.5 + c) + b);
-          x = (a - 0.5) * 2 * R * spread + Math.sin(t * 1.1 + i * 1.7) * R * 0.08;
-          y = L.mode === 'rise' ? R * (1 - 2.1 * p) : R * (-1.1 + 2.1 * p);
-          alpha = Math.sin(Math.PI * p);
-          front = i % 2 === 0;
-        } else if (L.mode === 'drift') {
-          x = R * spread * Math.sin(TAU * (a + t * L.speed * (0.3 + c))) * (0.4 + 0.6 * b);
-          y = R * spread * Math.cos(TAU * (b + t * L.speed * 0.7 * (0.3 + d))) * (0.4 + 0.6 * a);
-          alpha = 0.45 + 0.55 * Math.sin(t * 3 * (0.4 + d) + i * 2.3);
-          front = i % 2 === 0;
-        } else if (L.mode === 'burst') {
-          const p = frac(t * L.speed * (0.5 + c) + b);
-          x = Math.cos(TAU * a) * p * R * spread;
-          y = Math.sin(TAU * a) * p * R * spread;
-          alpha = 1 - p;
-          front = i % 2 === 0;
-        } else {
-          const ang = TAU * (a + t * L.speed * (0.5 + c));
-          const rr = R * ((L.rmin ?? 0.8) + ((L.rmax ?? 1.1) - (L.rmin ?? 0.8)) * b);
-          x = Math.cos(ang) * rr;
-          y = Math.sin(ang) * rr * (L.tilt ?? 0.35) + (d - 0.5) * R * 0.3;
-          front = Math.sin(ang) > 0;
-          alpha = front ? 1 : 0.6;
+        const size = L.size * (0.6 + 0.8 * d) * k;
+        // Ghosts are the same mote a moment earlier, fainter: a trail.
+        for (let g = ghosts; g >= 0; g--) {
+          const tt = t - g * 0.04;
+          let x = 0;
+          let y = 0;
+          let alpha = 1;
+          let front = i % 2 === 0;
+          if (L.mode === 'rise' || L.mode === 'fall') {
+            const p = frac(tt * L.speed * (0.5 + c) + b);
+            x = (a - 0.5) * 2 * R * spread + Math.sin(tt * 1.1 + i * 1.7) * R * 0.08;
+            y = L.mode === 'rise' ? R * (1 - 2.1 * p) : R * (-1.1 + 2.1 * p);
+            alpha = Math.sin(Math.PI * p);
+          } else if (L.mode === 'flow') {
+            const p = frac(tt * L.speed * (0.5 + c) + b);
+            x = R * spread * (-1.4 + 2.8 * p);
+            y = (a - 0.5) * 2 * R * 0.95 + Math.sin(tt * 1.3 + i * 1.7) * R * 0.06;
+            alpha = Math.sin(Math.PI * p);
+          } else if (L.mode === 'drift') {
+            x = R * spread * Math.sin(TAU * (a + tt * L.speed * (0.3 + c))) * (0.4 + 0.6 * b);
+            y = R * spread * Math.cos(TAU * (b + tt * L.speed * 0.7 * (0.3 + d))) * (0.4 + 0.6 * a);
+            alpha = 0.45 + 0.55 * Math.sin(tt * 3 * (0.4 + d) + i * 2.3);
+          } else if (L.mode === 'burst') {
+            const p = frac(tt * L.speed * (0.5 + c) + b);
+            x = Math.cos(TAU * a) * p * R * spread;
+            y = Math.sin(TAU * a) * p * R * spread;
+            alpha = 1 - p;
+          } else {
+            const ang = TAU * (a + tt * L.speed * (0.5 + c));
+            const rr = R * ((L.rmin ?? 0.8) + ((L.rmax ?? 1.1) - (L.rmin ?? 0.8)) * b);
+            x = Math.cos(ang) * rr;
+            y = Math.sin(ang) * rr * (L.tilt ?? 0.35) + (d - 0.5) * R * 0.3;
+            front = Math.sin(ang) > 0;
+            alpha = front ? 1 : 0.6;
+          }
+          if (g) alpha *= 0.5 * (1 - g / (ghosts + 1));
+          if (front === back || alpha <= 0.02) continue;
+          ctx.save();
+          ctx.globalAlpha = base * Math.max(0, alpha);
+          ctx.translate(x, y);
+          if (L.lit && !g) {
+            // A soft halo under anything that glows.
+            ctx.save();
+            ctx.globalAlpha *= 0.16;
+            ctx.fillStyle = L.c[i % L.c.length];
+            ctx.beginPath();
+            ctx.arc(0, 0, size * 2.6, 0, TAU);
+            ctx.fill();
+            ctx.restore();
+          }
+          if (spins) ctx.rotate(tt * (c - 0.5) * 3 + i);
+          shape(ctx, L.shape, g ? size * (1 - g / (ghosts + 2)) : size, L.c[i % L.c.length], tt, i, L.glyphs);
+          ctx.restore();
         }
-        if (front === back || alpha <= 0.02) continue;
-        ctx.save();
-        ctx.globalAlpha = base * Math.max(0, alpha);
-        ctx.translate(x, y);
-        if (L.shape === 'petal' || L.shape === 'leaf' || L.shape === 'flake' || L.shape === 'nut' || L.shape === 'star') ctx.rotate(t * (c - 0.5) * 3 + i);
-        shape(ctx, L.shape, L.size * (0.6 + 0.8 * d) * k, L.c[i % L.c.length], t, i, L.glyphs);
-        ctx.restore();
       }
       return;
     }
@@ -678,17 +704,30 @@ function drawLayer(ctx: C2, L: Layer, t: number, R: number, pass: Pass) {
       if (back) return;
       L.c.forEach((c, j) => {
         const y0 = R * (0.62 + 0.14 * j);
+        const crest = (x: number) => y0 + Math.sin((x / R) * 3.2 + t * (1.2 + 0.4 * j) + j * 1.7) * R * 0.06;
         ctx.beginPath();
         ctx.moveTo(-R * 1.5, R * 1.3);
-        for (let x = -R * 1.5; x <= R * 1.5; x += R * 0.06) ctx.lineTo(x, y0 + Math.sin((x / R) * 3.2 + t * (1.2 + 0.4 * j) + j * 1.7) * R * 0.06);
+        for (let x = -R * 1.5; x <= R * 1.5; x += R * 0.06) ctx.lineTo(x, crest(x));
         ctx.lineTo(R * 1.5, R * 1.3);
         ctx.closePath();
-        ctx.fillStyle = c;
+        const g = ctx.createLinearGradient(-R * 1.5, 0, R * 1.5, 0);
+        g.addColorStop(0, 'transparent');
+        g.addColorStop(0.3, c);
+        g.addColorStop(0.7, c);
+        g.addColorStop(1, 'transparent');
+        ctx.fillStyle = g;
         ctx.globalAlpha = 0.5;
         ctx.fill();
-        ctx.strokeStyle = '#ecfeff';
+        const foam = ctx.createLinearGradient(-R * 1.5, 0, R * 1.5, 0);
+        foam.addColorStop(0, 'transparent');
+        foam.addColorStop(0.3, '#ecfeff');
+        foam.addColorStop(0.7, '#ecfeff');
+        foam.addColorStop(1, 'transparent');
+        ctx.strokeStyle = foam;
         ctx.lineWidth = Math.max(1, R * 0.012);
         ctx.globalAlpha = 0.5;
+        ctx.beginPath();
+        for (let x = -R * 1.5; x <= R * 1.5; x += R * 0.06) ctx.lineTo(x, crest(x));
         ctx.stroke();
       });
       return;
@@ -808,6 +847,8 @@ function drawLayer(ctx: C2, L: Layer, t: number, R: number, pass: Pass) {
       drawBolt(ctx, R * 0.2, L.c);
       return;
     }
+    default:
+      drawMore(ctx, L, t, R, pass);
   }
 }
 

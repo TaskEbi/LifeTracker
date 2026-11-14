@@ -307,7 +307,7 @@ function Index({ s }: { s: AuraSave }) {
     <>
       <H2 aside={`${found.length} of ${AURAS.length}`}>Index</H2>
       <p className="i-note">
-        Each aura you roll adds {Math.round(INDEX_LUCK * 100)}% luck here and {Math.round(INDEX_WORKS * 100)}% to what the factory’s machines make, and pays gold cogs once ({cogs} so far). You only see an aura once you’ve rolled it.
+        Each aura you roll adds {INDEX_LUCK * 100}% luck here and {INDEX_WORKS * 100}% to what the factory’s machines make, and pays gold cogs once ({cogs} so far). You only see an aura once you’ve rolled it.
       </p>
       {show && (
         <div className="au-show" style={tierStyle(show)}>

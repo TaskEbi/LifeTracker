@@ -315,7 +315,7 @@ function Boosts({ s, ext }: { s: IdleSave; ext: Ext }) {
       {auraMult(ext) > 1 && (
         <li className="is-on">
           <b>Auras {pct(auraMult(ext))}</b>
-          <small>+1% for each aura in the dial’s index</small>
+          <small>+0.5% for each aura in the dial’s index</small>
         </li>
       )}
     </ul>
