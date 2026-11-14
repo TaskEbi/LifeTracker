@@ -957,6 +957,28 @@
   border-top: 1px dashed rgb(255 255 255 / 0.4);
   font-size: 13px;
 }
+.gm-ways {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 4px 12px;
+  margin: 8px 0 0;
+  font-size: 13px;
+}
+.gm-ways div {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 3px 0;
+  border-bottom: 1px dashed var(--surf-3);
+}
+.gm-ways dt {
+  color: var(--fg-2);
+}
+.gm-ways dd {
+  margin: 0;
+  font-weight: 600;
+  white-space: nowrap;
+}
 .gm-track__bar {
   height: 10px;
   overflow: hidden;

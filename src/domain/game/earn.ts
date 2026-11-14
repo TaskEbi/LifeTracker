@@ -11,7 +11,7 @@ import { overallLevel, sectionLevel, STAGES, stageFor, type XpEvent } from '../p
 import type { BossFight } from '../progress/boss';
 import type { QuestSet } from '../progress/quests';
 import { MATS, type Bag, type ChestTier, type Mats } from './catalog';
-import { eventOn, eventRunsUpTo, tokenRate } from './events';
+import { eventOn, eventRunsUpTo, TOKEN_PAY, tokenRate, type EventRun } from './events';
 import { hash32 } from './loot';
 import { upgradeLevel, type Grant, type Tx } from './wallet';
 
@@ -397,17 +397,33 @@ export function grantsFor(input: EarnInput): Grant[] {
   for (const date of faces) push({ key: `face:${date}`, date, source: 'album', label: 'Photo of the day', gain: { coins: 10 } });
   for (const [date, n] of lines) push({ key: `lines:${date}`, date, source: 'reading', label: `${n} highlight${n === 1 ? '' : 's'}`, gain: { coins: Math.min(n, 20) } });
 
-  // Seasonal tokens: a share of the day's XP, plus a little for turning up at all.
+  // Seasonal tokens: a share of the day's XP (the festival's own sections count twice), a few for
+  // turning up at all, and a handful for quests, bounties, bosses and streaks won while it runs.
+  const tokenMult = (run: EventRun, d: string) => tokenRate(run) * (1 + up('festival', d) * 0.25);
   for (const run of runs) {
-    const rate = tokenRate(run);
     for (let d = run.start; d <= run.end && d <= today; d = addDays(d, 1)) {
-      const xp = dayXp.get(d)?.all ?? 0;
+      const day = dayXp.get(d);
       const on = activeSet.has(d);
-      if (!xp && !on) continue;
-      const pass = 1 + up('festival', d) * 0.25;
-      const n = Math.round((xp / 4 + (on ? 10 : 0)) * rate * pass);
+      if (!day && !on) continue;
+      let xp = day?.all ?? 0;
+      for (const s of run.def.boost) xp += (day?.perSection.get(s) ?? 0) * (TOKEN_PAY.boost - 1);
+      const n = Math.round((xp / TOKEN_PAY.perXp + (on ? TOKEN_PAY.day : 0)) * tokenMult(run, d));
       if (n) push({ key: `token:${run.key}:${d}`, date: d, source: 'event', label: `${run.def.name}: ${run.def.token.name}`, gain: { tokens: { [run.key]: n } } });
     }
+  }
+  const won: { g: Grant; base: number; what: string }[] = [];
+  for (const g of out) {
+    if (g.source === 'quests') won.push({ g, base: TOKEN_PAY.sweep[g.key.split(':')[1]] ?? 0, what: g.label });
+    else if (g.source === 'bounty') won.push({ g, base: TOKEN_PAY.bounty, what: 'Bounty' });
+    else if (g.source === 'boss') won.push({ g, base: TOKEN_PAY.boss, what: 'Boss' });
+    else if (g.source === 'streak') won.push({ g, base: TOKEN_PAY.streak, what: g.label });
+  }
+  for (const { g, base, what } of won) {
+    // A bounty lands at the week's end, which may be after the festival: its Monday counts too.
+    const run = eventOn(g.date) ?? (g.source === 'bounty' ? eventOn(g.key.split(':')[1]) : null);
+    if (!run || !base) continue;
+    const n = Math.round(base * tokenMult(run, g.date));
+    push({ key: `token:${run.key}:${g.key}`, date: g.date, source: 'event', label: `${run.def.name}: ${what}`, gain: { tokens: { [run.key]: n } } });
   }
 
   return out;

@@ -6,6 +6,7 @@ import { consumableById } from '../../domain/game/catalog';
 import { LUCKY_BAG, NIGHT_EXTRAS } from '../../domain/game/market';
 import { SETS } from '../../domain/game/sets';
 import { BOARD, fishById, lineName, parseCastRef, parseRollRef } from '../../domain/game/arcade';
+import { masteryLine } from '../../domain/game/mastery';
 import { H2 } from '../../ui/i/bits';
 import { lootLines, num, Price } from './bits';
 import { useGame } from './store';
@@ -29,6 +30,7 @@ const txLine = (t: Tx): string => {
       if (t.ref.startsWith('set:')) return `Set complete: ${SETS.find((x) => x.id === t.ref.slice(4))?.name ?? t.ref.slice(4)}`;
       if (t.ref.startsWith('bingo:')) return t.ref.endsWith(':full') ? 'Bingo: full card' : `Bingo: ${lineName(Number(t.ref.split(':')[2]))}`;
       if (t.ref.startsWith('fishbook:')) return `Fish book: ${t.ref.slice(9)} kinds`;
+      if (t.ref.startsWith('body:') || t.ref.startsWith('hall:')) return masteryLine(t.ref);
       return 'Festival prize';
     case 'use':
       return `Used: ${consumableById(t.ref)?.name ?? t.ref}`;
@@ -47,6 +49,8 @@ const txLine = (t: Tx): string => {
     }
     case 'works':
       return `Works counter: ${itemName(t.ref)}`;
+    case 'pilot':
+      return `Piloting: ${t.ref === 'drone' ? 'the drone' : itemName(`chassis:${t.ref}:1`).replace(/ Mk I$/, '')}`;
   }
 };
 
@@ -70,7 +74,7 @@ export function LedgerTab() {
     return m;
   }, [g.grants, week]);
   const recent = useMemo(() => [...g.grants].sort((a, b) => b.date.localeCompare(a.date)), [g.grants]);
-  const spent = useMemo(() => [...g.txs].reverse(), [g.txs]);
+  const spent = useMemo(() => g.txs.filter((t) => t.type !== 'pilot').reverse(), [g.txs]);
   return (
     <>
       <H2 aside="last 7 days · all time">Where it comes from</H2>

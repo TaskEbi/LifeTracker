@@ -95,6 +95,23 @@ export const daysLeft = (run: EventRun, today: string) => Math.round((Date.UTC(+
 /** A short event gives tokens faster, so any event's prizes take about the same amount of training. */
 export const tokenRate = (run: EventRun) => Math.min(2.2, 30 / runLength(run));
 
+/**
+ * What pays tokens while a festival runs, before the rate and the Festival Pass. XP in the
+ * festival's own sections counts twice; the one-offs land on the day they were won.
+ */
+export const TOKEN_PAY = {
+  /** A token per this much XP. */
+  perXp: 3,
+  /** Any active day. */
+  day: 15,
+  /** XP in the boosted sections counts this many times. */
+  boost: 2,
+  sweep: { daily: 20, weekly: 80, monthly: 150 } as Record<string, number>,
+  bounty: 40,
+  boss: 60,
+  streak: 50,
+};
+
 // ─── the event's prize track ────────────────────────────────────────────────
 
 export interface TrackStep {

@@ -252,6 +252,19 @@ describe('events', () => {
     expect(tokenRate(short)).toBeGreaterThan(tokenRate(long));
   });
 
+  it('pays tokens for the festival sections twice, and for quests won while it runs', () => {
+    const plain = grantsFor(base({ xp: [xp('a', '2026-11-03', 'gym', 90)], today: '2026-11-30' }));
+    const boosted = grantsFor(base({ xp: [xp('a', '2026-11-03', 'maths', 90)], today: '2026-11-30' }));
+    const tok = (gs: Grant[]) => gs.filter((g) => g.source === 'event').reduce((n, g) => n + (g.gain.tokens?.['momiji-2026'] ?? 0), 0);
+    expect(tok(boosted)).toBe(tok(plain) * 2);
+    const sets = [
+      { period: 'daily' as const, start: '2026-11-04', end: '2026-11-04', quests: [], sweptOn: '2026-11-04' },
+      { period: 'daily' as const, start: '2026-12-04', end: '2026-12-04', quests: [], sweptOn: '2026-12-04' },
+    ];
+    const keys = grantsFor(base({ quests: sets, today: '2026-12-31' })).filter((g) => g.source === 'event').map((g) => g.key);
+    expect(keys).toEqual(['token:momiji-2026:sweep:daily:2026-11-04']);
+  });
+
   it('a month of normal training reaches the stall', () => {
     const run = eventRunsUpTo('2026-12-31').find((r) => r.def.id === 'momiji')!;
     const rows: XpEvent[] = [];

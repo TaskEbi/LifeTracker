@@ -15,13 +15,15 @@ import { activeDays, type ProgressInput } from '../../domain/progress/engine';
 import { bossHistory } from '../../domain/progress/boss';
 import { questHistory } from '../../domain/progress/quests';
 import { bountyBoard, dayBonus, grantsFor, type BountyProgress, type DayBonus, type EarnInput, type EarnRow } from '../../domain/game/earn';
-import { chassisById, chassisCost, consumableById, MATS, pityFor, SPIN10_COST, SPIN_COST, upgradeById, type Bag, type ChestTier } from '../../domain/game/catalog';
+import { CHASSIS, chassisById, chassisCost, consumableById, MATS, pityFor, SPIN10_COST, SPIN_COST, upgradeById, type Bag, type ChestTier } from '../../domain/game/catalog';
 import { eventOn } from '../../domain/game/events';
 import { rollChest, rollLuckyBag, rollSpin, type SpinResult } from '../../domain/game/loot';
 import { bagsThisWeek, LUCKY_BAG, NIGHT_EXTRAS, nightOf, nightOpen, perks, saleState, stampCard, stampPrize, standingOf, thanksLine, timeSale, withRank, type Request, type Standing } from '../../domain/game/market';
 import { setPrize, setsProgress } from '../../domain/game/sets';
 import { dailyDeal, discounted, DUST_TICKET, GEM_EXCHANGE, MAT_EXCHANGE, type ShopItem } from '../../domain/game/shop';
-import { canAfford, normaliseLoadout, shortfall, spinsSinceEpic, txOf, upgradeLevel, walletOf, type Grant, type Loadout, type Tx, type TxType, type Wallet } from '../../domain/game/wallet';
+import { canAfford, chassisMk, normaliseLoadout, plus, shortfall, spinsSinceEpic, txOf, upgradeLevel, walletOf, type Grant, type Loadout, type Tx, type TxType, type Wallet } from '../../domain/game/wallet';
+import { bestDaySections, bodyStats, claimedRefs, longestRun, PILOT_SEED_T, secretById, secretOpen, TIERS, unclaimed, type BodyStat, type Prize, type SecretFacts } from '../../domain/game/mastery';
+import { pondOf } from '../../domain/game/arcade';
 import { createStore, useStore } from '../../lib/createStore';
 import { uuid } from '../../lib/random';
 import { evolveBot } from './revealStore';
@@ -110,7 +112,105 @@ export const useLoadout = (): Loadout => {
 export const getLoadout = () => loadoutOf(data.get());
 
 export function setLoadout(patch: Partial<Loadout>) {
-  setPref('game_loadout', { ...getLoadout(), ...patch });
+  const before = getLoadout();
+  if (patch.chassis && patch.chassis !== before.chassis) pilot(before.chassis, patch.chassis);
+  setPref('game_loadout', { ...before, ...patch });
+}
+
+// ─── bodies: levels, mastery and the hidden ones (mastery.ts) ───────────────
+
+/** Changing body writes a pilot row, so what you log from now on goes to the new one. */
+function pilot(from: string, to: string) {
+  const txs = getGame().txs.filter((t) => t.type === 'pilot');
+  // The first change also writes down who was flying before it, from the day bodies started counting.
+  if (!txs.length) write({ type: 'pilot', ref: from, cost: {}, gain: {}, t: PILOT_SEED_T }, pairId('gm', 'pilot-seed'));
+  else if (txs[txs.length - 1].ref === to) return;
+  write({ type: 'pilot', ref: to, cost: {}, gain: {}, t: now() });
+}
+
+export interface Bodies {
+  stats: Map<string, BodyStat>;
+  claimed: Set<string>;
+  facts: SecretFacts;
+  /** Prizes reached and not claimed, everywhere. */
+  waiting: Prize[];
+}
+
+const bodiesMemo: { st: DataState; today: string; hour: number; b: Bodies }[] = [];
+
+export function bodiesOf(st: DataState, today: string, hour: number): Bodies {
+  const hit = bodiesMemo.find((m) => m.st === st && m.today === today && m.hour === hour);
+  if (hit) return hit.b;
+  const g = gameOf(st, today);
+  const stampOf = (key: string): number | null => {
+    const [kind, id] = key.split(':');
+    const at = kind === 'entry' ? st.log_entries.get(id)?.created_at : kind === 'task' ? st.todos.get(id)?.done_at : kind === 'bucket' ? st.lt_bucket.get(id)?.done_at : null;
+    const ms = at ? Date.parse(at) : NaN;
+    return Number.isFinite(ms) ? ms : null;
+  };
+  const stats = bodyStats({ xp: g.earnInput.xp, stampOf, txs: g.txs, current: loadoutOf(st).chassis });
+  const claimed = claimedRefs(g.txs);
+  const works = st.lt_records.get(pairId('gm', 'idle'));
+  const rebuilds = works && !works.deleted_at ? Number((works.data as { rebuilds?: unknown }).rebuilds) || 0 : 0;
+  const golds = [...stats.values()].filter((x) => x.tiers >= TIERS.length).length;
+  const facts: SecretFacts = {
+    bodiesOwned: CHASSIS.filter((c) => chassisMk(g.wallet, c.id) > 0).length,
+    bestStreak: longestRun(g.earnInput.streakDays),
+    photos: g.earnInput.rows.filter((r) => r.kind === 'album_shot').length,
+    bigWish: g.earnInput.bucket.some((b) => b.doneOn && (b.rarity === 'epic' || b.rarity === 'legendary')),
+    bosses: g.earnInput.bosses.filter((b) => b.defeatedOn).length,
+    rebuilds,
+    fish: pondOf(g.txs).caught,
+    bestDay: bestDaySections(g.earnInput.xp),
+    tanukiMp: stats.get('tanuki')?.mp ?? 0,
+    golds,
+    sleptToday: g.earnInput.xp.some((e) => e.section === 'sleep' && e.date === today),
+    hour,
+  };
+  const b: Bodies = { stats, claimed, facts, waiting: unclaimed(stats, claimed) };
+  bodiesMemo.push({ st, today, hour, b });
+  if (bodiesMemo.length > 2) bodiesMemo.shift();
+  return b;
+}
+
+export function useBodies(): Bodies {
+  const today = useToday();
+  const st = useStore(data, (s) => s);
+  const { hour } = useClock();
+  return useMemo(() => bodiesOf(st, today, hour), [st, today, hour]);
+}
+
+export const getBodies = () => bodiesOf(data.get(), ltToday(), ltHour());
+
+/** Claim one prize from a body's track or the hall. */
+export function claimPrize(ref: string): Bag | null {
+  const p = getBodies().waiting.find((x) => x.ref === ref);
+  if (!p) return null;
+  return claimOnce(p.ref, p.gain) ? p.gain : null;
+}
+
+/** Claim everything waiting (for one body, or everywhere). */
+export function claimAllPrizes(body?: string): Bag | null {
+  const list = getBodies().waiting.filter((p) => !body || p.ref.startsWith(`body:${body}:`));
+  let total: Bag = {};
+  let n = 0;
+  for (const p of list) if (claimOnce(p.ref, p.gain)) ((total = plus(total, p.gain)), n++);
+  return n ? total : null;
+}
+
+/** Wake a hidden body whose rule you've met: Mk I is free. */
+export function wakeSecret(id: string): boolean {
+  const ch = chassisById(id);
+  if (!ch?.unlock) return false;
+  if (chassisMk(getGame().wallet, id) > 0) return false;
+  if (!secretOpen(id, getBodies().facts)) {
+    toast(`Not yet: ${secretById(id)?.rule ?? 'its rule is not met'}.`);
+    return false;
+  }
+  write({ type: 'mk', ref: `chassis:${id}:1`, cost: {}, gain: { items: [`chassis:${id}:1`] } }, pairId('gm', `secret:${id}`));
+  setLoadout({ chassis: id });
+  evolveBot({ chassis: id, mk: 1 });
+  return true;
 }
 
 // ─── what a save paid (shown in the reward box) ─────────────────────────────
@@ -138,7 +238,7 @@ export function write(tx: Omit<Tx, 'id' | 'at'>, id = uuid()): Tx {
   const at = ltToday();
   const t = now();
   const prev = data.get().lt_records.get(id);
-  const value = { type: tx.type, at, ref: tx.ref, cost: tx.cost, gain: tx.gain, ...(tx.rolled ? { rolled: tx.rolled } : {}) };
+  const value = { type: tx.type, at, ref: tx.ref, cost: tx.cost, gain: tx.gain, ...(tx.rolled ? { rolled: tx.rolled } : {}), ...(tx.t ? { t: tx.t } : {}) };
   const row: LtRecord = prev
     ? { ...prev, data: value, deleted_at: null, updated_at: t }
     : { id, section: GAME_SECTION, kind: 'gm_tx', data: value, sort_order: 0, archived_at: null, created_at: t, updated_at: t, deleted_at: null };

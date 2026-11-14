@@ -22,10 +22,12 @@ import { LedgerTab } from './Ledger';
 import { RevealLayer, playChest, playAllChests } from './Reveal';
 import { closeReveal, revealStore, showReveal } from './revealStore';
 import { ShopTab } from './Shop';
-import { buyItem, buyMk, claimSet, setLoadout, setWish, standingNow, useGame, useLoadout, useWish, type GameState } from './store';
+import { buyItem, buyMk, claimSet, setLoadout, setWish, standingNow, useBodies, useGame, useLoadout, useWish, type Bodies, type GameState } from './store';
+import { secretById, secretOpen } from '../../domain/game/mastery';
 import { listPrice, saved, withRank } from '../../domain/game/market';
 import { setPrize, setRarity, setsProgress, setTitleName } from '../../domain/game/sets';
 import { WorkshopTab } from './Workshop';
+import { BodyPanel, CardLevel, MasteryHall, PilotPlate, SecretPanel, WaitingPrizes } from './Bodies';
 import { ArcadeTab } from './Arcade';
 import { useArcade } from './arcadeStore';
 import { arcadeWaiting } from '../../domain/game/arcade';
@@ -96,8 +98,10 @@ export function GameView() {
 
 // ─── the bay ────────────────────────────────────────────────────────────────
 
-const SLOTS: { id: 'body' | 'sets' | CosmeticKind; label: string }[] = [
+type Slot = 'body' | 'sets' | 'mastery' | CosmeticKind;
+const SLOTS: { id: Slot; label: string }[] = [
   { id: 'body', label: 'Body' },
+  { id: 'mastery', label: 'Mastery' },
   { id: 'paint', label: 'Paint' },
   { id: 'hat', label: 'Headgear' },
   { id: 'pet', label: 'Companion' },
@@ -117,7 +121,9 @@ function Bay({ g, run }: { g: GameState; run: EventRun | null }) {
   const p = useProgress();
   const look = useLoadout();
   const w = g.wallet;
-  const [slot, setSlot] = useState<'body' | 'sets' | CosmeticKind>('body');
+  const [slot, setSlot] = useState<Slot>('body');
+  const [open, setOpen] = useState<string | null>(null);
+  const b = useBodies();
   const ch = CHASSIS.find((x) => x.id === look.chassis);
   const mk = ch ? chassisMk(w, ch.id) || 1 : undefined;
   const stage = p.overall.stage;
@@ -141,8 +147,11 @@ function Bay({ g, run }: { g: GameState; run: EventRun | null }) {
             LV {p.overall.level} · {rankFor(p.overall.level)}
             {titleName(look.title) ? ` · “${titleName(look.title)}”` : ''}
           </small>
+          <PilotPlate ch={ch} b={b} g={g} />
         </div>
       </section>
+
+      <WaitingPrizes b={b} />
 
       {g.bonus.lines.length > 0 && (
         <p className="gm-bonus">
@@ -228,7 +237,22 @@ function Bay({ g, run }: { g: GameState; run: EventRun | null }) {
           </button>
         ))}
       </div>
-      {slot === 'body' ? <Garage g={g} look={look} stage={stage} /> : slot === 'sets' ? <SetsPanel g={g} stage={stage} /> : <Wardrobe kind={slot} g={g} look={look} stage={stage} />}
+      {slot === 'body' ? (
+        <Garage g={g} b={b} look={look} stage={stage} open={open} setOpen={setOpen} />
+      ) : slot === 'mastery' ? (
+        <MasteryHall
+          b={b}
+          g={g}
+          onOpen={(id) => {
+            setOpen(id);
+            setSlot('body');
+          }}
+        />
+      ) : slot === 'sets' ? (
+        <SetsPanel g={g} stage={stage} />
+      ) : (
+        <Wardrobe kind={slot} g={g} look={look} stage={stage} />
+      )}
     </>
   );
 }
@@ -253,25 +277,33 @@ const GROUP_NAMES: Record<ChassisGroup, { name: string; kanji: string; hint: str
   tribute: { name: 'Tributes', kanji: '誉', hint: 'One per section. Level the section to unlock them' },
   cosmic: { name: 'Strange', kanji: '異', hint: 'High level, high cost, and worth it' },
   event: { name: 'Festival', kanji: '祭', hint: 'Only sold during their event' },
+  secret: { name: 'Hidden', kanji: '隠', hint: 'Never sold. Each wakes up when you do something' },
 };
 
-function lockOf(ch: Chassis, mk: 1 | 2 | 3, level: number, sections: Record<string, { level: number }>, run: EventRun | null): string | null {
+function lockOf(ch: Chassis, mk: 1 | 2 | 3, level: number, sections: Record<string, { level: number }>, run: EventRun | null, b?: Bodies): string | null {
+  if (ch.unlock && mk === 1) return b && secretOpen(ch.id, b.facts) ? 'Ready to wake!' : 'Hidden';
   if (ch.event && run?.def.id !== ch.event) return 'Only during its festival';
   if (mk === 1 && ch.level && level < ch.level) return `Reach level ${ch.level}`;
   if (ch.section && sections[ch.section].level < TRIBUTE_LEVEL[mk - 1]) return `${sectionInfo(ch.section).name} level ${TRIBUTE_LEVEL[mk - 1]}`;
   return null;
 }
 
-function Garage({ g, look, stage }: { g: GameState; look: Loadout; stage: number }) {
+/** A hidden card's line: ready, how far along, or just hidden. */
+function hiddenLine(id: string, b: Bodies): string {
+  if (secretOpen(id, b.facts)) return 'Ready to wake!';
+  const [have, need] = secretById(id)?.progress(b.facts) ?? [0, 1];
+  return need > 1 ? `${have.toLocaleString('en-GB')} / ${need.toLocaleString('en-GB')}` : 'Hidden';
+}
+
+function Garage({ g, b, look, stage, open, setOpen }: { g: GameState; b: Bodies; look: Loadout; stage: number; open: string | null; setOpen: (id: string | null) => void }) {
   const p = useProgress();
-  const [open, setOpen] = useState<string | null>(null);
   const run = eventOn(g.today);
   const w = g.wallet;
   const ownedCount = CHASSIS.filter((c) => chassisMk(w, c.id) > 0).length;
   return (
     <>
       <p className="i-note">
-        {ownedCount} of {CHASSIS.length} bodies built. The drone is always yours and keeps transforming as you level.
+        {ownedCount} of {CHASSIS.length} bodies built. The drone is always yours and keeps transforming with your overall level; every other body has a level and mastery of its own, trained by wearing it.
       </p>
       <div className="gm-grid">
         <button type="button" className="gm-card" aria-pressed={look.chassis === 'drone'} onClick={() => setLoadout({ chassis: 'drone' })}>
@@ -289,32 +321,34 @@ function Garage({ g, look, stage }: { g: GameState; look: Loadout; stage: number
           <div className="gm-grid">
             {CHASSIS.filter((c) => c.group === grp).map((c) => {
               const mk = chassisMk(w, c.id);
-              const lock = mk ? null : lockOf(c, 1, p.overall.level, p.sections, run);
+              const lock = mk ? null : lockOf(c, 1, p.overall.level, p.sections, run, b);
+              const hidden = !mk && !!c.unlock;
               return (
                 <button
                   key={c.id}
                   type="button"
-                  className={`gm-card${mk ? '' : ' is-locked'}`}
+                  className={`gm-card${mk ? '' : ' is-locked'}${hidden && lock === 'Ready to wake!' ? ' is-ready' : ''}`}
                   aria-pressed={look.chassis === c.id}
                   style={{ '--a': RARITY[c.rarity].color } as CSSProperties}
                   onClick={() => setOpen(open === c.id ? null : c.id)}
-                  aria-label={`${c.name}, ${RARITY[c.rarity].name}${mk ? `, Mk ${mk} built` : lock ? `, locked: ${lock}` : ', for sale'}`}
+                  aria-label={hidden ? `A hidden body, ${lock === 'Ready to wake!' ? 'ready to wake' : secretById(c.id)?.rule ?? 'hidden'}` : `${c.name}, ${RARITY[c.rarity].name}${mk ? `, Mk ${mk} built, level ${b.stats.get(c.id)?.level ?? 1}` : lock ? `, locked: ${lock}` : ', for sale'}`}
                 >
-                  <Thumb look={{ chassis: c.id }} mk={mk || 1} />
-                  <b>{c.name}</b>
-                  <small>{mk ? `Mk ${'I'.repeat(mk)}` : lock ?? 'For sale'}</small>
+                  {hidden ? <span className="gm-thumb gm-thumb--word" aria-hidden="true">?</span> : <Thumb look={{ chassis: c.id }} mk={mk || 1} />}
+                  <b>{hidden ? '???' : c.name}</b>
+                  {mk ? <CardLevel s={b.stats.get(c.id)} /> : null}
+                  <small>{mk ? `Mk ${'I'.repeat(mk)}` : hidden ? hiddenLine(c.id, b) : lock ?? 'For sale'}</small>
                 </button>
               );
             })}
           </div>
-          {open && CHASSIS.find((c) => c.id === open)?.group === grp && <ChassisCard key={open} id={open} g={g} look={look} onClose={() => setOpen(null)} />}
+          {open && CHASSIS.find((c) => c.id === open)?.group === grp && <ChassisCard key={open} id={open} g={g} b={b} look={look} onClose={() => setOpen(null)} />}
         </div>
       ))}
     </>
   );
 }
 
-function ChassisCard({ id, g, look, onClose }: { id: string; g: GameState; look: Loadout; onClose: () => void }) {
+function ChassisCard({ id, g, b, look, onClose }: { id: string; g: GameState; b: Bodies; look: Loadout; onClose: () => void }) {
   const p = useProgress();
   const ch = CHASSIS.find((c) => c.id === id)!;
   const w = g.wallet;
@@ -322,7 +356,23 @@ function ChassisCard({ id, g, look, onClose }: { id: string; g: GameState; look:
   const run = eventOn(g.today);
   const nextMk = (mk + 1) as 1 | 2 | 3;
   const cost = mk < 3 ? chassisCost(ch, nextMk, run?.key) : null;
-  const lock = mk < 3 ? lockOf(ch, nextMk, p.overall.level, p.sections, run) : null;
+  const lock = mk < 3 ? lockOf(ch, nextMk, p.overall.level, p.sections, run, b) : null;
+  const hidden = !mk && !!ch.unlock;
+  if (hidden) {
+    return (
+      <section className="gm-detail" aria-label="A hidden body" style={{ '--a': RARITY[ch.rarity].color } as CSSProperties}>
+        <h3>
+          ??? <Rar r={ch.rarity} />
+        </h3>
+        <SecretPanel ch={ch} b={b} />
+        <div className="gm-detail__row">
+          <button type="button" className="i-link" onClick={onClose}>
+            Close
+          </button>
+        </div>
+      </section>
+    );
+  }
   return (
     <section className="gm-detail" aria-label={ch.name} style={{ '--a': RARITY[ch.rarity].color } as CSSProperties}>
       <div className="gm-detail__mks">
@@ -341,6 +391,7 @@ function ChassisCard({ id, g, look, onClose }: { id: string; g: GameState; look:
         <li className={mk >= 2 ? 'is-on' : ''}>Mk II: {ch.mk[0]}</li>
         <li className={mk >= 3 ? 'is-on' : ''}>Mk III: {ch.mk[1]}</li>
       </ul>
+      {mk > 0 && <BodyPanel ch={ch} b={b} worn={look.chassis === id} />}
       {cost && (
         <div className="gm-detail__buy">
           <Price cost={cost} w={w} tokenName={run?.def.token.name} />

@@ -44,7 +44,7 @@ export const themeItems = (): ShopItem[] =>
 export const consumableItems = (): ShopItem[] => CONSUMABLES.map((c) => ({ item: c.id, name: c.name, kind: 'consumable', rarity: c.rarity, cost: c.price, stock: true }));
 
 /** Chassis that the weekly stock can feature (not tributes, which take section levels, or events). */
-const shelfChassis = (): Chassis[] => CHASSIS.filter((c) => !c.event && !c.section);
+const shelfChassis = (): Chassis[] => CHASSIS.filter((c) => !c.event && !c.section && !c.unlock);
 
 function pick<T>(list: T[], seed: string, n: number): T[] {
   const left = [...list];

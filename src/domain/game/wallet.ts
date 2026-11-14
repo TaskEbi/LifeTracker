@@ -6,10 +6,10 @@
  */
 import type { SectionId } from '../../data/types';
 import type { Bag, ChestTier, CosmeticKind, Mats, Rarity } from './catalog';
-import { chassisById, COSMETIC_NAME, cosmeticOf, MATS, upgradeById } from './catalog';
+import { BODY_LINES, chassisById, COSMETIC_NAME, cosmeticOf, MATS, upgradeById } from './catalog';
 import { FLOORS, GEAR_SKINS } from './idle';
 
-export type TxType = 'buy' | 'mk' | 'upgrade' | 'open' | 'spin' | 'claim' | 'use' | 'trade' | 'deliver' | 'roll' | 'cast' | 'works';
+export type TxType = 'buy' | 'mk' | 'upgrade' | 'open' | 'spin' | 'claim' | 'use' | 'trade' | 'deliver' | 'roll' | 'cast' | 'works' | 'pilot';
 
 export interface Tx {
   id: string;
@@ -22,6 +22,8 @@ export interface Tx {
   gain: Bag;
   /** Rarities of a spin's capsules (the pity count needs them). */
   rolled?: Rarity[];
+  /** When it happened, to the second: a pilot row (changing body) needs it to share out the day's XP. */
+  t?: string;
 }
 
 /** Whatever was granted from records. */
@@ -128,7 +130,7 @@ export function txOf(r: { id: string; kind: string; deleted_at: string | null; d
   if (r.deleted_at || r.kind !== 'gm_tx') return null;
   const d = r.data;
   if (typeof d.type !== 'string' || typeof d.at !== 'string' || typeof d.ref !== 'string') return null;
-  return { id: r.id, type: d.type as TxType, at: d.at, ref: d.ref, cost: (d.cost as Bag) ?? {}, gain: (d.gain as Bag) ?? {}, rolled: Array.isArray(d.rolled) ? (d.rolled as Rarity[]) : undefined };
+  return { id: r.id, type: d.type as TxType, at: d.at, ref: d.ref, cost: (d.cost as Bag) ?? {}, gain: (d.gain as Bag) ?? {}, rolled: Array.isArray(d.rolled) ? (d.rolled as Rarity[]) : undefined, t: typeof d.t === 'string' ? d.t : undefined };
 }
 
 /** An upgrade's level on a day (a machine pays from the day it's bought). */
@@ -185,6 +187,7 @@ export function itemName(item: string): string {
   const [kind, id, mk] = item.split(':');
   if (kind === 'chassis') return `${chassisById(id)?.name ?? id} Mk ${mk === '3' ? 'III' : mk === '2' ? 'II' : 'I'}`;
   if (kind === 'theme') return `${id} theme`;
+  if (kind === 'cry') return `${chassisById(id)?.name ?? id}: “${BODY_LINES[id] ?? '…'}”`;
   if (kind === 'wgear') return GEAR_SKINS.find((x) => x.id === id)?.name ?? id;
   if (kind === 'wfloor') return FLOORS.find((x) => x.id === id)?.name ?? id;
   const c = cosmeticOf(item);
@@ -195,6 +198,7 @@ export function itemKindName(item: string): string {
   const [kind] = item.split(':');
   if (kind === 'chassis') return 'Chassis';
   if (kind === 'theme') return 'Colour theme';
+  if (kind === 'cry') return 'Battle cry';
   if (kind === 'wgear') return 'Works gear';
   if (kind === 'wfloor') return 'Works floor';
   return COSMETIC_NAME[kind as CosmeticKind] ?? kind;

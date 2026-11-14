@@ -3,8 +3,9 @@ import { useMemo, type CSSProperties } from 'react';
 import { useProgress } from '../../data/lt';
 import { toast } from '../../data/ui';
 import { CHASSIS, chassisCost, RARITY } from '../../domain/game/catalog';
-import { daysLeft, eventOn, eventStock, EVENTS, monthDay, nextEvent, trackOf, type EventRun } from '../../domain/game/events';
-import { canAfford, chassisMk, itemName, type Tx } from '../../domain/game/wallet';
+import { daysLeft, eventOn, eventStock, EVENTS, monthDay, nextEvent, TOKEN_PAY, tokenRate, trackOf, type EventRun } from '../../domain/game/events';
+import { canAfford, chassisMk, itemName, upgradeLevel, type Tx } from '../../domain/game/wallet';
+import { SECTIONS } from '../../domain/sections';
 import { H2 } from '../../ui/i/bits';
 import { daysWord, ItemThumb, num, Price, Rar, Thumb } from './bits';
 import { showReveal } from './revealStore';
@@ -52,6 +53,35 @@ function Track({ run }: { run: EventRun }) {
   );
 }
 
+/** Every way to earn this festival's tokens, at its rate and your Festival Pass. */
+function TokenWays({ run }: { run: EventRun }) {
+  const g = useGame();
+  const mult = tokenRate(run) * (1 + upgradeLevel(g.txs, 'festival', g.today) * 0.25);
+  const n = (x: number) => num(Math.max(1, Math.round(x * mult)));
+  const boost = run.def.boost.map((s) => SECTIONS.find((x) => x.id === s)?.name ?? s).join(' and ');
+  const ways: [string, string][] = [
+    ['Any XP', `${n(10 / TOKEN_PAY.perXp)} per 10 XP`],
+    [`${boost} XP`, `counts ${TOKEN_PAY.boost === 2 ? 'twice' : `${TOKEN_PAY.boost}×`}`],
+    ['An active day', `+${n(TOKEN_PAY.day)}`],
+    ['All daily quests', `+${n(TOKEN_PAY.sweep.daily)}`],
+    ['All weekly quests', `+${n(TOKEN_PAY.sweep.weekly)}`],
+    ['All monthly quests', `+${n(TOKEN_PAY.sweep.monthly)}`],
+    ['A bounty', `+${n(TOKEN_PAY.bounty)}`],
+    ["The week's boss", `+${n(TOKEN_PAY.boss)}`],
+    ['A streak milestone', `+${n(TOKEN_PAY.streak)}`],
+  ];
+  return (
+    <dl className="gm-ways" aria-label={`Ways to earn ${run.def.token.name}`}>
+      {ways.map(([k, v]) => (
+        <div key={k}>
+          <dt>{k}</dt>
+          <dd>{v}</dd>
+        </div>
+      ))}
+    </dl>
+  );
+}
+
 function Running({ run }: { run: EventRun }) {
   const g = useGame();
   const stage = useProgress().overall.stage;
@@ -85,7 +115,8 @@ function Running({ run }: { run: EventRun }) {
 
       <H2 aside={`${num(w.tokensEarned[run.key] ?? 0)} earned`}>Prize track</H2>
       <Track run={run} />
-      <p className="i-note">Every 4 XP you earn while it runs is worth a token (quicker in shorter festivals), plus a few for any active day. Spending tokens doesn't move you back along the track.</p>
+      <TokenWays run={run} />
+      <p className="i-note">Shorter festivals pay faster, and the Festival Pass adds a quarter per level. Spending tokens doesn't move you back along the track.</p>
 
       <H2 aside="only while it runs">Festival stall</H2>
       <div className="gm-fest__chassis" style={{ '--a': RARITY.legendary.color } as CSSProperties}>

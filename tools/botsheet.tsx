@@ -27,6 +27,7 @@ const LOAD: Record<string, () => Promise<Record<string, BotRegistry>>> = {
   cosmic: () => import('../src/ui/i/bots/chassisCosmic') as never,
   tribute: () => import('../src/ui/i/bots/chassisTribute') as never,
   event: () => import('../src/ui/i/bots/chassisEvent') as never,
+  secret: () => import('../src/ui/i/bots/chassisSecret') as never,
 };
 
 const box: CSSProperties = { width: 200, textAlign: 'center', font: '12px sans-serif', color: 'var(--fg)' };

@@ -11,7 +11,7 @@ import { DroneArt, droneHead } from '../Drone';
 import type { BotDesign, BotRegistry } from './types';
 import './robot.css';
 
-type GroupId = 'forms' | 'folklore' | 'toys' | 'cosmic' | 'tribute' | 'event' | 'gear';
+type GroupId = 'forms' | 'folklore' | 'toys' | 'cosmic' | 'tribute' | 'event' | 'secret' | 'gear';
 
 const LOADERS: Record<Exclude<GroupId, 'gear'>, () => Promise<BotRegistry>> = {
   forms: () => import('./forms').then((m) => m.FORMS),
@@ -20,6 +20,7 @@ const LOADERS: Record<Exclude<GroupId, 'gear'>, () => Promise<BotRegistry>> = {
   cosmic: () => import('./chassisCosmic').then((m) => m.COSMIC),
   tribute: () => import('./chassisTribute').then((m) => m.TRIBUTE),
   event: () => import('./chassisEvent').then((m) => m.EVENT),
+  secret: () => import('./chassisSecret').then((m) => m.SECRET),
 };
 
 const loaded = new Map<string, BotRegistry>();

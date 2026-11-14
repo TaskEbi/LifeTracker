@@ -9,7 +9,7 @@ export type Reveal =
   | { kind: 'chest'; tier: ChestTier; gain: Bag }
   | { kind: 'chests'; count: number; gain: Bag }
   | { kind: 'spin'; res: SpinResult }
-  | { kind: 'loot'; art: 'bag' | 'stamp' | 'set' | 'bingo' | 'fish'; title: string; line?: string; gain: Bag };
+  | { kind: 'loot'; art: 'bag' | 'stamp' | 'set' | 'bingo' | 'fish' | 'mastery'; title: string; line?: string; gain: Bag };
 
 export const revealStore = createStore<{ reveal: Reveal | null }>({ reveal: null });
 export const showReveal = (reveal: Reveal) => revealStore.set({ reveal });

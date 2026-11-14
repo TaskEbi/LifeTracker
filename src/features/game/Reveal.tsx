@@ -179,8 +179,8 @@ function SpinReveal({ res }: { res: Extract<Reveal, { kind: 'spin' }>['res'] }) 
   );
 }
 
-const LOOT_COLOR = { bag: '#ff4d6d', stamp: '#ffc23d', set: '#21e6ff', bingo: '#ffe14d', fish: '#4dd6ff' } as const;
-const LOOT_SEAL = { stamp: '満', set: '揃', bingo: '当', fish: '魚' } as const;
+const LOOT_COLOR = { bag: '#ff4d6d', stamp: '#ffc23d', set: '#21e6ff', bingo: '#ffe14d', fish: '#4dd6ff', mastery: '#ff9f1c' } as const;
+const LOOT_SEAL = { stamp: '満', set: '揃', bingo: '当', fish: '魚', mastery: '極' } as const;
 
 /** A lucky bag tearing open, a stamp card handed in, a set completed. */
 function LootReveal({ art, title, line, gain, okRef }: { art: keyof typeof LOOT_COLOR; title: string; line?: string; gain: Bag; okRef: React.RefObject<HTMLButtonElement | null> }) {

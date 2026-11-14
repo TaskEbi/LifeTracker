@@ -59,7 +59,7 @@ export interface Bag {
 
 // ─── the robot: chassis ─────────────────────────────────────────────────────
 
-export type ChassisGroup = 'folklore' | 'toys' | 'tribute' | 'cosmic' | 'event';
+export type ChassisGroup = 'folklore' | 'toys' | 'tribute' | 'cosmic' | 'event' | 'secret';
 
 export interface Chassis {
   id: string;
@@ -81,12 +81,15 @@ export interface Chassis {
   event?: string;
   /** Materials a Mk costs: the first two carry the weight. */
   mats?: SectionId[];
+  /** A hidden body: never sold. Meeting its rule (mastery.ts) builds Mk I for free. */
+  unlock?: string;
 }
 
-const F = (id: string, name: string, kanji: string, rarity: Rarity, c: string, c2: string, blurb: string, mk: [string, string], mats: SectionId[], level?: number): Chassis => ({ id, name, kanji, group: 'folklore', rarity, c, c2, blurb, mk, mats, level });
+const F =(id: string, name: string, kanji: string, rarity: Rarity, c: string, c2: string, blurb: string, mk: [string, string], mats: SectionId[], level?: number): Chassis => ({ id, name, kanji, group: 'folklore', rarity, c, c2, blurb, mk, mats, level });
 const T = (id: string, name: string, kanji: string, rarity: Rarity, c: string, c2: string, blurb: string, mk: [string, string], mats: SectionId[], level?: number): Chassis => ({ id, name, kanji, group: 'toys', rarity, c, c2, blurb, mk, mats, level });
 const S = (id: string, name: string, kanji: string, section: SectionId, c: string, c2: string, blurb: string, mk: [string, string]): Chassis => ({ id, name, kanji, group: 'tribute', rarity: 'epic', c, c2, blurb, mk, section, mats: [section] });
 const C = (id: string, name: string, kanji: string, rarity: Rarity, c: string, c2: string, blurb: string, mk: [string, string], mats: SectionId[], level: number): Chassis => ({ id, name, kanji, group: 'cosmic', rarity, c, c2, blurb, mk, mats, level });
+const X = (id: string, name: string, kanji: string, rarity: Rarity, c: string, c2: string, blurb: string, mk: [string, string], mats: SectionId[]): Chassis => ({ id, name, kanji, group: 'secret', rarity, c, c2, blurb, mk, mats, unlock: id });
 const E = (id: string, name: string, kanji: string, event: string, c: string, c2: string, blurb: string, mk: [string, string]): Chassis => ({ id, name, kanji, group: 'event', rarity: 'legendary', c, c2, blurb, mk, event });
 
 export const CHASSIS: Chassis[] = [
@@ -138,6 +141,18 @@ export const CHASSIS: Chassis[] = [
   E('orihime', 'Star Weaver', '織', 'tanabata', '#3d348b', '#f7b801', 'Weaves the Milky Way out of wishes on strips of paper.', ['A loom of light and tanzaku', 'A magpie bridge across the stars']),
   E('kingyo', 'Kingyo Matsuri', '祭', 'natsu', '#ff4d6d', '#fff0f3', 'A festival goldfish in a bag, wearing a happi coat.', ['Paper scoop and a fan', 'Fireworks and a taiko drum']),
   E('hyakki', 'Night Parade', '百', 'hyakki', '#ff7b00', '#9d4edd', 'A jack-o\'-lantern at the head of a hundred demons.', ['Bats and a witch\'s hat', 'A parade of ghost flames']),
+
+  X('kitsune', 'Kitsune Mech', '狐', 'epic', '#f08a24', '#fff4e0', 'The tanuki\'s old rival. Grows a tail for every hundred years, or every Mk.', ['Three tails and a fox-fire', 'Nine tails and a shrine-gate crest'], ['violin', 'chess']),
+  X('hoo', 'Hō-ō', '鳳', 'legendary', '#e0402c', '#ffd23f', 'The phoenix that only lands where a long streak has been.', ['Tail plumes of flame', 'Burning wings and a rebirth halo'], ['sleep', 'sports']),
+  X('niwatori', 'Niwatori', '鶏', 'rare', '#f4f1ea', '#e63946', 'A rooster with an alarm-clock heart. Wakes up early, and only early.', ['Twin bells on its head', 'A rising sun behind it'], ['sleep', 'study']),
+  X('nue', 'Nue', '鵺', 'epic', '#6a4c93', '#ffca3a', 'Monkey face, tiger legs, snake tail: built from the spare parts of every body you own.', ['Stitched plates that don\'t match', 'A thundercloud overhead'], ['cabinet', 'coding']),
+  X('ashura', 'Ashura', '阿', 'legendary', '#b5179e', '#ffd166', 'Six arms, one for each thing you did today.', ['A tool in every hand', 'A ring of fire behind'], ['gym', 'study']),
+  X('shashin', 'Shashin', '写', 'rare', '#2b2d42', '#ef233c', 'A folding camera with a bellows neck. Never misses a day.', ['A flash bulb on a stalk', 'A strip of film that never ends'], ['cabinet', 'reading']),
+  X('nagareboshi', 'Nagareboshi', '流', 'epic', '#4361ee', '#fff3b0', 'A shooting star that landed on a wish you kept.', ['A longer, brighter tail', 'Little stars orbiting it'], ['future', 'maths']),
+  X('namazu', 'Namazu', '鯰', 'epic', '#4a5759', '#b8f2e6', 'The giant catfish under the islands. When it wriggles, bosses fall over.', ['A keystone on its back', 'Shockwave rings'], ['gym', 'sports']),
+  X('chagama', 'Bunbuku Chagama', '茶', 'epic', '#7a5c3e', '#f2c078', 'A tea kettle that is also a tanuki. Found in the rubble when the Works came down.', ['Steam from the spout', 'A parasol for the tightrope'], ['cabinet', 'gym']),
+  X('medetai', 'Medetai', '鯛', 'rare', '#ff5d73', '#ffe066', 'A lucky sea bream on legs. Every catch is a celebration.', ['A fishing rod and a float', 'A festival banner'], ['sports', 'screen']),
+  X('kirin', 'Kirin', '麒', 'mythic', '#ffd60a', '#06d6a0', 'Appears only to those who have truly mastered something. Walks without bending the grass.', ['A cloud mane', 'Hooves of flame and a halo'], ['maths', 'violin']),
 ];
 
 export const chassisById = (id: string) => CHASSIS.find((x) => x.id === id);
@@ -325,7 +340,135 @@ export interface Title extends Gear {
   set?: string;
   /** Earned in the Arcade (arcade.ts), never sold. */
   arcade?: boolean;
+  /** Earned by mastering a body (mastery.ts): its id, or '*' for the hall's own titles. Never sold. */
+  mastery?: string;
 }
+
+/** Each body's title, for reaching Gold III mastery with it (mastery.ts). */
+export const MASTERY_TITLES: Record<string, string> = {
+  tanuki: 'Master of Bad Repairs',
+  daruma: 'Seven Falls, Eight Rises',
+  kappa: 'Keeper of the Dish',
+  maneki: 'Beckoner of Fortune',
+  kasa: 'Hundred-Year Umbrella',
+  chochin: 'Light in the Alley',
+  karakuri: 'Clockwork Host',
+  koi: 'Climbed the Waterfall',
+  tengu: 'Mountain Wind',
+  komainu: 'Ah and Un',
+  tin: 'Wind-up Champion',
+  pocket: 'Four Shades of Green',
+  capsule: 'Fresh from the Machine',
+  boombox: 'Side B Forever',
+  vending: 'Hot and Cold Running',
+  sprite: 'Eight Bits of Honour',
+  arcade: 'High Score Holder',
+  maestro: 'First Chair',
+  compiler: 'Zero Warnings',
+  pacer: 'Negative Split',
+  ironclad: 'Never Skips Leg Day',
+  scholar: 'Full Marks',
+  knight: 'Always One Move Ahead',
+  dreamer: 'Eight Hours, Every Night',
+  monk: 'Still Water',
+  curator: 'Keeper of Curiosities',
+  conductor: 'Right On Time',
+  bookworm: 'Read Them All',
+  euclid: 'Proved It',
+  origami: 'A Thousand Cranes',
+  bonsai: 'Patient Gardener',
+  jelly: 'Light of the Deep',
+  saucer: 'Took Me to Their Leader',
+  crystal: 'Flawless',
+  orrery: 'Mover of Heavens',
+  tesla: 'Live Wire',
+  kodama: 'Spirit of the Maples',
+  yukidaruma: 'Never Melts',
+  setsubunoni: 'Beans Bounce Off',
+  sakurei: 'Seven Days of Blossom',
+  teruteru: 'Bringer of Dry Days',
+  orihime: 'Weaver of Wishes',
+  kingyo: 'Scooped at Last',
+  hyakki: 'Leader of the Hundred',
+  kitsune: 'Nine Tails',
+  hoo: 'Rises from the Ashes',
+  niwatori: 'First Up',
+  nue: 'Made of Everything',
+  ashura: 'Six Arms, Six Sections',
+  shashin: 'Every Day a Picture',
+  nagareboshi: 'Wish Granted',
+  namazu: 'Shakes the Earth',
+  chagama: 'Lucky Kettle',
+  medetai: 'Something to Celebrate',
+  kirin: 'Beyond Mastery',
+};
+
+/** Each body's battle cry, for reaching Silver III mastery with it: it says this in the Hangar. */
+export const BODY_LINES: Record<string, string> = {
+  tanuki: 'If it ain\'t broke, I can fix that.',
+  daruma: 'Knock me down. Go on. I\'ll wait.',
+  kappa: 'Bow politely. Not too low, I\'ll spill.',
+  maneki: 'Come in, come in. Bring coins.',
+  kasa: 'Forecast: me.',
+  chochin: 'Follow me. I know a shortcut. Probably.',
+  karakuri: 'Tea is served. Gears are showing.',
+  koi: 'Upstream is the only stream.',
+  tengu: 'Long nose, longer reach.',
+  komainu: 'One of us talks. One of us guards.',
+  tin: 'Turn the key. Watch me go.',
+  pocket: 'Press start. Then keep pressing.',
+  capsule: 'Twist the dial. Surprise!',
+  boombox: 'Turn it up. No, up.',
+  vending: 'Exact change only.',
+  sprite: 'Every square of me is brave.',
+  arcade: 'Insert coin. Insert courage.',
+  maestro: 'From the top. Again. With feeling.',
+  compiler: 'It compiles. Ship it.',
+  pacer: 'Pace yourself. Then don\'t.',
+  ironclad: 'One more rep.',
+  scholar: 'Show your working.',
+  knight: 'Check. And then mate.',
+  dreamer: 'Five more minutes.',
+  monk: 'Put the phone down. Breathe.',
+  curator: 'Every drawer has a story.',
+  conductor: 'All aboard for the future.',
+  bookworm: 'Just one more chapter.',
+  euclid: 'Let the triangle speak.',
+  origami: 'Fold. Fold again. Fly.',
+  bonsai: 'Grow slowly. Grow old.',
+  jelly: 'Down here, I\'m the sun.',
+  saucer: 'We come in peace. Mostly.',
+  crystal: 'Light goes in. Rainbows come out.',
+  orrery: 'Everything turns, eventually.',
+  tesla: 'Don\'t touch the hair.',
+  kodama: 'The forest heard you.',
+  yukidaruma: 'Cold hands, warm bucket.',
+  setsubunoni: 'Throw all the beans you like.',
+  sakurei: 'Look now. I won\'t be here long.',
+  teruteru: 'Tomorrow, sun. I promise.',
+  orihime: 'Write it down. I\'ll weave it in.',
+  kingyo: 'The paper always breaks. Not this time.',
+  hyakki: 'Fall in, demons. We march at dusk.',
+  kitsune: 'Who said I was a tanuki?',
+  hoo: 'Every streak starts again from one.',
+  niwatori: 'Kokekokkō! Up you get.',
+  nue: 'Monkey face, tiger paws, all mine.',
+  ashura: 'Why do one thing when you have six hands?',
+  shashin: 'Say cheese. Say it every day.',
+  nagareboshi: 'Make a wish. Then make it happen.',
+  namazu: 'Bosses tremble when I wiggle.',
+  chagama: 'Tea? I\'m also a tanuki. Don\'t ask.',
+  medetai: 'Medetai! That\'s a good one.',
+  kirin: 'I only appear for the truly devoted.',
+};
+
+/** The mastery hall's own titles, for mastering several bodies (mastery.ts). */
+export const HALL_TITLES: Title[] = [
+  { id: 'm_tour', name: 'Well Travelled', rarity: 'rare', mastery: '*' },
+  { id: 'm_first', name: 'Mastered One', rarity: 'epic', mastery: '*' },
+  { id: 'm_shape', name: 'Shapeshifter', rarity: 'legendary', mastery: '*' },
+  { id: 'm_faces', name: 'A Thousand Faces', rarity: 'mythic', mastery: '*' },
+];
 
 export const TITLES: Title[] = [
   { id: 'rookie', name: 'Fresh out of the box', rarity: 'common' },
@@ -381,10 +524,12 @@ export const TITLES: Title[] = [
   { id: 'tappedout', name: 'Tapped Out', rarity: 'epic', works: true },
   { id: 'revolution', name: 'Industrial Revolutionary', rarity: 'legendary', works: true },
   { id: 'perpetual', name: 'Perpetual Motion', rarity: 'mythic', works: true },
+  ...Object.entries(MASTERY_TITLES).map(([body, name]): Title => ({ id: `m_${body}`, name, rarity: body === 'kirin' ? 'mythic' : 'epic', mastery: body })),
+  ...HALL_TITLES,
 ];
 
 /** Things the shop and the capsule machine may hand out: not event-only, earned or set titles, or the Works' own. */
-export const sellable = (g: Gear & Partial<Title>) => !g.event && !g.section && !g.level && !g.set && !g.arcade && !g.works;
+export const sellable = (g: Gear & Partial<Title>) => !g.event && !g.section && !g.level && !g.set && !g.arcade && !g.works && !g.mastery;
 
 export type CosmeticKind = 'paint' | 'hat' | 'pet' | 'aura' | 'title';
 export const cosmeticLists: Record<CosmeticKind, readonly (Gear | Paint | Title)[]> = { paint: PAINTS, hat: HATS, pet: PETS, aura: AURAS, title: TITLES };
