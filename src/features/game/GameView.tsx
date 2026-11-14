@@ -2,7 +2,7 @@
  * 格納庫, the Hangar: where the robot lives, and where everything you do turns into something to spend.
  * Its look is an arcade in Akihabara at night. Nothing here earns XP unless it says so.
  */
-import { useMemo, useState, type CSSProperties } from 'react';
+import { lazy, Suspense, useMemo, useState, type CSSProperties } from 'react';
 import { ChannelBar } from '../../app/Shell';
 import { navigate, useRoute } from '../../app/router';
 import { useProgress } from '../../data/lt';
@@ -29,12 +29,17 @@ import { WorkshopTab } from './Workshop';
 import { ArcadeTab } from './Arcade';
 import { useArcade } from './arcadeStore';
 import { arcadeWaiting } from '../../domain/game/arcade';
+import { useWorksGlance } from './worksStore';
 import './game.css';
+
+/** The Works is a game of its own, so it loads when its tab is opened. */
+const WorksTab = lazy(() => import('./Works'));
 
 const TABS = [
   { id: '', label: 'Hangar', kanji: '機' },
   { id: 'shop', label: 'Shop', kanji: '店' },
   { id: 'arcade', label: 'Arcade', kanji: '遊' },
+  { id: 'works', label: 'Works', kanji: '廠' },
   { id: 'capsule', label: 'Capsules', kanji: '蛋' },
   { id: 'workshop', label: 'Workshop', kanji: '工' },
   { id: 'events', label: 'Events', kanji: '祭' },
@@ -49,6 +54,7 @@ export function GameView() {
   const run = eventOn(g.today);
   const reveal = useStore(revealStore, (s) => s.reveal);
   const waiting = arcadeWaiting(useArcade());
+  const works = useWorksGlance();
   return (
     <div className="gm">
       <ChannelBar current="hangar" />
@@ -78,10 +84,11 @@ export function GameView() {
             <b>{t.label}</b>
             {t.id === '' && w.chests.length > 0 && <i className="gm-tab__n">{w.chests.length}</i>}
             {t.id === 'arcade' && waiting > 0 && <i className="gm-tab__n">{waiting}</i>}
+            {t.id === 'works' && tab !== 'works' && works.started && (works.crate || works.waiting >= 1) && <i className="gm-tab__n">!</i>}
           </button>
         ))}
       </nav>
-      {tab === 'shop' ? <ShopTab /> : tab === 'arcade' ? <ArcadeTab /> : tab === 'capsule' ? <CapsuleTab /> : tab === 'workshop' ? <WorkshopTab /> : tab === 'events' ? <EventsTab /> : tab === 'ledger' ? <LedgerTab /> : <Bay g={g} run={run} />}
+      {tab === 'shop' ? <ShopTab /> : tab === 'arcade' ? <ArcadeTab /> : tab === 'works' ? <Suspense fallback={<p className="i-note">Opening the factory…</p>}><WorksTab /></Suspense> : tab === 'capsule' ? <CapsuleTab /> : tab === 'workshop' ? <WorkshopTab /> : tab === 'events' ? <EventsTab /> : tab === 'ledger' ? <LedgerTab /> : <Bay g={g} run={run} />}
       {reveal && <RevealLayer reveal={reveal} onClose={closeReveal} />}
     </div>
   );
@@ -370,7 +377,7 @@ function Wardrobe({ kind, g, look, stage }: { kind: CosmeticKind; g: GameState; 
   return (
     <>
       <p className="i-note">
-        {mine.length} of {all} {COSMETIC_NAME[kind].toLowerCase()}. More from the shop, chests and capsules.
+        {mine.length} of {all} {COSMETIC_NAME[kind].toLowerCase()}. More from the shop, chests, capsules and the Works.
       </p>
       <div className="gm-grid">
         <button type="button" className="gm-card" aria-pressed={!worn} onClick={() => setLoadout({ [kind]: null })}>

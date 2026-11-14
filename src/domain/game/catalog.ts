@@ -188,6 +188,8 @@ export interface Paint {
   /** A CSS effect on the whole robot. */
   fx?: 'neon' | 'chrome' | 'holo' | 'void' | 'gold' | 'glitch' | 'ink';
   event?: string;
+  /** Only sold at the Works' counter, for gold cogs (idle.ts). */
+  works?: boolean;
 }
 
 export const PAINTS: Paint[] = [
@@ -219,6 +221,12 @@ export const PAINTS: Paint[] = [
   { id: 'milkyway', name: 'Milky Way', rarity: 'epic', c: '#1e1b4b', c2: '#fde047', fx: 'neon', event: 'tanabata' },
   { id: 'firework', name: 'Hanabi', rarity: 'epic', c: '#e11d48', c2: '#38bdf8', fx: 'neon', event: 'natsu' },
   { id: 'pumpkin', name: 'Pumpkin Rot', rarity: 'epic', c: '#c2410c', c2: '#a855f7', event: 'hyakki' },
+  { id: 'machineoil', name: 'Machine Oil', rarity: 'common', c: '#1f2937', c2: '#f59e0b', works: true },
+  { id: 'brass', name: 'Brass Works', rarity: 'rare', c: '#a67c37', c2: '#ffe9a8', works: true },
+  { id: 'blueprint', name: 'Blueprint', rarity: 'rare', c: '#1d4ed8', c2: '#e0f2fe', works: true },
+  { id: 'hotrivet', name: 'Hot Rivet', rarity: 'epic', c: '#7c2d12', c2: '#fb923c', fx: 'neon', works: true },
+  { id: 'clockchrome', name: 'Clockwork Chrome', rarity: 'epic', c: '#78716c', c2: '#fef3c7', fx: 'chrome', works: true },
+  { id: 'molten', name: 'Molten Core', rarity: 'legendary', c: '#dc2626', c2: '#fde047', fx: 'gold', works: true },
 ];
 
 export interface Gear {
@@ -226,6 +234,8 @@ export interface Gear {
   name: string;
   rarity: Rarity;
   event?: string;
+  /** Only sold at the Works' counter, for gold cogs (idle.ts). */
+  works?: boolean;
 }
 
 export const HATS: Gear[] = [
@@ -253,6 +263,9 @@ export const HATS: Gear[] = [
   { id: 'tanzaku', name: 'Wish Strips', rarity: 'epic', event: 'tanabata' },
   { id: 'happi', name: 'Festival Band', rarity: 'epic', event: 'natsu' },
   { id: 'witch', name: 'Witch Hat', rarity: 'epic', event: 'hyakki' },
+  { id: 'hardhat', name: 'Hard Hat', rarity: 'rare', works: true },
+  { id: 'weldmask', name: 'Welding Mask', rarity: 'epic', works: true },
+  { id: 'cogcrown', name: 'Cog Crown', rarity: 'legendary', works: true },
 ];
 
 export const PETS: Gear[] = [
@@ -276,6 +289,8 @@ export const PETS: Gear[] = [
   { id: 'magpie', name: 'Bridge Magpie', rarity: 'epic', event: 'tanabata' },
   { id: 'hanabi', name: 'Pocket Firework', rarity: 'epic', event: 'natsu' },
   { id: 'ghost', name: 'Little Ghost', rarity: 'epic', event: 'hyakki' },
+  { id: 'sparebolt', name: 'Spare Bolt', rarity: 'common', works: true },
+  { id: 'windmouse', name: 'Wind-up Mouse', rarity: 'epic', works: true },
 ];
 
 export const AURAS: Gear[] = [
@@ -297,6 +312,8 @@ export const AURAS: Gear[] = [
   { id: 'stars', name: 'River of Stars', rarity: 'epic', event: 'tanabata' },
   { id: 'lanterns', name: 'Festival Lanterns', rarity: 'epic', event: 'natsu' },
   { id: 'flames', name: 'Ghost Flames', rarity: 'epic', event: 'hyakki' },
+  { id: 'sparks', name: 'Flying Sparks', rarity: 'epic', works: true },
+  { id: 'cogs', name: 'Turning Cogs', rarity: 'legendary', works: true },
 ];
 
 export interface Title extends Gear {
@@ -357,10 +374,17 @@ export const TITLES: Title[] = [
   { id: 'pondlord', name: 'Lord of the Pond', rarity: 'legendary', arcade: true },
   { id: 'bingo', name: 'Bingo Caller', rarity: 'epic', arcade: true },
   { id: 'sugoroku', name: 'Around the Board', rarity: 'epic', arcade: true },
+  { id: 'boltcounter', name: 'Bolt Counter', rarity: 'common', works: true },
+  { id: 'clockedin', name: 'Clocks In, Never Out', rarity: 'rare', works: true },
+  { id: 'foreman', name: 'Shop Foreman', rarity: 'rare', works: true },
+  { id: 'idlehands', name: 'Idle Hands', rarity: 'epic', works: true },
+  { id: 'tappedout', name: 'Tapped Out', rarity: 'epic', works: true },
+  { id: 'revolution', name: 'Industrial Revolutionary', rarity: 'legendary', works: true },
+  { id: 'perpetual', name: 'Perpetual Motion', rarity: 'mythic', works: true },
 ];
 
-/** Things the shop and the capsule machine may hand out: not event-only, earned or set titles. */
-export const sellable = (g: Gear & Partial<Title>) => !g.event && !g.section && !g.level && !g.set && !g.arcade;
+/** Things the shop and the capsule machine may hand out: not event-only, earned or set titles, or the Works' own. */
+export const sellable = (g: Gear & Partial<Title>) => !g.event && !g.section && !g.level && !g.set && !g.arcade && !g.works;
 
 export type CosmeticKind = 'paint' | 'hat' | 'pet' | 'aura' | 'title';
 export const cosmeticLists: Record<CosmeticKind, readonly (Gear | Paint | Title)[]> = { paint: PAINTS, hat: HATS, pet: PETS, aura: AURAS, title: TITLES };

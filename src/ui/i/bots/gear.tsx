@@ -684,6 +684,53 @@ export const HAT_ART: Record<string, HatArt> = {
       </At>
     </g>
   ),
+
+  /* ── the Works' counter (bought with gold cogs) ── */
+
+  hardhat: ({ uid }) => (
+    <g>
+      <defs>
+        <Lin id={`${uid}h`} s={[[0, '#fde047'], [1, '#f59e0b']]} />
+      </defs>
+      <path d="M-27 2C-27 -30 27 -30 27 2Z" fill={`url(#${uid}h)`} {...ink()} />
+      <path d="M-5 -21C-5 -27 5 -27 5 -21V2H-5Z" fill="#fef08a" {...ink(1.8)} />
+      <path d="M-34 2H36Q38 8 30 8H-30Q-37 8 -34 2Z" fill="#f59e0b" {...ink()} />
+      <path d="M-20 -8Q-17 -17 -10 -20" fill="none" stroke="#fff" strokeWidth="2.4" strokeLinecap="round" opacity=".6" />
+    </g>
+  ),
+
+  weldmask: ({ uid, still }) => (
+    <g>
+      <defs>
+        <Lin id={`${uid}w`} s={[[0, '#67e8f9'], [1, '#1d4ed8']]} />
+      </defs>
+      <path d="M-24 -3L-27 -30Q0 -45 27 -30L24 -3Q0 -9 -24 -3Z" fill="#57534e" {...ink()} />
+      <path d="M-30 5Q0 -1 30 5L29 -4Q0 -10 -29 -4Z" fill="#292524" {...ink(2)} />
+      <rect x="-15" y="-30" width="30" height="13" rx="2.5" fill={`url(#${uid}w)`} {...ink(2)} />
+      <path d="M-11 -20L-5 -27M-4 -20L0 -25" fill="none" stroke="#fff" strokeWidth="1.8" strokeLinecap="round" opacity=".7" />
+      <circle cx="-27" cy="0" r="2.6" fill="#a8a29e" {...ink(1.2)} />
+      <circle cx="27" cy="0" r="2.6" fill="#a8a29e" {...ink(1.2)} />
+      <Glint x={11} y={-27} R={5} still={still} />
+    </g>
+  ),
+
+  cogcrown: ({ uid, still }) => (
+    <g>
+      <defs>
+        <Lin id={`${uid}g`} to={[1, 0]} s={GOLD} />
+      </defs>
+      <path d="M-28 2V-14H-22V-22H-14V-14H-4V-24H4V-14H14V-22H22V-14H28V2Q0 7 -28 2Z" fill={`url(#${uid}g)`} {...ink()} />
+      <path d="M-28 -4Q0 1 28 -4" fill="none" {...ink(1.4)} />
+      <At x={0} y={-35}>
+        <Wheel still={still} r={9} d={6}>
+          <path d={cogPath(8, 9, 6.6)} fill={`url(#${uid}g)`} {...ink(1.6)} />
+          <circle r="2.6" fill="#7c2d12" {...ink(1.2)} />
+        </Wheel>
+      </At>
+      <Gem x={0} y={-7} r={5} col="#ef4444" />
+      <Glint x={-18} y={-19} R={5} still={still} t={1} />
+    </g>
+  ),
 };
 
 /* ── companions ──────────────────────────────────────────────────────────── */
@@ -1119,6 +1166,36 @@ export const PET_ART: Record<string, PetArt> = {
       <ellipse cy="5.6" rx="1.3" ry="1.7" fill={EYE} />
       <ellipse cx="-8" cy="4.4" rx="1.9" ry="1.1" fill="#fb7185" opacity=".7" />
       <ellipse cx="8" cy="4.4" rx="1.9" ry="1.1" fill="#fb7185" opacity=".7" />
+    </g>
+  ),
+
+  /* ── the Works' counter (bought with gold cogs) ── */
+
+  sparebolt: ({ still }) => (
+    <g {...fx(still, 'bg-float', { d: 3, dy: 3 })}>
+      <path d="M-4.6 0H4.6V13Q0 16.4 -4.6 13Z" fill="#94a3b8" {...ink(W)} />
+      <path d="M-4.6 4.6L4.6 2.6M-4.6 8.4L4.6 6.4M-4.6 12.2L4.6 10.2" fill="none" {...ink(1.1)} />
+      <path d="M-13 -6L-7 -14H7L13 -6L7 2H-7Z" fill="#cbd5e1" {...ink(W)} />
+      <path d="M-9 -10.6Q-6 -12.6 -2 -12.6" fill="none" stroke="#fff" strokeWidth="1.6" strokeLinecap="round" />
+      <Face y={-6.6} gap={4.4} />
+    </g>
+  ),
+
+  windmouse: ({ still }) => (
+    <g>
+      <At x={-4} y={-10}>
+        <Wheel still={still} r={6} d={2.4}>
+          <path d="M0 -6V6M-3.6 -6H3.6M-3.6 6H3.6" fill="none" stroke="#f59e0b" strokeWidth="2.6" strokeLinecap="round" />
+        </Wheel>
+      </At>
+      <path d="M-14 7Q-19.4 6 -18 -1" fill="none" {...ink(1.6)} />
+      <path d="M-14 9C-15 -3 -6 -8 2 -8C11 -8 16 0 15.4 9Q0 13 -14 9Z" fill="#d6d3d1" {...ink(W)} />
+      <circle cx="8.6" cy="-8" r="5" fill="#fda4af" {...ink(W)} />
+      <circle cx="8" cy="1" r="1.5" fill={EYE} />
+      <circle cx="15.2" cy="4.6" r="1.7" fill="#fb7185" stroke={EYE} strokeWidth=".6" />
+      <path d="M-9 3Q-4 6 2 4" fill="none" {...ink(1)} opacity=".5" />
+      <circle cx="-7" cy="11.8" r="2.8" fill="#44403c" stroke={FG} strokeWidth="1" />
+      <circle cx="7" cy="11.8" r="2.8" fill="#44403c" stroke={FG} strokeWidth="1" />
     </g>
   ),
 };
@@ -1667,4 +1744,56 @@ export const AURA_ART: Record<string, AuraArt> = {
       })}
     </g>
   ),
+
+  /* ── the Works' counter (bought with gold cogs) ── */
+
+  sparks: ({ uid, still }) => (
+    <g>
+      <defs>
+        <Rad id={`${uid}k`} at={[100, 186, 96]} s={[[0, '#fbbf24', 0.45], [0.6, '#f97316', 0.14], [1, '#f97316', 0]]} />
+      </defs>
+      <circle cx="100" cy="186" r="96" fill={`url(#${uid}k)`} />
+      {rim(16, 70, 56, 94).map(({ x, y, i }) => (
+        <At key={i} x={x} y={y} rot={i * 47}>
+          <g {...fx(still, 'bg-drift', { d: 1.6 + (i % 5) * 0.5, t: i * 0.37, dx: i % 2 ? 22 : -20, dy: -34, r: 90 })}>
+            <path d={sparkPath(i % 3 === 0 ? 6 : 4, 0.1)} fill={i % 2 ? '#fde047' : '#fff7ed'} stroke="#c2410c" strokeWidth=".8" strokeLinejoin="round" />
+          </g>
+        </At>
+      ))}
+    </g>
+  ),
+
+  cogs: ({ uid, still }) => (
+    <g>
+      <defs>
+        <Lin id={`${uid}q`} to={[1, 1]} s={GOLD} />
+      </defs>
+      {(
+        [
+          [34, 48, 22, 10, false],
+          [166, 58, 17, 8, true],
+          [26, 142, 15, 8, true],
+          [172, 146, 24, 10, false],
+          [100, 22, 12, 6, true],
+        ] as [number, number, number, number, boolean][]
+      ).map(([x, y, R, n, rev], i) => (
+        <At key={i} x={x} y={y}>
+          <Wheel still={still} r={R} d={10 + i * 2} rev={rev}>
+            <path d={cogPath(n, R, R * 0.76)} fill={i % 2 ? '#94a3b8' : `url(#${uid}q)`} {...ink(1.8)} />
+            <circle r={n2(R * 0.34)} fill="var(--surf)" {...ink(1.4)} />
+          </Wheel>
+        </At>
+      ))}
+    </g>
+  ),
 };
+
+/** A square-toothed cog round the origin: `n` teeth out to `R`, the rim at `r`. */
+function cogPath(n: number, R: number, r: number): string {
+  const step = 360 / n;
+  const pts = range(n).flatMap((i) => {
+    const a = i * step;
+    return [polar(r, a - step * 0.28), polar(R, a - step * 0.17), polar(R, a + step * 0.17), polar(r, a + step * 0.28)].map((q) => q.join(' '));
+  });
+  return `M${pts.join('L')}Z`;
+}

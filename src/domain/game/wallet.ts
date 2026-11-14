@@ -7,8 +7,9 @@
 import type { SectionId } from '../../data/types';
 import type { Bag, ChestTier, CosmeticKind, Mats, Rarity } from './catalog';
 import { chassisById, COSMETIC_NAME, cosmeticOf, MATS, upgradeById } from './catalog';
+import { FLOORS, GEAR_SKINS } from './idle';
 
-export type TxType = 'buy' | 'mk' | 'upgrade' | 'open' | 'spin' | 'claim' | 'use' | 'trade' | 'deliver' | 'roll' | 'cast';
+export type TxType = 'buy' | 'mk' | 'upgrade' | 'open' | 'spin' | 'claim' | 'use' | 'trade' | 'deliver' | 'roll' | 'cast' | 'works';
 
 export interface Tx {
   id: string;
@@ -184,6 +185,8 @@ export function itemName(item: string): string {
   const [kind, id, mk] = item.split(':');
   if (kind === 'chassis') return `${chassisById(id)?.name ?? id} Mk ${mk === '3' ? 'III' : mk === '2' ? 'II' : 'I'}`;
   if (kind === 'theme') return `${id} theme`;
+  if (kind === 'wgear') return GEAR_SKINS.find((x) => x.id === id)?.name ?? id;
+  if (kind === 'wfloor') return FLOORS.find((x) => x.id === id)?.name ?? id;
   const c = cosmeticOf(item);
   return c ? c.entry.name : item;
 }
@@ -192,6 +195,8 @@ export function itemKindName(item: string): string {
   const [kind] = item.split(':');
   if (kind === 'chassis') return 'Chassis';
   if (kind === 'theme') return 'Colour theme';
+  if (kind === 'wgear') return 'Works gear';
+  if (kind === 'wfloor') return 'Works floor';
   return COSMETIC_NAME[kind as CosmeticKind] ?? kind;
 }
 

@@ -163,8 +163,13 @@
 /* ─── tabs ─── */
 .gm-tabs {
   display: grid;
-  grid-template-columns: repeat(7, minmax(0, 1fr));
+  grid-template-columns: repeat(8, minmax(0, 1fr));
   gap: 4px;
+}
+@media (max-width: 560px) {
+  .gm-tabs {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
 }
 .gm-tab {
   position: relative;

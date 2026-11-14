@@ -188,7 +188,7 @@ test('hangar: the shop street stamps, ranks, haggles, delivers and opens after d
 
 test('hangar: every tab has one heading, named controls and no sideways scroll', async ({ page }) => {
   await seed(page);
-  for (const path of ['/hangar', '/hangar/shop', '/hangar/shop/requests', '/hangar/shop/night', '/hangar/shop/catalogue', '/hangar/capsule', '/hangar/workshop', '/hangar/events', '/hangar/ledger']) {
+  for (const path of ['/hangar', '/hangar/shop', '/hangar/shop/requests', '/hangar/shop/night', '/hangar/shop/catalogue', '/hangar/capsule', '/hangar/works', '/hangar/works/counter', '/hangar/workshop', '/hangar/events', '/hangar/ledger']) {
     await page.goto(path);
     await expect(page.locator('h1')).toHaveCount(1);
     const bad = await page.evaluate(() => {

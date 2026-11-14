@@ -462,3 +462,33 @@ Asked for: finish what was left (papers after 2021, the A2 notes), and add study
 - Logic in `src/domain/notes/tools.ts` (tested), screens in `src/features/notes/Tools.tsx`; the shared pieces of the notes page moved to `parts.tsx`.
 - Verified: 762 unit/DB tests (5 new for the tools), typecheck, production build, `notes.spec.ts`, the new `notes-tools.spec.ts` (the A2 switch and an A2 topic, covering definitions, a topic's deck with a miss that comes back, the end of a sitting into the Study sheet, reload, the decks, the formula cover, glossary search, the tips filter), `papers.spec.ts`, and the every-screen sweep with six new addresses, in WebKit at iPhone size. Screens checked at phone width. Not tried on a real iPhone.
 - The A2 content, like the AS content, was written from the specifications' topic lists and has not been checked line by line against the specification documents or a textbook.
+
+## M44 · Motion 動 (done)
+Asked for: a few high-quality 3D animations that use the app's UI and data, "it can be anything", then five more.
+- **Where:** `/motion` (and `/motion/<scene>`), a dark stage that fills the screen with its own type. Ways in: the rail, the channel strip, Home's More page and the command palette ("motion").
+- **Nine scenes**, all WebGL (three.js, loaded in the page's own chunk only when it opens), each with a caption that follows what is in focus and an "Open <section>" button:
+  - **Core 核**: 24,000–44,000 points hold the shape of the overall level, then pour into each section's kanji; a dial of the twelve sections turns underneath. Tap to change, move to stir.
+  - **Deck 札**: every section as a foil card on a ring, with reflections. Drag to spin, tap the front card to flip it to its numbers.
+  - **Year 年**: the last 53 weeks as a field of bars (one per day, coloured by the section that took most of it); the camera flies in from a year ago as they rise. Drag along the year, tap a day.
+  - **Fusion 融**: the last 7 days as ray-marched drops of liquid metal, sized by share of time, merging as they circle.
+  - **Orbit 軌**: the level as a sun, sections as planets (busiest closest, higher levels bigger, the highest ringed). Tap a planet to fly to it.
+  - **Ridges 峰**: one mountain range per section across 53 weeks, a peak for every busy week.
+  - **Prism 晶**: a twelve-sided crystal, a face per section, the kanji set inside the glass. Drag to roll; it settles on the nearest face.
+  - **Galaxy 星**: every day a cluster of stars on a spiral arm, a year ago at the core and this week at the rim. Tap a day.
+  - **Tunnel 門**: a flight through twelve gates, straight through each kanji. Move to steer, tap for speed.
+- **Data:** derived, nothing stored, no migration, no XP (`src/domain/motion/model.ts`, tested): section levels and time, a year of days, minutes per week per section. With fewer than five logged days the scenes use made-up numbers and the page says "Sample data".
+- **Code:** `src/features/motion/MotionPage.tsx` owns the renderer, the frame loop and the pointer; each scene is one file in `scenes/` behind the small contract in `stage.ts`. With reduced motion nothing auto-plays and drift is slowed. If WebGL can't start, the page says so.
+- `three` is a new dependency (the Motion chunk is about 160 KB gzipped and loads only when the page opens).
+- Verified: unit tests for the model, typecheck, `motion.spec.ts` in WebKit (opens from Home, all nine tabs, the address, reload, back), three addresses in the every-screen sweep. Every scene was rendered in headless Chromium (software WebGL) at phone and desktop size with sample data, and dragged and tapped, with no console errors. Not tried on a real iPhone or with real data; frame rate not measured (Fusion is the heaviest and draws at reduced resolution).
+
+## M45 · The Works 廠, a clicker in the Hangar (done)
+Asked for: a clicker / AFK game where you buy upgrades and it keeps going while you're away, with a lot of features, built into the app, and a shop in the game that sells cosmetics.
+- **Where:** a new Hangar tab, `/hangar/works` (rooms `/tune`, `/plans`, `/counter`, `/book`). Ways in: a door on Home's Arena page that says how many bolts are waiting, and the command palette ("the works", "clicker game", "cosmetics counter"). The Hangar's tabs are now two rows of four on a phone.
+- **The game:** turn the big gear for bolts (螺). Turning fast fills a heat bar (up to ×3); 5% of turns are perfect (×10). Twelve machines, from a Wind-up Mouse to a Time Loom, each 15% dearer than the last, bought ×1, ×10 or Max; the next two you haven't met are shown, the rest stay hidden. 97 upgrades for the run (each machine's Mk II–VII at 10, 25, 50, 100, 150 and 200 owned; turns, perfect turns, oil, catnip), with "Buy all you can afford".
+- **Away:** shut the app and the crew keeps going for up to 4 hours at 50% speed; opening it again says how long you were gone and what they made. Anything under 90 seconds is paid in full.
+- **Tied to real life (read from the records, never stored):** +15% for each section logged today (up to six), +1% per day of streak (up to 50), +1% per overall level. The daily crate of gold cogs doubles once something is logged that day.
+- **Lucky cat:** turns up every two to three minutes while the tab is open; catching it gives a lump of bolts, a frenzy (machines ×7 for 45 s) or tap fever (turns ×15 for 20 s), plus a gold cog for the first ten a day.
+- **Rebuild:** knock it down for blueprints (cube root of lifetime bolts, the first at a million), each +5% for good, and spend them on eight perks kept through every rebuild (longer and faster away time, a head start, an auto-turner, cheaper machines, more cats, a bigger crate).
+- **The counter (cosmetics):** gold cogs come from 47 milestones, the crate, the cat and rebuilds. They buy 20 robot cosmetics sold nowhere else (7 titles, 6 paints, 3 headgear, 2 companions, 2 auras, all drawn), which appear in the Hangar's wardrobe; 6 looks for the gear you turn; and 5 factory floors. Bolts never become Ryō or Tama, so the Hangar's economy is unchanged.
+- **Data:** one `gm_idle` row for the save and a `works` ledger row per purchase (see AGENTS.md). Saved a moment after anything changes, every 20 s while open, and on leaving. No migration, no XP.
+- Verified: 787 unit/DB tests (21 new in `idle.test.ts`), new `works.spec.ts` in WebKit at iPhone size (turn, buy, reload; two hours away; crate; cat; buying and wearing a title, a gear look; the ledger; a rebuild and a perk; every room's headings and widths). Screens checked at phone width. Not tried on a real iPhone, and the balance (how fast it grows over days) has only been reasoned about, not played through.

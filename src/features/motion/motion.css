@@ -1,0 +1,385 @@
+/* ── Motion 動 ────────────────────────────────────────────────────────────────
+   A dark stage that fills the screen, with its own quiet type so the scenes carry the colour.
+   Everything is scoped to .mo; the app's theme doesn't reach in. */
+
+/* the page slides in with a transform, which would anchor the fixed stage to it for a moment */
+.i-view:has(.mo) {
+  animation: none;
+}
+
+.mo {
+  --mo-bg: #050507;
+  --mo-fg: #f3f1ec;
+  --mo-dim: rgb(243 241 236 / 0.62);
+  --mo-faint: rgb(243 241 236 / 0.34);
+  --mo-line: rgb(255 255 255 / 0.14);
+  --mo-serif: 'Instrument Serif', 'Shippori Mincho', Georgia, serif;
+  --mo-mono: 'M PLUS 1 Code', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+  --mo-display: 'Dela Gothic One', 'Zen Kaku Gothic New', sans-serif;
+  --mo-pad: max(20px, env(safe-area-inset-left, 0px));
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  overflow: hidden;
+  background: var(--mo-bg);
+  color: var(--mo-fg);
+  font-family: 'Zen Kaku Gothic New', ui-sans-serif, system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  user-select: none;
+  -webkit-user-select: none;
+}
+@media (min-width: 900px) {
+  .mo {
+    left: 236px;
+    --mo-pad: 40px;
+  }
+}
+
+.mo-canvas,
+.mo-overlay,
+.mo-shade,
+.mo-grain {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+.mo-canvas {
+  display: block;
+  touch-action: none;
+  opacity: 0;
+  transition: opacity 0.2s linear;
+  cursor: grab;
+}
+.mo-canvas.is-in {
+  opacity: 1;
+  transition: opacity 0.9s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+.mo-canvas:active {
+  cursor: grabbing;
+}
+.mo-overlay,
+.mo-shade,
+.mo-grain {
+  pointer-events: none;
+}
+/* darker towards the edges and behind the words */
+.mo-shade {
+  background:
+    radial-gradient(120% 90% at 50% 42%, transparent 55%, rgb(0 0 0 / 0.55) 100%),
+    linear-gradient(to top, rgb(5 5 7 / 0.88) 0%, rgb(5 5 7 / 0.5) 22%, transparent 46%),
+    linear-gradient(to bottom, rgb(5 5 7 / 0.6) 0%, transparent 16%);
+}
+.mo-grain {
+  opacity: 0.09;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+}
+
+/* labels a scene pins to things in its world */
+.mo-label {
+  position: absolute;
+  left: 0;
+  top: 0;
+  font: 900 22px/1 'Zen Kaku Gothic New', sans-serif;
+  color: #fff;
+  text-shadow: 0 1px 12px rgb(0 0 0 / 0.55);
+  will-change: transform, opacity;
+  white-space: nowrap;
+}
+.mo-label small {
+  display: block;
+  margin-top: 5px;
+  font: 500 9px/1 var(--mo-mono);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  opacity: 0.8;
+  text-align: center;
+}
+
+/* ── top ── */
+.mo-top {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: calc(14px + env(safe-area-inset-top, 0px)) var(--mo-pad) 0;
+  pointer-events: none;
+}
+.mo-top > * {
+  pointer-events: auto;
+}
+.mo-back {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border: 1px solid var(--mo-line);
+  border-radius: 50%;
+  background: rgb(255 255 255 / 0.04);
+  color: var(--mo-fg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  cursor: pointer;
+  transition:
+    background 0.2s,
+    transform 0.2s;
+}
+.mo-back:hover {
+  background: rgb(255 255 255 / 0.1);
+  transform: translateX(-2px);
+}
+.mo-title {
+  margin: 0;
+  font: italic 400 26px/1 var(--mo-serif);
+  letter-spacing: 0.01em;
+}
+.mo-title span {
+  margin-left: 6px;
+  font: 800 15px/1 'Shippori Mincho', serif;
+  font-style: normal;
+  color: var(--mo-faint);
+  vertical-align: 3px;
+}
+.mo-sample {
+  margin-left: auto;
+  padding: 6px 10px 5px;
+  border: 1px solid var(--mo-line);
+  border-radius: 99px;
+  font: 500 10px/1 var(--mo-mono);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--mo-dim);
+  background: rgb(5 5 7 / 0.5);
+}
+
+/* ── the words beside the scene ── */
+.mo-hud {
+  position: absolute;
+  left: var(--mo-pad);
+  right: var(--mo-pad);
+  bottom: calc(132px + env(safe-area-inset-bottom, 0px));
+  max-width: 460px;
+  pointer-events: none;
+}
+.mo-hud > * {
+  margin: 0;
+  animation: mo-rise 0.7s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+.mo-hud > :nth-child(2) {
+  animation-delay: 0.05s;
+}
+.mo-hud > :nth-child(3) {
+  animation-delay: 0.1s;
+}
+.mo-hud > :nth-child(4) {
+  animation-delay: 0.16s;
+}
+.mo-hud > :nth-child(5) {
+  animation-delay: 0.22s;
+}
+@keyframes mo-rise {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+    filter: blur(6px);
+  }
+}
+.mo-kicker {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font: 500 11px/1 var(--mo-mono);
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--mo-c);
+}
+.mo-kicker::before {
+  content: '';
+  width: 22px;
+  height: 1px;
+  background: currentColor;
+}
+.mo-name {
+  margin-top: 10px !important;
+  font: 400 clamp(30px, 6.4vw, 44px) / 1 var(--mo-serif);
+  letter-spacing: -0.01em;
+}
+.mo-value {
+  margin-top: 2px !important;
+  font: 400 clamp(52px, 13vw, 92px) / 0.98 var(--mo-display);
+  letter-spacing: -0.02em;
+  color: var(--mo-c);
+  text-shadow: 0 0 44px color-mix(in srgb, var(--mo-c) 45%, transparent);
+  font-variant-numeric: tabular-nums;
+}
+.mo-sub {
+  margin-top: 10px !important;
+  font-size: 13.5px;
+  line-height: 1.45;
+  color: var(--mo-dim);
+  text-wrap: pretty;
+}
+.mo-open {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 14px !important;
+  padding: 10px 16px 9px;
+  border: 1px solid color-mix(in srgb, var(--mo-c) 55%, transparent);
+  border-radius: 99px;
+  background: color-mix(in srgb, var(--mo-c) 12%, rgb(5 5 7 / 0.6));
+  color: var(--mo-fg);
+  font: 700 12px/1 'Zen Kaku Gothic New', sans-serif;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  pointer-events: auto;
+  cursor: pointer;
+  transition:
+    background 0.2s,
+    gap 0.2s;
+}
+.mo-open:hover {
+  background: color-mix(in srgb, var(--mo-c) 26%, rgb(5 5 7 / 0.6));
+  gap: 12px;
+}
+.mo-fail {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  margin: 0;
+  padding: 0 var(--mo-pad);
+  text-align: center;
+  color: var(--mo-dim);
+  line-height: 1.6;
+}
+
+/* ── scenes ── */
+.mo-foot {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 0 var(--mo-pad) calc(16px + env(safe-area-inset-bottom, 0px));
+  pointer-events: none;
+}
+.mo-hint {
+  margin: 0;
+  font: 500 10px/1 var(--mo-mono);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--mo-faint);
+}
+.mo-tabs {
+  display: flex;
+  max-width: 100%;
+  overflow-x: auto;
+  scrollbar-width: none;
+  gap: 2px;
+  padding: 4px;
+  border: 1px solid var(--mo-line);
+  border-radius: 99px;
+  background: rgb(14 14 18 / 0.62);
+  backdrop-filter: blur(18px) saturate(1.4);
+  -webkit-backdrop-filter: blur(18px) saturate(1.4);
+  pointer-events: auto;
+}
+.mo-tab {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 14px;
+  border: 0;
+  border-radius: 99px;
+  background: none;
+  color: var(--mo-dim);
+  cursor: pointer;
+  transition:
+    background 0.25s,
+    color 0.25s;
+}
+.mo-tab__k {
+  font: 800 17px/1 'Shippori Mincho', 'Zen Kaku Gothic New', serif;
+}
+.mo-tab__n {
+  font: 700 11px/1 'Zen Kaku Gothic New', sans-serif;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.mo-tab:hover {
+  color: var(--mo-fg);
+}
+.mo-tab[aria-current='page'] {
+  background: var(--mo-fg);
+  color: #08080a;
+}
+.mo-back:focus-visible,
+.mo-open:focus-visible,
+.mo-tab:focus-visible {
+  outline: 2px solid var(--mo-fg);
+  outline-offset: 2px;
+}
+.mo-tabs::-webkit-scrollbar {
+  display: none;
+}
+.mo-tab {
+  flex: none;
+}
+/* nine scenes: short of room, only the one showing spells out its name */
+@media (max-width: 1279px) {
+  .mo-tab {
+    padding: 9px 7px;
+  }
+  .mo-tab__k {
+    font-size: 16px;
+  }
+  .mo-tab:not([aria-current='page']) .mo-tab__n {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+  .mo-tab[aria-current='page'] {
+    padding: 9px 13px;
+  }
+}
+@media (min-width: 900px) {
+  /* the words sit bottom left, so on a wide screen the scene is drawn off-centre to the right of them */
+  .mo-canvas,
+  .mo-overlay {
+    left: 14%;
+  }
+  .mo-hud {
+    bottom: 104px;
+    max-width: 400px;
+  }
+  .mo-value {
+    font-size: 68px;
+  }
+  .mo-name {
+    font-size: 40px;
+  }
+  .mo-foot {
+    padding-bottom: 24px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .mo-hud > * {
+    animation: none;
+  }
+  .mo-canvas.is-in {
+    transition: none;
+  }
+}

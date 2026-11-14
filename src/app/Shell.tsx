@@ -88,6 +88,7 @@ function Rail({ current, rest }: { current: RouteName; rest: string[] }) {
       {item('bucket', 'Bucket list', SYSTEM_KANJI.bucket)}
       {item('hangar', 'Hangar', SYSTEM_KANJI.hangar)}
       {item('album', 'Album', SYSTEM_KANJI.album)}
+      {item('motion', 'Motion', SYSTEM_KANJI.motion)}
       <div className="i-rail__sep" />
       {item('calendar', 'Calendar', SYSTEM_KANJI.calendar)}
       {item('tasks', 'Tasks', SYSTEM_KANJI.tasks)}
@@ -142,6 +143,7 @@ const SYSTEM: { id: keyof typeof SYSTEM_KANJI; label: string }[] = [
   { id: 'hangar', label: 'Hangar' },
   { id: 'bucket', label: 'Bucket' },
   { id: 'album', label: 'Album' },
+  { id: 'motion', label: 'Motion' },
   { id: 'log', label: 'Activity' },
   { id: 'settings', label: 'Settings' },
 ];

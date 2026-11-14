@@ -18,6 +18,7 @@
     "fflate": "^0.8.3",
     "react": "^19.3.0",
     "react-dom": "^19.3.0",
+    "three": "^0.187.0",
     "topojson-client": "^3.1.0",
     "world-atlas": "^2.0.2"
   },
@@ -27,6 +28,7 @@
     "@types/d3-force": "^3.0.10",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
+    "@types/three": "^0.187.0",
     "@types/topojson-client": "^3.1.5",
     "@vitejs/plugin-react": "^6.1.2",
     "fake-indexeddb": "^6.0.0",

@@ -45,6 +45,8 @@ const txLine = (t: Tx): string => {
       const f = c?.fish ? fishById(c.fish) : null;
       return f ? `Pond: ${f.name}, ${c!.cm} cm` : 'Pond: it got away';
     }
+    case 'works':
+      return `Works counter: ${itemName(t.ref)}`;
   }
 };
 

@@ -1,5 +1,5 @@
 /** Route → screen. Each feature module owns its screen; the shell only looks them up here. */
-import type { ComponentType } from 'react';
+import { createElement, lazy, Suspense, type ComponentType } from 'react';
 import type { RouteName } from './router';
 import '../features/home/QuickSheet';
 import '../features/focus/FocusSheet';
@@ -30,6 +30,10 @@ import { MediaPage } from '../features/media/MediaPage';
 import { PlacesPage } from '../features/places/PlacesPage';
 import { StagePage } from '../features/stage/StagePage';
 
+/** Motion brings three.js with it, so it loads only when opened. */
+const MotionLazy = lazy(() => import('../features/motion/MotionPage'));
+const MotionView = () => createElement(Suspense, { fallback: createElement('p', { className: 'i-loading' }, 'MOTION · loading…') }, createElement(MotionLazy));
+
 export const sectionViews: Partial<Record<RouteName, ComponentType>> = {
   violin: ViolinChannel,
   calendar: CalendarView,
@@ -57,4 +61,5 @@ export const sectionViews: Partial<Record<RouteName, ComponentType>> = {
   media: MediaPage,
   places: PlacesPage,
   stage: StagePage,
+  motion: MotionView,
 };
