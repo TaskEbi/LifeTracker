@@ -7,6 +7,7 @@ LifeTracker is a personal tracker (React 19 + Vite + TypeScript PWA) that shares
 - Schema changes are additive migrations in `supabase/migrations/` (new `lt_` tables or nullable columns). Never drop, rename or tighten anything Curio Cabinet uses.
 - Migration ownership: from `20261025120000_lifetracker_core.sql` on, **this repository owns the schema**. The AnyStop repository must not add migrations while both apps run. The first nine files are copies of AnyStop's, byte for byte, so `supabase db push` sees them as already applied.
 - Production migration, replacing Curio Cabinet and deploying are separate release steps that need the user's review. Follow `docs/migration.md`.
+- Backups: `.github/workflows/backup.yml` dumps the `public` schema hourly, encrypted, kept 3 days (`docs/backups.md`). The repository is public: never print or upload anything from the database unencrypted.
 - Keep secrets out of the repo and the bundle: only the publishable (anon) key may appear in `VITE_` variables.
 
 ## One record per activity

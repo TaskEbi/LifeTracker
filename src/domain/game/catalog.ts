@@ -59,7 +59,7 @@ export interface Bag {
 
 // ─── the robot: chassis ─────────────────────────────────────────────────────
 
-export type ChassisGroup = 'folklore' | 'toys' | 'tribute' | 'cosmic' | 'event' | 'secret';
+export type ChassisGroup = 'folklore' | 'toys' | 'tribute' | 'cosmic' | 'samurai' | 'mecha' | 'guardians' | 'engines' | 'heavens' | 'event' | 'secret';
 
 export interface Chassis {
   id: string;
@@ -90,6 +90,13 @@ const T = (id: string, name: string, kanji: string, rarity: Rarity, c: string, c
 const S = (id: string, name: string, kanji: string, section: SectionId, c: string, c2: string, blurb: string, mk: [string, string]): Chassis => ({ id, name, kanji, group: 'tribute', rarity: 'epic', c, c2, blurb, mk, section, mats: [section] });
 const C = (id: string, name: string, kanji: string, rarity: Rarity, c: string, c2: string, blurb: string, mk: [string, string], mats: SectionId[], level: number): Chassis => ({ id, name, kanji, group: 'cosmic', rarity, c, c2, blurb, mk, mats, level });
 const X = (id: string, name: string, kanji: string, rarity: Rarity, c: string, c2: string, blurb: string, mk: [string, string], mats: SectionId[]): Chassis => ({ id, name, kanji, group: 'secret', rarity, c, c2, blurb, mk, mats, unlock: id });
+/** The detailed bodies of M53: five groups of six, each sold from an overall level. */
+const G = (group: ChassisGroup) => (id: string, name: string, kanji: string, rarity: Rarity, c: string, c2: string, blurb: string, mk: [string, string], mats: SectionId[], level: number): Chassis => ({ id, name, kanji, group, rarity, c, c2, blurb, mk, mats, level });
+const SM = G('samurai');
+const MC = G('mecha');
+const GD = G('guardians');
+const EN = G('engines');
+const HV = G('heavens');
 const E = (id: string, name: string, kanji: string, event: string, c: string, c2: string, blurb: string, mk: [string, string]): Chassis => ({ id, name, kanji, group: 'event', rarity: 'legendary', c, c2, blurb, mk, event });
 
 export const CHASSIS: Chassis[] = [
@@ -132,6 +139,41 @@ export const CHASSIS: Chassis[] = [
   C('crystal', 'Crystal Golem', '晶', 'legendary', '#4361ee', '#90e0ef', 'Faceted all the way through. Light comes out differently than it went in.', ['Floating shards', 'A crown of prisms and rainbow refraction'], ['maths', 'gym'], 45),
   C('orrery', 'The Orrery', '儀', 'legendary', '#b08968', '#ffd166', 'A brass model of the heavens, with a sun in its chest.', ['Three planets on arms', 'Saturn and a star map'], ['maths', 'reading'], 60),
   C('tesla', 'Tesla Coil', '雷', 'mythic', '#3a86ff', '#ffbe0b', 'A column of copper rings holding a live arc for a head.', ['Arcs between its hands', 'Ball lightning and a plasma globe'], ['coding', 'maths'], 80),
+
+  SM('oyoroi', 'Ō-yoroi General', '将', 'rare', '#9d1c24', '#e8c372', 'Laced lamellar armour, a crescent maedate and a war fan. Every plate is tied by hand.', ['Sode shoulder guards and a war fan', 'A horo cape billowing and a clan banner on its back'], ['gym', 'chess'], 6),
+  SM('kage', 'Kage Shinobi', '影', 'epic', '#1c2333', '#c0303a', 'A ninja frame in matte black. You only see it when it wants you to.', ['A kusarigama chain and a scarf tail', 'Shadow clones flickering either side'], ['coding', 'chess'], 14),
+  SM('tomoe', 'Tomoe', '巴', 'epic', '#6b2d5c', '#f2d0a4', 'A mounted-archer frame with a naginata as long as a story.', ['A naginata with a curved blade', 'A quiver of hawk-fletched arrows and a mon on the chest'], ['sports', 'violin'], 20),
+  SM('sohei', 'Sōhei Monk', '僧', 'legendary', '#e8e2d0', '#5a3e85', 'A warrior monk in a white cowl, with prayer beads the size of cannonballs.', ['Giant prayer beads round its shoulders', 'A temple bell on its back and a ring of sutra light'], ['study', 'screen'], 34),
+  SM('shogun', 'Shōgun', '幕', 'legendary', '#2c2a2e', '#d9a520', 'The lord of every castle. Black lacquer, gold antlers, and a very large mood.', ['A golden antler crest and a jinbaori coat', 'A folding gold screen behind and two katana drawn'], ['gym', 'future'], 44),
+  SM('ronin47', 'The Last Rōnin', '浪', 'mythic', '#3b4a5a', '#e04f3a', 'Masterless, scarred, and still walking. Rain follows it from village to village.', ['A straw hat pulled low and a torn haori', 'Rain, lightning and a blade that glows red'], ['chess', 'sports'], 66),
+
+  MC('gattai', 'Gattai Prime', '合', 'rare', '#d72631', '#f5f5f5', 'Five machines that fit together into one. The jet is the head. The tank is the legs.', ['Visible docking joints and a lion on the chest', 'A wing crest and a combined-cannon fist'], ['sports', 'coding'], 8),
+  MC('sniper', 'Long Range', '狙', 'epic', '#3f5f3c', '#d9c27a', 'A grey-green real robot with a rifle longer than it is tall. Lies down, waits, never misses.', ['A shoulder radome and a camo cloak', 'Its rifle deployed, a scope glint and spent shells'], ['chess', 'maths'], 16),
+  MC('rocketfist', 'Rocket Fist', '拳', 'epic', '#2246a8', '#ffcc00', 'A seventies super robot whose fists fly off and come back. Shouts its attacks.', ['A rocket fist in flight with a flame trail', 'A breast fire beam and a horned crown'], ['gym', 'sports'], 24),
+  MC('sentai', 'Sentai Red', '戦', 'legendary', '#e11d2a', '#ffffff', 'A transformation suit with a visor, a belt buckle and a pose for every occasion.', ['A glowing transformation belt and a blaster', 'A five-colour explosion behind its pose'], ['sports', 'screen'], 38),
+  MC('kaijuhunter', 'Kaiju Breaker', '砕', 'legendary', '#4a4f57', '#ff7a00', 'Twenty storeys of armour built to punch monsters back into the sea.', ['A chain-sword arm', 'Its reactor chest open, and harbour cranes for scale'], ['gym', 'maths'], 48),
+  MC('zero', 'Unit Zero', '零', 'mythic', '#f2f2f4', '#7a4dff', 'The prototype nobody else can pilot. Its wings are made of light, and it remembers you.', ['Light wings and a halo array', 'Six floating funnels and a full-burst glow'], ['coding', 'future'], 70),
+
+  GD('genbu', 'Genbu', '玄', 'rare', '#2f4858', '#7fd4c1', 'The black tortoise of the north, with a snake for a tail and a mountain for a shell.', ['A serpent coiled round it', 'A mountain on its shell with a waterfall and a shrine'], ['sleep', 'reading'], 10),
+  GD('byakko', 'Byakko', '白', 'epic', '#f1f3f6', '#4a86e8', 'The white tiger of the west. Its stripes are written in an old script.', ['Wind-blade armour on its shoulders', 'A storm of autumn wind and a roar of light'], ['sports', 'gym'], 18),
+  GD('suzaku', 'Suzaku', '朱', 'epic', '#e8361e', '#ffd44f', 'The vermilion bird of the south. Hotter than the phoenix and twice as proud.', ['Long tail streamers', 'Wings of fire spread wide and a sun disc'], ['violin', 'study'], 26),
+  GD('seiryu', 'Seiryū', '青', 'legendary', '#1d6fa3', '#a8f0e0', 'The azure dragon of the east, coiled through a cloud, holding a pearl.', ['A longer coil and a wish pearl', 'Thunderclouds and rain streaming from its whiskers'], ['coding', 'maths'], 40),
+  GD('orochi', 'Yamata no Orochi', '蛇', 'legendary', '#4b5d23', '#d4302b', 'Eight heads, eight tails, eight barrels of sake and still thirsty.', ['Five heads awake', 'All eight heads, and a sword glinting in a tail'], ['chess', 'cabinet'], 50),
+  GD('kohryu', 'Kōryū', '黄', 'mythic', '#d4a017', '#fff3c4', 'The yellow dragon of the centre, above the other four. It does not need to roar.', ['Four guardian orbs circling it', 'A palace of clouds and a five-colour halo'], ['maths', 'study'], 75),
+
+  EN('d51', 'Steam Walker D51', '汽', 'rare', '#202326', '#c9302c', 'A steam locomotive that stood up. The boiler is its chest; the smokebox door is its face.', ['Driving-wheel shoulders and a whistle', 'A full head of steam and a coal-tender backpack'], ['sports', 'future'], 7),
+  EN('shinkansen', 'Shinkansen', '新', 'epic', '#f4f6f8', '#1a4fa0', 'A bullet-train nose for a head. 320 km/h, and on time to the second.', ['Pantograph horns and blue speed stripes', 'Rails beneath and a slipstream of light'], ['future', 'sports'], 15),
+  EN('tenshu', 'Castle Keep', '城', 'epic', '#ece6d6', '#3a5f45', 'A white castle keep with legs. Five storeys of plaster and a golden shachihoko on the roof.', ['Golden shachihoko on the ridge', 'Stone base walls and cherry trees in bloom'], ['cabinet', 'study'], 22),
+  EN('diver', 'Abyss Diver', '潜', 'legendary', '#b87333', '#4fd1c5', 'A brass deep-sea suit with twelve portholes and a lamp for a heart.', ['An air hose and a pressure-gauge chest', 'A lantern, bubbles and an anglerfish friend'], ['sleep', 'reading'], 36),
+  EN('clocktower', 'Clocktower', '刻', 'legendary', '#5b3a29', '#e9c46a', 'A tower clock that walks to wherever it is late. The pendulum is its tail.', ['An exposed gear train and a bell', 'Four faces turning and floating Roman numerals'], ['study', 'coding'], 46),
+  EN('reactor', 'Star Reactor', '炉', 'mythic', '#1b1f3b', '#3df5e0', 'A fusion core in a cage of magnets, held together by very good engineering.', ['Magnetic rings spinning', 'A miniature sun in its chest and plasma arcs'], ['maths', 'coding'], 72),
+
+  HV('usagi', 'Moon Rabbit', '兎', 'rare', '#f4f1fb', '#ff8fb1', 'A rabbit on the moon, pounding mochi with a mallet bigger than it is.', ['A wooden mallet and an usu mortar', 'A full moon behind and mochi floating up'], ['sleep', 'cabinet'], 9),
+  HV('fujin', 'Fūjin', '風', 'epic', '#3fae6a', '#e6f4ea', 'The wind god, with a bag of storms over his shoulders.', ['The wind bag puffed full', 'Gusts swirling and leaves torn from the trees'], ['sports', 'screen'], 17),
+  HV('raijin', 'Raijin', '鳴', 'epic', '#c62f2f', '#ffd400', 'The thunder god, inside a ring of drums. Hit one and the sky answers.', ['A ring of drums around it', 'Lightning between every drum, and storm clouds'], ['violin', 'gym'], 27),
+  HV('tennyo', 'Tennyo', '羽', 'legendary', '#8fb8ff', '#ffe1f0', 'A celestial maiden in a feather robe, playing a lute among the clouds.', ['A biwa lute and floating ribbons', 'A feather robe trailing, and lotus blooms'], ['violin', 'reading'], 42),
+  HV('ryujin', 'Ryūjin', '龍', 'legendary', '#0e6e6e', '#f2c14e', 'The dragon king of the sea, crowned, holding the tide jewels.', ['The tide jewels and a coral crown', 'The great wave behind and a palace under the sea'], ['sleep', 'maths'], 52),
+  HV('amaterasu', 'Amaterasu', '照', 'mythic', '#ff9f1c', '#fff7d6', 'The sun herself, stepping out of the cave. Everything gets brighter.', ['The mirror Yata no Kagami', 'A sun-disc halo and eight rays of dawn'], ['study', 'future'], 80),
 
   E('kodama', 'Kodama', '紅', 'momiji', '#d00000', '#ffba08', 'A forest spirit with a maple-leaf face, rattling its head.', ['A crown of red maple', 'Falling leaves and a shrine bell']),
   E('yukidaruma', 'Yuki-daruma', '雪', 'yuki', '#caf0f8', '#ff6b6b', 'A snow daruma in a bucket hat. Melts for nobody.', ['Scarf and a twig broom', 'A blizzard and an ice crown']),
@@ -390,6 +432,36 @@ export const MASTERY_TITLES: Record<string, string> = {
   orihime: 'Weaver of Wishes',
   kingyo: 'Scooped at Last',
   hyakki: 'Leader of the Hundred',
+  oyoroi: 'Tied by Hand',
+  kage: 'Never Seen',
+  tomoe: 'Worth a Thousand',
+  sohei: 'Mountain Temple',
+  shogun: 'Lord of Every Castle',
+  ronin47: 'Walks in the Rain',
+  gattai: 'Better Together',
+  sniper: 'One Shot',
+  rocketfist: 'Fists Come Back',
+  sentai: 'Five Colours',
+  kaijuhunter: 'Cancels the Apocalypse',
+  zero: 'Only Pilot',
+  genbu: 'Shell of the North',
+  byakko: 'Wind of the West',
+  suzaku: 'Fire of the South',
+  seiryu: 'Dragon of the East',
+  orochi: 'Eight Heads Thinking',
+  kohryu: 'Centre of All Things',
+  d51: 'Full Head of Steam',
+  shinkansen: 'To the Second',
+  tenshu: 'White Heron',
+  diver: 'Pressure Proof',
+  clocktower: 'Never Late Again',
+  reactor: 'Made a Star',
+  usagi: 'Pounder of Mochi',
+  fujin: 'Holds the Wind',
+  raijin: 'Answered by Thunder',
+  tennyo: 'Feather Robe',
+  ryujin: 'King Under the Sea',
+  amaterasu: 'Out of the Cave',
   kitsune: 'Nine Tails',
   hoo: 'Rises from the Ashes',
   niwatori: 'First Up',
@@ -449,6 +521,36 @@ export const BODY_LINES: Record<string, string> = {
   orihime: 'Write it down. I\'ll weave it in.',
   kingyo: 'The paper always breaks. Not this time.',
   hyakki: 'Fall in, demons. We march at dusk.',
+  oyoroi: 'Every plate tied. Every knot mine.',
+  kage: 'You didn\'t see me. Good.',
+  tomoe: 'Longer reach, cooler head.',
+  sohei: 'Pray first. Then swing the beads.',
+  shogun: 'Kneel. Or don\'t. I\'m very busy.',
+  ronin47: 'No master. Just the road.',
+  gattai: 'Five machines, one plan!',
+  sniper: 'Breathe out. Wait. Now.',
+  rocketfist: 'ROCKET... PUNCH!',
+  sentai: 'Henshin! Pose! Explosion!',
+  kaijuhunter: 'Back in the sea with you.',
+  zero: 'I remember every pilot. You\'re the one.',
+  genbu: 'Slow. Steady. Older than the hills.',
+  byakko: 'Listen to the wind. Then run.',
+  suzaku: 'The phoenix wishes it was this hot.',
+  seiryu: 'Clouds part when I pass.',
+  orochi: 'Eight heads say yes.',
+  kohryu: 'The centre holds.',
+  d51: 'Poooo! All aboard!',
+  shinkansen: 'Departing on time. Of course.',
+  tenshu: 'Five storeys, no stairs skipped.',
+  diver: 'Deeper. It\'s quieter down here.',
+  clocktower: 'Tick. Tock. You\'re on time.',
+  reactor: 'Contained. For now.',
+  usagi: 'Pettan, pettan. Mochi\'s up!',
+  fujin: 'Hold on to your hat.',
+  raijin: 'Drum once. The sky answers.',
+  tennyo: 'Play it again, softer.',
+  ryujin: 'The tide comes when I call.',
+  amaterasu: 'Out of the cave. Lights on.',
   kitsune: 'Who said I was a tanuki?',
   hoo: 'Every streak starts again from one.',
   niwatori: 'Kokekokkō! Up you get.',
@@ -524,7 +626,7 @@ export const TITLES: Title[] = [
   { id: 'tappedout', name: 'Tapped Out', rarity: 'epic', works: true },
   { id: 'revolution', name: 'Industrial Revolutionary', rarity: 'legendary', works: true },
   { id: 'perpetual', name: 'Perpetual Motion', rarity: 'mythic', works: true },
-  ...Object.entries(MASTERY_TITLES).map(([body, name]): Title => ({ id: `m_${body}`, name, rarity: body === 'kirin' ? 'mythic' : 'epic', mastery: body })),
+  ...Object.entries(MASTERY_TITLES).map(([body, name]): Title => ({ id: `m_${body}`, name, rarity: ['kirin', 'ronin47', 'zero', 'kohryu', 'reactor', 'amaterasu'].includes(body) ? 'mythic' : 'epic', mastery: body })),
   ...HALL_TITLES,
 ];
 
@@ -567,6 +669,8 @@ export interface Consumable {
 }
 
 export const SCROLL_XP = { scroll: 120, bigscroll: 500 } as const;
+/** XP an achievement's prize gives when it's claimed (rewards.ts), by tier. */
+export const ACH_XP = { bronze: 20, silver: 50, gold: 120, platinum: 300 } as const;
 export const TONIC = { pct: 0.5, cap: 120 } as const;
 export const BOMB_DMG = 150;
 

@@ -1,0 +1,73 @@
+# Hourly backup of the database (everything in the public schema: LifeTracker's and Curio Cabinet's
+# tables). Each run dumps it, encrypts it with BACKUP_PASSPHRASE and keeps it as a workflow artifact
+# for 3 days, after which GitHub deletes it. The repository is public, so nothing readable is ever
+# stored or printed: only the encrypted file. Read-only: it never writes to the database.
+# How to set it up and restore: docs/backups.md.
+name: Database backup
+
+on:
+  schedule:
+    - cron: '17 * * * *' # every hour, at :17 (on the hour is GitHub's busiest minute)
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: backup
+  cancel-in-progress: false
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check the secrets are set
+        id: check
+        env:
+          DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+          PASSPHRASE: ${{ secrets.BACKUP_PASSPHRASE }}
+        run: |
+          if [ -z "$DB_URL" ] || [ -z "$PASSPHRASE" ]; then
+            echo "::warning::Backups aren't set up yet: add SUPABASE_DB_URL and BACKUP_PASSPHRASE (docs/backups.md)."
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Install pg_dump 17
+        if: steps.check.outputs.ready == 'true'
+        run: |
+          sudo install -d /usr/share/postgresql-common/pgdg
+          sudo curl -fsSL -o /usr/share/postgresql-common/pgdg/apt.postgresql.org.asc https://www.postgresql.org/media/keys/ACCC4CF8.asc
+          echo "deb [signed-by=/usr/share/postgresql-common/pgdg/apt.postgresql.org.asc] https://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" | sudo tee /etc/apt/sources.list.d/pgdg.list > /dev/null
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq postgresql-client-17 > /dev/null
+
+      - name: Dump and encrypt
+        if: steps.check.outputs.ready == 'true'
+        id: dump
+        env:
+          DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+          PASSPHRASE: ${{ secrets.BACKUP_PASSPHRASE }}
+        run: |
+          set -euo pipefail
+          stamp=$(date -u +%Y-%m-%dT%H%MZ)
+          mkdir -p out
+          umask 077
+          /usr/lib/postgresql/17/bin/pg_dump "$DB_URL" --schema=public --format=custom --no-owner --no-privileges --file=/tmp/db.dump
+          gpg --batch --yes --quiet --pinentry-mode loopback --passphrase-fd 3 --symmetric --cipher-algo AES256 \
+            --output "out/lifetracker-$stamp.dump.gpg" /tmp/db.dump 3<<< "$PASSPHRASE"
+          shred -u /tmp/db.dump
+          echo "stamp=$stamp" >> "$GITHUB_OUTPUT"
+          echo "Backup $stamp: $(du -h out/*.gpg | cut -f1) encrypted."
+
+      - name: Keep for 3 days
+        if: steps.check.outputs.ready == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: db-${{ steps.dump.outputs.stamp }}
+          path: out/*.gpg
+          retention-days: 3
+          if-no-files-found: error
+          compression-level: 0

@@ -1,0 +1,167 @@
+/* Heavens chassis motion. Transform and opacity only; origins are in the art's 200 x 200 box. */
+.bhv-bob,
+.bhv-float,
+.bhv-sway,
+.bhv-sway-r,
+.bhv-spin,
+.bhv-spin-r,
+.bhv-fan,
+.bhv-pulse,
+.bhv-glow,
+.bhv-flash,
+.bhv-rise,
+.bhv-pound,
+.bhv-twitch,
+.bhv-leaf,
+.bhv-puff,
+.bhv-thump,
+.bhv-drift,
+.bhv-orbit,
+.bhv-ripple {
+  transform-box: view-box;
+}
+
+/* breathing idle */
+.bhv-bob { animation: bhv-bob 3.2s ease-in-out infinite; }
+@keyframes bhv-bob {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-2.5px); }
+}
+
+/* floating on a cloud */
+.bhv-float { animation: bhv-float 4.4s ease-in-out infinite; }
+@keyframes bhv-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-5px); }
+}
+
+/* cloth, ribbons, whiskers, hair */
+.bhv-sway { animation: bhv-sway 4s ease-in-out infinite; }
+.bhv-sway-r { animation: bhv-sway 4.6s ease-in-out infinite reverse; }
+@keyframes bhv-sway {
+  0%, 100% { transform: rotate(-3deg); }
+  50% { transform: rotate(3deg); }
+}
+
+.bhv-spin { animation: bhv-spin 40s linear infinite; }
+.bhv-spin-r { animation: bhv-spin 26s linear infinite reverse; }
+.bhv-fan { animation: bhv-spin 1.6s linear infinite; }
+@keyframes bhv-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* glowing parts */
+.bhv-pulse { animation: bhv-pulse 2.6s ease-in-out infinite; }
+@keyframes bhv-pulse {
+  0%, 100% { opacity: 0.55; }
+  50% { opacity: 1; }
+}
+.bhv-glow { animation: bhv-glow 3.6s ease-in-out infinite; }
+@keyframes bhv-glow {
+  0%, 100% { opacity: 0.8; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.04); }
+}
+
+/* lightning: dark most of the time, then a double flash */
+.bhv-flash { animation: bhv-flash 3.4s linear infinite; }
+@keyframes bhv-flash {
+  0%, 62%, 100% { opacity: 0; }
+  64%, 70% { opacity: 1; }
+  67% { opacity: 0.2; }
+  76% { opacity: 0; }
+}
+
+/* mochi and bubbles going up */
+.bhv-rise { animation: bhv-rise 5s ease-in-out infinite; }
+@keyframes bhv-rise {
+  0% { transform: translateY(8px); opacity: 0; }
+  20% { opacity: 1; }
+  80% { opacity: 1; }
+  100% { transform: translateY(-22px); opacity: 0; }
+}
+
+/* the mallet, lifted and brought down */
+.bhv-pound { animation: bhv-pound 2.4s ease-in-out infinite; }
+@keyframes bhv-pound {
+  0%, 100% { transform: rotate(0); }
+  45% { transform: rotate(-9deg); }
+  60% { transform: rotate(5deg); }
+  70% { transform: rotate(3deg); }
+}
+
+/* an ear twitch now and then */
+.bhv-twitch { animation: bhv-twitch 5s ease-in-out infinite; }
+@keyframes bhv-twitch {
+  0%, 70%, 100% { transform: rotate(0); }
+  75% { transform: rotate(-7deg); }
+  80% { transform: rotate(3deg); }
+  85% { transform: rotate(-4deg); }
+}
+
+/* leaves torn off and tumbling */
+.bhv-leaf { animation: bhv-leaf 3.8s ease-in-out infinite; }
+@keyframes bhv-leaf {
+  0%, 100% { transform: translate(0, 0) rotate(0); }
+  50% { transform: translate(6px, -5px) rotate(40deg); }
+}
+
+/* the wind bag, breathing in */
+.bhv-puff { animation: bhv-puff 3.2s ease-in-out infinite; }
+@keyframes bhv-puff {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.035); }
+}
+
+/* a drum hit */
+.bhv-thump { animation: bhv-thump 1.7s ease-out infinite; }
+@keyframes bhv-thump {
+  0%, 100% { transform: scale(1); }
+  8% { transform: scale(1.1); }
+  24% { transform: scale(1); }
+}
+
+.bhv-drift { animation: bhv-drift 6s ease-in-out infinite; }
+@keyframes bhv-drift {
+  0%, 100% { transform: translateX(0); }
+  50% { transform: translateX(5px); }
+}
+
+/* jewels circling the body */
+.bhv-orbit { animation: bhv-orbit 5s ease-in-out infinite; }
+@keyframes bhv-orbit {
+  0%, 100% { transform: translate(0, 0); }
+  25% { transform: translate(2px, -4px); }
+  50% { transform: translate(0, -6px); }
+  75% { transform: translate(-2px, -3px); }
+}
+
+/* the sea breathing */
+.bhv-ripple { animation: bhv-ripple 5.5s ease-in-out infinite; }
+@keyframes bhv-ripple {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(-2px, 1px) scale(1.015); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bhv-bob,
+  .bhv-float,
+  .bhv-sway,
+  .bhv-sway-r,
+  .bhv-spin,
+  .bhv-spin-r,
+  .bhv-fan,
+  .bhv-pulse,
+  .bhv-glow,
+  .bhv-flash,
+  .bhv-rise,
+  .bhv-pound,
+  .bhv-twitch,
+  .bhv-leaf,
+  .bhv-puff,
+  .bhv-thump,
+  .bhv-drift,
+  .bhv-orbit,
+  .bhv-ripple {
+    animation: none !important;
+  }
+}
