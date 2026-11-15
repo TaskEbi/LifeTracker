@@ -11,7 +11,7 @@ import type { PlansState } from '../plans/types';
 import { futureXp } from '../future/plan';
 import { readingXp } from '../reading/model';
 import { mathsXp } from '../maths/model';
-import { ACH_XP, SCROLL_XP, TONIC } from '../game/catalog';
+import { SCROLL_XP, TONIC } from '../game/catalog';
 import { bossEvents } from './boss';
 import { questEvents } from './quests';
 
@@ -61,7 +61,7 @@ export interface ProgressInput {
   readingGoal?: number;
   /** Live Maths records (contests, papers, problems); absent in old fixtures. */
   maths?: LtRecord[];
-  /** Hangar items used up (scrolls, tonics, bombs) and achievement prizes claimed (`ach:…` refs); absent in old fixtures. */
+  /** Hangar items used up (scrolls, tonics, bombs); absent in old fixtures. */
   usedItems?: UsedItem[];
 }
 
@@ -333,10 +333,6 @@ export function xpEvents(input: ProgressInput): XpEvent[] {
       const day = out.reduce((n, e) => (e.date === u.date && !e.key.startsWith('item:') ? n + e.xp : n), 0);
       const xp = Math.min(TONIC.cap, Math.round(day * TONIC.pct));
       if (xp) out.push({ key: `item:${u.id}`, date: u.date, section: 'quests', xp, reason: 'Spirit Tonic' });
-    } else if (u.item.startsWith('ach:')) {
-      // An achievement's prize, claimed in the Hangar: its XP comes from the tier in the ref.
-      const xp = ACH_XP[u.item.slice(u.item.lastIndexOf(':') + 1) as keyof typeof ACH_XP];
-      if (xp) out.push({ key: `item:${u.id}`, date: u.date, section: 'quests', xp, reason: 'Achievement prize' });
     }
   }
   // One award per key, whatever reaches us: a record that arrives twice still counts once.

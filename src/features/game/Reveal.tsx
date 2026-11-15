@@ -4,7 +4,6 @@ import { chassisById, CHESTS, RARITY, type Bag, type ChestTier } from '../../dom
 import { itemKindName, itemName, plus, DEFAULT_LOADOUT } from '../../domain/game/wallet';
 import { playStyle } from '../../ui/i/fx/celebrate';
 import { Robot } from '../../ui/i/bots/Robot';
-import { SKINS } from '../../domain/game/rewards';
 import { ItemThumb, lootLines, Rar } from './bits';
 import { ChestArt } from './GameView';
 import { showReveal, type Reveal } from './revealStore';
@@ -37,7 +36,7 @@ export function RevealLayer({ reveal, onClose }: { reveal: Reveal; onClose: () =
   return (
     <div className="gm-rv" role="dialog" aria-modal="true" aria-label={label}>
       <div className="gm-rv__box">
-        {reveal.kind === 'bot' && <BotReveal chassis={reveal.chassis} mk={reveal.mk} skin={reveal.skin} />}
+        {reveal.kind === 'bot' && <BotReveal chassis={reveal.chassis} mk={reveal.mk} />}
         {reveal.kind === 'item' && <ItemReveal item={reveal.item} />}
         {reveal.kind === 'chest' && <ChestReveal tier={reveal.tier} gain={reveal.gain} okRef={ok} />}
         {reveal.kind === 'chests' && <AllReveal count={reveal.count} gain={reveal.gain} />}
@@ -51,22 +50,21 @@ export function RevealLayer({ reveal, onClose }: { reveal: Reveal; onClose: () =
   );
 }
 
-function BotReveal({ chassis, mk, skin }: { chassis: string; mk: 1 | 2 | 3; skin?: 'silver' | 'gold' }) {
+function BotReveal({ chassis, mk }: { chassis: string; mk: 1 | 2 | 3 }) {
   const ch = chassisById(chassis);
   if (!ch) return null;
-  const metal = skin ? SKINS[skin] : null;
   return (
-    <div className="gm-rv__bot" style={{ '--c': metal?.c ?? ch.c, '--c2': metal?.c2 ?? ch.c2 } as CSSProperties}>
+    <div className="gm-rv__bot" style={{ '--c': ch.c, '--c2': ch.c2 } as CSSProperties}>
       <span className="gm-rv__rays" aria-hidden="true" />
       <div className="gm-rv__robot i-drone">
-        <Robot stage={0} look={{ ...DEFAULT_LOADOUT, chassis, ...(skin ? { skins: { [chassis]: skin } } : {}) }} mk={mk} happy />
+        <Robot stage={0} look={{ ...DEFAULT_LOADOUT, chassis }} mk={mk} happy />
       </div>
       <span className="gm-rv__stamp" aria-hidden="true">
-        {metal ? metal.kanji : mk === 1 ? '完成' : '改造'}
+        {mk === 1 ? '完成' : '改造'}
       </span>
-      <h2>{metal ? `${metal.name} ${ch.name}` : ch.name}</h2>
+      <h2>{ch.name}</h2>
       <p>
-        {metal ? `Cast in ${skin}. Every edge catches the light.` : <>Mk {'I'.repeat(mk)} · {mk === 1 ? ch.blurb : ch.mk[mk - 2]}</>}
+        Mk {'I'.repeat(mk)} · {mk === 1 ? ch.blurb : ch.mk[mk - 2]}
       </p>
     </div>
   );
@@ -181,8 +179,8 @@ function SpinReveal({ res }: { res: Extract<Reveal, { kind: 'spin' }>['res'] }) 
   );
 }
 
-const LOOT_COLOR = { bag: '#ff4d6d', stamp: '#ffc23d', set: '#21e6ff', bingo: '#ffe14d', fish: '#4dd6ff', mastery: '#ff9f1c', emblem: '#ffd54a', pass: '#7cf29c' } as const;
-const LOOT_SEAL = { stamp: '満', set: '揃', bingo: '当', fish: '魚', mastery: '極', emblem: '紋', pass: '月' } as const;
+const LOOT_COLOR = { bag: '#ff4d6d', stamp: '#ffc23d', set: '#21e6ff', bingo: '#ffe14d', fish: '#4dd6ff', mastery: '#ff9f1c' } as const;
+const LOOT_SEAL = { stamp: '満', set: '揃', bingo: '当', fish: '魚', mastery: '極' } as const;
 
 /** A lucky bag tearing open, a stamp card handed in, a set completed. */
 function LootReveal({ art, title, line, gain, okRef }: { art: keyof typeof LOOT_COLOR; title: string; line?: string; gain: Bag; okRef: React.RefObject<HTMLButtonElement | null> }) {

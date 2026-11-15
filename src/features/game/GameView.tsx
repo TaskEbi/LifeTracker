@@ -22,14 +22,13 @@ import { LedgerTab } from './Ledger';
 import { RevealLayer, playChest, playAllChests } from './Reveal';
 import { closeReveal, revealStore, showReveal } from './revealStore';
 import { ShopTab } from './Shop';
-import { buyItem, buyMk, claimSet, rewardsOf, setLoadout, setWish, standingNow, useBodies, useGame, useLoadout, useWish, type Bodies, type GameState } from './store';
+import { buyItem, buyMk, claimSet, setLoadout, setWish, standingNow, useBodies, useGame, useLoadout, useWish, type Bodies, type GameState } from './store';
 import { secretById, secretOpen } from '../../domain/game/mastery';
 import { listPrice, saved, withRank } from '../../domain/game/market';
 import { setPrize, setRarity, setsProgress, setTitleName } from '../../domain/game/sets';
 import { WorkshopTab } from './Workshop';
 import { BodyPanel, CardLevel, MasteryHall, PilotPlate, SecretPanel, WaitingPrizes } from './Bodies';
 import { ArcadeTab } from './Arcade';
-import { RewardsTab, SkinPanel } from './Rewards';
 import { useArcade } from './arcadeStore';
 import { arcadeWaiting } from '../../domain/game/arcade';
 import { useWorksGlance } from './worksStore';
@@ -45,7 +44,6 @@ const TABS = [
   { id: 'works', label: 'Works', kanji: '廠' },
   { id: 'capsule', label: 'Capsules', kanji: '蛋' },
   { id: 'workshop', label: 'Workshop', kanji: '工' },
-  { id: 'rewards', label: 'Rewards', kanji: '賞' },
   { id: 'events', label: 'Events', kanji: '祭' },
   { id: 'ledger', label: 'Ledger', kanji: '帳' },
 ] as const;
@@ -59,7 +57,6 @@ export function GameView() {
   const reveal = useStore(revealStore, (s) => s.reveal);
   const waiting = arcadeWaiting(useArcade());
   const works = useWorksGlance();
-  const prizes = rewardsOf(g).waiting;
   return (
     <div className="gm">
       <ChannelBar current="hangar" />
@@ -89,12 +86,11 @@ export function GameView() {
             <b>{t.label}</b>
             {t.id === '' && w.chests.length > 0 && <i className="gm-tab__n">{w.chests.length}</i>}
             {t.id === 'arcade' && waiting > 0 && <i className="gm-tab__n">{waiting}</i>}
-            {t.id === 'rewards' && prizes > 0 && <i className="gm-tab__n">{prizes > 99 ? '99+' : prizes}</i>}
             {t.id === 'works' && tab !== 'works' && works.started && (works.crate || works.waiting >= 1) && <i className="gm-tab__n">!</i>}
           </button>
         ))}
       </nav>
-      {tab === 'shop' ? <ShopTab /> : tab === 'arcade' ? <ArcadeTab /> : tab === 'works' ? <Suspense fallback={<p className="i-note">Opening the factory…</p>}><WorksTab /></Suspense> : tab === 'capsule' ? <CapsuleTab /> : tab === 'workshop' ? <WorkshopTab /> : tab === 'rewards' ? <RewardsTab /> : tab === 'events' ? <EventsTab /> : tab === 'ledger' ? <LedgerTab /> : <Bay g={g} run={run} />}
+      {tab === 'shop' ? <ShopTab /> : tab === 'arcade' ? <ArcadeTab /> : tab === 'works' ? <Suspense fallback={<p className="i-note">Opening the factory…</p>}><WorksTab /></Suspense> : tab === 'capsule' ? <CapsuleTab /> : tab === 'workshop' ? <WorkshopTab /> : tab === 'events' ? <EventsTab /> : tab === 'ledger' ? <LedgerTab /> : <Bay g={g} run={run} />}
       {reveal && <RevealLayer reveal={reveal} onClose={closeReveal} />}
     </div>
   );
@@ -156,7 +152,6 @@ function Bay({ g, run }: { g: GameState; run: EventRun | null }) {
       </section>
 
       <WaitingPrizes b={b} />
-      <RewardsWaiting g={g} />
 
       {g.bonus.lines.length > 0 && (
         <p className="gm-bonus">
@@ -281,11 +276,6 @@ const GROUP_NAMES: Record<ChassisGroup, { name: string; kanji: string; hint: str
   toys: { name: 'Toy box', kanji: '玩', hint: 'Things that should have stayed in the cupboard' },
   tribute: { name: 'Tributes', kanji: '誉', hint: 'One per section. Level the section to unlock them' },
   cosmic: { name: 'Strange', kanji: '異', hint: 'High level, high cost, and worth it' },
-  samurai: { name: 'Warlords', kanji: '侍', hint: 'Armour tied plate by plate' },
-  mecha: { name: 'Super robots', kanji: '鋼', hint: 'Twenty storeys, rocket fists, and a pose' },
-  guardians: { name: 'Guardians', kanji: '守', hint: 'The beasts of the four directions, and the centre' },
-  engines: { name: 'Engines', kanji: '機', hint: 'Trains, castles, clocks and a star in a cage' },
-  heavens: { name: 'Heavens', kanji: '天', hint: 'Gods of wind, thunder, sea and sun' },
   event: { name: 'Festival', kanji: '祭', hint: 'Only sold during their event' },
   secret: { name: 'Hidden', kanji: '隠', hint: 'Never sold. Each wakes up when you do something' },
 };
@@ -402,7 +392,6 @@ function ChassisCard({ id, g, b, look, onClose }: { id: string; g: GameState; b:
         <li className={mk >= 3 ? 'is-on' : ''}>Mk III: {ch.mk[1]}</li>
       </ul>
       {mk > 0 && <BodyPanel ch={ch} b={b} worn={look.chassis === id} />}
-      {mk > 0 && <SkinPanel ch={ch} b={b} g={g} look={look} mk={mk as 1 | 2 | 3} />}
       {cost && (
         <div className="gm-detail__buy">
           <Price cost={cost} w={w} tokenName={run?.def.token.name} />
@@ -460,26 +449,6 @@ function Wardrobe({ kind, g, look, stage }: { kind: CosmeticKind; g: GameState; 
         </button>
       )}
     </>
-  );
-}
-
-/** Pass tiers and emblem prizes waiting: a button in the bay to the Rewards tab. */
-function RewardsWaiting({ g }: { g: GameState }) {
-  const n = rewardsOf(g).waiting;
-  if (!n) return null;
-  return (
-    <button type="button" className="gm-waiting gm-waiting--rw" onClick={() => navigate('hangar', ['rewards'], { replace: true })}>
-      <span className="gm-waiting__k" aria-hidden="true">
-        賞
-      </span>
-      <span className="gm-waiting__t">
-        <b>
-          {n} reward{n === 1 ? '' : 's'} to claim
-        </b>
-        <small>From the Hangar Pass and your emblems.</small>
-      </span>
-      <span aria-hidden="true">▶</span>
-    </button>
   );
 }
 

@@ -206,7 +206,7 @@ export function progressInput(st: DataState, today: string): ProgressInput {
     reading: live(st.lt_records).filter((r) => r.section === 'reading'),
     readingGoal: yearGoalOf(st.lt_prefs),
     maths: live(st.lt_records).filter((r) => r.section === 'maths'),
-    usedItems: live(st.lt_records).flatMap((r) => (r.kind === 'gm_tx' && (r.data.type === 'use' || (r.data.type === 'claim' && String(r.data.ref).startsWith('ach:'))) ? [{ id: r.id, item: String(r.data.ref), date: String(r.data.at) }] : [])),
+    usedItems: live(st.lt_records).flatMap((r) => (r.kind === 'gm_tx' && r.data.type === 'use' ? [{ id: r.id, item: String(r.data.ref), date: String(r.data.at) }] : [])),
   };
   lastState = st;
   lastToday = today;
