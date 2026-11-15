@@ -31,6 +31,7 @@ import {
   type Ctx,
 } from '../../domain/game/aura';
 import { fmt } from '../../domain/game/idle';
+import { saveProgress } from '../../domain/game/saves';
 import { createStore, useStore } from '../../lib/createStore';
 import { GAME_SECTION } from './store';
 import { extNow, spendBolts } from './worksStore';
@@ -71,7 +72,7 @@ export const aura = createStore<Live>({ save: freshAura(Date.now()), ready: fals
 /** The stage is winding up a rare roll: its scene waits until then (0 lets it go now). */
 export const holdScenes = (until: number) => aura.set({ hold: until });
 
-let written: { row: LtRecord; at: number } | null = null;
+let written: { row: LtRecord } | null = null;
 let dirty = false;
 let saveTimer: number | null = null;
 let hitN = 0;
@@ -103,7 +104,7 @@ export function persistAura() {
   const row: LtRecord = prev
     ? { ...prev, kind: KIND, data: value, deleted_at: null, updated_at: t }
     : { id: AURA_ROW, section: GAME_SECTION, kind: KIND, data: value, sort_order: 0, archived_at: null, created_at: t, updated_at: t, deleted_at: null };
-  written = { row, at: live.save.at };
+  written = { row };
   dirty = false;
   commit('lt_records', [row]);
 }
@@ -137,11 +138,11 @@ const hitOf = (batch: Batch, hand: boolean, queued: string[]): Hit | null =>
 /** Read the saved row (or start new) and roll for the time away. */
 function load() {
   const st = data.get();
-  if (!st.ready) return;
+  if (!st.ready || !st.sync.pulled) return;
   const row = rowOf(st);
   const now = Date.now();
   const { save, away, batch } = settleAura(normaliseAura(row?.data, now), now, ctx());
-  written = row ? { row, at: save.at } : null;
+  written = row ? { row } : null;
   aura.set((s) => ({ ...s, save, ready: true, away: away ?? s.away, fresh: batch ? [...new Set([...s.fresh, ...batch.fresh])] : s.fresh }));
   if (!batch) return;
   dirty = true;
@@ -152,19 +153,29 @@ function load() {
   }
 }
 
-/** A row that isn't ours and is newer than what we last wrote came from another device: take it. */
+/**
+ * A row that isn't the one we wrote came from the server. If it has made more than the save on
+ * screen, another device is ahead: take it. If it has made less than what we last wrote, an older
+ * copy has been pushed over ours: write ours again. (Times can't decide this; see domain/game/saves.)
+ */
 function onData() {
   const st = data.get();
-  if (!st.ready) return;
+  if (!st.ready || !st.sync.pulled) return;
   if (!aura.get().ready) return load();
   const row = rowOf(st);
   if (!row || row === written?.row) return;
-  const at = typeof row.data.at === 'number' ? row.data.at : 0;
-  if (at > (written?.at ?? 0)) {
+  const theirs = saveProgress(KIND, row.data) ?? 0;
+  if (theirs > (saveProgress(KIND, aura.get().save) ?? 0)) {
     dirty = false;
     load();
-  } else {
-    written = written ? { ...written, row } : null;
+    return;
+  }
+  const behind = written && theirs < (saveProgress(KIND, written.row.data) ?? 0);
+  written = written ? { row } : null;
+  if (behind) {
+    dirty = true;
+    if (saveTimer !== null) window.clearTimeout(saveTimer);
+    saveTimer = window.setTimeout(persistAura, 1500);
   }
 }
 

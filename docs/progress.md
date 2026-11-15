@@ -541,3 +541,9 @@ Asked for: aura animations off after an aura's first roll, and a way to record a
 - **Tests without a score:** on the Stage's test sheet the score (and the total) can be left blank. The row is still a `study_mark`, with `score: null`; the Stage shows it as "Score to come", with a nudge on Now and a "Waiting for a score" list on Tests, and tapping it opens the sheet to add the score. Study's marks, averages and the Future page skip it until the score is in (`markOf` already needs a score). No migration, no XP.
 - Verified: unit tests (`stage.test.ts`, `aura.test.ts`), typecheck, `stage.spec.ts` (new: a test saved without a score, then scored) and `aura.spec.ts` in WebKit at iPhone size.
 
+
+## M51 · The Works and the Aura Dial sync between devices (done)
+Asked for: the Works and the Aura Dial weren't syncing between phone and PC; keep the phone's copy, which had the upgrades.
+- **Cause:** both saves loaded from the device's local copy before the first pull, settled the time away (stamping "now" on an old save) and pushed it, so each device overwrote the server with its own copy on opening. A row from another device was taken only if its `at` was later than ours, and the device just opened always had the latest `at`.
+- **Fix:** the copy that has made more wins, not the newer one: bolts ever made (`life`) for `gm_idle`, rolls ever made (`rolls`) for `gm_aura` (`pickSave` in `src/domain/game/saves.ts`). `applyRemote` keeps a local save that is ahead and sends it again, and takes a remote one that is ahead even over unsent local changes. Both stores wait for `sync.pulled` (set once the first pull is done) before loading, take another device's row when it has made more than the save on screen, and write theirs again if an older copy was pushed over it. No migration.
+- Verified: `saves.test.ts`, the full unit suite, typecheck, `works.spec.ts` and `aura.spec.ts` in WebKit at iPhone size.

@@ -42,6 +42,7 @@ import {
 } from '../../domain/game/idle';
 import { auraCogs, auraFoundIn, worksBonus } from '../../domain/game/aura';
 import { itemName } from '../../domain/game/wallet';
+import { saveProgress } from '../../domain/game/saves';
 import { createStore, useStore } from '../../lib/createStore';
 import { GAME_SECTION, getGame, useGame, write } from './store';
 
@@ -109,8 +110,8 @@ interface Live {
 
 export const works = createStore<Live>({ save: fresh(Date.now()), ready: false, heat: 0, away: null, cat: null, prize: null, pops: [] });
 
-/** The save object we last wrote, and the row we wrote it in: anything else in the table came from sync. */
-let written: { row: LtRecord; at: number } | null = null;
+/** The row we last wrote: anything else in the table came from sync. */
+let written: { row: LtRecord } | null = null;
 let dirty = false;
 let saveTimer: number | null = null;
 let lastTap = 0;
@@ -151,7 +152,7 @@ export function persist() {
   const row: LtRecord = prev
     ? { ...prev, kind: KIND, data: value, deleted_at: null, updated_at: t }
     : { id: WORKS_ROW, section: GAME_SECTION, kind: KIND, data: value, sort_order: 0, archived_at: null, created_at: t, updated_at: t, deleted_at: null };
-  written = { row, at: live.save.at };
+  written = { row };
   dirty = false;
   commit('lt_records', [row]);
 }
@@ -159,29 +160,39 @@ export function persist() {
 /** Read the saved row (or start new), and pay for the time away. */
 function load() {
   const st = data.get();
-  if (!st.ready) return;
+  if (!st.ready || !st.sync.pulled) return;
   const row = rowOf(st);
   const now = Date.now();
   const { save, away } = settle(normalise(row?.data, now), now, extNow());
-  written = row ? { row, at: save.at } : null;
+  written = row ? { row } : null;
   nextCat = now + catWait(save, Math.random()) * 1000;
   works.set({ save, ready: true, heat: 0, cat: null, prize: null, pops: [], away: away && away.gained >= 1 ? away : null });
   if (away) put(save);
 }
 
-/** A row that isn't ours and is newer than what we last wrote came from another device: take it. */
+/**
+ * A row that isn't the one we wrote came from the server. If it has made more than the save on
+ * screen, another device is ahead: take it. If it has made less than what we last wrote, an older
+ * copy has been pushed over ours: write ours again. (Times can't decide this; see domain/game/saves.)
+ */
 function onData() {
   const st = data.get();
-  if (!st.ready) return;
+  if (!st.ready || !st.sync.pulled) return;
   if (!works.get().ready) return load();
   const row = rowOf(st);
   if (!row || row === written?.row) return;
-  const at = typeof row.data.at === 'number' ? row.data.at : 0;
-  if (at > (written?.at ?? 0)) {
+  const theirs = saveProgress(KIND, row.data) ?? 0;
+  if (theirs > (saveProgress(KIND, works.get().save) ?? 0)) {
     dirty = false;
     load();
-  } else {
-    written = written ? { ...written, row } : null;
+    return;
+  }
+  const behind = written && theirs < (saveProgress(KIND, written.row.data) ?? 0);
+  written = written ? { row } : null;
+  if (behind) {
+    dirty = true;
+    if (saveTimer !== null) window.clearTimeout(saveTimer);
+    saveTimer = window.setTimeout(persist, 1500);
   }
 }
 

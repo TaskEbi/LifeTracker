@@ -23,6 +23,7 @@ import {
   type TableName,
   type Todo,
 } from './types';
+import { pickSave } from '../domain/game/saves';
 
 export type SyncStatus = 'local' | 'idle' | 'syncing' | 'offline' | 'error';
 
@@ -45,7 +46,8 @@ export interface DataState {
   lt_prefs: Map<string, LtPref>;
   lt_bucket: Map<string, LtBucket>;
   settings: Settings;
-  sync: { status: SyncStatus; pending: number; error: string | null };
+  /** `pulled`: the first pull from the server is done (or there's no server), so the local copy is current. */
+  sync: { status: SyncStatus; pending: number; error: string | null; pulled: boolean };
 }
 
 export const data = createStore<DataState>({
@@ -67,7 +69,7 @@ export const data = createStore<DataState>({
   lt_prefs: new Map(),
   lt_bucket: new Map(),
   settings: DEFAULT_SETTINGS,
-  sync: { status: 'local', pending: 0, error: null },
+  sync: { status: 'local', pending: 0, error: null, pulled: false },
 });
 
 // ─── outbox: which local records still need pushing ─────────────────────────
@@ -154,12 +156,35 @@ export function commitSettings(patch: Partial<Settings>) {
  */
 export function applyRemote<T extends TableName>(table: T, rows: RecordOf<T>[]) {
   if (!rows.length || !session) return;
-  const dirty = session.outbox[table];
+  const s = session;
+  const dirty: Record<string, number> = s.outbox[table];
   const stored: RecordOf<T>[] = [];
+  /** Game saves kept over a copy that had made less: they go back to the server. */
+  const resend: string[] = [];
+  let outboxChanged = false;
   data.set((st) => {
     const next = new Map(st[table] as Map<string, RecordOf<T>>);
     for (const row of rows) {
       const local = next.get(row.id);
+      // A game save (the Works, the Aura Dial): the copy that has made more wins, not the newer one.
+      if (table === 'lt_records' && local) {
+        const l = local as LtRecord;
+        const r = row as LtRecord;
+        const pick = !l.deleted_at && !r.deleted_at && l.kind === r.kind ? pickSave(r.kind, l.data, r.data) : null;
+        if (pick === 'local') {
+          resend.push(row.id);
+          continue;
+        }
+        if (pick === 'remote') {
+          if (dirty[row.id]) {
+            delete dirty[row.id];
+            outboxChanged = true;
+          }
+          next.set(row.id, row);
+          stored.push(row);
+          continue;
+        }
+      }
       let merged: RecordOf<T> = row;
       if (local && dirty[row.id]) {
         if (table !== 'items') continue;
@@ -172,7 +197,12 @@ export function applyRemote<T extends TableName>(table: T, rows: RecordOf<T>[]) 
     }
     return { ...st, [table]: next };
   });
-  void session.db.putMany(table, stored);
+  void s.db.putMany(table, stored);
+  if (resend.length) {
+    for (const id of resend) dirty[id] = ++s.outbox.rev;
+    s.onLocalChange();
+  }
+  if (resend.length || outboxChanged) persistOutbox();
 }
 
 export function applyRemoteSettings(settings: Settings) {
@@ -205,7 +235,7 @@ export async function openSession(opts: { cloud: boolean; onLocalChange: () => v
     ready: true,
     mode: opts.cloud ? 'synced' : 'local',
     settings: { ...DEFAULT_SETTINGS, ...settings, road: normaliseRoad(settings?.road) },
-    sync: { status: opts.cloud ? 'idle' : 'local', pending: countPending(session.outbox), error: null },
+    sync: { status: opts.cloud ? 'idle' : 'local', pending: countPending(session.outbox), error: null, pulled: !opts.cloud },
   });
   return session;
 }
@@ -219,7 +249,7 @@ export function closeSession(): string | null {
     ...(Object.fromEntries(TABLES.map((t) => [t, new Map()])) as Pick<DataState, TableName>),
     ready: false,
     settings: DEFAULT_SETTINGS,
-    sync: { status: 'local', pending: 0, error: null },
+    sync: { status: 'local', pending: 0, error: null, pulled: false },
   });
   return name;
 }

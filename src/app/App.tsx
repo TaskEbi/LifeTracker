@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { AUTH_STORAGE_KEY, supabase } from '../lib/supabase';
-import { closeSession, data, openSession } from '../data/store';
+import { closeSession, data, openSession, setSyncState } from '../data/store';
 import { startSync, type SyncHandle } from '../data/sync';
 import { autoMapSections } from '../data/lt';
 import { enrichBacklog } from '../data/enrich';
@@ -32,6 +32,8 @@ function useSession(cloud: boolean) {
         await handle.firstPull;
       }
       if (cancelled) return;
+      // Game saves (the Works, the Aura Dial) wait for this, so a device never plays on from an old copy.
+      setSyncState({ pulled: true });
       // Match sections to existing Daily Log topics by name; only after the first pull, so an
       // offline first launch can't decide anything before the real topics arrive.
       if (!cloud || data.get().sync.status === 'idle') autoMapSections();
