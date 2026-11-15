@@ -49,6 +49,8 @@ const txLine = (t: Tx): string => {
     }
     case 'works':
       return `Works counter: ${itemName(t.ref)}`;
+    case 'xfer':
+      return masteryLine(t.ref);
     case 'pilot':
       return `Piloting: ${t.ref === 'drone' ? 'the drone' : itemName(`chassis:${t.ref}:1`).replace(/ Mk I$/, '')}`;
   }

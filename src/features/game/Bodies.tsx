@@ -2,14 +2,15 @@
  * 極, body mastery: each body's own level and mastery track, the hall for mastering several, and the
  * hidden bodies' rules. The numbers come from domain/game/mastery.ts; prizes are claim rows.
  */
-import type { CSSProperties } from 'react';
+import { useState, type CSSProperties } from 'react';
 import { BODY_LINES, CHASSIS, chassisById, RARITY, type Chassis } from '../../domain/game/catalog';
 import { BODY_MAX, bodyPrizes, bodySections, hallState, METAL, MP, OWN_MULT, secretById, secretOpen, TIERS, type BodyStat, type Prize } from '../../domain/game/mastery';
 import { chassisMk } from '../../domain/game/wallet';
 import { sectionInfo } from '../../domain/sections';
 import { lootLines, num, Thumb } from './bits';
 import { showReveal } from './revealStore';
-import { claimAllPrizes, claimPrize, wakeSecret, type Bodies, type GameState } from './store';
+import { toast } from '../../data/ui';
+import { claimAllPrizes, claimPrize, sendOverflow, wakeSecret, type Bodies, type GameState } from './store';
 import './bodies.css';
 
 const tierOf = (s: BodyStat) => (s.tiers ? TIERS[s.tiers - 1] : null);
@@ -33,8 +34,56 @@ export function CardLevel({ s }: { s: BodyStat | undefined }) {
   return (
     <span className="gm-cardlv">
       <b>LV {s.level}</b>
+      {s.over > 0 && <i className="gm-over" title={`${num(s.over)} overflow XP`}>+{num(s.over)}</i>}
       <Medal s={s} small />
     </span>
+  );
+}
+
+/** A full body's overflow XP, and somewhere to send it. */
+function Overflow({ ch, s, b, g }: { ch: Chassis; s: BodyStat; b: Bodies; g: GameState }) {
+  const others = CHASSIS.filter((c) => c.id !== ch.id && chassisMk(g.wallet, c.id) > 0).sort((x, y) => (b.stats.get(x.id)!.max ? 1 : 0) - (b.stats.get(y.id)!.max ? 1 : 0) || b.stats.get(y.id)!.xp - b.stats.get(x.id)!.xp);
+  const [to, setTo] = useState('');
+  const pick = others.some((c) => c.id === to) ? to : (others[0]?.id ?? '');
+  if (!s.max) return null;
+  return (
+    <div className="gm-overflow">
+      <p>
+        <b>+{num(s.over)} overflow XP</b>
+        <small>{s.over > 0 ? 'Earned past the top level. It stays here until you send it on.' : 'Anything it earns from now on is kept here as overflow.'}</small>
+      </p>
+      {s.over > 0 &&
+        (others.length ? (
+          <div className="gm-overflow__send">
+            <label>
+              <span>Send it to</span>
+              <select value={pick} onChange={(e) => setTo(e.target.value)}>
+                {others.map((c) => {
+                  const o = b.stats.get(c.id)!;
+                  return (
+                    <option key={c.id} value={c.id}>
+                      {c.name} · LV {o.level}
+                      {o.max ? ' (max)' : ''}
+                    </option>
+                  );
+                })}
+              </select>
+            </label>
+            <button
+              type="button"
+              className="i-btn i-btn--sm i-btn--sig"
+              onClick={() => {
+                const sent = sendOverflow(ch.id, pick);
+                if (sent) toast(`Sent ${num(sent)} XP to ${chassisById(pick)?.name ?? 'the other body'}.`);
+              }}
+            >
+              Send {num(s.over)} XP
+            </button>
+          </div>
+        ) : (
+          <small className="i-note">Build another body to have somewhere to send it.</small>
+        ))}
+    </div>
   );
 }
 
@@ -60,7 +109,7 @@ function claimAll(body?: string) {
 }
 
 /** In a body's card: its level, its mastery, and the track of prizes. */
-export function BodyPanel({ ch, b, worn }: { ch: Chassis; b: Bodies; worn: boolean }) {
+export function BodyPanel({ ch, b, g, worn }: { ch: Chassis; b: Bodies; g: GameState; worn: boolean }) {
   const s = b.stats.get(ch.id)!;
   const track = bodyPrizes(ch, s);
   const waiting = track.filter((x) => x.reached && !b.claimed.has(x.prize.ref)).length;
@@ -78,7 +127,7 @@ export function BodyPanel({ ch, b, worn }: { ch: Chassis; b: Bodies; worn: boole
             Body level {s.level}
             {s.max ? ' · MAX' : ''}
           </b>
-          {s.max ? <small>{num(s.xp)} body XP. Mastery keeps going.</small> : <Bar value={s.into} max={s.need} label={`${ch.name} level ${s.level}`} />}
+          {s.max ? <small>{num(s.xp)} body XP in all. Mastery keeps going.</small> : <Bar value={s.into} max={s.need} label={`${ch.name} level ${s.level}`} />}
           {!s.max && (
             <small>
               {num(s.into)} / {num(s.need)} to level {s.level + 1} (max {BODY_MAX})
@@ -86,6 +135,7 @@ export function BodyPanel({ ch, b, worn }: { ch: Chassis; b: Bodies; worn: boole
           )}
         </span>
       </div>
+      <Overflow ch={ch} s={s} b={b} g={g} />
       <div className="gm-body__row">
         {tierOf(s) ? <Medal s={s} /> : <span className="gm-medal gm-medal--none" aria-hidden="true">極</span>}
         <span className="gm-body__t">
@@ -95,7 +145,7 @@ export function BodyPanel({ ch, b, worn }: { ch: Chassis; b: Bodies; worn: boole
         </span>
       </div>
       <p className="i-note">
-        {worn ? 'You\'re piloting it: what you log now trains it.' : 'Wear it to train it: only the body you\'re piloting earns.'} Its own sections ({own.map((x) => sectionInfo(x).name).join(', ') || 'none'}) count ×{OWN_MULT} for its level and {MP.own} mastery a session (others {MP.session}); +{MP.day} a day you turn up with it, +{MP.daily} for a cleared daily board, +{MP.boss} a boss. {s.sessions ? `${s.sessions} session${s.sessions === 1 ? '' : 's'} over ${s.days} day${s.days === 1 ? '' : 's'} so far.` : ''}
+        {worn ? 'You\'re piloting it: what you log now trains it.' : 'Wear it to train it: only the body you\'re piloting earns. What it has earned stays with it whatever you wear.'} Its own sections ({own.map((x) => sectionInfo(x).name).join(', ') || 'none'}) count ×{OWN_MULT} for its level and {MP.own} mastery a session (others {MP.session}); +{MP.day} a day you turn up with it, +{MP.daily} for a cleared daily board, +{MP.boss} a boss. {s.sessions ? `${s.sessions} session${s.sessions === 1 ? '' : 's'} over ${s.days} day${s.days === 1 ? '' : 's'} so far.` : ''}
       </p>
       {waiting > 1 && (
         <button type="button" className="i-btn i-btn--sig" onClick={() => claimAll(ch.id)}>
@@ -182,7 +232,7 @@ export function PilotPlate({ ch, b, g }: { ch: Chassis | undefined; b: Bodies; g
         <span className="gm-pilot">
           <b>Body LV {s.level}</b>
           <Medal s={s} small />
-          {!s.max && <Bar value={s.into} max={s.need} label={`${ch!.name} level ${s.level}`} />}
+          {s.max ? <i className="gm-over">+{num(s.over)} XP over</i> : <Bar value={s.into} max={s.need} label={`${ch!.name} level ${s.level}`} />}
         </span>
       )}
     </>

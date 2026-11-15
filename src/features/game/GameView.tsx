@@ -402,7 +402,7 @@ function ChassisCard({ id, g, b, look, onClose }: { id: string; g: GameState; b:
         <li className={mk >= 2 ? 'is-on' : ''}>Mk II: {ch.mk[0]}</li>
         <li className={mk >= 3 ? 'is-on' : ''}>Mk III: {ch.mk[1]}</li>
       </ul>
-      {mk > 0 && <BodyPanel ch={ch} b={b} worn={look.chassis === id} />}
+      {mk > 0 && <BodyPanel ch={ch} b={b} g={g} worn={look.chassis === id} />}
       {mk > 0 && <SkinPanel ch={ch} b={b} g={g} look={look} mk={mk as 1 | 2 | 3} />}
       {cost && (
         <div className="gm-detail__buy">

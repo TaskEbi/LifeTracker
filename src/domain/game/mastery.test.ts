@@ -17,12 +17,14 @@ import {
   MK_XP,
   MP,
   OWN_MULT,
+  parseXfer,
   pilotAt,
   pilotsOf,
   SECRETS,
   secretOpen,
   TIERS,
   unclaimed,
+  xferRef,
   type SecretFacts,
 } from './mastery';
 import { overallLevel } from '../progress/engine';
@@ -62,12 +64,31 @@ describe('who was piloting', () => {
     expect(pilotAt(ps, null, '2026-11-01')).toBeNull();
   });
 
-  it('timed XP goes to the body worn at that moment; day-only XP to the one you ended the day in', () => {
+  it('timed XP goes to the body worn at that moment; day-only XP to the one you started the day in', () => {
     const ps = pilotsOf([pilot('kappa', `${D}T15:00:00.000Z`), pilot('tanuki', `${D}T00:00:00.000Z`)], 'kappa');
     expect(ps.map((p) => p.chassis)).toEqual(['tanuki', 'kappa']);
     expect(pilotAt(ps, Date.parse(`${D}T09:00:00Z`), D)).toBe('tanuki');
     expect(pilotAt(ps, Date.parse(`${D}T18:00:00Z`), D)).toBe('kappa');
-    expect(pilotAt(ps, null, D)).toBe('kappa');
+    expect(pilotAt(ps, null, D)).toBe('tanuki');
+    // The next day starts in the body you went to bed in.
+    expect(pilotAt(ps, null, '2026-11-15')).toBe('kappa');
+  });
+
+  it('changing body, and changing back, never moves XP a body already has', () => {
+    const day = '2026-11-15';
+    const xp = [ev(`quest:daily:${day}:sweep`, 'quests', 20, day), ev(`night:${day}:logged`, 'sleep', 10, day), ev('item:u1', 'quests', 300, day), ev('entry:a:time', 'gym', 40, day)];
+    const stampOf = (k: string) => (k === 'entry:a:time' ? Date.parse(`${day}T09:00:00Z`) : null);
+    const base = [pilot('tanuki', `${D}T00:00:00.000Z`)];
+    const of = (txs: Tx[], current: string) => {
+      const st = bodyStats({ xp, stampOf, txs, current });
+      return [st.get('tanuki')!.xp, st.get('tanuki')!.mp, st.get('kappa')!.xp];
+    };
+    const before = of(base, 'tanuki');
+    expect(before[0]).toBeGreaterThan(300);
+    const away = [...base, pilot('kappa', `${day}T12:00:00.000Z`)];
+    expect(of(away, 'kappa')).toEqual(before);
+    expect(of([...away, pilot('drone', `${day}T12:05:00.000Z`)], 'drone')).toEqual(before);
+    expect(of([...away, pilot('tanuki', `${day}T12:10:00.000Z`)], 'tanuki')).toEqual(before);
   });
 });
 
@@ -91,21 +112,47 @@ describe('body stats', () => {
 
   it('shares XP out by who was piloting, doubled in a body\'s own sections', () => {
     // Tanuki is from gym and cabinet: the morning's gym session counts double.
-    expect(stats.get('tanuki')!.xp).toBe(45 * OWN_MULT);
-    // The Maestro is violin's: the afternoon's session doubles, and the day's quests and boss land with whoever ended the day.
-    expect(stats.get('maestro')!.xp).toBe(35 * OWN_MULT + 120);
+    // The day's quests and boss stay with the body the day started in, whoever is worn later.
+    expect(stats.get('tanuki')!.xp).toBe(45 * OWN_MULT + 120);
+    // The Maestro is violin's: the afternoon's session doubles.
+    expect(stats.get('maestro')!.xp).toBe(35 * OWN_MULT);
     expect(stats.get('kappa')!.xp).toBe(0);
   });
 
   it('mastery counts sessions, days, boards and bosses', () => {
-    expect(stats.get('tanuki')!.mp).toBe(MP.own + MP.day);
-    expect(stats.get('maestro')!.mp).toBe(MP.own + MP.day + MP.daily + MP.boss);
+    expect(stats.get('tanuki')!.mp).toBe(MP.own + MP.day + MP.daily + MP.boss);
+    expect(stats.get('maestro')!.mp).toBe(MP.own + MP.day);
     expect(stats.get('maestro')!.sessions).toBe(1);
   });
 
   it('building a Mk gives the body XP', () => {
     const s = bodyStats({ xp: [], stampOf: noStamp, txs: [{ id: 'm', type: 'mk', at: D, ref: 'chassis:koi:3', cost: {}, gain: {} }], current: 'drone' });
     expect(s.get('koi')!.xp).toBe(MK_XP[3]);
+  });
+
+  it('XP past the top level is overflow, and can be sent to another body', () => {
+    const top = bodyXpFor(BODY_MAX);
+    const mk = (id: string, n: number): Tx => ({ id: `${id}${n}`, type: 'mk', at: D, ref: `chassis:${id}:${n}`, cost: {}, gain: {} });
+    const xf = (from: string, to: string, n: number, i = 0): Tx => ({ id: `x${i}`, type: 'xfer', at: D, ref: xferRef(from, to, n), cost: {}, gain: {} });
+    const earned = [ev('entry:a:time', 'violin', top, D)];
+    const base = [pilot('tanuki', `${D}T00:00:00.000Z`), mk('tanuki', 2)];
+    const stampOf = () => Date.parse(`${D}T09:00:00Z`);
+    const full = bodyStats({ xp: earned, stampOf, txs: base, current: 'tanuki' });
+    expect(full.get('tanuki')).toMatchObject({ level: BODY_MAX, max: true, over: MK_XP[2] });
+    expect(full.get('kappa')!.over).toBe(0);
+    // Below the top there is no overflow.
+    expect(bodyStats({ xp: [], stampOf, txs: base, current: 'tanuki' }).get('tanuki')!.over).toBe(0);
+
+    const sent = bodyStats({ xp: earned, stampOf, txs: [...base, xf('tanuki', 'kappa', 150)], current: 'tanuki' });
+    expect(sent.get('tanuki')).toMatchObject({ level: BODY_MAX, over: MK_XP[2] - 150 });
+    expect(sent.get('kappa')!.xp).toBe(150);
+    expect(sent.get('kappa')!.level).toBeGreaterThan(1);
+    // A body can't give away more than its overflow, however many rows say so (two devices sending at once).
+    const twice = bodyStats({ xp: earned, stampOf, txs: [...base, xf('tanuki', 'kappa', 150, 1), xf('tanuki', 'koi', 150, 2)], current: 'tanuki' });
+    expect(twice.get('tanuki')).toMatchObject({ level: BODY_MAX, over: 0 });
+    expect(twice.get('kappa')!.xp + twice.get('koi')!.xp).toBe(MK_XP[2]);
+    expect(parseXfer(xferRef('tanuki', 'kappa', 150))).toEqual({ from: 'tanuki', to: 'kappa', xp: 150 });
+    expect(parseXfer('xfer:tanuki:tanuki:5')).toBeNull();
   });
 
   it('the drone earns nothing of its own, and old records before mastery count for nobody', () => {
@@ -129,7 +176,7 @@ describe('prizes', () => {
   });
 
   it('lists what is reached and not claimed, once', () => {
-    const fake = new Map([['tanuki', { id: 'tanuki', xp: bodyXpFor(12), level: 12, into: 0, need: 1, max: false, mp: 260, tiers: 2, next: TIERS[2], ownXp: 0, sessions: 0, days: 0 }]]);
+    const fake = new Map([['tanuki', { id: 'tanuki', xp: bodyXpFor(12), level: 12, into: 0, need: 1, max: false, over: 0, mp: 260, tiers: 2, next: TIERS[2], ownXp: 0, sessions: 0, days: 0 }]]);
     const all = unclaimed(fake, new Set()).map((p) => p.ref);
     expect(all).toEqual(['body:tanuki:lv5', 'body:tanuki:lv10', 'body:tanuki:b1', 'body:tanuki:b2']);
     expect(unclaimed(fake, new Set(['body:tanuki:lv5', 'body:tanuki:b1'])).map((p) => p.ref)).toEqual(['body:tanuki:lv10', 'body:tanuki:b2']);

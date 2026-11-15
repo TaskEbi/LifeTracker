@@ -97,3 +97,68 @@ test('mastery: a hidden body wakes when its rule is met, and is never in the sho
   await expect(page.locator('.gm-bay__plate')).toContainText('Ashura Mk I');
   expect(await walletNumber(page, 'Ryō')).toBe(coins);
 });
+
+test('mastery: changing body keeps each body\'s XP, and a full body\'s overflow can be sent on', async ({ page }) => {
+  await page.clock.setFixedTime(new Date('2026-11-16T10:00:00Z'));
+  await seed(page, ['violin', 'gym', 'study'], 20);
+  await page.clock.setFixedTime(new Date('2026-11-16T11:00:00Z'));
+  await page.goto('/hangar');
+  await page.getByRole('button', { name: /^The Maestro/ }).click();
+  await page.getByRole('button', { name: 'Build it' }).click();
+  await page.getByRole('dialog', { name: 'New body' }).getByRole('button', { name: 'OK' }).click();
+
+  // Train it far past the top level, and give it a second body to send to.
+  await page.clock.setFixedTime(new Date('2026-11-16T12:00:00Z'));
+  await page.evaluate(async () => {
+    const lt = await import('/src/data/lt.ts' as string);
+    const log = await import('/src/data/logActions.ts' as string);
+    const dates = await import('/src/domain/log/dates.ts' as string);
+    const game = await import('/src/features/game/store.ts' as string);
+    const topic = lt.ensureSectionTopic('violin');
+    for (let d = 0; d < 45; d++) log.addEntry({ topic_id: topic, date: dates.addDays(lt.ltToday(), -d), minutes: 120, note: '' });
+    game.write({ type: 'mk', ref: 'chassis:tanuki:1', cost: {}, gain: { items: ['chassis:tanuki:1'] } });
+  });
+  const plate = page.locator('.gm-bay__plate');
+  await expect(plate).toContainText('Body LV 30');
+  const over = async () => Number((await plate.locator('.gm-over').innerText()).replace(/[^\d]/g, ''));
+  const had = await over();
+  expect(had).toBeGreaterThan(0);
+
+  // Take it off and put it back on: nothing is lost on the way.
+  await page.clock.setFixedTime(new Date('2026-11-16T13:00:00Z'));
+  await page.evaluate(async () => {
+    const game = await import('/src/features/game/store.ts' as string);
+    game.setLoadout({ chassis: 'tanuki' });
+  });
+  await expect(plate).toContainText('Body LV 1');
+  // (the Maestro's card is still open from building it)
+  const card = page.getByRole('region', { name: 'The Maestro' });
+  await expect(card.getByText('Body level 30 · MAX')).toBeVisible();
+  await expect(card.locator('.gm-overflow b')).toHaveText(`+${had.toLocaleString('en-GB')} overflow XP`);
+  await page.evaluate(async () => {
+    const game = await import('/src/features/game/store.ts' as string);
+    game.setLoadout({ chassis: 'maestro' });
+  });
+  expect(await over()).toBe(had);
+
+  // Send the overflow to the Tanuki: it levels up, the Maestro stays at the top with none left.
+  await card.getByRole('combobox').selectOption('tanuki');
+  await card.getByRole('button', { name: /^Send .* XP$/ }).click();
+  await expect(card.locator('.gm-overflow b')).toHaveText('+0 overflow XP');
+  await expect(card.getByText('Body level 30 · MAX')).toBeVisible();
+  // let every row reach IndexedDB before reloading
+  await page.evaluate(async () => {
+    const store = await import('/src/data/store.ts' as string);
+    for (let i = 0; i < 100; i++) {
+      const db = store.currentSession()?.db;
+      if (!db) break;
+      if ((await db.getAll('lt_records')).length >= store.data.get().lt_records.size && (await db.getAll('log_entries')).length >= store.data.get().log_entries.size) break;
+      await new Promise((r) => setTimeout(r, 100));
+    }
+  });
+  await page.reload();
+  await page.getByRole('button', { name: /^Tanuki Tinker/ }).click();
+  await expect(page.getByRole('region', { name: 'Tanuki Tinker' }).getByText(/^Body level (?!1\b)\d+/)).toBeVisible();
+  await page.getByRole('button', { name: /^The Maestro/ }).click();
+  await expect(page.getByRole('region', { name: 'The Maestro' }).locator('.gm-overflow b')).toHaveText('+0 overflow XP');
+});

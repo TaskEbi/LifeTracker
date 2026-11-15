@@ -584,3 +584,11 @@ Asked for: a few new bodies in completely different art styles from the existing
 - Each has Mk II and Mk III hardware, a mastery title and a battle cry, takes paint, headgear, companions, auras and True Silver/Gold like any other body, and holds still with reduced motion.
 - **Data:** none. Bodies are catalogue entries; owning one is the usual `mk` row. No migration.
 - Verified: 839 unit/DB tests, typecheck; contact sheets (`tools/botsheet.mjs atelier`) at Mk I–III in both themes, smiling, and Vertex from the front, side and back mid-spin; the group in the Hangar in WebKit at iPhone size with no console errors.
+
+## M57 · Body XP stays put, and overflow XP (done)
+Asked for: a body's level reset when it was taken off and came back when worn again; show overflow XP on the character, and let it be transferred to another body.
+- **Cause:** XP that only has a day, not a moment (quests, bosses, weekly goals, sleep, screen time, cabinet, scrolls and emblem prizes), was given to the body worn last that day. Changing body moved all of today's such XP to the new one, and changing back returned it.
+- **Fix (`pilotAt` in `src/domain/game/mastery.ts`):** day-only XP goes to the body the day started in, which nothing done later can change. Scrolls, tonics and emblem prizes now use the moment they were used or claimed, like sessions do. Bodies are still worked out from records, so the numbers correct themselves; today's day-only XP may land on a different body than it showed on before.
+- **Overflow:** XP past body level 30 is kept and shown: `+N` beside the level on the body's card and on the bay's plate, and a panel in the body's card. From there it can be sent, all at once, to any other body you own; it arrives as it is (not doubled) and can level that body and unlock its level prizes. The sender stays at level 30.
+- **Data:** a transfer is a `gm_tx` row of type `xfer` (see AGENTS.md); it shows in the ledger. No migration, nothing stored as a balance.
+- Verified: unit tests (XP unchanged by changing body and back; overflow, sending, and two sends never giving more than there is), typecheck, the full unit suite, and in WebKit at iPhone size `mastery.spec.ts` (new: a body trained past the top keeps its overflow when taken off and put back, sends it, and the result survives a reload), `hangar`, `outfits` and `rewards`.

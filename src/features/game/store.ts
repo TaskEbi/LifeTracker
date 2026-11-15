@@ -22,7 +22,7 @@ import { bagsThisWeek, LUCKY_BAG, NIGHT_EXTRAS, nightOf, nightOpen, perks, saleS
 import { setPrize, setsProgress } from '../../domain/game/sets';
 import { dailyDeal, discounted, DUST_TICKET, GEM_EXCHANGE, MAT_EXCHANGE, type ShopItem } from '../../domain/game/shop';
 import { canAfford, changeLoadout, chassisMk, normaliseLoadout, plus, shortfall, spinsSinceEpic, txOf, upgradeLevel, walletOf, type Grant, type Loadout, type Tx, type TxType, type Wallet } from '../../domain/game/wallet';
-import { bestDaySections, bodyStats, claimedRefs, longestRun, PILOT_SEED_T, secretById, secretOpen, TIERS, unclaimed, type BodyStat, type Prize, type SecretFacts } from '../../domain/game/mastery';
+import { bestDaySections, bodyStats, claimedRefs, xferRef, longestRun, PILOT_SEED_T, secretById, secretOpen, TIERS, unclaimed, type BodyStat, type Prize, type SecretFacts } from '../../domain/game/mastery';
 import { pondOf } from '../../domain/game/arcade';
 import { achPrizes, passesNow, rewardClaims, SKINS, skinItem, skinLock, type AchPrize, type PassState, type SkinId } from '../../domain/game/rewards';
 import { createStore, useStore } from '../../lib/createStore';
@@ -145,7 +145,7 @@ export function bodiesOf(st: DataState, today: string, hour: number): Bodies {
   const g = gameOf(st, today);
   const stampOf = (key: string): number | null => {
     const [kind, id] = key.split(':');
-    const at = kind === 'entry' ? st.log_entries.get(id)?.created_at : kind === 'task' ? st.todos.get(id)?.done_at : kind === 'bucket' ? st.lt_bucket.get(id)?.done_at : null;
+    const at = kind === 'entry' ? st.log_entries.get(id)?.created_at : kind === 'task' ? st.todos.get(id)?.done_at : kind === 'bucket' ? st.lt_bucket.get(id)?.done_at : kind === 'item' ? st.lt_records.get(id)?.created_at : null;
     const ms = at ? Date.parse(at) : NaN;
     return Number.isFinite(ms) ? ms : null;
   };
@@ -182,6 +182,15 @@ export function useBodies(): Bodies {
 }
 
 export const getBodies = () => bodiesOf(data.get(), ltToday(), ltHour());
+
+/** Send a body's overflow XP (what it has past the top level) to another body you own. Returns what was sent. */
+export function sendOverflow(from: string, to: string): number {
+  const b = getBodies();
+  const xp = b.stats.get(from)?.over ?? 0;
+  if (xp <= 0 || from === to || !b.stats.has(to) || chassisMk(getGame().wallet, to) <= 0) return 0;
+  write({ type: 'xfer', ref: xferRef(from, to, xp), cost: {}, gain: {}, t: now() });
+  return xp;
+}
 
 /** Claim one prize from a body's track or the hall. */
 export function claimPrize(ref: string): Bag | null {

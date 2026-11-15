@@ -9,7 +9,7 @@ import type { Bag, ChestTier, CosmeticKind, Mats, Rarity } from './catalog';
 import { BODY_LINES, chassisById, COSMETIC_NAME, cosmeticOf, MATS, upgradeById } from './catalog';
 import { FLOORS, GEAR_SKINS } from './idle';
 
-export type TxType = 'buy' | 'mk' | 'upgrade' | 'open' | 'spin' | 'claim' | 'use' | 'trade' | 'deliver' | 'roll' | 'cast' | 'works' | 'pilot';
+export type TxType = 'buy' | 'mk' | 'upgrade' | 'open' | 'spin' | 'claim' | 'use' | 'trade' | 'deliver' | 'roll' | 'cast' | 'works' | 'pilot' | 'xfer';
 
 export interface Tx {
   id: string;

@@ -4,7 +4,10 @@
  *
  * - Which body earned what comes from `pilot` rows (gm_tx): one each time you change body, with the
  *   moment it happened. XP from a record goes to the body you were piloting when the record was saved;
- *   XP that only has a day (quests, bosses, weekly goals) goes to the body you ended that day in.
+ *   XP that only has a day (quests, bosses, weekly goals) goes to the body you started that day in, so
+ *   changing body later never moves XP a body already has.
+ * - Past the top level a body's XP is overflow: it shows on the body, and can be sent to another body
+ *   you own (an `xfer` row, ref `xfer:<from>:<to>:<xp>`). Sent XP arrives as it is, never doubled.
  * - Body XP is the XP you earned while piloting it, doubled in the body's own sections, plus a lump
  *   for each Mk you've built. Levels come much faster than overall ones and stop at 30.
  * - Mastery points come from turning up and logging with it (more in its own sections), clearing quest
@@ -155,14 +158,42 @@ export function pilotsOf(txs: Tx[], current: string): Pilot[] {
   return out.sort((a, b) => a.ms - b.ms);
 }
 
-/** Who was flying at a moment (if the record has one) or at the end of a day. */
+/**
+ * Who was flying at a moment (if the record has one), or else at the start of a day: the last body
+ * chosen before that day, or the first one chosen on it. Nothing done later in the day changes that,
+ * so swapping bodies can't take a day's XP from one and hand it to another.
+ */
 export function pilotAt(pilots: Pilot[], ms: number | null, date: string): string | null {
   let who: string | null = null;
+  if (ms != null) {
+    for (const p of pilots) {
+      if (p.ms <= ms) who = p.chassis;
+      else break;
+    }
+    return who;
+  }
   for (const p of pilots) {
-    if (ms != null ? p.ms <= ms : p.at <= date) who = p.chassis;
-    else break;
+    if (p.at < date) who = p.chassis;
+    else {
+      if (who == null && p.at === date) who = p.chassis;
+      break;
+    }
   }
   return who;
+}
+
+// ─── overflow ───────────────────────────────────────────────────────────────
+
+export interface Transfer {
+  from: string;
+  to: string;
+  xp: number;
+}
+export const xferRef = (from: string, to: string, xp: number) => `xfer:${from}:${to}:${Math.floor(xp)}`;
+export function parseXfer(ref: string): Transfer | null {
+  const [kind, from, to, n] = ref.split(':');
+  const xp = Math.floor(Number(n));
+  return kind === 'xfer' && from && to && from !== to && xp > 0 ? { from, to, xp } : null;
 }
 
 // ─── the numbers for every body ─────────────────────────────────────────────
@@ -183,6 +214,8 @@ export interface BodyStat {
   into: number;
   need: number;
   max: boolean;
+  /** XP past the top level: shown on the body, and can be sent to another one. 0 below the top. */
+  over: number;
   mp: number;
   /** Tiers reached, 0–9. */
   tiers: number;
@@ -229,6 +262,15 @@ export function bodyStats(input: MasteryInput): Map<string, BodyStat> {
     const [, id, mk] = t.ref.split(':');
     if (MK_XP[Number(mk)] && own.has(id)) get(id).xp += MK_XP[Number(mk)];
   }
+  // Overflow sent on, in the order it happened. A body can only ever give away what it has past the top.
+  const top = bodyXpFor(BODY_MAX);
+  for (const t of input.txs) {
+    const x = t.type === 'xfer' ? parseXfer(t.ref) : null;
+    if (!x || !own.has(x.from) || !own.has(x.to)) continue;
+    const n = Math.min(x.xp, Math.max(0, get(x.from).xp - top));
+    get(x.from).xp -= n;
+    get(x.to).xp += n;
+  }
 
   const out = new Map<string, BodyStat>();
   for (const ch of CHASSIS) {
@@ -236,7 +278,7 @@ export function bodyStats(input: MasteryInput): Map<string, BodyStat> {
     const mp = (a?.mp ?? 0) + (a?.days.size ?? 0) * MP.day;
     const lv = bodyLevel(a?.xp ?? 0);
     const tiers = tierCount(mp);
-    out.set(ch.id, { id: ch.id, xp: a?.xp ?? 0, ...lv, mp, tiers, next: TIERS[tiers] ?? null, ownXp: a?.ownXp ?? 0, sessions: a?.sessions ?? 0, days: a?.days.size ?? 0 });
+    out.set(ch.id, { id: ch.id, xp: a?.xp ?? 0, ...lv, over: lv.max ? Math.max(0, Math.floor((a?.xp ?? 0) - top)) : 0, mp, tiers, next: TIERS[tiers] ?? null, ownXp: a?.ownXp ?? 0, sessions: a?.sessions ?? 0, days: a?.days.size ?? 0 });
   }
   return out;
 }
@@ -278,6 +320,10 @@ export function masteryLine(ref: string): string {
   const [kind, id, step] = ref.split(':');
   if (kind === 'hall') return `Mastery hall: ${HALL.find((h) => h.id === id)?.name ?? id}`;
   if (kind === 'secret') return `Woke up ${chassisById(id)?.name ?? id}`;
+  if (kind === 'xfer') {
+    const x = parseXfer(ref);
+    return x ? `Sent ${x.xp} overflow XP from ${chassisById(x.from)?.name ?? x.from} to ${chassisById(x.to)?.name ?? x.to}` : 'Sent overflow XP';
+  }
   const name = chassisById(id)?.name ?? id;
   if (step?.startsWith('lv')) return `${name} reached level ${step.slice(2)}`;
   return `${name}: ${TIERS.find((t) => t.id === step)?.name ?? step} mastery`;
