@@ -286,6 +286,7 @@ const GROUP_NAMES: Record<ChassisGroup, { name: string; kanji: string; hint: str
   guardians: { name: 'Guardians', kanji: '守', hint: 'The beasts of the four directions, and the centre' },
   engines: { name: 'Engines', kanji: '機', hint: 'Trains, castles, clocks and a star in a cage' },
   heavens: { name: 'Heavens', kanji: '天', hint: 'Gods of wind, thunder, sea and sun' },
+  atelier: { name: 'Atelier', kanji: '絵', hint: 'Five ways of drawing: crayon, neon, ink, an anime cel and real 3D' },
   event: { name: 'Festival', kanji: '祭', hint: 'Only sold during their event' },
   secret: { name: 'Hidden', kanji: '隠', hint: 'Never sold. Each wakes up when you do something' },
 };

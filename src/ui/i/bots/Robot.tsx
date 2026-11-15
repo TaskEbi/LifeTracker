@@ -26,6 +26,7 @@ const LOADERS: Record<Exclude<GroupId, 'gear'>, () => Promise<BotRegistry>> = {
   guardians: () => import('./chassisGuardians').then((m) => m.GUARDIANS),
   engines: () => import('./chassisEngines').then((m) => m.ENGINES),
   heavens: () => import('./chassisHeavens').then((m) => m.HEAVENS),
+  atelier: () => import('./chassisAtelier').then((m) => m.ATELIER),
 };
 
 const loaded = new Map<string, BotRegistry>();

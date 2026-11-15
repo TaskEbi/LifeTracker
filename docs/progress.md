@@ -572,3 +572,15 @@ Asked for: everything equipped saved separately for each character.
 - Each body, the drone included, keeps its own paint, headgear, companion, aura and title. Changing body saves the outfit of the one you leave and puts the new one's back on; a body you haven't dressed starts bare. True skins were already per body. The wardrobe says so.
 - **Data:** `kits` in the `game_loadout` pref, by body id (`changeLoadout` in `src/domain/game/wallet.ts`). The first change of body after this saves what you were wearing under the body you had on. No migration.
 - Verified: unit tests (outfits switch and come back, read back through JSON), typecheck, new `outfits.spec.ts` (two bodies dressed differently, switched back and forth, after a reload) plus `hangar`, `mastery`, `rewards` and `works` specs in WebKit at iPhone size.
+
+## M56 · The Atelier: five bodies in five art styles (done)
+Asked for: a few new bodies in completely different art styles from the existing ones (3D, 2D anime, something special), about five.
+- **A new group, Atelier 絵** (`catalog.ts`, art in `src/ui/i/bots/chassisAtelier.tsx`), sold from overall levels 3 to 18:
+  - **Rakugaki 落** (rare, level 3): a child's crayon drawing. Wobbly lines, colouring-in over the edges, waxy texture; when it moves the lines "boil" (the wobble is redrawn a few times a second).
+  - **Open Late 電** (rare, level 6): a neon sign on a smoked panel. Each tube is a glow, coloured glass and a white core; the waving arm is two tubes lit in turn.
+  - **Fude 筆** (epic, level 10): ink and brush on a round of washi. Its body is an ensō drawn in one stroke that thins as the brush lifts, with washes, dry-brush gaps and a red seal.
+  - **Kira 煌** (epic, level 14): an anime cel. Flat colour with one hard shadow, a shine across the hair, large eyes, and a white sticker edge.
+  - **Vertex 面** (legendary, level 18): real 3D. A mesh of about 200 flat faces is turned, lit and depth-sorted every frame by a small renderer (`src/ui/i/bots/poly3d.ts`) and drawn as SVG polygons, so it works everywhere a body is shown, thumbnails and True skins included. It looks about and spins right round every 11 seconds.
+- Each has Mk II and Mk III hardware, a mastery title and a battle cry, takes paint, headgear, companions, auras and True Silver/Gold like any other body, and holds still with reduced motion.
+- **Data:** none. Bodies are catalogue entries; owning one is the usual `mk` row. No migration.
+- Verified: 839 unit/DB tests, typecheck; contact sheets (`tools/botsheet.mjs atelier`) at Mk I–III in both themes, smiling, and Vertex from the front, side and back mid-spin; the group in the Hangar in WebKit at iPhone size with no console errors.

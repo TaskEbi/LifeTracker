@@ -59,7 +59,7 @@ export interface Bag {
 
 // ─── the robot: chassis ─────────────────────────────────────────────────────
 
-export type ChassisGroup = 'folklore' | 'toys' | 'tribute' | 'cosmic' | 'samurai' | 'mecha' | 'guardians' | 'engines' | 'heavens' | 'event' | 'secret';
+export type ChassisGroup = 'folklore' | 'toys' | 'tribute' | 'cosmic' | 'samurai' | 'mecha' | 'guardians' | 'engines' | 'heavens' | 'atelier' | 'event' | 'secret';
 
 export interface Chassis {
   id: string;
@@ -97,6 +97,8 @@ const MC = G('mecha');
 const GD = G('guardians');
 const EN = G('engines');
 const HV = G('heavens');
+/** The Atelier (M56): five bodies, each drawn in a different art style. */
+const AT = G('atelier');
 const E = (id: string, name: string, kanji: string, event: string, c: string, c2: string, blurb: string, mk: [string, string]): Chassis => ({ id, name, kanji, group: 'event', rarity: 'legendary', c, c2, blurb, mk, event });
 
 export const CHASSIS: Chassis[] = [
@@ -174,6 +176,12 @@ export const CHASSIS: Chassis[] = [
   HV('tennyo', 'Tennyo', '羽', 'legendary', '#8fb8ff', '#ffe1f0', 'A celestial maiden in a feather robe, playing a lute among the clouds.', ['A biwa lute and floating ribbons', 'A feather robe trailing, and lotus blooms'], ['violin', 'reading'], 42),
   HV('ryujin', 'Ryūjin', '龍', 'legendary', '#0e6e6e', '#f2c14e', 'The dragon king of the sea, crowned, holding the tide jewels.', ['The tide jewels and a coral crown', 'The great wave behind and a palace under the sea'], ['sleep', 'maths'], 52),
   HV('amaterasu', 'Amaterasu', '照', 'mythic', '#ff9f1c', '#fff7d6', 'The sun herself, stepping out of the cave. Everything gets brighter.', ['The mirror Yata no Kagami', 'A sun-disc halo and eight rays of dawn'], ['study', 'future'], 80),
+
+  AT('rakugaki', 'Rakugaki', '落', 'rare', '#f2622e', '#3a86ff', 'A crayon drawing by someone aged six, who is very proud of it. The lines never quite sit still.', ['A cape and a sword, coloured outside the lines', 'A sun in the corner, grass, and a dog (probably)'], ['cabinet', 'reading'], 3),
+  AT('neon', 'Open Late', '電', 'rare', '#ff3d9a', '#35e0ff', 'A neon sign that unplugged itself and walked off. Bent glass tubes, a little buzz, and one arm that waves.', ['"Open" in kanji down one side, with a flicker', 'A border of chasing bulbs and twinkling stars'], ['screen', 'sleep'], 6),
+  AT('fude', 'Fude', '筆', 'epic', '#26221f', '#c8372d', 'Ink on paper: one breath, one brush, no going back. The circle is its body.', ['A bamboo staff and a gourd', 'Far mountains, a red sun, birds and the painter\'s seal'], ['study', 'violin'], 10),
+  AT('kira', 'Kira', '煌', 'epic', '#ff4d6d', '#8ecbff', 'The main character. Cel-shaded, cut out like a sticker, with eyes that take up half the face.', ['A pilot headset and a scarf in the wind', 'A beam saber and speed lines'], ['future', 'sports'], 14),
+  AT('vertex', 'Vertex', '面', 'legendary', '#2ec4b6', '#ff9f1c', 'Real 3D: a couple of hundred flat faces, lit from one side. It turns right round to show you its back.', ['Shoulder pyramids, an antenna and a thruster pack', 'Triangle wings, three orbiting gems and a platform'], ['coding', 'maths'], 18),
 
   E('kodama', 'Kodama', '紅', 'momiji', '#d00000', '#ffba08', 'A forest spirit with a maple-leaf face, rattling its head.', ['A crown of red maple', 'Falling leaves and a shrine bell']),
   E('yukidaruma', 'Yuki-daruma', '雪', 'yuki', '#caf0f8', '#ff6b6b', 'A snow daruma in a bucket hat. Melts for nobody.', ['Scarf and a twig broom', 'A blizzard and an ice crown']),
@@ -462,6 +470,11 @@ export const MASTERY_TITLES: Record<string, string> = {
   tennyo: 'Feather Robe',
   ryujin: 'King Under the Sea',
   amaterasu: 'Out of the Cave',
+  rakugaki: 'Outside the Lines',
+  neon: 'Never Closes',
+  fude: 'One Breath, One Stroke',
+  kira: 'Main Character',
+  vertex: 'Seen from Every Side',
   kitsune: 'Nine Tails',
   hoo: 'Rises from the Ashes',
   niwatori: 'First Up',
@@ -551,6 +564,11 @@ export const BODY_LINES: Record<string, string> = {
   tennyo: 'Play it again, softer.',
   ryujin: 'The tide comes when I call.',
   amaterasu: 'Out of the cave. Lights on.',
+  rakugaki: 'I drew this. That\'s you, the big one.',
+  neon: 'Still open. Still buzzing.',
+  fude: 'One breath. One stroke. No rubber.',
+  kira: 'This is the part where I win!',
+  vertex: 'Two hundred faces, and all of them are looking at you.',
   kitsune: 'Who said I was a tanuki?',
   hoo: 'Every streak starts again from one.',
   niwatori: 'Kokekokkō! Up you get.',
