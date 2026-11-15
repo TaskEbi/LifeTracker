@@ -23,7 +23,7 @@ import {
   type TableName,
   type Todo,
 } from './types';
-import { pickSave } from '../domain/game/saves';
+import { isGameSave, mergeSave, sameData } from '../domain/game/saves';
 
 export type SyncStatus = 'local' | 'idle' | 'syncing' | 'offline' | 'error';
 
@@ -159,29 +159,33 @@ export function applyRemote<T extends TableName>(table: T, rows: RecordOf<T>[]) 
   const s = session;
   const dirty: Record<string, number> = s.outbox[table];
   const stored: RecordOf<T>[] = [];
-  /** Game saves kept over a copy that had made less: they go back to the server. */
+  /** Game saves merged with something the server's copy lacked: they go back to the server. */
   const resend: string[] = [];
   let outboxChanged = false;
   data.set((st) => {
     const next = new Map(st[table] as Map<string, RecordOf<T>>);
     for (const row of rows) {
       const local = next.get(row.id);
-      // A game save (the Works, the Aura Dial): the copy that has made more wins, not the newer one.
+      // A game save (the Works, the Aura Dial): the two copies are merged, so neither loses anything.
       if (table === 'lt_records' && local) {
         const l = local as LtRecord;
         const r = row as LtRecord;
-        const pick = !l.deleted_at && !r.deleted_at && l.kind === r.kind ? pickSave(r.kind, l.data, r.data) : null;
-        if (pick === 'local') {
-          resend.push(row.id);
-          continue;
-        }
-        if (pick === 'remote') {
-          if (dirty[row.id]) {
-            delete dirty[row.id];
-            outboxChanged = true;
+        const both = !l.deleted_at && !r.deleted_at && l.kind === r.kind && isGameSave(r.kind);
+        const mergedData = both ? mergeSave(r.kind, l.data, r.data) : null;
+        if (mergedData) {
+          const keep = { ...r, data: mergedData } as RecordOf<T>;
+          if (sameData(mergedData, r.data)) {
+            if (dirty[row.id]) {
+              delete dirty[row.id];
+              outboxChanged = true;
+            }
+            next.set(row.id, row);
+            stored.push(row);
+          } else {
+            next.set(row.id, keep);
+            stored.push(keep);
+            resend.push(row.id);
           }
-          next.set(row.id, row);
-          stored.push(row);
           continue;
         }
       }

@@ -248,9 +248,11 @@ export interface AuraSave {
   worn: string | null;
   /** Scenes not watched yet, in the order to play them. */
   queue: string[];
+  /** One-off repairs already applied to this save (so they're never applied twice). */
+  fixes: string[];
 }
 
-export const freshAura = (now: number): AuraSave => ({ v: 1, at: now, motes: 0, motesAll: 0, rolls: 0, hand: 0, n: 0, got: {}, first: {}, ups: {}, incense: 0, worn: null, queue: [] });
+export const freshAura = (now: number): AuraSave => ({ v: 1, at: now, motes: 0, motesAll: 0, rolls: 0, hand: 0, n: 0, got: {}, first: {}, ups: {}, incense: 0, worn: null, queue: [], fixes: [] });
 
 const num = (v: unknown) => (typeof v === 'number' && Number.isFinite(v) && v > 0 ? v : 0);
 const int = (v: unknown) => Math.floor(num(v));
@@ -284,6 +286,7 @@ export function normaliseAura(v: unknown, now: number): AuraSave {
     incense: Math.min(INCENSE_MAX, int(o.incense)),
     worn: typeof o.worn === 'string' && got[o.worn] ? o.worn : null,
     queue,
+    fixes: Array.isArray(o.fixes) ? [...new Set(o.fixes.filter((f): f is string => typeof f === 'string'))].slice(0, 20) : [],
   };
 }
 
@@ -579,3 +582,37 @@ export const auraCogs = (found: string[]) => found.reduce((n, id) => n + (AURA_T
 
 /** "1 in 1,500,000". */
 export const oddsText = (a: Aura) => `1 in ${a.odds.toLocaleString('en-GB')}`;
+
+// ─── putting a lost save back ───────────────────────────────────────────────
+
+export interface AuraRestore {
+  /** Marks the save once it's applied. */
+  id: string;
+  /** Auras to count as found. */
+  found: string[];
+  /** Upgrade levels to come back to. */
+  ups: Record<string, number>;
+  motes: number;
+}
+
+/**
+ * Brings a save back up to what it had, without lowering anything it has now: auras are added
+ * (rolled once, first seen `day`, no scene to watch), upgrades and motes rise to the given levels.
+ * A save that already has the repair is left as it is.
+ */
+export function restoreAura(s: AuraSave, r: AuraRestore, day: string): AuraSave {
+  if (s.fixes.includes(r.id)) return s;
+  const got = { ...s.got };
+  const first = { ...s.first };
+  for (const id of r.found) {
+    if (!BY_ID.has(id) || got[id]) continue;
+    got[id] = 1;
+    first[id] = day;
+  }
+  const ups = { ...s.ups };
+  for (const [id, n] of Object.entries(r.ups)) {
+    const u = auraUpgradeById(id);
+    if (u) ups[id] = Math.max(ups[id] ?? 0, Math.min(u.max, n));
+  }
+  return { ...s, got, first, ups, motes: Math.max(s.motes, r.motes), motesAll: Math.max(s.motesAll, r.motes), fixes: [...s.fixes, r.id] };
+}

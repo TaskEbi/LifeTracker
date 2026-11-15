@@ -18,6 +18,7 @@ import {
   buyIncense,
   freshAura,
   normaliseAura,
+  restoreAura,
   oddsText,
   pull,
   SCENE_TIER,
@@ -31,8 +32,9 @@ import {
   type Ctx,
 } from '../../domain/game/aura';
 import { fmt } from '../../domain/game/idle';
-import { saveProgress } from '../../domain/game/saves';
+import { mergeAura, NO_CLAMP, sameData } from '../../domain/game/saves';
 import { createStore, useStore } from '../../lib/createStore';
+import { AURA_RESTORE } from './auraRestore';
 import { GAME_SECTION } from './store';
 import { extNow, spendBolts } from './worksStore';
 
@@ -72,7 +74,7 @@ export const aura = createStore<Live>({ save: freshAura(Date.now()), ready: fals
 /** The stage is winding up a rare roll: its scene waits until then (0 lets it go now). */
 export const holdScenes = (until: number) => aura.set({ hold: until });
 
-let written: { row: LtRecord } | null = null;
+let written: { row: LtRecord; save: AuraSave } | null = null;
 let dirty = false;
 let saveTimer: number | null = null;
 let hitN = 0;
@@ -104,7 +106,7 @@ export function persistAura() {
   const row: LtRecord = prev
     ? { ...prev, kind: KIND, data: value, deleted_at: null, updated_at: t }
     : { id: AURA_ROW, section: GAME_SECTION, kind: KIND, data: value, sort_order: 0, archived_at: null, created_at: t, updated_at: t, deleted_at: null };
-  written = { row };
+  written = { row, save: live.save };
   dirty = false;
   commit('lt_records', [row]);
 }
@@ -141,10 +143,14 @@ function load() {
   if (!st.ready || !st.sync.pulled) return;
   const row = rowOf(st);
   const now = Date.now();
-  const { save, away, batch } = settleAura(normaliseAura(row?.data, now), now, ctx());
-  written = row ? { row } : null;
+  const stored = normaliseAura(row?.data, now);
+  // M52: put back the save the phone lost (once; the merge carries it to other devices).
+  const restored = row && st.mode === 'synced' ? restoreAura(stored, AURA_RESTORE, ltToday()) : stored;
+  const { save, away, batch } = settleAura(restored, now, ctx());
+  written = row ? { row, save: normaliseAura(row.data, NO_CLAMP) } : null;
   aura.set((s) => ({ ...s, save, ready: true, away: away ?? s.away, fresh: batch ? [...new Set([...s.fresh, ...batch.fresh])] : s.fresh }));
-  if (!batch) return;
+  if (restored !== stored) toast('Aura Dial restored: upgrades and auras put back as you remembered them.');
+  if (!batch && restored === stored) return;
   dirty = true;
   persistAura();
   if (away && !inRoom()) {
@@ -154,25 +160,23 @@ function load() {
 }
 
 /**
- * A row that isn't the one we wrote came from the server. If it has made more than the save on
- * screen, another device is ahead: take it. If it has made less than what we last wrote, an older
- * copy has been pushed over ours: write ours again. (Times can't decide this; see domain/game/saves.)
+ * A row that isn't the one we wrote came from the server (another device, or our own write coming
+ * back). Merge it into the save on screen, so nothing either copy reached is lost; if it lacks
+ * something we wrote, an older copy was pushed over ours, so write the merged save again soon.
  */
 function onData() {
   const st = data.get();
   if (!st.ready || !st.sync.pulled) return;
-  if (!aura.get().ready) return load();
+  const live = aura.get();
+  if (!live.ready) return load();
   const row = rowOf(st);
   if (!row || row === written?.row) return;
-  const theirs = saveProgress(KIND, row.data) ?? 0;
-  if (theirs > (saveProgress(KIND, aura.get().save) ?? 0)) {
-    dirty = false;
-    load();
-    return;
-  }
-  const behind = written && theirs < (saveProgress(KIND, written.row.data) ?? 0);
-  written = written ? { row } : null;
-  if (behind) {
+  const theirs = normaliseAura(row.data, NO_CLAMP);
+  const lacking = !!written && !sameData(mergeAura(theirs, written.save), theirs);
+  written = { row, save: written?.save ?? theirs };
+  const merged = mergeAura(live.save, theirs);
+  if (!sameData(merged, live.save)) aura.set({ save: merged });
+  if (lacking) {
     dirty = true;
     if (saveTimer !== null) window.clearTimeout(saveTimer);
     saveTimer = window.setTimeout(persistAura, 1500);
