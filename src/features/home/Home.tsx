@@ -17,6 +17,7 @@ import { LivingDrone } from './LivingDrone';
 import { Purse } from '../game/Purse';
 import { arcadeLine, useArcade, useMore } from '../game/arcadeStore';
 import { useWorksGlance, worksLine } from '../game/worksStore';
+import { cosmosLine, useCosmosGlance } from '../game/cosmosStore';
 import { useGame } from '../game/store';
 import { OmikujiCard } from './Omikuji';
 import { Sky } from './Sky';
@@ -456,6 +457,7 @@ function ArenaPage() {
   const arcade = useArcade();
   const more = useMore();
   const works = useWorksGlance();
+  const sky = useCosmosGlance();
   const hasRecap = recap.minutes > 0 || recap.activeDays > 0;
   return (
     <div className="h-grid">
@@ -484,6 +486,7 @@ function ArenaPage() {
           <div className="h-sys">
             <Door k="遊" name="Arcade" sub={arcadeLine(arcade, more)} go={() => navigate('hangar', ['arcade'])} wide />
             <Door k="廠" name="The Works" sub={worksLine(works)} go={() => navigate('hangar', ['works'])} wide />
+            <Door k="宙" name="The Cosmos" sub={cosmosLine(sky)} go={() => navigate('hangar', ['cosmos'])} wide />
             <Door k={SYSTEM_KANJI.hangar} name="Hangar" sub="Shop · capsules · events" go={() => navigate('hangar')} />
             <Door k={SYSTEM_KANJI.progress} name="Awakening" sub={`${STAGES.length} forms · ${rankFor(p.overall.level)}`} go={() => navigate('progress')} />
             <Door k="紋" name="Emblems" sub={`${ach.filter((a) => a.unlockedOn).length}/${ach.length} earned`} go={() => navigate('progress', ['achievements'])} />

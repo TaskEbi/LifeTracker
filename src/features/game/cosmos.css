@@ -1,0 +1,1118 @@
+/* ── The Cosmos · 宙 ──────────────────────────────────────────────────────────────
+   An incremental game behind the Hangar: a sky you tap, and four layers of starting again, each
+   with its own colour. Classes are prefixed cz-. */
+
+.cz {
+  --cz-dust: #ffb454;
+  --cz-light: #ffe27a;
+  --cz-dark: #b07cff;
+  --cz-gal: #5fe3ff;
+  --cz-eon: #ff9fe0;
+  --cz-c: var(--cz-dust);
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+}
+.cz > * {
+  min-width: 0;
+}
+.cz [data-layer='1'],
+.cz [data-k='light'] {
+  --cz-c: var(--cz-light);
+}
+.cz [data-layer='2'],
+.cz [data-k='dark'] {
+  --cz-c: var(--cz-dark);
+}
+.cz [data-layer='3'],
+.cz [data-k='gal'] {
+  --cz-c: var(--cz-gal);
+}
+.cz [data-layer='4'],
+.cz [data-k='eon'] {
+  --cz-c: var(--cz-eon);
+}
+
+/* ─── stage ─── */
+.cz-stage {
+  position: relative;
+  height: clamp(280px, 46vh, 400px);
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, #8fa4ff 35%, var(--rule));
+  border-radius: var(--r-2);
+  background: #070b22;
+  color: #fff;
+  isolation: isolate;
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-user-select: none;
+  box-shadow:
+    inset 0 0 0 1px rgb(255 255 255 / 0.04),
+    0 10px 30px -18px rgb(80 110 255 / 0.8);
+}
+.cz-stage[data-era='5'] {
+  border-color: #ffd66b;
+  box-shadow: 0 0 0 1px #ffd66b, 0 0 26px rgb(255 214 107 / 0.45);
+}
+.cz-sky {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  width: 100%;
+  height: 100%;
+}
+.cz-count {
+  position: absolute;
+  top: 10px;
+  left: 0;
+  right: 0;
+  display: grid;
+  justify-items: center;
+  gap: 2px;
+  pointer-events: none;
+  text-align: center;
+}
+.cz-count p {
+  margin: 0;
+}
+.cz-count__era {
+  padding: 2px 9px;
+  border: 1px solid rgb(255 255 255 / 0.22);
+  border-radius: 10px;
+  background: rgb(0 0 0 / 0.35);
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  backdrop-filter: blur(3px);
+}
+.cz-count__n {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font: 400 clamp(30px, 9vw, 42px) / 1.05 'Bungee', var(--f-label);
+  font-variant-numeric: tabular-nums;
+  text-shadow:
+    0 2px 0 rgb(0 0 0 / 0.55),
+    0 0 18px rgb(255 190 110 / 0.55);
+}
+.cz-count__n .cz-coin {
+  width: 0.72em;
+  height: 0.72em;
+}
+.cz-count__r {
+  padding: 1px 8px;
+  border-radius: 9px;
+  background: rgb(0 0 0 / 0.32);
+  font-size: 12.5px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.cz-corebox {
+  position: absolute;
+  top: 52%;
+  left: 50%;
+  translate: -50% -50%;
+  width: min(46%, 190px);
+  aspect-ratio: 1;
+}
+.cz-core {
+  position: absolute;
+  inset: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: none;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: scale 0.08s;
+}
+.cz-core::after {
+  content: '';
+  position: absolute;
+  inset: 6%;
+  border: 1px dashed rgb(255 255 255 / 0.22);
+  border-radius: 50%;
+  animation: cz-spin 30s linear infinite;
+}
+.cz-core:active {
+  scale: 0.94;
+}
+.cz-core:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 2px;
+}
+@keyframes cz-spin {
+  to {
+    rotate: 360deg;
+  }
+}
+.cz-pop {
+  position: absolute;
+  top: 18%;
+  left: 50%;
+  translate: calc(-50% + var(--x, 0px)) 0;
+  color: #fff;
+  font: 400 17px/1 'Bungee', var(--f-label);
+  text-shadow:
+    0 2px 0 #14101e,
+    0 0 8px rgb(0 0 0 / 0.6);
+  white-space: nowrap;
+  pointer-events: none;
+  animation: cz-pop 0.85s ease-out forwards;
+}
+.cz-pop.is-crit {
+  color: #ffe14d;
+  font-size: 25px;
+}
+@keyframes cz-pop {
+  from {
+    transform: translateY(0) scale(0.7);
+    opacity: 0;
+  }
+  18% {
+    transform: translateY(-12px) scale(1.1);
+    opacity: 1;
+  }
+  to {
+    transform: translateY(-56px) scale(1);
+    opacity: 0;
+  }
+}
+.cz-flash {
+  position: absolute;
+  left: 50%;
+  bottom: 14px;
+  translate: -50% 0;
+  margin: 0;
+  padding: 7px 16px;
+  border: 1px solid var(--cz-c);
+  border-radius: 20px;
+  background: rgb(8 6 20 / 0.82);
+  color: var(--cz-c);
+  font: 400 15px/1.1 'Bungee', var(--f-label);
+  white-space: nowrap;
+  box-shadow: 0 0 22px color-mix(in srgb, var(--cz-c) 60%, transparent);
+  animation: cz-flash 3.2s ease-out forwards;
+}
+@keyframes cz-flash {
+  from {
+    transform: scale(0.6);
+    opacity: 0;
+  }
+  10% {
+    transform: scale(1.12);
+    opacity: 1;
+  }
+  18% {
+    transform: scale(1);
+  }
+  82% {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+/* ─── coins and the purse ─── */
+.cz-coin {
+  flex: none;
+  width: 1.05em;
+  height: 1.05em;
+  vertical-align: -0.16em;
+  filter: drop-shadow(0 0 3px color-mix(in srgb, var(--cz-c) 55%, transparent));
+}
+.cz-purse {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 6px;
+}
+.cz-amt {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  column-gap: 8px;
+  padding: 7px 10px;
+  border: 1px solid color-mix(in srgb, var(--cz-c) 45%, var(--rule));
+  border-radius: var(--r-2);
+  background:
+    radial-gradient(120% 140% at 0% 0%, color-mix(in srgb, var(--cz-c) 20%, transparent), transparent 60%),
+    var(--surf);
+}
+.cz-amt .cz-coin {
+  grid-row: span 2;
+  width: 28px;
+  height: 28px;
+}
+.cz-amt b {
+  overflow: hidden;
+  color: var(--cz-c);
+  font: 400 17px/1.1 'Bungee', var(--f-label);
+  font-variant-numeric: tabular-nums;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.cz-amt small {
+  color: var(--fg-2);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.cz-cost {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 11.5px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.cz-cost .cz-coin {
+  width: 13px;
+  height: 13px;
+  filter: none;
+}
+
+/* ─── banners ─── */
+.cz-away,
+.cz-end {
+  display: grid;
+  gap: 6px;
+  justify-items: start;
+  padding: 12px;
+  border: 1px solid var(--cz-dust);
+  border-radius: var(--r-2);
+  background: color-mix(in srgb, var(--cz-dust) 12%, var(--surf));
+}
+.cz-away p,
+.cz-end p {
+  margin: 0;
+  color: var(--fg-2);
+  font-size: 14px;
+}
+.cz-end {
+  border-color: #ffd66b;
+  background:
+    radial-gradient(100% 160% at 50% 0%, rgb(255 214 107 / 0.3), transparent 70%),
+    var(--surf);
+}
+.cz-end b {
+  color: #ffd66b;
+  font: 400 18px/1.2 'RocknRoll One', var(--f-body);
+}
+.cz-chalbar {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+  padding: 10px;
+  border: 1px solid #ff5d6c;
+  border-radius: var(--r-2);
+  background:
+    repeating-linear-gradient(-45deg, rgb(255 93 108 / 0.1) 0 10px, transparent 10px 20px),
+    var(--surf);
+}
+.cz-chalbar .cz-card__k {
+  background: #ff5d6c;
+  color: #fff;
+}
+
+/* ─── rooms ─── */
+.cz-rooms {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 5px;
+}
+@media (max-width: 520px) {
+  .cz-rooms {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+.cz-room {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  gap: 1px;
+  min-height: 48px;
+  padding: 5px 1px;
+  border: 1px solid var(--rule);
+  border-radius: var(--r-1);
+  background: var(--surf);
+  color: var(--fg-2);
+  cursor: pointer;
+}
+.cz-room > span {
+  color: color-mix(in srgb, var(--cz-c) 80%, var(--fg-2));
+  font: 400 17px/1 'RocknRoll One', var(--f-body);
+}
+.cz-room b {
+  font-size: 11px;
+  font-weight: 600;
+}
+.cz-room[aria-current='page'] {
+  border-color: var(--cz-c);
+  background: color-mix(in srgb, var(--cz-c) 15%, var(--surf));
+  color: var(--fg);
+  box-shadow: 0 0 10px color-mix(in srgb, var(--cz-c) 40%, transparent);
+}
+.cz-room.is-shut {
+  border-style: dashed;
+  opacity: 0.5;
+  cursor: default;
+}
+.cz-room.is-shut > span {
+  color: var(--fg-3, var(--fg-2));
+}
+.cz-dot {
+  position: absolute;
+  top: 4px;
+  right: 5px;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--cz-c);
+  box-shadow: 0 0 8px var(--cz-c);
+  animation: cz-blink 1.2s ease-in-out infinite;
+}
+@keyframes cz-blink {
+  50% {
+    opacity: 0.35;
+  }
+}
+
+/* ─── real life ─── */
+.cz-boosts {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.cz-boosts li {
+  display: grid;
+  gap: 1px;
+  padding: 7px 9px;
+  border: 1px solid var(--rule);
+  border-radius: var(--r-1);
+  background: var(--surf);
+  color: var(--fg-2);
+}
+.cz-boosts li.is-on {
+  border-color: color-mix(in srgb, var(--cz-dust) 50%, var(--rule));
+}
+.cz-boosts li.is-on b {
+  color: var(--cz-dust);
+}
+.cz-boosts b {
+  font-size: 13px;
+}
+.cz-boosts small {
+  font-size: 11px;
+  line-height: 1.25;
+}
+
+/* ─── lists ─── */
+.cz-amounts {
+  display: inline-flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 4px;
+}
+.cz-amounts button {
+  min-width: 40px;
+  min-height: 30px;
+  padding: 2px 8px;
+  border: 1px solid var(--rule);
+  border-radius: 15px;
+  background: var(--surf);
+  color: var(--fg-2);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.cz-amounts button[aria-pressed='true'] {
+  border-color: var(--cz-dust);
+  background: var(--cz-dust);
+  color: #14101e;
+}
+.cz-amounts .cz-all {
+  border-color: var(--cz-dust);
+  color: var(--cz-dust);
+}
+.cz-amounts button:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+.cz-tally {
+  color: var(--fg-2);
+  font-size: 12px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.cz-list,
+.cz-chals,
+.cz-autos {
+  display: grid;
+  gap: 6px;
+}
+.cz-row,
+.cz-chal,
+.cz-node,
+.cz-auto {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+  padding: 9px 10px;
+  border: 1px solid var(--rule);
+  border-radius: var(--r-2);
+  background: var(--surf);
+}
+.cz-row.is-on {
+  border-color: color-mix(in srgb, var(--cz-dust) 40%, var(--rule));
+}
+.cz-bodyicon {
+  width: 44px;
+  height: 44px;
+  border: 1px solid rgb(255 255 255 / 0.1);
+  border-radius: 12px;
+  background: radial-gradient(circle at 30% 25%, #26305e, #0a0d22 75%);
+}
+.cz-row:not(.is-on) .cz-bodyicon {
+  filter: grayscale(0.7) brightness(0.75);
+}
+.cz-row__t,
+.cz-card__t {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+.cz-row__t b,
+.cz-card__t b {
+  font-size: 14px;
+  line-height: 1.2;
+}
+.cz-row__t em {
+  color: var(--cz-dust);
+  font-style: normal;
+  font-variant-numeric: tabular-nums;
+}
+.cz-row__t small,
+.cz-card__t small {
+  color: var(--fg-2);
+  font-size: 12px;
+  line-height: 1.3;
+}
+.cz-row__n {
+  font-variant-numeric: tabular-nums;
+}
+.cz-bar {
+  display: block;
+  height: 5px;
+  overflow: hidden;
+  border-radius: 3px;
+  background: var(--surf-3, rgb(127 127 127 / 0.25));
+}
+.cz-bar i {
+  display: block;
+  height: 100%;
+  border-radius: 3px;
+  background: linear-gradient(90deg, color-mix(in srgb, var(--cz-c) 55%, #fff 0%), var(--cz-c));
+  box-shadow: 0 0 6px var(--cz-c);
+  transition: width 0.2s;
+}
+.cz-buy,
+.cz-go {
+  display: grid;
+  justify-items: center;
+  gap: 0;
+  min-width: 84px;
+  min-height: 44px;
+  padding: 4px 8px;
+  line-height: 1.15;
+}
+/* The app's buttons draw their face in ::before, so that is what gets coloured. */
+.cz .i-btn.is-armed {
+  color: #fff;
+}
+.cz .i-btn.is-armed::before {
+  border: 0;
+  background: #ff5d6c;
+  box-shadow: 4px 4px 0 #7a1f2a;
+}
+
+/* ─── cards (levelled upgrades) ─── */
+.cz-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(158px, 1fr));
+  gap: 6px;
+}
+.cz-card {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  grid-template-rows: 1fr auto;
+  gap: 6px 9px;
+  padding: 9px;
+  border: 1px solid var(--rule);
+  border-radius: var(--r-2);
+  background: var(--surf);
+  color: var(--fg);
+  text-align: left;
+  cursor: pointer;
+}
+.cz-card:not(:disabled) {
+  border-color: var(--cz-c);
+  background:
+    radial-gradient(130% 120% at 100% 0%, color-mix(in srgb, var(--cz-c) 22%, transparent), transparent 60%),
+    var(--surf);
+  box-shadow: 0 0 10px -3px var(--cz-c);
+}
+.cz-card:disabled {
+  cursor: default;
+}
+.cz-card:disabled:not(.is-max) .cz-cost {
+  opacity: 0.6;
+}
+.cz-card.is-max {
+  border-color: color-mix(in srgb, var(--cz-c) 55%, var(--rule));
+}
+.cz-card__k {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  background: var(--surf-3, rgb(127 127 127 / 0.2));
+  color: var(--fg-2);
+  font: 400 20px/1 'RocknRoll One', var(--f-body);
+}
+.cz-card.is-on .cz-card__k,
+.cz-node.is-on .cz-card__k,
+.cz-chal.is-max .cz-card__k {
+  background: linear-gradient(145deg, color-mix(in srgb, var(--cz-c) 70%, #fff), var(--cz-c));
+  color: #14101e;
+}
+.cz-card__f {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  padding-top: 5px;
+  border-top: 1px dashed var(--rule);
+  color: var(--cz-c);
+}
+.cz-card__f i {
+  color: var(--fg-2);
+  font-size: 11.5px;
+  font-style: normal;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ─── a layer's panel ─── */
+.cz-layer {
+  position: relative;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 4px 12px;
+  align-items: center;
+  padding: 12px;
+  overflow: hidden;
+  border: 1px solid var(--cz-c);
+  border-radius: var(--r-2);
+  background:
+    radial-gradient(90% 160% at 0% 50%, color-mix(in srgb, var(--cz-c) 26%, transparent), transparent 62%),
+    linear-gradient(180deg, #14122b, #0b0a1c);
+  color: #fff;
+  box-shadow: 0 0 18px -6px var(--cz-c);
+}
+.cz-layer__sigil {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 62px;
+  height: 62px;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle, color-mix(in srgb, var(--cz-c) 55%, #000) 0 38%, transparent 40%),
+    conic-gradient(from 0deg, var(--cz-c), transparent 22%, var(--cz-c) 50%, transparent 72%, var(--cz-c));
+  animation: cz-spin 14s linear infinite;
+}
+.cz-layer__sigil::before {
+  content: '';
+  position: absolute;
+  inset: 5px;
+  border-radius: 50%;
+  background: #0d0b20;
+}
+.cz-layer__sigil span {
+  position: relative;
+  color: var(--cz-c);
+  font: 400 26px/1 'RocknRoll One', var(--f-body);
+  text-shadow: 0 0 10px var(--cz-c);
+  animation: cz-spin 14s linear infinite reverse;
+}
+.cz-layer__t {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+.cz-layer__t b {
+  color: var(--cz-c);
+  font: 400 19px/1.1 'Bungee', var(--f-label);
+}
+.cz-layer__t p {
+  margin: 0;
+  color: rgb(255 255 255 / 0.8);
+  font-size: 12.5px;
+  line-height: 1.35;
+}
+.cz-layer__t small {
+  color: rgb(255 255 255 / 0.62);
+  font-size: 11.5px;
+  line-height: 1.3;
+}
+.cz-layer .cz-bar {
+  background: rgb(255 255 255 / 0.14);
+}
+.cz-layer .cz-go:not(:disabled):not(.is-armed) {
+  color: #14101e;
+}
+.cz-layer .cz-go:not(:disabled):not(.is-armed)::before {
+  background: var(--cz-c);
+  box-shadow: 0 0 16px var(--cz-c);
+  animation: cz-throb 1.6s ease-in-out infinite;
+}
+.cz-layer .cz-go:disabled {
+  color: rgb(255 255 255 / 0.7);
+}
+.cz-layer .cz-go:disabled::before {
+  border: 1px solid rgb(255 255 255 / 0.25);
+  background: rgb(255 255 255 / 0.08);
+  box-shadow: none;
+}
+@keyframes cz-throb {
+  50% {
+    box-shadow: 0 0 4px var(--cz-c);
+  }
+}
+.cz-layer__n {
+  grid-column: 1 / -1;
+  margin: 0;
+  color: rgb(255 255 255 / 0.5);
+  font-size: 11px;
+  text-align: right;
+}
+@media (max-width: 420px) {
+  .cz-layer {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+  .cz-layer .cz-go {
+    grid-column: 1 / -1;
+    width: 100%;
+  }
+}
+
+/* ─── milestones ─── */
+.cz-miles {
+  display: grid;
+  gap: 5px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.cz-miles li {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+  padding: 7px 10px;
+  border: 1px solid var(--rule);
+  border-radius: var(--r-1);
+  background: var(--surf);
+}
+.cz-miles i {
+  display: grid;
+  place-items: center;
+  min-width: 34px;
+  height: 26px;
+  padding: 0 6px;
+  border: 1px solid var(--rule);
+  border-radius: 13px;
+  color: var(--fg-2);
+  font: 400 12px/1 'Bungee', var(--f-label);
+  font-style: normal;
+}
+.cz-miles span {
+  display: grid;
+  gap: 1px;
+  min-width: 0;
+}
+.cz-miles b {
+  font-size: 13px;
+}
+.cz-miles small,
+.cz-miles em {
+  color: var(--fg-2);
+  font-size: 11.5px;
+  font-style: normal;
+}
+.cz-miles li.is-on {
+  border-color: color-mix(in srgb, var(--cz-c) 55%, var(--rule));
+}
+.cz-miles li.is-on i {
+  border-color: var(--cz-c);
+  background: var(--cz-c);
+  color: #14101e;
+}
+.cz-miles li.is-on em {
+  color: var(--cz-c);
+  font-weight: 700;
+}
+
+/* ─── the constellation ─── */
+.cz-map {
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--cz-light) 35%, var(--rule));
+  border-radius: var(--r-2);
+  background:
+    radial-gradient(1px 1px at 12% 18%, #fff, transparent),
+    radial-gradient(1px 1px at 82% 9%, #fff, transparent),
+    radial-gradient(1.5px 1.5px at 66% 38%, rgb(255 255 255 / 0.7), transparent),
+    radial-gradient(1px 1px at 30% 60%, #fff, transparent),
+    radial-gradient(1px 1px at 90% 70%, rgb(255 255 255 / 0.8), transparent),
+    radial-gradient(1.5px 1.5px at 8% 88%, rgb(255 255 255 / 0.6), transparent),
+    radial-gradient(1px 1px at 48% 96%, #fff, transparent),
+    radial-gradient(60% 50% at 30% 30%, rgb(90 110 255 / 0.28), transparent 70%),
+    radial-gradient(55% 45% at 75% 75%, rgb(255 150 90 / 0.18), transparent 70%),
+    linear-gradient(180deg, #080a24, #130c2c);
+}
+.cz-map.is-dark {
+  filter: grayscale(1) brightness(0.6);
+}
+.cz-map svg {
+  display: block;
+  width: 100%;
+  max-height: 560px;
+  margin: 0 auto;
+}
+.cz-map__line {
+  stroke: rgb(255 255 255 / 0.13);
+  stroke-width: 0.35;
+  stroke-dasharray: 1 1.4;
+}
+.cz-map__line.is-next {
+  stroke: rgb(159 216 255 / 0.55);
+}
+.cz-map__line.is-on {
+  stroke: #ffe9a3;
+  stroke-width: 0.5;
+  stroke-dasharray: none;
+  filter: drop-shadow(0 0 1.2px #ffb338);
+}
+.cz-map__node {
+  cursor: pointer;
+  outline: none;
+}
+.cz-map__dot {
+  fill: rgb(255 255 255 / 0.3);
+}
+.cz-map__node.is-can .cz-map__dot {
+  fill: #cfeaff;
+}
+.cz-map__star {
+  fill: #fff;
+  filter: drop-shadow(0 0 1.5px #ffcf5e);
+}
+.cz-map__glow {
+  opacity: 0.75;
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: cz-twinkle 3.4s ease-in-out infinite;
+}
+.cz-map__node.is-ready .cz-map__glow {
+  animation-duration: 0.9s;
+}
+@keyframes cz-twinkle {
+  50% {
+    opacity: 0.4;
+    transform: scale(0.82);
+  }
+}
+.cz-map__ring {
+  fill: none;
+  stroke: #fff;
+  stroke-width: 0.4;
+  stroke-dasharray: 1.6 1.2;
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: cz-spin 8s linear infinite;
+}
+.cz-map__node:focus-visible .cz-map__ring,
+.cz-map__node:focus-visible circle:first-child {
+  stroke: #fff;
+  stroke-width: 0.5;
+}
+.cz-map__name {
+  fill: rgb(255 255 255 / 0.45);
+  font: 600 3.1px var(--f-body);
+  pointer-events: none;
+}
+.cz-map__node.is-on .cz-map__name {
+  fill: #ffe9a3;
+}
+.cz-map__node.is-can .cz-map__name {
+  fill: #cfeaff;
+}
+.cz-node {
+  --cz-c: var(--cz-light);
+}
+.cz-owned {
+  padding: 4px 10px;
+  border: 1px solid var(--cz-c);
+  border-radius: 13px;
+  color: var(--cz-c);
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 700;
+}
+
+/* ─── challenges ─── */
+.cz-chal {
+  --cz-c: #ff5d6c;
+}
+.cz-chal.is-active {
+  border-color: #ff5d6c;
+  box-shadow: 0 0 10px -2px #ff5d6c;
+}
+.cz-chal__r {
+  color: var(--cz-dark) !important;
+  font-weight: 700;
+}
+.cz-pips {
+  display: flex;
+  gap: 3px;
+  margin-top: 2px;
+}
+.cz-pips i {
+  width: 14px;
+  height: 5px;
+  border-radius: 3px;
+  background: var(--surf-3, rgb(127 127 127 / 0.3));
+}
+.cz-pips i.is-on {
+  background: var(--cz-c);
+  box-shadow: 0 0 5px var(--cz-c);
+}
+
+/* ─── relics ─── */
+.cz-relics {
+  --cz-c: var(--cz-gal);
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(158px, 1fr));
+  gap: 6px;
+}
+.cz-relic {
+  display: grid;
+  align-content: start;
+  gap: 4px;
+  padding: 10px;
+  border: 1px solid var(--rule);
+  border-radius: var(--r-2);
+  background: var(--surf);
+}
+.cz-relic:not(.is-on) {
+  border-style: dashed;
+}
+.cz-relic.is-worn {
+  border-color: var(--cz-gal);
+  background:
+    radial-gradient(120% 90% at 50% 0%, rgb(95 227 255 / 0.2), transparent 65%),
+    var(--surf);
+  box-shadow: 0 0 12px -3px var(--cz-gal);
+}
+.cz-relic__k {
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  border: 1px solid color-mix(in srgb, var(--cz-gal) 50%, var(--rule));
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #3b4a8f, #0d1030 70%);
+  color: #dff9ff;
+  font: 400 22px/1 'RocknRoll One', var(--f-body);
+  rotate: 0deg;
+}
+.cz-relic:not(.is-on) .cz-relic__k {
+  filter: grayscale(1);
+  opacity: 0.6;
+}
+.cz-relic.is-worn .cz-relic__k {
+  box-shadow:
+    0 0 0 2px var(--surf),
+    0 0 0 3px var(--cz-gal),
+    0 0 12px var(--cz-gal);
+}
+.cz-relic b {
+  font-size: 14px;
+}
+.cz-relic small {
+  color: var(--fg-2);
+  font-size: 12px;
+  line-height: 1.3;
+}
+.cz-relic__next {
+  opacity: 0.75;
+}
+.cz-relic__f {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 5px;
+  margin-top: 4px;
+}
+.cz-relic__f .i-btn[aria-pressed='true'] {
+  color: #14101e;
+}
+.cz-relic__f .i-btn[aria-pressed='true']::before {
+  border-color: var(--cz-gal);
+  background: var(--cz-gal);
+}
+
+/* ─── automation ─── */
+.cz-auto {
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+.cz-auto.is-shut {
+  border-style: dashed;
+  opacity: 0.65;
+}
+.cz-switch {
+  position: relative;
+  width: 50px;
+  height: 30px;
+  padding: 0;
+  border: 1px solid var(--rule);
+  border-radius: 15px;
+  background: var(--surf-3, rgb(127 127 127 / 0.25));
+  cursor: pointer;
+}
+.cz-switch i {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--fg-2);
+  transition: translate 0.15s;
+}
+.cz-switch[aria-checked='true'] {
+  border-color: #6dffb0;
+  background: rgb(109 255 176 / 0.25);
+}
+.cz-switch[aria-checked='true'] i {
+  translate: 20px 0;
+  background: #6dffb0;
+  box-shadow: 0 0 8px #6dffb0;
+}
+.cz-switch:disabled {
+  cursor: default;
+}
+
+/* ─── the log ─── */
+.cz-parts,
+.cz-stats {
+  display: grid;
+  gap: 0;
+  margin: 0;
+  border: 1px solid var(--rule);
+  border-radius: var(--r-2);
+  background: var(--surf);
+}
+.cz-parts > div,
+.cz-stats > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 7px 10px;
+  font-size: 13px;
+}
+.cz-parts > div + div,
+.cz-stats > div + div {
+  border-top: 1px solid var(--rule);
+}
+.cz-parts dt,
+.cz-stats dt {
+  color: var(--fg-2);
+}
+.cz-parts dd,
+.cz-stats dd {
+  margin: 0;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+.cz-parts .is-sum dd {
+  color: var(--cz-dust);
+  font: 400 15px/1.2 'Bungee', var(--f-label);
+}
+.cz-feats {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 5px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.cz-feats li {
+  display: grid;
+  gap: 1px;
+  padding: 7px 9px;
+  border: 1px dashed var(--rule);
+  border-radius: var(--r-1);
+  background: var(--surf);
+  opacity: 0.6;
+}
+.cz-feats li.is-on {
+  border: 1px solid color-mix(in srgb, var(--cz-light) 60%, var(--rule));
+  background:
+    radial-gradient(100% 120% at 100% 0%, rgb(255 226 122 / 0.2), transparent 60%),
+    var(--surf);
+  opacity: 1;
+}
+.cz-feats b {
+  font-size: 12.5px;
+}
+.cz-feats li.is-on b {
+  color: var(--cz-light);
+}
+.cz-feats small {
+  color: var(--fg-2);
+  font-size: 11px;
+  line-height: 1.25;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cz-core::after,
+  .cz-layer__sigil,
+  .cz-layer__sigil span,
+  .cz-map__glow,
+  .cz-map__ring,
+  .cz-dot,
+  .cz-layer .cz-go::before {
+    animation: none !important;
+  }
+  .cz-pop,
+  .cz-flash {
+    animation-duration: 0.01s;
+  }
+  .cz-flash {
+    animation: none;
+  }
+}

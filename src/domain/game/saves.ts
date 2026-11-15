@@ -1,5 +1,5 @@
 /**
- * The Works and the Aura Dial each keep one save row that every device rewrites as it plays. Two
+ * The Works, the Aura Dial and the Cosmos each keep one save row that every device rewrites as it plays. Two
  * copies that differ are merged, never picked between: everything either copy has reached is kept
  * (auras found, upgrade levels, milestones, lifetime counts), and the running state (what's on the
  * floor, the motes in hand, the queue) comes from the copy that has made more. Times can't decide
@@ -9,6 +9,7 @@
  */
 import { normalise, type IdleSave } from './idle';
 import { normaliseAura, type AuraSave } from './aura';
+import { mergeCosmos, normaliseCosmos } from './cosmos';
 
 /** Reading a save to merge it must not clamp its time to this device's clock. */
 export const NO_CLAMP = Number.MAX_SAFE_INTEGER;
@@ -69,12 +70,13 @@ export function mergeAura(x: AuraSave, y: AuraSave): AuraSave {
 }
 
 /** Whether this kind of row is a game save that merges. */
-export const isGameSave = (kind: string) => kind === 'gm_idle' || kind === 'gm_aura';
+export const isGameSave = (kind: string) => kind === 'gm_idle' || kind === 'gm_aura' || kind === 'gm_cosmos';
 
 /** Two copies of a save, merged (as plain row data), or null if the row isn't a game save. */
 export function mergeSave(kind: string, a: unknown, b: unknown): Record<string, unknown> | null {
   if (kind === 'gm_idle') return mergeIdle(normalise(a, NO_CLAMP), normalise(b, NO_CLAMP)) as unknown as Record<string, unknown>;
   if (kind === 'gm_aura') return mergeAura(normaliseAura(a, NO_CLAMP), normaliseAura(b, NO_CLAMP)) as unknown as Record<string, unknown>;
+  if (kind === 'gm_cosmos') return mergeCosmos(normaliseCosmos(a, NO_CLAMP), normaliseCosmos(b, NO_CLAMP)) as unknown as Record<string, unknown>;
   return null;
 }
 

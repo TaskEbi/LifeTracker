@@ -34,16 +34,20 @@ import { useArcade, useMore } from './arcadeStore';
 import { arcadeWaiting } from '../../domain/game/arcade';
 import { moreWaiting } from '../../domain/game/arcadeMore';
 import { useWorksGlance } from './worksStore';
+import { useCosmosGlance } from './cosmosStore';
 import './game.css';
 
 /** The Works is a game of its own, so it loads when its tab is opened. */
 const WorksTab = lazy(() => import('./Works'));
+/** So is the Cosmos. */
+const CosmosTab = lazy(() => import('./Cosmos'));
 
 const TABS = [
   { id: '', label: 'Hangar', kanji: '機' },
   { id: 'shop', label: 'Shop', kanji: '店' },
   { id: 'arcade', label: 'Arcade', kanji: '遊' },
   { id: 'works', label: 'Works', kanji: '廠' },
+  { id: 'cosmos', label: 'Cosmos', kanji: '宙' },
   { id: 'capsule', label: 'Capsules', kanji: '蛋' },
   { id: 'workshop', label: 'Workshop', kanji: '工' },
   { id: 'rewards', label: 'Rewards', kanji: '賞' },
@@ -60,6 +64,7 @@ export function GameView() {
   const reveal = useStore(revealStore, (s) => s.reveal);
   const waiting = arcadeWaiting(useArcade()) + moreWaiting(useMore());
   const works = useWorksGlance();
+  const sky = useCosmosGlance();
   const prizes = rewardsOf(g).waiting;
   return (
     <div className="gm">
@@ -91,11 +96,12 @@ export function GameView() {
             {t.id === '' && w.chests.length > 0 && <i className="gm-tab__n">{w.chests.length}</i>}
             {t.id === 'arcade' && waiting > 0 && <i className="gm-tab__n">{waiting}</i>}
             {t.id === 'rewards' && prizes > 0 && <i className="gm-tab__n">{prizes > 99 ? '99+' : prizes}</i>}
+            {t.id === 'cosmos' && tab !== 'cosmos' && sky.started && sky.waiting >= 1 && <i className="gm-tab__n">!</i>}
             {t.id === 'works' && tab !== 'works' && works.started && (works.crate || works.waiting >= 1) && <i className="gm-tab__n">!</i>}
           </button>
         ))}
       </nav>
-      {tab === 'shop' ? <ShopTab /> : tab === 'arcade' ? <ArcadeTab /> : tab === 'works' ? <Suspense fallback={<p className="i-note">Opening the factory…</p>}><WorksTab /></Suspense> : tab === 'capsule' ? <CapsuleTab /> : tab === 'workshop' ? <WorkshopTab /> : tab === 'rewards' ? <RewardsTab /> : tab === 'events' ? <EventsTab /> : tab === 'ledger' ? <LedgerTab /> : <Bay g={g} run={run} />}
+      {tab === 'shop' ? <ShopTab /> : tab === 'arcade' ? <ArcadeTab /> : tab === 'works' ? <Suspense fallback={<p className="i-note">Opening the factory…</p>}><WorksTab /></Suspense> : tab === 'cosmos' ? <Suspense fallback={<p className="i-note">Looking up…</p>}><CosmosTab /></Suspense> : tab === 'capsule' ? <CapsuleTab /> : tab === 'workshop' ? <WorkshopTab /> : tab === 'rewards' ? <RewardsTab /> : tab === 'events' ? <EventsTab /> : tab === 'ledger' ? <LedgerTab /> : <Bay g={g} run={run} />}
       {reveal && <RevealLayer reveal={reveal} onClose={closeReveal} />}
     </div>
   );
