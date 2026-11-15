@@ -1,0 +1,203 @@
+/* 賞 Rewards: the monthly pass track and the emblem prizes. */
+.gm-pass {
+  display: grid;
+  gap: 10px;
+  margin-bottom: 18px;
+  padding: 12px;
+  border: 2px solid #7cf29c;
+  border-radius: var(--r-2);
+  background:
+    radial-gradient(120% 80% at 0% 0%, rgb(124 242 156 / 0.16), transparent 60%),
+    var(--surf);
+}
+.gm-pass__head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.gm-pass__k {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #d8ffe3, #2fae5a);
+  color: #08321a;
+  font: 400 24px/1 'RocknRoll One', var(--f-body);
+  box-shadow: 0 0 14px rgb(124 242 156 / 0.5);
+}
+.gm-pass__t {
+  display: grid;
+  flex: 1;
+  gap: 3px;
+  min-width: 0;
+}
+.gm-pass__t small {
+  color: var(--fg-2);
+  font-size: 12px;
+}
+.gm-pass__track {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.gm-pass__tier button {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  align-content: start;
+  gap: 3px;
+  width: 100%;
+  min-height: 74px;
+  padding: 5px 2px 6px;
+  border: 1px solid var(--rule);
+  border-radius: 10px;
+  background: var(--surf-2);
+  color: var(--fg);
+  font: inherit;
+  cursor: default;
+  opacity: 0.6;
+}
+.gm-pass__tier.is-big button {
+  border-color: color-mix(in srgb, #ffc23d 60%, var(--rule));
+  background: linear-gradient(170deg, rgb(255 194 61 / 0.18), var(--surf-2));
+}
+.gm-pass__tier.is-ready button {
+  border: 2px solid #7cf29c;
+  opacity: 1;
+  cursor: pointer;
+  box-shadow: 0 0 12px rgb(124 242 156 / 0.45);
+}
+.gm-pass__tier.is-ready button::after {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: inherit;
+  box-shadow: 0 0 16px 2px rgb(124 242 156 / 0.7);
+  pointer-events: none;
+  animation: gm-pass-ready 1.6s ease-in-out infinite;
+}
+.gm-pass__tier.is-got button {
+  opacity: 0.85;
+}
+.gm-pass__n {
+  font: 400 13px/1 'Bungee', var(--f-label);
+  color: var(--fg-2);
+}
+.gm-pass__loot {
+  display: grid;
+  justify-items: center;
+  gap: 2px;
+  transform: scale(0.86);
+}
+.gm-pass__tier small {
+  color: var(--fg-3);
+  font-size: 10px;
+}
+.gm-pass__tick {
+  position: absolute;
+  top: 3px;
+  right: 5px;
+  color: #7cf29c;
+  font-weight: 700;
+}
+@keyframes gm-pass-ready {
+  0%,
+  100% {
+    opacity: 0.2;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+.gm-achp {
+  display: grid;
+  gap: 10px;
+}
+.gm-achp__key {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 6px;
+}
+.gm-achp__key > span {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 0 8px;
+  align-items: center;
+  padding: 6px 8px;
+  border-left: 3px solid var(--a);
+  border-radius: 8px;
+  background: var(--surf);
+}
+.gm-achp__key i {
+  grid-row: span 2;
+  color: var(--a);
+  font: normal 400 20px/1 'RocknRoll One', var(--f-body);
+}
+.gm-achp__key small {
+  color: var(--fg-2);
+  font-size: 11px;
+}
+
+/* True Silver and True Gold, in a body's card */
+.gm-skins {
+  display: grid;
+  gap: 8px;
+  padding: 10px;
+  border: 1px solid var(--rule);
+  border-radius: var(--r-2);
+  background: linear-gradient(120deg, rgb(201 211 222 / 0.12), rgb(255 194 61 / 0.12)), var(--surf);
+}
+.gm-skins__row {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+.gm-skin {
+  display: grid;
+  justify-items: center;
+  gap: 4px;
+  padding: 6px 4px 8px;
+  border: 1px solid var(--rule);
+  border-radius: 10px;
+  background: var(--surf-2);
+  text-align: center;
+}
+.gm-skin[aria-current='true'] {
+  border: 2px solid var(--a);
+  box-shadow: 0 0 12px color-mix(in srgb, var(--a) 50%, transparent);
+}
+.gm-skin .gm-thumb {
+  width: 100%;
+  max-width: 96px;
+}
+.gm-skin b {
+  color: var(--a);
+  font-size: 13px;
+}
+.gm-skin small {
+  color: var(--fg-2);
+  font-size: 11px;
+}
+.gm-skin.is-locked .gm-thumb {
+  opacity: 0.55;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gm-pass__tier.is-ready button::after {
+    animation: none;
+  }
+}
+.gm-waiting--rw {
+  margin-top: 8px;
+  border-color: #7cf29c;
+  background: linear-gradient(100deg, rgb(124 242 156 / 0.2), var(--surf));
+}
+.gm-waiting--rw .gm-waiting__k {
+  color: #7cf29c;
+}

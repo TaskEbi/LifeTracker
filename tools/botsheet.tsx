@@ -9,12 +9,16 @@ import '../src/features/home/living.css';
 import type { BotRegistry } from '../src/ui/i/bots/types';
 import { HAT_ART, PET_ART, AURA_ART } from '../src/ui/i/bots/gear';
 import { CHASSIS, STAGE_COLOURS } from './botsheetData';
+import { Robot } from '../src/ui/i/bots/Robot';
+import { DEFAULT_LOADOUT } from '../src/domain/game/wallet';
 
 const q = new URLSearchParams(location.search);
 const reg = q.get('reg') ?? 'forms';
 const dark = q.get('theme') !== 'light';
 const only = q.get('only')?.split(',');
 const animate = q.has('animate');
+/** `skin=silver` or `skin=gold`: draw each body through Robot, in that skin. */
+const skin = q.get('skin') as 'silver' | 'gold' | null;
 
 const vars = (dark
   ? { '--fg': '#f4f1ea', '--surf': '#16161b', '--surf-2': '#1f1f26', '--bg': '#0b0b0d', '--fg-2': '#bab6c3' }
@@ -28,6 +32,11 @@ const LOAD: Record<string, () => Promise<Record<string, BotRegistry>>> = {
   tribute: () => import('../src/ui/i/bots/chassisTribute') as never,
   event: () => import('../src/ui/i/bots/chassisEvent') as never,
   secret: () => import('../src/ui/i/bots/chassisSecret') as never,
+  samurai: () => import('../src/ui/i/bots/chassisSamurai') as never,
+  mecha: () => import('../src/ui/i/bots/chassisMecha') as never,
+  guardians: () => import('../src/ui/i/bots/chassisGuardians') as never,
+  engines: () => import('../src/ui/i/bots/chassisEngines') as never,
+  heavens: () => import('../src/ui/i/bots/chassisHeavens') as never,
 };
 
 const box: CSSProperties = { width: 200, textAlign: 'center', font: '12px sans-serif', color: 'var(--fg)' };
@@ -66,6 +75,7 @@ function Sheet() {
       cells = keys.flatMap((k) => {
         const D = r[k];
         const ch = CHASSIS.find((x) => x.id === k);
+        if (skin) return ([1, 2, 3] as const).map((mk) => cell(`${k}${mk}`, `${k} · ${skin} · Mk ${mk}`, <span style={{ display: 'block', width: 200, height: 200 }}><Robot stage={0} look={{ ...DEFAULT_LOADOUT, chassis: k, skins: { [k]: skin } }} mk={mk} still={!animate} label={false} /></span>));
         return ([1, 2, 3] as const).map((mk) =>
           cell(`${k}${mk}`, `${k} · Mk ${mk}`, <Svg><D.Art c={ch?.c ?? '#f00'} c2={ch?.c2 ?? '#ff0'} uid={`u${k}${mk}`} still={!animate} happy={false} mk={mk} />{mk === 1 && <path d={`M${D.head.x - 8} ${D.head.y} h16`} stroke="#0ff" strokeWidth="2" />}</Svg>),
         );

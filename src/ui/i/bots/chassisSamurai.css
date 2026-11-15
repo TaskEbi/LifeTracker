@@ -1,0 +1,164 @@
+/* Warlords (samurai chassis) motion. Transform and opacity only; origins are in the art's 200 x 200 box. */
+.bsm-breathe,
+.bsm-sway,
+.bsm-flutter,
+.bsm-billow,
+.bsm-flag,
+.bsm-pulse,
+.bsm-spin,
+.bsm-flicker,
+.bsm-rain-a,
+.bsm-rain-b,
+.bsm-flash,
+.bsm-jingle,
+.bsm-petal,
+.bsm-swing,
+.bsm-fan,
+.bsm-hover,
+.bsm-splash {
+  transform-box: view-box;
+}
+
+/* a slow breath for the upper body */
+.bsm-breathe { animation: bsm-breathe 3.8s ease-in-out infinite; }
+@keyframes bsm-breathe {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-1.4px); }
+}
+
+/* hair, cords and tails */
+.bsm-sway { animation: bsm-sway 3.4s ease-in-out infinite; }
+@keyframes bsm-sway {
+  0%, 100% { transform: rotate(-2.5deg); }
+  50% { transform: rotate(2.5deg); }
+}
+
+/* cloth caught in the wind */
+.bsm-flutter { animation: bsm-flutter 1.5s ease-in-out infinite; }
+@keyframes bsm-flutter {
+  0%, 100% { transform: rotate(-3deg) scaleX(1); }
+  50% { transform: rotate(3deg) scaleX(0.95); }
+}
+
+/* the horo cape filling with air */
+.bsm-billow { animation: bsm-billow 3.2s ease-in-out infinite; }
+@keyframes bsm-billow {
+  0%, 100% { transform: scale(1) rotate(0); }
+  50% { transform: scale(1.04) rotate(-1.5deg); }
+}
+
+/* banners and flags */
+.bsm-flag { animation: bsm-flag 2.8s ease-in-out infinite; }
+@keyframes bsm-flag {
+  0%, 100% { transform: skewY(0) rotate(0); }
+  50% { transform: skewY(-3deg) rotate(1.5deg); }
+}
+
+/* glows */
+.bsm-pulse { animation: bsm-pulse 2.4s ease-in-out infinite; }
+@keyframes bsm-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.55; }
+}
+
+/* the sutra ring */
+.bsm-spin { animation: bsm-spin 46s linear infinite; }
+@keyframes bsm-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* shadow clones: there, then not quite */
+.bsm-flicker { animation: bsm-flicker 2.8s ease-in-out infinite; }
+@keyframes bsm-flicker {
+  0%, 100% { opacity: 1; transform: translateX(0); }
+  30% { opacity: 0.85; }
+  36% { opacity: 0.15; transform: translateX(-2px); }
+  40% { opacity: 0.9; transform: translateX(1px); }
+  44% { opacity: 0.3; }
+  48%, 90% { opacity: 1; transform: translateX(0); }
+}
+
+/* rain: each layer moves exactly one dash period along its slant, so the loop is seamless */
+.bsm-rain-a { animation: bsm-rain-a 0.5s linear infinite; }
+@keyframes bsm-rain-a {
+  to { transform: translate(-11.38px, 34.15px); }
+}
+.bsm-rain-b { animation: bsm-rain-b 0.42s linear infinite; }
+@keyframes bsm-rain-b {
+  to { transform: translate(-17.08px, 51.23px); }
+}
+
+/* lightning */
+.bsm-flash { animation: bsm-flash 4.6s linear infinite; }
+@keyframes bsm-flash {
+  0%, 68%, 100% { opacity: 0.18; }
+  70% { opacity: 1; }
+  72% { opacity: 0.3; }
+  74% { opacity: 1; }
+  82% { opacity: 0.18; }
+}
+
+/* the shakujō rings */
+.bsm-jingle { animation: bsm-jingle 3s ease-in-out infinite; }
+@keyframes bsm-jingle {
+  0%, 40%, 100% { transform: rotate(0); }
+  8%, 24% { transform: rotate(6deg); }
+  16%, 32% { transform: rotate(-6deg); }
+}
+
+/* sakura petals drifting */
+.bsm-petal { animation: bsm-petal 5s ease-in-out infinite; }
+@keyframes bsm-petal {
+  0%, 100% { transform: translate(0, 0) rotate(0); opacity: 1; }
+  50% { transform: translate(-5px, 7px) rotate(120deg); opacity: 0.7; }
+}
+
+/* a chain or weight swinging */
+.bsm-swing { animation: bsm-swing 2.4s ease-in-out infinite; }
+@keyframes bsm-swing {
+  0%, 100% { transform: rotate(-4deg); }
+  50% { transform: rotate(4deg); }
+}
+
+/* the war fan */
+.bsm-fan { animation: bsm-fan 3s ease-in-out infinite; }
+@keyframes bsm-fan {
+  0%, 100% { transform: rotate(0); }
+  50% { transform: rotate(-5deg); }
+}
+
+/* the bell, floating a little */
+.bsm-hover { animation: bsm-hover 4.2s ease-in-out infinite; }
+@keyframes bsm-hover {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-2.5px); }
+}
+
+/* splashes where the rain lands */
+.bsm-splash { animation: bsm-splash 0.9s ease-out infinite; }
+@keyframes bsm-splash {
+  0% { opacity: 0.9; transform: scale(0.3); }
+  100% { opacity: 0; transform: scale(1.4); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bsm-breathe,
+  .bsm-sway,
+  .bsm-flutter,
+  .bsm-billow,
+  .bsm-flag,
+  .bsm-pulse,
+  .bsm-spin,
+  .bsm-flicker,
+  .bsm-rain-a,
+  .bsm-rain-b,
+  .bsm-flash,
+  .bsm-jingle,
+  .bsm-petal,
+  .bsm-swing,
+  .bsm-fan,
+  .bsm-hover,
+  .bsm-splash {
+    animation: none !important;
+  }
+}

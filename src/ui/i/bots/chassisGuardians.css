@@ -1,0 +1,166 @@
+/* Guardians of the four directions. Transform and opacity only; origins are in the art's 200 x 200 box. */
+.bgd-bob,
+.bgd-sway,
+.bgd-sway-s,
+.bgd-spin,
+.bgd-fall,
+.bgd-rain,
+.bgd-flash,
+.bgd-leaf,
+.bgd-gust-l,
+.bgd-gust-r,
+.bgd-flap,
+.bgd-peck,
+.bgd-whisk,
+.bgd-drift,
+.bgd-pulse,
+.bgd-glint,
+.bgd-orbit,
+.bgd-breathe,
+.bgd-nod,
+.bgd-flick {
+  transform-box: view-box;
+}
+
+.bgd-bob { animation: bgd-bob 3.4s ease-in-out infinite; }
+@keyframes bgd-bob {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-2.5px); }
+}
+
+.bgd-breathe { animation: bgd-breathe 4.2s ease-in-out infinite; }
+@keyframes bgd-breathe {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.015); }
+}
+
+.bgd-sway { animation: bgd-sway 3.6s ease-in-out infinite; }
+@keyframes bgd-sway {
+  0%, 100% { transform: rotate(-3deg); }
+  50% { transform: rotate(3deg); }
+}
+
+.bgd-sway-s { animation: bgd-sway-s 3.8s ease-in-out infinite; }
+@keyframes bgd-sway-s {
+  0%, 100% { transform: rotate(-1.6deg); }
+  50% { transform: rotate(1.6deg); }
+}
+
+/* the serpent heads nod; set on a group drawn in the head's own frame */
+.bgd-nod { animation: bgd-nod 3s ease-in-out infinite; }
+@keyframes bgd-nod {
+  0%, 100% { transform: rotate(0); }
+  50% { transform: rotate(4deg); }
+}
+
+.bgd-flick { animation: bgd-flick 2.2s ease-in-out infinite; }
+@keyframes bgd-flick {
+  0%, 60%, 100% { transform: scaleY(1); }
+  70% { transform: scaleY(.4); }
+  80% { transform: scaleY(1.1); }
+  90% { transform: scaleY(.5); }
+}
+
+.bgd-spin { animation: bgd-spin 40s linear infinite; }
+@keyframes bgd-spin {
+  to { transform: rotate(360deg); }
+}
+
+.bgd-orbit { animation: bgd-spin 22s linear infinite; }
+
+.bgd-fall { animation: bgd-fall .9s linear infinite; }
+@keyframes bgd-fall {
+  from { transform: translateY(0); }
+  to { transform: translateY(9px); }
+}
+
+.bgd-rain { animation: bgd-rain 1.2s linear infinite; }
+@keyframes bgd-rain {
+  0% { transform: translate(2px, -10px); opacity: 0; }
+  25% { opacity: 1; }
+  100% { transform: translate(-3px, 12px); opacity: 0; }
+}
+
+.bgd-flash { animation: bgd-flash 4.6s steps(1) infinite; }
+@keyframes bgd-flash {
+  0%, 100% { opacity: .9; }
+  80% { opacity: .15; }
+  84% { opacity: 1; }
+  87% { opacity: .2; }
+  90% { opacity: 1; }
+}
+
+.bgd-leaf { animation: bgd-leaf 5s ease-in-out infinite; }
+@keyframes bgd-leaf {
+  0%, 100% { transform: translate(0, 0) rotate(0); }
+  50% { transform: translate(5px, -5px) rotate(24deg); }
+}
+
+.bgd-gust-l { animation: bgd-gust-l 3s ease-in-out infinite; }
+.bgd-gust-r { animation: bgd-gust-l 3s ease-in-out infinite; }
+@keyframes bgd-gust-l {
+  0%, 100% { transform: rotate(0); }
+  50% { transform: rotate(-4deg); }
+}
+
+.bgd-flap { animation: bgd-flap 2.4s ease-in-out infinite; }
+@keyframes bgd-flap {
+  0%, 100% { transform: rotate(0); }
+  50% { transform: rotate(6deg); }
+}
+
+.bgd-peck { animation: bgd-peck 4s ease-in-out infinite; }
+@keyframes bgd-peck {
+  0%, 70%, 100% { transform: rotate(0); }
+  80% { transform: rotate(-5deg); }
+  90% { transform: rotate(1deg); }
+}
+
+.bgd-whisk { animation: bgd-whisk 3.2s ease-in-out infinite; }
+@keyframes bgd-whisk {
+  0%, 100% { transform: rotate(0); }
+  50% { transform: rotate(5deg); }
+}
+
+.bgd-drift { animation: bgd-drift 6s ease-in-out infinite; }
+@keyframes bgd-drift {
+  0%, 100% { transform: translateX(-2px); }
+  50% { transform: translateX(3px); }
+}
+
+.bgd-pulse { animation: bgd-pulse 2.6s ease-in-out infinite; }
+@keyframes bgd-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: .8; transform: scale(1.06); }
+}
+
+.bgd-glint { animation: bgd-glint 2.8s ease-in-out infinite; }
+@keyframes bgd-glint {
+  0%, 100% { opacity: .2; transform: scale(.5); }
+  50% { opacity: 1; transform: scale(1.15); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bgd-bob,
+  .bgd-sway,
+  .bgd-sway-s,
+  .bgd-nod,
+  .bgd-flick,
+  .bgd-spin,
+  .bgd-orbit,
+  .bgd-fall,
+  .bgd-rain,
+  .bgd-flash,
+  .bgd-leaf,
+  .bgd-gust-l,
+  .bgd-gust-r,
+  .bgd-flap,
+  .bgd-peck,
+  .bgd-whisk,
+  .bgd-drift,
+  .bgd-pulse,
+  .bgd-glint,
+  .bgd-breathe {
+    animation: none !important;
+  }
+}

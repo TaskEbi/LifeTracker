@@ -169,15 +169,22 @@ export interface Loadout {
   pet: string | null;
   aura: string | null;
   title: string | null;
+  /** The True Silver or True Gold skin each body wears, by body id (rewards.ts). Absent: none. */
+  skins?: Record<string, 'silver' | 'gold'>;
 }
 
 export const DEFAULT_LOADOUT: Loadout = { chassis: 'drone', paint: null, hat: null, pet: null, aura: null, title: null };
+
+/** The skin the body you're wearing has on, if any. */
+export const wornSkin = (look: Pick<Loadout, 'chassis' | 'skins'>): 'silver' | 'gold' | null => (look.chassis !== 'drone' && look.skins?.[look.chassis]) || null;
 
 export function normaliseLoadout(v: unknown): Loadout {
   if (!v || typeof v !== 'object') return DEFAULT_LOADOUT;
   const o = v as Record<string, unknown>;
   const str = (x: unknown) => (typeof x === 'string' && x ? x : null);
-  return { chassis: str(o.chassis) ?? 'drone', paint: str(o.paint), hat: str(o.hat), pet: str(o.pet), aura: str(o.aura), title: str(o.title) };
+  const skins: Record<string, 'silver' | 'gold'> = {};
+  if (o.skins && typeof o.skins === 'object') for (const [k, v] of Object.entries(o.skins as Record<string, unknown>)) if (v === 'silver' || v === 'gold') skins[k] = v;
+  return { chassis: str(o.chassis) ?? 'drone', paint: str(o.paint), hat: str(o.hat), pet: str(o.pet), aura: str(o.aura), title: str(o.title), ...(Object.keys(skins).length ? { skins } : {}) };
 }
 
 // ─── naming things ──────────────────────────────────────────────────────────
@@ -188,6 +195,7 @@ export function itemName(item: string): string {
   if (kind === 'chassis') return `${chassisById(id)?.name ?? id} Mk ${mk === '3' ? 'III' : mk === '2' ? 'II' : 'I'}`;
   if (kind === 'theme') return `${id} theme`;
   if (kind === 'cry') return `${chassisById(id)?.name ?? id}: “${BODY_LINES[id] ?? '…'}”`;
+  if (kind === 'skin') return `True ${mk === 'gold' ? 'Gold' : 'Silver'} ${chassisById(id)?.name ?? id}`;
   if (kind === 'wgear') return GEAR_SKINS.find((x) => x.id === id)?.name ?? id;
   if (kind === 'wfloor') return FLOORS.find((x) => x.id === id)?.name ?? id;
   const c = cosmeticOf(item);
@@ -199,6 +207,7 @@ export function itemKindName(item: string): string {
   if (kind === 'chassis') return 'Chassis';
   if (kind === 'theme') return 'Colour theme';
   if (kind === 'cry') return 'Battle cry';
+  if (kind === 'skin') return 'Body skin';
   if (kind === 'wgear') return 'Works gear';
   if (kind === 'wfloor') return 'Works floor';
   return COSMETIC_NAME[kind as CosmeticKind] ?? kind;

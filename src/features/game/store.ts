@@ -24,6 +24,7 @@ import { dailyDeal, discounted, DUST_TICKET, GEM_EXCHANGE, MAT_EXCHANGE, type Sh
 import { canAfford, chassisMk, normaliseLoadout, plus, shortfall, spinsSinceEpic, txOf, upgradeLevel, walletOf, type Grant, type Loadout, type Tx, type TxType, type Wallet } from '../../domain/game/wallet';
 import { bestDaySections, bodyStats, claimedRefs, longestRun, PILOT_SEED_T, secretById, secretOpen, TIERS, unclaimed, type BodyStat, type Prize, type SecretFacts } from '../../domain/game/mastery';
 import { pondOf } from '../../domain/game/arcade';
+import { achPrizes, passesNow, rewardClaims, SKINS, skinItem, skinLock, type AchPrize, type PassState, type SkinId } from '../../domain/game/rewards';
 import { createStore, useStore } from '../../lib/createStore';
 import { uuid } from '../../lib/random';
 import { evolveBot } from './revealStore';
@@ -571,3 +572,72 @@ export function claimSet(id: string): Bag | null {
 const wishOf = (v: unknown) => (typeof v === 'string' && v ? v : null);
 export const useWish = (): string | null => useStore(data, (s) => wishOf(prefValue(s, 'game_wish')));
 export const setWish = (item: string | null) => setPref('game_wish', item);
+
+// ─── M54: True skins, achievement prizes and the Hangar Pass (rewards.ts) ───
+
+export interface Rewards {
+  ach: AchPrize[];
+  passes: PassState[];
+  /** Everything waiting to be claimed. */
+  waiting: number;
+}
+
+const rewardsMemo: { g: GameState; r: Rewards }[] = [];
+export function rewardsOf(g: GameState): Rewards {
+  const hit = rewardsMemo.find((m) => m.g === g);
+  if (hit) return hit.r;
+  const claimed = rewardClaims(g.txs);
+  const ach = achPrizes(g.earnInput.achievements, claimed);
+  const passes = passesNow(g.earnInput.xp, g.today, claimed);
+  const waiting = ach.length + passes.reduce((n, p) => n + p.tiers.filter((t) => t.reached && !t.claimed).length, 0);
+  const r = { ach, passes, waiting };
+  rewardsMemo.push({ g, r });
+  if (rewardsMemo.length > 2) rewardsMemo.shift();
+  return r;
+}
+export const useRewards = (): Rewards => rewardsOf(useGame());
+
+/** Claim achievement prizes (one, or all of them). Returns what they paid and the XP. */
+export function claimAch(ref?: string): { gain: Bag; xp: number; n: number } | null {
+  const list = rewardsOf(getGame()).ach.filter((a) => !ref || a.ref === ref);
+  let gain: Bag = {};
+  let xp = 0;
+  let n = 0;
+  for (const a of list) if (claimOnce(a.ref, a.gain)) ((gain = plus(gain, a.gain)), (xp += a.xp), n++);
+  return n ? { gain, xp, n } : null;
+}
+
+/** Claim pass tiers reached (one, or every one waiting). */
+export function claimPass(ref?: string, month?: string): Bag | null {
+  let gain: Bag = {};
+  let n = 0;
+  for (const p of rewardsOf(getGame()).passes) {
+    if (!p.open || (month && p.month !== month)) continue;
+    for (const t of p.tiers) if (t.reached && !t.claimed && (!ref || t.ref === ref) && claimOnce(t.ref, t.gain)) ((gain = plus(gain, t.gain)), n++);
+  }
+  return n ? gain : null;
+}
+
+/** Buy a body's True Silver or True Gold, and put it on. */
+export function buySkin(body: string, skin: SkinId): boolean {
+  const g = getGame();
+  const item = skinItem(body, skin);
+  if (g.wallet.items.has(item)) return false;
+  const lock = skinLock(skin, getBodies().stats.get(body)?.level ?? 0, (it) => g.wallet.items.has(it), body, chassisMk(g.wallet, body));
+  if (lock) {
+    toast(`Not yet: ${lock}.`);
+    return false;
+  }
+  if (!buyItem(item, SKINS[skin].cost, { id: pairId('gm:skin', item) })) return false;
+  wearSkin(body, skin);
+  return true;
+}
+
+/** Put a skin you own on a body (or take it off with null). */
+export function wearSkin(body: string, skin: SkinId | null) {
+  const look = getLoadout();
+  const skins = { ...look.skins };
+  if (skin && getGame().wallet.items.has(skinItem(body, skin))) skins[body] = skin;
+  else delete skins[body];
+  setPref('game_loadout', { ...look, skins });
+}
