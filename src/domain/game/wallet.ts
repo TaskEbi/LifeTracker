@@ -171,6 +171,26 @@ export interface Loadout {
   title: string | null;
   /** The True Silver or True Gold skin each body wears, by body id (rewards.ts). Absent: none. */
   skins?: Record<string, 'silver' | 'gold'>;
+  /** What each body wears, by body id ('drone' too): changing body puts its own outfit back on. */
+  kits?: Record<string, Kit>;
+}
+
+/** One body's outfit. */
+export type Kit = Pick<Loadout, 'paint' | 'hat' | 'pet' | 'aura' | 'title'>;
+const KIT_KEYS = ['paint', 'hat', 'pet', 'aura', 'title'] as const;
+export const EMPTY_KIT: Kit = { paint: null, hat: null, pet: null, aura: null, title: null };
+export const kitOf = (look: Kit): Kit => ({ paint: look.paint, hat: look.hat, pet: look.pet, aura: look.aura, title: look.title });
+
+/**
+ * A change to what you're wearing. Each body keeps its own outfit: the one you leave is saved under
+ * its id, and the one you change to comes back as you left it (bare, the first time). Anything in the
+ * patch itself wins.
+ */
+export function changeLoadout(before: Loadout, patch: Partial<Loadout>): Loadout {
+  const to = patch.chassis ?? before.chassis;
+  const kits = { ...before.kits, [before.chassis]: kitOf(before) };
+  const next: Loadout = { ...before, ...(to !== before.chassis ? (kits[to] ?? EMPTY_KIT) : {}), ...patch, chassis: to };
+  return { ...next, kits: { ...kits, [to]: kitOf(next) } };
 }
 
 export const DEFAULT_LOADOUT: Loadout = { chassis: 'drone', paint: null, hat: null, pet: null, aura: null, title: null };
@@ -184,7 +204,15 @@ export function normaliseLoadout(v: unknown): Loadout {
   const str = (x: unknown) => (typeof x === 'string' && x ? x : null);
   const skins: Record<string, 'silver' | 'gold'> = {};
   if (o.skins && typeof o.skins === 'object') for (const [k, v] of Object.entries(o.skins as Record<string, unknown>)) if (v === 'silver' || v === 'gold') skins[k] = v;
-  return { chassis: str(o.chassis) ?? 'drone', paint: str(o.paint), hat: str(o.hat), pet: str(o.pet), aura: str(o.aura), title: str(o.title), ...(Object.keys(skins).length ? { skins } : {}) };
+  const kits: Record<string, Kit> = {};
+  if (o.kits && typeof o.kits === 'object') {
+    for (const [k, v] of Object.entries(o.kits as Record<string, unknown>)) {
+      if (!v || typeof v !== 'object') continue;
+      const r = v as Record<string, unknown>;
+      kits[k] = Object.fromEntries(KIT_KEYS.map((x) => [x, str(r[x])])) as Kit;
+    }
+  }
+  return { chassis: str(o.chassis) ?? 'drone', paint: str(o.paint), hat: str(o.hat), pet: str(o.pet), aura: str(o.aura), title: str(o.title), ...(Object.keys(skins).length ? { skins } : {}), ...(Object.keys(kits).length ? { kits } : {}) };
 }
 
 // ─── naming things ──────────────────────────────────────────────────────────

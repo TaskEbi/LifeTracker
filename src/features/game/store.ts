@@ -21,7 +21,7 @@ import { rollChest, rollLuckyBag, rollSpin, type SpinResult } from '../../domain
 import { bagsThisWeek, LUCKY_BAG, NIGHT_EXTRAS, nightOf, nightOpen, perks, saleState, stampCard, stampPrize, standingOf, thanksLine, timeSale, withRank, type Request, type Standing } from '../../domain/game/market';
 import { setPrize, setsProgress } from '../../domain/game/sets';
 import { dailyDeal, discounted, DUST_TICKET, GEM_EXCHANGE, MAT_EXCHANGE, type ShopItem } from '../../domain/game/shop';
-import { canAfford, chassisMk, normaliseLoadout, plus, shortfall, spinsSinceEpic, txOf, upgradeLevel, walletOf, type Grant, type Loadout, type Tx, type TxType, type Wallet } from '../../domain/game/wallet';
+import { canAfford, changeLoadout, chassisMk, normaliseLoadout, plus, shortfall, spinsSinceEpic, txOf, upgradeLevel, walletOf, type Grant, type Loadout, type Tx, type TxType, type Wallet } from '../../domain/game/wallet';
 import { bestDaySections, bodyStats, claimedRefs, longestRun, PILOT_SEED_T, secretById, secretOpen, TIERS, unclaimed, type BodyStat, type Prize, type SecretFacts } from '../../domain/game/mastery';
 import { pondOf } from '../../domain/game/arcade';
 import { achPrizes, passesNow, rewardClaims, SKINS, skinItem, skinLock, type AchPrize, type PassState, type SkinId } from '../../domain/game/rewards';
@@ -115,7 +115,7 @@ export const getLoadout = () => loadoutOf(data.get());
 export function setLoadout(patch: Partial<Loadout>) {
   const before = getLoadout();
   if (patch.chassis && patch.chassis !== before.chassis) pilot(before.chassis, patch.chassis);
-  setPref('game_loadout', { ...before, ...patch });
+  setPref('game_loadout', changeLoadout(before, patch));
 }
 
 // ─── bodies: levels, mastery and the hidden ones (mastery.ts) ───────────────

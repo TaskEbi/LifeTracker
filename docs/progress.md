@@ -566,3 +566,9 @@ Asked for: about 30 more bodies, very detailed and high quality (a different art
 - **Screens:** a new Rewards 賞 tab in the Hangar (pass track, emblem prizes, Claim all), a count on the tab and a banner in the bay when anything is waiting, and a True skins panel in each body's card.
 - **Data:** skins are `buy` rows; prizes and pass tiers are `claim` rows (see AGENTS.md); emblem XP is derived from the tier in the ref. No migration.
 - Verified: 837 unit/DB tests (new `rewards.test.ts`), typecheck, new `rewards.spec.ts` (pass tier and emblem prizes claimed once and surviving a reload; True Silver cast, worn, taken off and kept after a reload), plus `hangar.spec.ts` and `mastery.spec.ts` in WebKit at iPhone size. Every new body was looked at on contact sheets at Mk I–III in both themes, and the skins on existing bodies in both metals. Not tried on a real iPhone; the frame rate of the metal filter on a phone isn't measured. How fast the pass fills is reasoned (about 150 XP a day finishes it), not played through.
+
+## M55 · An outfit per body (done)
+Asked for: everything equipped saved separately for each character.
+- Each body, the drone included, keeps its own paint, headgear, companion, aura and title. Changing body saves the outfit of the one you leave and puts the new one's back on; a body you haven't dressed starts bare. True skins were already per body. The wardrobe says so.
+- **Data:** `kits` in the `game_loadout` pref, by body id (`changeLoadout` in `src/domain/game/wallet.ts`). The first change of body after this saves what you were wearing under the body you had on. No migration.
+- Verified: unit tests (outfits switch and come back, read back through JSON), typecheck, new `outfits.spec.ts` (two bodies dressed differently, switched back and forth, after a reload) plus `hangar`, `mastery`, `rewards` and `works` specs in WebKit at iPhone size.

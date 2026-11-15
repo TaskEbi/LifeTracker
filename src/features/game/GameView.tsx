@@ -439,7 +439,7 @@ function Wardrobe({ kind, g, look, stage }: { kind: CosmeticKind; g: GameState; 
   return (
     <>
       <p className="i-note">
-        {mine.length} of {all} {COSMETIC_NAME[kind].toLowerCase()}. More from the shop, chests, capsules and the Works.
+        {mine.length} of {all} {COSMETIC_NAME[kind].toLowerCase()}. More from the shop, chests, capsules and the Works. What you put on is kept for {ch ? (ch.name.startsWith('The ') ? ch.name : `the ${ch.name}`) : 'your drone'}: every body has its own outfit, and changing body puts that body's back on.
       </p>
       <div className="gm-grid">
         <button type="button" className="gm-card" aria-pressed={!worn} onClick={() => setLoadout({ [kind]: null })}>

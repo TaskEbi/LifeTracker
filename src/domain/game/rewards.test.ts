@@ -3,7 +3,7 @@ import type { XpEvent } from '../progress/engine';
 import { computeProgress } from '../progress/engine';
 import { ACH_XP, CHASSIS, MASTERY_TITLES, BODY_LINES } from './catalog';
 import { achPrizes, achRef, claimXp, nextMonth, passesNow, passGain, passState, PASS_STEP, PASS_TIERS, rewardClaims, skinItem, skinLock, SKINS } from './rewards';
-import { normaliseLoadout, wornSkin, type Tx } from './wallet';
+import { changeLoadout, normaliseLoadout, wornSkin, type Tx } from './wallet';
 
 const ev = (date: string, xp: number, key = `entry:${date}:${xp}:time`): XpEvent => ({ key, date, section: 'violin', xp, reason: 'x' });
 
@@ -101,5 +101,28 @@ describe('the Hangar Pass', () => {
   it('reads claim refs from the ledger', () => {
     const tx = (ref: string): Tx => ({ id: ref, type: 'claim', at: '2026-11-15', ref, cost: {}, gain: {} });
     expect([...rewardClaims([tx('ach:a:bronze'), tx('pass:2026-11:1'), tx('body:koi:lv5')])]).toEqual(['ach:a:bronze', 'pass:2026-11:1']);
+  });
+});
+
+describe('an outfit per body', () => {
+  it('saves what the old body wore and puts the new body\'s back on', () => {
+    let look = normaliseLoadout({ chassis: 'koi', hat: 'crown', paint: 'gold', title: 'rookie' });
+    look = changeLoadout(look, { chassis: 'tanuki' });
+    expect(look).toMatchObject({ chassis: 'tanuki', hat: null, paint: null, title: null });
+    look = changeLoadout(look, { pet: 'cat', title: 'ronin' });
+    look = changeLoadout(look, { chassis: 'koi' });
+    expect(look).toMatchObject({ chassis: 'koi', hat: 'crown', paint: 'gold', title: 'rookie', pet: null });
+    look = changeLoadout(look, { chassis: 'tanuki' });
+    expect(look).toMatchObject({ chassis: 'tanuki', pet: 'cat', title: 'ronin', hat: null });
+    look = changeLoadout(look, { chassis: 'drone' });
+    expect(look).toMatchObject({ chassis: 'drone', hat: null, pet: null });
+  });
+
+  it('lets a patch that changes body and outfit together win, and reads back through JSON', () => {
+    const look = changeLoadout(normaliseLoadout({ chassis: 'koi', hat: 'crown' }), { chassis: 'tanuki', hat: 'cap' });
+    expect(look.hat).toBe('cap');
+    const back = normaliseLoadout(JSON.parse(JSON.stringify(look)));
+    expect(back.kits).toEqual(look.kits);
+    expect(back.kits?.koi.hat).toBe('crown');
   });
 });
