@@ -6,6 +6,7 @@ import { consumableById } from '../../domain/game/catalog';
 import { LUCKY_BAG, NIGHT_EXTRAS } from '../../domain/game/market';
 import { SETS } from '../../domain/game/sets';
 import { BOARD, fishById, lineName, parseCastRef, parseRollRef } from '../../domain/game/arcade';
+import { dropLine, parseDropRef, parseDuelRef, parseVaultRef } from '../../domain/game/arcadeMore';
 import { masteryLine } from '../../domain/game/mastery';
 import { H2 } from '../../ui/i/bits';
 import { lootLines, num, Price } from './bits';
@@ -30,6 +31,7 @@ const txLine = (t: Tx): string => {
       if (t.ref.startsWith('set:')) return `Set complete: ${SETS.find((x) => x.id === t.ref.slice(4))?.name ?? t.ref.slice(4)}`;
       if (t.ref.startsWith('bingo:')) return t.ref.endsWith(':full') ? 'Bingo: full card' : `Bingo: ${lineName(Number(t.ref.split(':')[2]))}`;
       if (t.ref.startsWith('fishbook:')) return `Fish book: ${t.ref.slice(9)} kinds`;
+      if (t.ref.startsWith('vaultbook:')) return `Vault: ${t.ref.slice(10)} cracked`;
       if (t.ref.startsWith('body:') || t.ref.startsWith('hall:')) return masteryLine(t.ref);
       return 'Festival prize';
     case 'use':
@@ -46,6 +48,18 @@ const txLine = (t: Tx): string => {
       const c = parseCastRef(t.ref);
       const f = c?.fish ? fishById(c.fish) : null;
       return f ? `Pond: ${f.name}, ${c!.cm} cm` : 'Pond: it got away';
+    }
+    case 'drop': {
+      const d = parseDropRef(t.ref);
+      return d ? `Pachinko: ${dropLine(d.code)}` : 'Pachinko';
+    }
+    case 'duel': {
+      const d = parseDuelRef(t.ref);
+      return d ? `Dojo: floor ${d.floor} ${d.won ? 'won' : 'lost'}` : 'Dojo';
+    }
+    case 'crack': {
+      const v = parseVaultRef(t.ref);
+      return v ? (v.tries ? `Vault: cracked in ${v.tries}` : 'Vault: it stayed shut') : 'Vault';
     }
     case 'works':
       return `Works counter: ${itemName(t.ref)}`;

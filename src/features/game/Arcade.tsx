@@ -1,5 +1,5 @@
 /**
- * 遊 The Arcade: bingo, sugoroku and the pond. Each plays with what you've logged (arcade.ts), and
+ * 遊 The Arcade: bingo, sugoroku and the pond here; pachinko, the dojo and the vault in ArcadeMore.tsx. Each plays with what you've logged (arcade.ts), and
  * each roll, cast and claim is a saved record.
  */
 import { useEffect, useRef, useState, type CSSProperties } from 'react';
@@ -27,6 +27,7 @@ import {
   type Fish,
   type Roll,
 } from '../../domain/game/arcade';
+import { BALL_CAP, BOUT_CAP, VAULT_TRIES } from '../../domain/game/arcadeMore';
 import { RARITY, type Bag } from '../../domain/game/catalog';
 import { plus } from '../../domain/game/wallet';
 import { shortDay, monthName } from '../../domain/log/dates';
@@ -34,7 +35,8 @@ import { H2 } from '../../ui/i/bits';
 import { playStyle } from '../../ui/i/fx/celebrate';
 import { Robot } from '../../ui/i/bots/Robot';
 import { lootLines, num, Rar } from './bits';
-import { claimAllBingo, claimBingo, claimBook, endCast, nextBite, pondContext, rollOnce, useArcade } from './arcadeStore';
+import { DojoGame, PachiGame, VaultGame } from './ArcadeMore';
+import { claimAllBingo, claimBingo, claimBook, endCast, nextBite, pondContext, rollOnce, useArcade, useMore } from './arcadeStore';
 import { showReveal } from './revealStore';
 import { useLoadout } from './store';
 import './arcade.css';
@@ -43,6 +45,9 @@ const GAMES = [
   { id: 'bingo', label: 'Bingo', kanji: '賓' },
   { id: 'board', label: 'Sugoroku', kanji: '双' },
   { id: 'pond', label: 'Pond', kanji: '釣' },
+  { id: 'pachinko', label: 'Pachinko', kanji: '弾' },
+  { id: 'dojo', label: 'Dojo', kanji: '闘' },
+  { id: 'vault', label: 'Vault', kanji: '錠' },
 ] as const;
 type GameId = (typeof GAMES)[number]['id'];
 
@@ -50,7 +55,19 @@ export function ArcadeTab() {
   const route = useRoute();
   const game: GameId = GAMES.find((x) => x.id === route.rest[1])?.id ?? 'bingo';
   const a = useArcade();
-  const badge = (id: GameId) => (id === 'bingo' ? a.bingo.toClaim.length + (a.lastBingo?.toClaim.length ?? 0) : id === 'board' ? a.dice.now : a.casts.now + a.bookToClaim.length);
+  const m = useMore();
+  const badge = (id: GameId) =>
+    id === 'bingo'
+      ? a.bingo.toClaim.length + (a.lastBingo?.toClaim.length ?? 0)
+      : id === 'board'
+        ? a.dice.now
+        : id === 'pond'
+          ? a.casts.now + a.bookToClaim.length
+          : id === 'pachinko'
+            ? m.balls.now
+            : id === 'dojo'
+              ? m.bouts.now
+              : (m.vault.open && !m.vault.today ? 1 : 0) + m.vaultToClaim.length;
   return (
     <section className="ar" aria-label="Arcade">
       <div className="ar-marquee" aria-hidden="true">
@@ -67,7 +84,7 @@ export function ArcadeTab() {
           </button>
         ))}
       </nav>
-      {game === 'bingo' ? <BingoGame a={a} /> : game === 'board' ? <BoardGame a={a} /> : <PondGame a={a} />}
+      {game === 'bingo' ? <BingoGame a={a} /> : game === 'board' ? <BoardGame a={a} /> : game === 'pond' ? <PondGame a={a} /> : game === 'pachinko' ? <PachiGame m={m} /> : game === 'dojo' ? <DojoGame m={m} /> : <VaultGame m={m} />}
       <Guide />
     </section>
   );
@@ -623,7 +640,7 @@ function Guide() {
       <summary>How the Arcade works</summary>
       <ul>
         <li>
-          <b>Nothing to buy.</b> Dice, casts and bingo marks all come from what you log, worked out like XP. Each roll, cast and claim is saved once, so it's the same on every device.
+          <b>Nothing to buy.</b> Dice, casts, balls, challenges and bingo marks all come from what you log, worked out like XP. Each roll, cast and claim is saved once, so it's the same on every device.
         </li>
         <li>
           <b>Bingo 賓.</b> Every Monday a new 4 × 4 card: up to six cells ask for the sections you've been doing lately, the rest are things like tasks, nights, quests and busy days. Cells tick themselves. Each of the 10 lines pays once; lines through the gold cell pay double. Last week's unclaimed lines can still be claimed for a week.
@@ -635,7 +652,16 @@ function Guide() {
           <b>The pond 釣.</b> Cast, wait for the float to dip, strike, then stop the needle in the green: once for common fish, up to three times for the rarest, with one slip allowed. The fish is fixed when you cast, so leaving doesn't change it. What bites depends on the hour (night fish), the month (seasonal fish) and the sections you logged today (each has a spirit fish). Bigger and rarer pays more; a new kind pays Tama too.
         </li>
         <li>
-          <b>Saved up.</b> Dice keep up to {DICE_CAP} and casts up to {CAST_CAP}; past that, a day's new ones are lost, so play now and then.
+          <b>Pachinko 弾.</b> Balls come from the day's XP. Pick a chute and drop: the ball bounces down eight rows of pins into one of seven pockets, which change places every day. Most pay Ryō or a Tama; the 当 pocket spins three reels, and three sevens is the jackpot. A ball's bounces are fixed before it drops.
+        </li>
+        <li>
+          <b>The dojo 闘.</b> A ladder of rival robots, one floor at a time, a master every fifth. Each round pick Strike, Guard or Feint: Strike beats Feint, Feint beats Guard, Guard beats Strike, and a clash chips both. A rival favours one stance and never uses the same one three times running. Kiai doubles one winning hit a duel. Your health and attack come from your overall level, your body's level and its Mk. A loss makes you hit harder on that floor next time; leaving mid-duel is a loss.
+        </li>
+        <li>
+          <b>The vault 錠.</b> One code a day, once you've logged something: four symbols out of six, {VAULT_TRIES} tries. After each try you're told how many symbols are right and in place, and how many are right but misplaced. Fewer tries pay more. The tries you've made are kept on this device; the result is saved once for every device.
+        </li>
+        <li>
+          <b>Saved up.</b> Dice keep up to {DICE_CAP}, casts up to {CAST_CAP}, balls up to {BALL_CAP} and challenges up to {BOUT_CAP}; past that, a day's new ones are lost, so play now and then.
         </li>
       </ul>
     </details>

@@ -28,6 +28,33 @@ import {
   type PondContext,
   type Roll,
 } from '../../domain/game/arcade';
+import {
+  codeFor,
+  dojoOf,
+  dropBall,
+  dropRef,
+  duelPrize,
+  duelRef,
+  judge,
+  LOSS_PRIZE,
+  moreOf,
+  parseDropRef,
+  parseDuelRef,
+  rivalOf,
+  startDuel,
+  validGuess,
+  VAULT_PRIZES,
+  VAULT_SLOTS,
+  VAULT_TRIES,
+  vaultBookRef,
+  vaultPrize,
+  vaultRef,
+  withGrit,
+  type Drop,
+  type Duel,
+  type Fighter,
+  type MoreState,
+} from '../../domain/game/arcadeMore';
 import type { Bag } from '../../domain/game/catalog';
 import type { Tx } from '../../domain/game/wallet';
 import { claimOnce, getGame, ltHour, recentSections, useGame, write, type GameState } from './store';
@@ -47,11 +74,12 @@ export function useArcade(): ArcadeState {
 
 export const getArcade = () => arcadeFor(getGame());
 
-const topN = (txs: Tx[], type: 'roll' | 'cast') =>
+const PARSE = { roll: parseRollRef, cast: parseCastRef, drop: parseDropRef, duel: parseDuelRef } as const;
+
+const topN = (txs: Tx[], type: keyof typeof PARSE) =>
   txs.reduce((n, t) => {
     if (t.type !== type) return n;
-    const p = type === 'roll' ? parseRollRef(t.ref) : parseCastRef(t.ref);
-    return Math.max(n, p?.n ?? 0);
+    return Math.max(n, PARSE[type](t.ref)?.n ?? 0);
   }, 0);
 
 const live = (id: string) => {
@@ -133,11 +161,89 @@ export function claimBook(at: number): Bag | null {
   return claimOnce(bookRef(at), gain) ? gain : null;
 }
 
+// ─── pachinko, the dojo and the vault (arcadeMore.ts) ───────────────────────
+
+const moreMemo = new WeakMap<GameState, MoreState>();
+
+export function moreFor(g: GameState): MoreState {
+  let m = moreMemo.get(g);
+  if (!m) moreMemo.set(g, (m = moreOf(g.earnInput, arcadeFor(g).stats)));
+  return m;
+}
+
+export function useMore(): MoreState {
+  const g = useGame();
+  return useMemo(() => moreFor(g), [g]);
+}
+
+/** Drop the next ball down a chute. The row is written as it leaves your hand. */
+export function dropOnce(chute: number): Drop | null {
+  const g = getGame();
+  if (moreFor(g).balls.now < 1) {
+    toast('No balls left. Log some time to earn more.');
+    return null;
+  }
+  const n = topN(g.txs, 'drop') + 1;
+  const id = pairId('gm', `drop:${n}`);
+  if (live(id)) return null;
+  const d = dropBall(n, chute, g.today);
+  write({ type: 'drop', ref: dropRef(d), cost: {}, gain: d.gain }, id);
+  return d;
+}
+
+/** Step onto the mat against this floor's rival (nothing is written until the duel is over). */
+export function nextDuel(hero: Fighter): Duel | null {
+  const g = getGame();
+  const m = moreFor(g);
+  if (m.bouts.now < 1) {
+    toast('No challenges left. Log something to earn more.');
+    return null;
+  }
+  return startDuel(topN(g.txs, 'duel') + 1, withGrit(hero, m.dojo.grit), rivalOf(m.dojo.floor));
+}
+
+/** The duel is over (or walked out of, which is a loss): one row either way. */
+export function endDuel(d: Duel): Bag | null {
+  const g = getGame();
+  const id = pairId('gm', `duel:${d.n}`);
+  if (live(id)) return null;
+  // Only the floor you're really on can be won.
+  const won = d.over === 'won' && dojoOf(g.txs).floor === d.rival.floor;
+  const gain = won ? duelPrize(d.rival.floor) : LOSS_PRIZE;
+  write({ type: 'duel', ref: duelRef(d.n, d.rival.floor, won, d.rounds.length), cost: {}, gain }, id);
+  return gain;
+}
+
+/** Today's vault is finished: cracked by the last of these guesses, or out of tries. Paid once a day. */
+export function endVault(guesses: number[][]): Bag | null {
+  const g = getGame();
+  const m = moreFor(g);
+  if (!m.vault.open || m.vault.today || !guesses.length || guesses.length > VAULT_TRIES || !guesses.every(validGuess)) return null;
+  const cracked = judge(codeFor(g.today), guesses[guesses.length - 1]).hit === VAULT_SLOTS;
+  if (!cracked && guesses.length < VAULT_TRIES) return null;
+  const tries = cracked ? guesses.length : 0;
+  const id = pairId('gm', `vault:${g.today}`);
+  if (live(id)) return null;
+  const gain = vaultPrize(tries);
+  write({ type: 'crack', ref: vaultRef(g.today, tries), cost: {}, gain }, id);
+  return gain;
+}
+
+export function claimVaultBook(at: number): Bag | null {
+  if (!moreFor(getGame()).vaultToClaim.includes(at)) return null;
+  const p = VAULT_PRIZES.find((x) => x.at === at)!;
+  const gain: Bag = p.title ? { ...p.gain, items: [`title:${p.title}`] } : p.gain;
+  return claimOnce(vaultBookRef(at), gain) ? gain : null;
+}
+
 /** One line for Home: what's waiting in the Arcade. */
-export const arcadeLine = (a: ArcadeState) => {
+export const arcadeLine = (a: ArcadeState, m?: MoreState) => {
   const bits: string[] = [];
   if (a.dice.now) bits.push(`${a.dice.now} ${a.dice.now === 1 ? 'die' : 'dice'}`);
   if (a.casts.now) bits.push(`${a.casts.now} cast${a.casts.now === 1 ? '' : 's'}`);
+  if (m?.balls.now) bits.push(`${m.balls.now} ball${m.balls.now === 1 ? '' : 's'}`);
+  if (m?.bouts.now) bits.push(`${m.bouts.now} duel${m.bouts.now === 1 ? '' : 's'}`);
+  if (m && m.vault.open && !m.vault.today) bits.push('vault');
   const claims = a.bingo.toClaim.length + (a.lastBingo?.toClaim.length ?? 0);
   if (claims) bits.push(`bingo ×${claims}`);
   return bits.length ? bits.join(' · ') : `Bingo ${a.bingo.progress.filter((p) => p.marked).length}/16`;

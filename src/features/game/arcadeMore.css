@@ -1,0 +1,428 @@
+/* ── Arcade · 遊, the second row ───────────────────────────────────────────────────
+   A pachinko board under parlour lights, a dojo mat, and a vault door. Shares arcade.css. */
+
+/* ─── pachinko ─── */
+.ar-pachi {
+  display: grid;
+  gap: 6px;
+  max-width: 420px;
+  margin: 0 auto;
+  width: 100%;
+  padding: 10px;
+  border: 2px solid #ff2e93;
+  border-radius: 14px;
+  background: linear-gradient(180deg, #2a1640, #120a20);
+  box-shadow: 0 0 16px rgb(255 46 147 / 0.3), inset 0 0 24px rgb(33 230 255 / 0.12);
+}
+.ar-chutes {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  padding: 0 0.64%;
+}
+.ar-chutes button {
+  min-height: 40px;
+  border: 0;
+  border-radius: 8px;
+  background: none;
+  color: #6f6394;
+  font-size: 16px;
+  cursor: pointer;
+}
+.ar-chutes button[aria-pressed='true'] {
+  background: rgb(255 225 77 / 0.14);
+  color: #ffe14d;
+  text-shadow: 0 0 8px #ffe14d;
+}
+.ar-pins {
+  display: block;
+  width: 100%;
+  border-radius: 10px;
+  background:
+    radial-gradient(circle at 50% 0, rgb(33 230 255 / 0.16), transparent 60%),
+    #0c0916;
+}
+.ar-pin {
+  fill: #d9d2f0;
+  filter: drop-shadow(0 0 2px rgb(33 230 255 / 0.8));
+}
+.ar-aim {
+  fill: #ffe14d;
+}
+.ar-ball {
+  fill: #f4f4f8;
+  stroke: #9aa3b5;
+  stroke-width: 1;
+  filter: drop-shadow(0 0 4px #fff);
+  transition: transform 0.115s ease-in;
+}
+.ar-pocket rect {
+  fill: #1d1533;
+  stroke: #4a3d74;
+  stroke-width: 1.5;
+}
+.ar-pocket text {
+  fill: #c9bfe6;
+  font: 400 13px/1 'RocknRoll One', sans-serif;
+}
+.ar-pocket .ar-pocket__n {
+  font: 700 9px/1 var(--f-body, sans-serif);
+  fill: #9a8fbd;
+}
+.ar-pocket--reel rect {
+  fill: #4a0d2c;
+  stroke: #ff2e93;
+}
+.ar-pocket--reel text {
+  fill: #ffe14d;
+}
+.ar-pocket--gems rect {
+  stroke: #3df5e0;
+}
+.ar-pocket.is-hit rect {
+  fill: #ffe14d;
+  stroke: #fff;
+}
+.ar-pocket.is-hit text {
+  fill: #14101e;
+}
+.ar-pachi__ctl {
+  display: grid;
+  gap: 8px;
+  justify-items: center;
+  text-align: center;
+}
+.ar-pachi__btns {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+}
+.ar-reels {
+  display: flex;
+  gap: 6px;
+}
+.ar-reels span {
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 52px;
+  border: 2px solid #4a3d74;
+  border-radius: 8px;
+  background: #fff;
+  color: #b9b2cc;
+  font: 400 28px/1 'RocknRoll One', sans-serif;
+}
+.ar-reels span.is-set {
+  border-color: #ffe14d;
+  color: #c2185b;
+}
+.ar-reels.is-spinning span {
+  animation: ar-reel 0.16s linear infinite;
+}
+.ar-reels.is-spinning span:nth-child(2) {
+  animation-delay: 0.05s;
+}
+.ar-reels.is-spinning span:nth-child(3) {
+  animation-delay: 0.1s;
+}
+@keyframes ar-reel {
+  50% {
+    transform: translateY(-5px);
+    color: #ff2e93;
+  }
+}
+.ar-recent li > span {
+  min-width: 0;
+}
+
+/* ─── the dojo ─── */
+.ar-mat {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  gap: 6px;
+  align-items: center;
+  padding: 12px 8px;
+  border: 1px solid #6b5a2a;
+  border-radius: 12px;
+  background:
+    repeating-linear-gradient(90deg, rgb(0 0 0 / 0.08) 0 2px, transparent 2px 26px),
+    linear-gradient(180deg, #3a3418, #262210);
+}
+.ar-fighter {
+  display: grid;
+  gap: 4px;
+  justify-items: center;
+  min-width: 0;
+  text-align: center;
+  color: #f6f1e0;
+}
+.ar-fighter b {
+  font-size: 13.5px;
+  overflow-wrap: anywhere;
+}
+.ar-fighter small {
+  color: #d3c9a4;
+  font-size: 11.5px;
+}
+.ar-fighter .ar-grit {
+  color: #ffb347;
+}
+.ar-fighter__bot {
+  display: block;
+  width: min(100%, 120px);
+  aspect-ratio: 1;
+}
+.ar-fighter__bot svg {
+  width: 100%;
+  height: 100%;
+}
+.ar-fighter--rival .ar-fighter__bot {
+  transform: scaleX(-1);
+}
+.ar-vs {
+  color: #ffe14d;
+  font: 400 26px/1 'RocknRoll One', var(--f-body);
+  text-shadow: 0 0 10px rgb(255 225 77 / 0.6);
+}
+.ar-hp {
+  position: relative;
+  display: block;
+  width: 100%;
+  max-width: 150px;
+  height: 16px;
+  overflow: hidden;
+  border: 1px solid rgb(255 255 255 / 0.35);
+  border-radius: 8px;
+  background: #14101e;
+}
+.ar-hp i {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, #3ddc84, #b6f36a);
+  transition: width 0.3s ease-out;
+}
+.ar-fighter--rival .ar-hp i {
+  background: linear-gradient(90deg, #ff5a3c, #ffb347);
+}
+.ar-hp b {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: #fff;
+  font-size: 10.5px;
+  font-weight: 700;
+  text-shadow: 0 1px 2px #000;
+}
+.ar-mat.is-win .ar-fighter--rival .ar-fighter__bot,
+.ar-mat.is-clash .ar-fighter--rival .ar-fighter__bot {
+  animation: ar-hit-r 0.35s ease-out;
+}
+.ar-mat.is-lose .ar-fighter:not(.ar-fighter--rival) .ar-fighter__bot,
+.ar-mat.is-clash .ar-fighter:not(.ar-fighter--rival) .ar-fighter__bot {
+  animation: ar-hit 0.35s ease-out;
+}
+@keyframes ar-hit {
+  30% {
+    transform: translateX(-9px) rotate(-6deg);
+    filter: brightness(2);
+  }
+}
+@keyframes ar-hit-r {
+  30% {
+    transform: scaleX(-1) translateX(-9px) rotate(-6deg);
+    filter: brightness(2);
+  }
+}
+.ar-stances {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+}
+.ar-stance {
+  display: grid;
+  gap: 2px;
+  justify-items: center;
+  min-height: 84px;
+  padding: 8px 4px;
+  border: 2px solid var(--a, #ffe14d);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--a, #ffe14d) 14%, var(--surf));
+  color: var(--fg);
+  cursor: pointer;
+}
+.ar-stance:active {
+  transform: translateY(2px);
+}
+.ar-stance > span {
+  color: var(--a);
+  font: 400 28px/1 'RocknRoll One', var(--f-body);
+}
+.ar-stance b {
+  font-size: 14px;
+}
+.ar-stance small {
+  color: var(--fg-2);
+  font-size: 11px;
+}
+.ar-stance--strike {
+  --a: #ff5a3c;
+}
+.ar-stance--guard {
+  --a: #4db8ff;
+}
+.ar-stance--feint {
+  --a: #c77dff;
+}
+.ar-kiai {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 10px;
+  align-items: center;
+}
+.ar-kiai small {
+  color: var(--fg-2);
+  font-size: 12px;
+}
+.ar-kiai button[aria-pressed='true'] {
+  border-color: #ffe14d;
+  background: rgb(255 225 77 / 0.18);
+  box-shadow: 0 0 10px rgb(255 225 77 / 0.5);
+}
+
+/* ─── the vault ─── */
+.ar-vault {
+  display: grid;
+  gap: 10px;
+  justify-items: center;
+  max-width: 420px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 14px 12px;
+  border: 3px solid #6b7480;
+  border-radius: 16px;
+  background:
+    radial-gradient(circle at 50% -20%, rgb(255 255 255 / 0.1), transparent 55%),
+    linear-gradient(180deg, #2b313a, #171a20);
+  box-shadow: inset 0 0 0 2px #11141a, inset 0 0 22px rgb(0 0 0 / 0.6);
+}
+.ar-vault.is-open {
+  border-color: #ffc23d;
+  box-shadow: inset 0 0 0 2px #11141a, 0 0 16px rgb(255 194 61 / 0.4);
+}
+.ar-vault__shut {
+  display: grid;
+  gap: 8px;
+  justify-items: center;
+  margin: 12px 0;
+  color: #c7ced8;
+  text-align: center;
+}
+.ar-vault__shut span {
+  font: 400 44px/1 'RocknRoll One', var(--f-body);
+  color: #8b95a3;
+}
+.ar-vault__key {
+  color: #aab3bf;
+  font-size: 11.5px;
+}
+.ar-guesses {
+  display: grid;
+  gap: 6px;
+  width: 100%;
+  max-width: 280px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: g;
+}
+.ar-guesses li {
+  display: grid;
+  grid-template-columns: 18px auto minmax(0, 1fr);
+  gap: 8px;
+  align-items: center;
+  counter-increment: g;
+}
+.ar-guesses li::before {
+  content: counter(g);
+  color: #8b95a3;
+  font-size: 11px;
+  text-align: right;
+}
+.ar-guesses .ar-guesses__else {
+  display: block;
+  color: #aab3bf;
+  font-size: 13px;
+  text-align: center;
+}
+.ar-guesses .ar-guesses__else::before {
+  content: none;
+}
+.ar-guess {
+  display: inline-flex;
+  gap: 5px;
+  vertical-align: middle;
+}
+.ar-sym {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border: 2px solid var(--a, #4a5260);
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--a, #4a5260) 24%, #12151a);
+  color: #fff;
+  font: 400 17px/1 'RocknRoll One', var(--f-body);
+}
+.ar-sym--empty {
+  border-style: dashed;
+  background: none;
+}
+.ar-marks {
+  color: #ffe14d;
+  font-size: 15px;
+  letter-spacing: 2px;
+}
+.ar-keys {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 6px;
+  width: 100%;
+  max-width: 320px;
+}
+.ar-keys button {
+  display: grid;
+  place-items: center;
+  padding: 0;
+  aspect-ratio: 1;
+  min-height: 44px;
+  border: 2px solid var(--a);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--a) 22%, #12151a);
+  color: #fff;
+  font: 400 20px/1 'RocknRoll One', var(--f-body);
+  cursor: pointer;
+}
+.ar-keys button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+.ar-vault .ar-result p {
+  margin: 0;
+  color: #f1f4f8;
+  text-align: center;
+}
+.ar-vault .ar-result small {
+  color: #c7ced8;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ar-ball,
+  .ar-hp i {
+    transition: none;
+  }
+  .ar-reels.is-spinning span,
+  .ar-mat .ar-fighter__bot {
+    animation: none !important;
+  }
+}

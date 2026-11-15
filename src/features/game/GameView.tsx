@@ -30,8 +30,9 @@ import { WorkshopTab } from './Workshop';
 import { BodyPanel, CardLevel, MasteryHall, PilotPlate, SecretPanel, WaitingPrizes } from './Bodies';
 import { ArcadeTab } from './Arcade';
 import { RewardsTab, SkinPanel } from './Rewards';
-import { useArcade } from './arcadeStore';
+import { useArcade, useMore } from './arcadeStore';
 import { arcadeWaiting } from '../../domain/game/arcade';
+import { moreWaiting } from '../../domain/game/arcadeMore';
 import { useWorksGlance } from './worksStore';
 import './game.css';
 
@@ -57,7 +58,7 @@ export function GameView() {
   const w = g.wallet;
   const run = eventOn(g.today);
   const reveal = useStore(revealStore, (s) => s.reveal);
-  const waiting = arcadeWaiting(useArcade());
+  const waiting = arcadeWaiting(useArcade()) + moreWaiting(useMore());
   const works = useWorksGlance();
   const prizes = rewardsOf(g).waiting;
   return (

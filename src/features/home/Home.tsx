@@ -15,7 +15,7 @@ import { accent } from '../../ui/i/bits';
 import { droneMood, hourIn, seasonOf, timeOfDay, TOD_LABEL } from '../../domain/fun/season';
 import { LivingDrone } from './LivingDrone';
 import { Purse } from '../game/Purse';
-import { arcadeLine, useArcade } from '../game/arcadeStore';
+import { arcadeLine, useArcade, useMore } from '../game/arcadeStore';
 import { useWorksGlance, worksLine } from '../game/worksStore';
 import { useGame } from '../game/store';
 import { OmikujiCard } from './Omikuji';
@@ -454,6 +454,7 @@ function ArenaPage() {
   const boss = useBoss();
   const { recap } = useLookBack(1);
   const arcade = useArcade();
+  const more = useMore();
   const works = useWorksGlance();
   const hasRecap = recap.minutes > 0 || recap.activeDays > 0;
   return (
@@ -481,7 +482,7 @@ function ArenaPage() {
         <section className="h-sec" aria-label="Your progress">
           <Head k="覚">Progress</Head>
           <div className="h-sys">
-            <Door k="遊" name="Arcade" sub={arcadeLine(arcade)} go={() => navigate('hangar', ['arcade'])} wide />
+            <Door k="遊" name="Arcade" sub={arcadeLine(arcade, more)} go={() => navigate('hangar', ['arcade'])} wide />
             <Door k="廠" name="The Works" sub={worksLine(works)} go={() => navigate('hangar', ['works'])} wide />
             <Door k={SYSTEM_KANJI.hangar} name="Hangar" sub="Shop · capsules · events" go={() => navigate('hangar')} />
             <Door k={SYSTEM_KANJI.progress} name="Awakening" sub={`${STAGES.length} forms · ${rankFor(p.overall.level)}`} go={() => navigate('progress')} />
