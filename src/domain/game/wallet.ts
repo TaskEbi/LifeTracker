@@ -35,7 +35,7 @@ export interface Grant {
   gain: Bag;
 }
 
-export type GrantSource = 'training' | 'daily' | 'streak' | 'quests' | 'bounty' | 'boss' | 'emblems' | 'levels' | 'bucket' | 'hideout' | 'reading' | 'album' | 'workshop' | 'event';
+export type GrantSource = 'training' | 'daily' | 'streak' | 'quests' | 'bounty' | 'boss' | 'emblems' | 'levels' | 'bucket' | 'hideout' | 'reading' | 'album' | 'workshop' | 'event' | 'atlas';
 
 export const SOURCE_INFO: Record<GrantSource, { name: string; kanji: string; hint: string }> = {
   training: { name: 'Every XP you earn', kanji: '修', hint: 'Ryō for each XP, and a material for each section you worked in' },
@@ -51,6 +51,7 @@ export const SOURCE_INFO: Record<GrantSource, { name: string; kanji: string; hin
   reading: { name: 'Kindle highlights', kanji: '読', hint: 'A Ryō per line saved, up to 20 a day' },
   album: { name: 'The Album', kanji: '写', hint: '10 Ryō for the photo of the day, once a day' },
   workshop: { name: 'Workshop machines', kanji: '工', hint: 'Ticket Printer and Omamori Rack' },
+  atlas: { name: 'The Atlas', kanji: '地', hint: 'Right answers each day, the daily challenge, passport stamps, medals, whole continents' },
   event: { name: 'Seasonal events', kanji: '祭', hint: 'Tokens for whatever you log while one runs' },
 };
 

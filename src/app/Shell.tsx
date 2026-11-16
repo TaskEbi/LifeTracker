@@ -90,6 +90,7 @@ function Rail({ current, rest }: { current: RouteName; rest: string[] }) {
       {item('hangar', 'Hangar', SYSTEM_KANJI.hangar)}
       {item('album', 'Album', SYSTEM_KANJI.album)}
       {item('motion', 'Motion', SYSTEM_KANJI.motion)}
+      {item('atlas', 'Atlas', SYSTEM_KANJI.atlas)}
       <div className="i-rail__sep" />
       {item('calendar', 'Calendar', SYSTEM_KANJI.calendar)}
       {item('tasks', 'Tasks', SYSTEM_KANJI.tasks)}
@@ -145,6 +146,7 @@ const SYSTEM: { id: keyof typeof SYSTEM_KANJI; label: string }[] = [
   { id: 'bucket', label: 'Bucket' },
   { id: 'album', label: 'Album' },
   { id: 'motion', label: 'Motion' },
+  { id: 'atlas', label: 'Atlas' },
   { id: 'log', label: 'Activity' },
   { id: 'settings', label: 'Settings' },
 ];
@@ -224,7 +226,7 @@ export function Shell() {
   const isCabinet = route.name === 'cabinet';
   const sect = (SECTION_IDS as readonly string[]).includes(route.name) ? (route.name as SectionId) : null;
   // the bucket list, the hideout, the hangar and the album aren't sections but have their own spaces too
-  const look: LookId | null = sect ?? (route.name === 'bucket' || route.name === 'base' || route.name === 'album' || route.name === 'hangar' ? route.name : null);
+  const look: LookId | null = sect ?? (route.name === 'bucket' || route.name === 'base' || route.name === 'album' || route.name === 'hangar' || route.name === 'atlas' ? route.name : null);
   const ref = useSectionLook(look);
   return (
     <div className="i-shell" ref={ref} data-sect={look ?? undefined}>

@@ -12,6 +12,7 @@ import type { BossFight } from '../progress/boss';
 import type { QuestSet } from '../progress/quests';
 import { MATS, type Bag, type ChestTier, type Mats } from './catalog';
 import { eventOn, eventRunsUpTo, TOKEN_PAY, tokenRate, type EventRun } from './events';
+import { atlasGrants } from '../atlas/pay';
 import { hash32 } from './loot';
 import { upgradeLevel, type Grant, type Tx } from './wallet';
 
@@ -393,6 +394,11 @@ export function grantsFor(input: EarnInput): Grant[] {
     const wired = (d: string) => (up('hideout', d) ? 2 : 1);
     push({ key: `hq:${r.id}`, date: pay.date, source: 'hideout', label: pay.label, gain: { coins: pay.coins * wired(pay.date), ...(pay.gems ? { gems: pay.gems } : {}) } });
     if (pay.extra) push({ key: `hq:${r.id}:${pay.extra.tag}`, date: pay.extra.date, source: 'hideout', label: pay.extra.label, gain: { coins: pay.extra.coins * wired(pay.extra.date), ...(pay.extra.gems ? { gems: pay.extra.gems } : {}) } });
+  }
+  // The Atlas: answers, the daily challenge, stamps, medals, continents.
+  for (const g of atlasGrants(input.rows.filter((r) => r.kind.startsWith('geo_')))) {
+    if (g.date < GAME_FROM) continue;
+    push({ key: g.key, date: g.date, source: 'atlas', label: g.label, gain: { ...(g.coins ? { coins: g.coins } : {}), ...(g.gems ? { gems: g.gems } : {}), ...(g.chest ? { chests: [g.chest] } : {}) } });
   }
   for (const date of faces) push({ key: `face:${date}`, date, source: 'album', label: 'Photo of the day', gain: { coins: 10 } });
   for (const [date, n] of lines) push({ key: `lines:${date}`, date, source: 'reading', label: `${n} highlight${n === 1 ? '' : 's'}`, gain: { coins: Math.min(n, 20) } });

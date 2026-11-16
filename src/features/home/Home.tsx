@@ -45,6 +45,7 @@ import { EPQ_KANJI, epqLine, useEpq } from '../epq/EpqPage';
 import { papersLine } from '../papers/actions';
 import { cardsDue, notesLine } from '../notes/actions';
 import { NOTES_KANJI, useCards, useNotes } from '../notes/door';
+import { atlasLine, useAtlas } from '../atlas/door';
 import { PAPERS_KANJI, usePapers } from '../papers/door';
 import { LifeDoors } from '../life/LifeDoors';
 import './home.css';
@@ -525,6 +526,7 @@ function MorePage() {
   const papers = usePapers();
   const notes = useNotes();
   const noteCards = useCards();
+  const atlas = useAtlas();
   const hq = useHq();
   const dueCards = useMemo(() => reviewQueue(hq.cards, today).length, [hq.cards, today]);
   const contestWhen = nextContest?.date
@@ -560,6 +562,7 @@ function MorePage() {
             {nowReading && <Door wide k={sectionInfo('reading').kanji} name="Now reading" sub={`${nowReading.title} · ${nowReading.pct}%`} go={() => navigate('reading')} />}
             {nextContest && <Door wide k={sectionInfo('maths').kanji} name="Next contest" sub={`${nextContest.label} · ${contestWhen}`} go={() => navigate('maths')} />}
             <Door wide k={SYSTEM_KANJI.album} name="Album" sub={albumLine} go={() => navigate('album')} />
+            <Door wide k={SYSTEM_KANJI.atlas} name="Atlas" sub={atlasLine(atlas, today)} go={() => navigate('atlas')} />
             <Door wide k={SYSTEM_KANJI.motion} name="Motion" sub="Your year and your sections in 3D · nine scenes" go={() => navigate('motion')} />
             <Door
               wide

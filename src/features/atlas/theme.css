@@ -1,0 +1,55 @@
+/* ── Atlas 地 · the look ─────────────────────────────────────────────────────
+   A chart table at night: deep sea blue, sage land, a brass-amber for whatever is lit, graticule
+   lines behind everything. Loaded with the shell so the page and browser chrome take the colour
+   at once; the screens' own styles (atlas.css) come with the Atlas chunk. */
+.i-shell[data-sect='atlas'] {
+  --bg: #06121e;
+  --bg-dot: transparent;
+  --surf: #0c2033;
+  --surf-2: #122a41;
+  --surf-3: #1a3652;
+  --fg: #eef4f8;
+  --fg-2: #b6c6d4;
+  --fg-3: #8195a8;
+  --rule: #1f3a54;
+  --grid: #0c2033;
+  --led-off: #1f3a54;
+  --sig: #ffb627;
+  --sig-fg: #1b1300;
+  --sig-soft: rgb(255 182 39 / 0.14);
+  --acc2: #5fd4e8;
+  --acc2-fg: #03181d;
+  --ok: #58d68d;
+  --ok-soft: rgb(88 214 141 / 0.14);
+  --warn: #ff7262;
+  --warn-soft: rgb(255 114 98 / 0.14);
+  --f-label: 'Bricolage Grotesque', 'Zen Kaku Gothic New', ui-sans-serif, system-ui, sans-serif;
+  --f-body: 'Figtree', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --f-mono: 'DM Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+  --w-label: 700;
+  --tt-label: none;
+  --slant: 0deg;
+  --r-1: 6px;
+  --r-2: 10px;
+  --r-3: 16px;
+  --lift: 0 0 0 1px rgb(95 212 232 / 0.22), 0 30px 70px rgb(0 0 0 / 0.7);
+  --at-sea: #081a2b;
+  --at-land: #4a7a68;
+  --at-land-2: #173046;
+  --at-coast: #06121e;
+  color-scheme: dark;
+  background: transparent;
+}
+.i-shell[data-sect='atlas']::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(60% 34% at 88% 0%, rgb(255 182 39 / 0.1), transparent 70%),
+    radial-gradient(70% 40% at 0% 10%, rgb(95 212 232 / 0.1), transparent 70%),
+    repeating-linear-gradient(0deg, rgb(140 190 230 / 0.045) 0 1px, transparent 1px 56px),
+    repeating-linear-gradient(90deg, rgb(140 190 230 / 0.045) 0 1px, transparent 1px 56px),
+    #06121e;
+}

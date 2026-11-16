@@ -29,10 +29,15 @@ import { PeoplePage } from '../features/people/PeoplePage';
 import { MediaPage } from '../features/media/MediaPage';
 import { PlacesPage } from '../features/places/PlacesPage';
 import { StagePage } from '../features/stage/StagePage';
+import '../features/atlas/theme.css';
 
 /** Motion brings three.js with it, so it loads only when opened. */
 const MotionLazy = lazy(() => import('../features/motion/MotionPage'));
 const MotionView = () => createElement(Suspense, { fallback: createElement('p', { className: 'i-loading' }, 'MOTION · loading…') }, createElement(MotionLazy));
+
+/** The Atlas brings 195 countries, its maps and its games: its own chunk too. */
+const AtlasLazy = lazy(() => import('../features/atlas/AtlasPage'));
+const AtlasView = () => createElement(Suspense, { fallback: createElement('p', { className: 'i-loading' }, 'ATLAS · unrolling the maps…') }, createElement(AtlasLazy));
 
 export const sectionViews: Partial<Record<RouteName, ComponentType>> = {
   violin: ViolinChannel,
@@ -62,4 +67,5 @@ export const sectionViews: Partial<Record<RouteName, ComponentType>> = {
   places: PlacesPage,
   stage: StagePage,
   motion: MotionView,
+  atlas: AtlasView,
 };
