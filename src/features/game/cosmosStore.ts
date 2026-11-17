@@ -5,7 +5,7 @@
  * row's time when it's opened again. Two devices' copies are merged, never picked between.
  */
 import { useEffect, useMemo } from 'react';
-import { useToday } from '../../data/lt';
+import { ltToday, useToday } from '../../data/lt';
 import { pairId } from '../../data/logActions';
 import { commit, data, type DataState } from '../../data/store';
 import { toast } from '../../data/ui';
@@ -22,9 +22,15 @@ import {
   buyRelic,
   buyUp,
   buyVoid,
+  buyOrr,
+  catchStar,
   check,
+  claimBounty,
+  claimDaily,
   collapse,
   enterChal,
+  fillBoard,
+  labById,
   fmt,
   freshCosmos,
   ignite,
@@ -35,10 +41,16 @@ import {
   rateNow,
   setAuto,
   settle,
+  starGap,
+  STAR_LIFE,
+  startLab,
+  stopLab,
+  swapBounty,
   tap,
   transcend,
   waiting,
   wearRelic,
+  type Gift,
   type AutoKey,
   type Away,
   type CosmosSave,
@@ -59,11 +71,20 @@ export interface Pop {
   x: number;
 }
 
-/** A layer that has just been done, for the full-stage flash. */
+/** A layer that has just been done (or a shooting star's gift, layer 0), for the full-stage flash. */
 export interface Flash {
   n: number;
-  layer: Layer;
+  layer: Layer | 0;
   text: string;
+}
+
+/** A shooting star crossing the stage. */
+export interface Star {
+  id: number;
+  born: number;
+  /** How far down the stage it crosses, 0–1, and which way. */
+  top: number;
+  left: boolean;
 }
 
 interface Live {
@@ -74,9 +95,10 @@ interface Live {
   flash: Flash | null;
   /** Counts taps, so the sky can throw a spark for each. */
   pulse: number;
+  star: Star | null;
 }
 
-export const cosmos = createStore<Live>({ save: freshCosmos(Date.now()), ready: false, away: null, pops: [], flash: null, pulse: 0 });
+export const cosmos = createStore<Live>({ save: freshCosmos(Date.now()), ready: false, away: null, pops: [], flash: null, pulse: 0, star: null });
 
 /** The row we last wrote: anything else in the table came from sync. */
 let written: { row: LtRecord; save: CosmosSave } | null = null;
@@ -85,6 +107,11 @@ let saveTimer: number | null = null;
 let popN = 0;
 let flashN = 0;
 let lastAuto = 0;
+let starN = 0;
+let nextStar = 0;
+
+/** When the next shooting star comes: around the average gap, never quite the same. */
+const planStar = (s: CosmosSave, now: number) => now + starGap(s) * 1000 * (0.6 + 0.8 * Math.random());
 
 const rowOf = (st: DataState) => {
   const r = st.lt_records.get(COSMOS_ROW);
@@ -98,7 +125,9 @@ function schedule(ms: number) {
 /** Take a new save: note achievements and a finished challenge, and save soon. */
 function put(next: CosmosSave, extra: Partial<Live> = {}, soon = 2500) {
   const { save, feats, won } = check(next);
+  const before = cosmos.get().save;
   cosmos.set({ save, ...extra });
+  for (const id of save.labs) if (!before.labs.includes(id) && cosmos.get().ready) toast(`Research done: ${labById(id)?.name}. +${labById(id)?.pay} shard${labById(id)?.pay === 1 ? '' : 's'}.`);
   if (won) toast(`${won.c.name} tier ${won.tier} done. ${won.c.reward}, for good.`);
   if (feats.length) toast(feats.length === 1 ? `Feat: ${feats[0].name}. Dust +5%.` : `${feats.length} feats. Dust +${Math.round((1.05 ** feats.length - 1) * 100)}%.`);
   dirty = true;
@@ -131,10 +160,14 @@ function load() {
   if (!st.ready || !st.sync.pulled) return;
   const row = rowOf(st);
   const now = Date.now();
-  const { save, away } = settle(normaliseCosmos(row?.data, now), now, extNow());
+  const ext = extNow();
+  const settled = settle(normaliseCosmos(row?.data, now), now, ext);
+  const away = settled.away;
+  const save = fillBoard(settled.save, rateNow(settled.save, ext, now));
   written = row ? { row, save: normaliseCosmos(row.data, NO_CLAMP) } : null;
-  cosmos.set({ save, ready: true, pops: [], flash: null, away: away && away.dust >= 1 ? away : null });
-  if (away) put(save);
+  nextStar = planStar(save, now);
+  cosmos.set({ save, ready: true, pops: [], flash: null, star: null, away: away && (away.dust >= 1 || away.labs.length) ? away : null });
+  if (away || save !== settled.save) put(save);
 }
 
 /**
@@ -167,14 +200,22 @@ function tick() {
   const live = cosmos.get();
   if (!live.ready) return;
   const now = Date.now();
-  let { save } = settle(live.save, now, extNow());
+  const ext = extNow();
+  let { save } = settle(live.save, now, ext);
   if (now - lastAuto >= 500) {
     lastAuto = now;
     save = autoStep(save, now);
+    save = fillBoard(save, rateNow(save, ext, now));
+  }
+  // Shooting stars: one at a time, gone if not caught in time.
+  if (live.star && now - live.star.born > STAR_LIFE) cosmos.set({ star: null });
+  else if (!live.star && now >= nextStar && document.visibilityState === 'visible') {
+    cosmos.set({ star: { id: ++starN, born: now, top: 0.12 + Math.random() * 0.5, left: Math.random() < 0.5 } });
+    nextStar = planStar(save, now) + STAR_LIFE;
   }
   if (save === live.save) return;
   const done = check(save);
-  if (done.won || done.feats.length) return put(save, {}, 20_000);
+  if (done.won || done.feats.length || save.labs.length !== live.save.labs.length) return put(save, {}, 20_000);
   cosmos.set({ save });
   dirty = true;
   schedule(20_000);
@@ -199,7 +240,7 @@ export function useCosmosRunning() {
         document.removeEventListener('visibilitychange', hide);
         window.removeEventListener('pagehide', persist);
         persist();
-        cosmos.set({ ready: false, pops: [], flash: null });
+        cosmos.set({ ready: false, pops: [], flash: null, star: null });
       };
     }
     return () => {
@@ -251,6 +292,33 @@ export const buyRelicLevel = (id: string) => act((s) => buyRelic(s, id));
 export const toggleRelic = (id: string) => act((s) => wearRelic(s, id));
 export const buyAscension = (id: string) => act((s) => buyAsc(s, id));
 export const switchAuto = (k: AutoKey, on: boolean) => act((s) => setAuto(s, k, on));
+export const buyOrreryPart = (id: string) => act((s) => buyOrr(s, id));
+export const beginResearch = (id: string) => act((s, now) => startLab(s, id, now), {}) && (persist(), true);
+export const stopResearch = (id: string) => act((s) => stopLab(s, id));
+export const claimBountyNow = (n: number) => act((s, now) => claimBounty(s, n, rateNow(s, extNow(), now)));
+export const swapBountyNow = (n: number) => act((s, now) => swapBounty(s, n, now, rateNow(s, extNow(), now)));
+
+/** Catch the shooting star on the stage: its gift is flashed on the stage. */
+export function catchShootingStar(): Gift | null {
+  const live = cosmos.get();
+  if (!live.ready || !live.star) return null;
+  const now = Date.now();
+  const ext = extNow();
+  const { save, gift } = catchStar(settle(live.save, now, ext).save, now, ext, Math.random());
+  put(save, { star: null, flash: { n: ++flashN, layer: 0, text: `${gift.name}! ${gift.text}` } });
+  return gift;
+}
+
+/** Today's alignment, if it hasn't been claimed. */
+export function claimAlignment(): boolean {
+  const day = ltToday();
+  const ok = act((s, now) => claimDaily(s, day, now));
+  if (ok) {
+    cosmos.set({ flash: { n: ++flashN, layer: 0, text: 'Aligned: Frenzy for 2 minutes' } });
+    persist();
+  }
+  return ok;
+}
 
 /** Do a layer by hand: the stage flashes, and the save is written straight away. */
 export function prestige(layer: Layer): boolean {

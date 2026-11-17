@@ -1,12 +1,35 @@
 /**
  * 宙 The Cosmos: gather dust, light a star, and start again four ways. Each layer (Ignite, Collapse,
- * Big Bang, Transcend) has a room of its own; rooms stay shut until you're near them. Logic in
- * domain/game/cosmos.ts, saving in cosmosStore.ts, the sky in cosmosSky.ts.
+ * Big Bang, Transcend) has a room of its own; rooms stay shut until you're near them. Around them:
+ * shooting stars on the stage, the Board (bounties and the daily alignment), the Lab (research in
+ * real time) and the Orrery (what shards buy). Logic in domain/game/cosmos.ts, saving in
+ * cosmosStore.ts, the sky in cosmosSky.ts.
  */
 import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { navigate, useRoute } from '../../app/router';
+import { useToday } from '../../data/lt';
 import {
   ASCS,
+  boardSize,
+  boostOn,
+  bountyHave,
+  bountyKind,
+  dailyPay,
+  dailyRunOn,
+  FRENZY,
+  hasLab,
+  labMs,
+  labOpen,
+  labReady,
+  LABS,
+  labSlots,
+  ORRERY,
+  RUSH,
+  starGap,
+  SWAP_MS,
+  upCost,
+  type Bounty,
+  type Research,
   AUTO_KEYS,
   AUTO_NAME,
   autoNeed,
@@ -64,6 +87,13 @@ import {
 import { fmtTime } from '../../domain/game/idle';
 import { H2 } from '../../ui/i/bits';
 import {
+  beginResearch,
+  buyOrreryPart,
+  catchShootingStar,
+  claimAlignment,
+  claimBountyNow,
+  stopResearch,
+  swapBountyNow,
   buyAscension,
   buyBodies,
   buyDustUp,
@@ -95,13 +125,24 @@ const ROOMS = [
   { id: 'void', label: 'Void', kanji: '闇', layer: 2 },
   { id: 'galaxies', label: 'Galaxies', kanji: '銀', layer: 3 },
   { id: 'beyond', label: 'Beyond', kanji: '劫', layer: 4 },
+  { id: 'board', label: 'Board', kanji: '依', layer: 0 },
+  { id: 'lab', label: 'Lab', kanji: '研', layer: 0 },
+  { id: 'orrery', label: 'Orrery', kanji: '儀', layer: 0 },
   { id: 'auto', label: 'Auto', kanji: '自', layer: 0 },
   { id: 'log', label: 'Log', kanji: '録', layer: 0 },
 ] as const;
 type RoomId = (typeof ROOMS)[number]['id'];
+type Room = (typeof ROOMS)[number];
 
-type Coin = 'dust' | 'light' | 'dark' | 'gal' | 'eon';
-const COIN_NAME: Record<Coin, string> = { dust: 'dust', light: 'starlight', dark: 'dark matter', gal: 'galaxies', eon: 'aeons' };
+const roomOpen = (s: CosmosSave, r: Room) => (r.id === 'lab' ? labOpen(s) : r.layer === 0 || layerSeen(s, r.layer as Layer));
+
+type Coin = 'dust' | 'light' | 'dark' | 'gal' | 'eon' | 'shard';
+const COIN_NAME: Record<Coin, string> = { dust: 'dust', light: 'starlight', dark: 'dark matter', gal: 'galaxies', eon: 'aeons', shard: 'shards' };
+
+/** Something in the Lab could start now. */
+const labIdle = (s: CosmosSave) => labOpen(s) && s.lab.length < labSlots(s) && LABS.some((r) => !hasLab(s, r.id) && !s.lab.some((l) => l.id === r.id) && labReady(s, r) && r.cost <= s[r.coin]);
+/** Something on the Board is waiting to be claimed. */
+const boardReady = (s: CosmosSave, today: string) => s.daily < today || s.bounties.some((b) => bountyHave(s, b) >= b.need);
 const LAYER_COIN: Record<Layer, Coin> = { 1: 'light', 2: 'dark', 3: 'gal', 4: 'eon' };
 const ERA_NAME = ['A cloud of dust', 'A star', 'A star and its shadow', 'A galaxy', 'Beyond the sky', 'Enlightened'];
 
@@ -118,9 +159,10 @@ export default function CosmosTab() {
   const route = useRoute();
   const live = useCosmos();
   const ext = useExt();
+  const today = useToday();
   const s = live.save;
   const want = ROOMS.find((r) => r.id === route.rest[1]) ?? ROOMS[0];
-  const room: RoomId = want.layer === 0 || layerSeen(s, want.layer as Layer) ? want.id : 'orbit';
+  const room: RoomId = roomOpen(s, want) ? want.id : 'orbit';
   if (!live.ready) {
     return (
       <section className="cz" aria-label="The Cosmos">
@@ -143,6 +185,7 @@ export default function CosmosTab() {
             {live.away.light >= 1 ? `, ${fmt(live.away.light)} starlight` : ''}
             {live.away.dark >= 1 ? `, ${fmt(live.away.dark)} dark matter` : ''}
             {live.away.gal >= 1 ? `, ${fmt(live.away.gal)} galaxies` : ''}. Nothing buys itself or starts again while you’re away.
+            {live.away.labs.length > 0 && ` Research finished: ${live.away.labs.map((id) => LABS.find((r) => r.id === id)?.name).join(', ')}.`}
           </p>
           <button type="button" className="i-btn i-btn--sm i-btn--sig" onClick={dismissAway}>
             Carry on
@@ -152,8 +195,8 @@ export default function CosmosTab() {
       {s.chal && <ChalBanner s={s} />}
       <nav className="cz-rooms" aria-label="The Cosmos">
         {ROOMS.map((r) => {
-          const open = r.layer === 0 || layerSeen(s, r.layer as Layer);
-          const n = r.layer ? ready[r.layer as Layer] : 0;
+          const open = roomOpen(s, r);
+          const n = r.layer ? ready[r.layer as Layer] : r.id === 'board' ? +boardReady(s, today) : r.id === 'lab' ? +labIdle(s) : 0;
           return (
             <button
               key={r.id}
@@ -172,7 +215,27 @@ export default function CosmosTab() {
           );
         })}
       </nav>
-      {room === 'stars' ? <Stars s={s} /> : room === 'void' ? <Void s={s} /> : room === 'galaxies' ? <Galaxies s={s} /> : room === 'beyond' ? <Beyond s={s} /> : room === 'auto' ? <Auto s={s} /> : room === 'log' ? <Log s={s} ext={ext} now={now} /> : <Orbit s={s} ext={ext} now={now} />}
+      {room === 'stars' ? (
+        <Stars s={s} />
+      ) : room === 'void' ? (
+        <Void s={s} />
+      ) : room === 'galaxies' ? (
+        <Galaxies s={s} />
+      ) : room === 'beyond' ? (
+        <Beyond s={s} />
+      ) : room === 'board' ? (
+        <Board s={s} today={today} now={now} />
+      ) : room === 'lab' ? (
+        <Lab s={s} now={now} />
+      ) : room === 'orrery' ? (
+        <Orrery s={s} />
+      ) : room === 'auto' ? (
+        <Auto s={s} />
+      ) : room === 'log' ? (
+        <Log s={s} ext={ext} now={now} />
+      ) : (
+        <Orbit s={s} ext={ext} now={now} />
+      )}
     </section>
   );
 }
@@ -192,7 +255,7 @@ function SkyCanvas({ view }: { view: SkyView }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pulse]);
   useEffect(() => {
-    if (flash) sky.current?.burst(flash.layer);
+    if (flash && flash.layer) sky.current?.burst(flash.layer);
   }, [flash]);
   useEffect(() => {
     const cv = ref.current;
@@ -264,6 +327,20 @@ function Stage({ s, ext, now }: { s: CosmosSave; ext: Ext; now: number }) {
         <p className="cz-count__r">
           {fmt(rate)} a second · {fmt(tapValue(s, ext, now))} a tap{speed(s) > 1.001 ? ` · time ×${speed(s).toFixed(2)}` : ''}
         </p>
+        {(boostOn(s, 'frenzy', now) || boostOn(s, 'rush', now)) && (
+          <p className="cz-buffs">
+            {boostOn(s, 'frenzy', now) && (
+              <span className="cz-buff">
+                Frenzy ×{FRENZY} · {Math.ceil((s.boosts.frenzy - now) / 1000)} s
+              </span>
+            )}
+            {boostOn(s, 'rush', now) && (
+              <span className="cz-buff is-rush">
+                Rush ×{RUSH} taps · {Math.ceil((s.boosts.rush - now) / 1000)} s
+              </span>
+            )}
+          </p>
+        )}
       </div>
       <div className="cz-corebox">
         <button
@@ -284,12 +361,53 @@ function Stage({ s, ext, now }: { s: CosmosSave; ext: Ext; now: number }) {
           </span>
         ))}
       </div>
+      <ShootingStar />
       {flash && (
-        <p key={flash.n} className="cz-flash" data-layer={flash.layer} role="status">
+        <p key={flash.n} className={`cz-flash${flash.layer ? '' : ' is-gift'}`} data-layer={flash.layer || undefined} role="status">
           {flash.text}
         </p>
       )}
     </div>
+  );
+}
+
+/** A shooting star crossing the stage: tap it before it's gone. */
+function ShootingStar() {
+  const star = useCosmos().star;
+  if (!star) return null;
+  return (
+    <button
+      key={star.id}
+      type="button"
+      className={`cz-shoot${star.left ? ' is-left' : ''}`}
+      style={{ '--y': `${Math.round(star.top * 100)}%` } as CSSProperties}
+      aria-label="Catch the shooting star"
+      onPointerDown={(ev) => {
+        if (ev.button === 0) catchShootingStar();
+      }}
+      onClick={(ev) => {
+        if (ev.detail === 0) catchShootingStar();
+      }}
+    >
+      <svg viewBox="0 0 140 40" aria-hidden="true">
+        <defs>
+          <linearGradient id="cz-shoot-tail" x1="0" x2="1" y1="0" y2="0">
+            <stop offset="0" stopColor="#7ff0ff" stopOpacity="0" />
+            <stop offset="0.7" stopColor="#bff7ff" stopOpacity="0.55" />
+            <stop offset="1" stopColor="#fff" stopOpacity="0.95" />
+          </linearGradient>
+          <radialGradient id="cz-shoot-head">
+            <stop offset="0" stopColor="#fff" />
+            <stop offset="0.35" stopColor="#fff6c4" />
+            <stop offset="1" stopColor="#ffd36b" stopOpacity="0" />
+          </radialGradient>
+        </defs>
+        <path d="M4 22 C40 19 80 18 116 20 L116 20 C80 23 40 24 4 22Z" fill="url(#cz-shoot-tail)" />
+        <path d="M30 20.5 C60 19.5 90 19 116 20" stroke="#fff" strokeOpacity="0.6" strokeWidth="0.8" fill="none" />
+        <circle cx="118" cy="20" r="16" fill="url(#cz-shoot-head)" />
+        <path d="M118 10 120 18 128 20 120 22 118 30 116 22 108 20 116 18Z" fill="#fff" />
+      </svg>
+    </button>
   );
 }
 
@@ -336,8 +454,23 @@ function CoinArt({ k }: { k: Coin }) {
               <stop offset="1" stopColor="#8a5cff" />
             </>
           )}
+          {k === 'shard' && (
+            <>
+              <stop offset="0" stopColor="#ffffff" />
+              <stop offset="0.45" stopColor="#8ff5d6" />
+              <stop offset="1" stopColor="#1f8f8a" />
+            </>
+          )}
         </radialGradient>
       </defs>
+      {k === 'shard' && (
+        <g>
+          <path d="M12 1.5 18.5 9 15 22.5 9 22.5 5.5 9Z" fill={`url(#czg-${k})`} />
+          <path d="M12 1.5 12 22.5M5.5 9 18.5 9M12 1.5 9 22.5M12 1.5 15 22.5" stroke="#e9fff7" strokeWidth="0.6" opacity="0.7" fill="none" />
+          <path d="M12 1.5 18.5 9 12 9Z" fill="#fff" opacity="0.45" />
+          <path d="M20.5 3.5 21.2 5 22.7 5.7 21.2 6.4 20.5 7.9 19.8 6.4 18.3 5.7 19.8 5Z" fill="#fff" />
+        </g>
+      )}
       {k === 'dust' && (
         <g fill={`url(#czg-${k})`}>
           <circle cx="8" cy="14.5" r="5" />
@@ -388,6 +521,7 @@ function Purse({ s }: { s: CosmosSave }) {
   if (s.darkAll > 0) shown.push({ k: 'dark', n: s.dark });
   if (s.galAll > 0) shown.push({ k: 'gal', n: s.gal });
   if (s.eonAll > 0) shown.push({ k: 'eon', n: s.eon });
+  if (s.shardsAll > 0) shown.push({ k: 'shard', n: s.shards });
   if (!shown.length) return null;
   return (
     <div className="cz-purse" role="group" aria-label="What you hold">
@@ -548,7 +682,7 @@ function Orbit({ s, ext, now }: { s: CosmosSave; ext: Ext; now: number }) {
         })}
         {shown.length < open.length && <p className="i-note">Something bigger comes into view once you have a {shown[shown.length - 2]?.name ?? BODIES[0].name}.</p>}
       </div>
-      <Levels title="Dust upgrades" note="These go at every Ignite." list={UPS} have={s.ups} purse={s.dust} coin="dust" onBuy={buyDustUp} onAll={buyEveryDustUp} />
+      <Levels title="Dust upgrades" note={(s.orr.keep ?? 0) > 0 ? 'The Keepsake keeps these through an Ignite; a Collapse still takes them.' : 'These go at every Ignite.'} list={UPS} have={s.ups} purse={s.dust} coin="dust" onBuy={buyDustUp} onAll={buyEveryDustUp} costOf={(u, lv) => upCost(s, u, lv)} />
       <p className="i-note">
         Close the app and the sky keeps turning for up to {awayHours(s)} hours at {Math.round(awayEff(s) * 100)}% speed.
       </p>
@@ -557,8 +691,8 @@ function Orbit({ s, ext, now }: { s: CosmosSave; ext: Ext; now: number }) {
 }
 
 /** A grid of upgrades that have levels. */
-function Levels({ title, note, list, have, purse, coin, onBuy, onAll }: { title: string; note?: string; list: Levelled[]; have: Record<string, number>; purse: number; coin: Coin; onBuy: (id: string) => void; onAll?: () => void }) {
-  const can = list.some((u) => (have[u.id] ?? 0) < u.max && levelCost(u, have[u.id] ?? 0) <= purse);
+function Levels({ title, note, list, have, purse, coin, onBuy, onAll, costOf = levelCost }: { title: string; note?: string; list: Levelled[]; have: Record<string, number>; purse: number; coin: Coin; onBuy: (id: string) => void; onAll?: () => void; costOf?: (u: Levelled, lv: number) => number }) {
+  const can = list.some((u) => (have[u.id] ?? 0) < u.max && costOf(u, have[u.id] ?? 0) <= purse);
   return (
     <>
       <H2
@@ -576,7 +710,7 @@ function Levels({ title, note, list, have, purse, coin, onBuy, onAll }: { title:
         {list.map((u) => {
           const lv = have[u.id] ?? 0;
           const maxed = lv >= u.max;
-          const cost = levelCost(u, lv);
+          const cost = costOf(u, lv);
           return (
             <button key={u.id} type="button" className={`cz-card${lv ? ' is-on' : ''}${maxed ? ' is-max' : ''}`} disabled={maxed || cost > purse} aria-label={`${u.name}, level ${lv} of ${u.max}. ${u.blurb} ${maxed ? 'At the top.' : `Next level: ${fmt(cost)} ${COIN_NAME[coin]}.`}`} onClick={() => onBuy(u.id)}>
               <span className="cz-card__k" aria-hidden="true">
@@ -759,7 +893,7 @@ function Stars({ s }: { s: CosmosSave }) {
       </div>
       <p className="i-note">
         {dark ? 'Lights Out: the constellation does nothing until the challenge is over. ' : ''}
-        Stars stay lit through an Ignite. A Collapse puts them out{timesDone(s, 2) >= 5 ? ', but not for you any more' : ' (until its fifth milestone)'}.
+        Stars stay lit through an Ignite. A Collapse puts them out{timesDone(s, 2) >= 3 ? ', but not for you any more' : ' (until your third Collapse)'}.
       </p>
       <Miles s={s} layer={1} />
     </>
@@ -771,7 +905,7 @@ function Stars({ s }: { s: CosmosSave }) {
 function ChalBanner({ s }: { s: CosmosSave }) {
   const c = CHALLENGES.find((x) => x.id === s.chal);
   if (!c) return null;
-  const goal = chalGoal(c, chalTier(s, c.id));
+  const goal = chalGoal(c, chalTier(s, c.id), s);
   return (
     <div className="cz-chalbar" role="status">
       <span className="cz-card__k" aria-hidden="true">
@@ -800,7 +934,7 @@ function Void({ s }: { s: CosmosSave }) {
       <Levels title="Void upgrades" note="These go at a Big Bang." list={VOIDS} have={s.voids} purse={s.dark} coin="dark" onBuy={buyVoidUp} onAll={buyEveryVoidUp} />
       <H2>Challenges</H2>
       {!chalsOpen(s) ? (
-        <p className="i-note">Collapse twice and the gauntlet opens: runs with a handicap, each paying something you keep for good.</p>
+        <p className="i-note">Collapse once and the gauntlet opens: runs with a handicap, each paying something you keep for good.</p>
       ) : (
         <>
           <div className="cz-chals">
@@ -830,7 +964,7 @@ function Void({ s }: { s: CosmosSave }) {
                   ) : active ? (
                     <em className="cz-owned">Running</em>
                   ) : (
-                    <Twice className="i-btn--sm cz-buy" disabled={!!s.chal} label={<><span>Start</span><small className="cz-cost">{fmt(chalGoal(c, tier))} dust</small></>} armed={<><span>Sure?</span><small className="cz-cost">Collapses now</small></>} onDo={() => startChallenge(c.id)} />
+                    <Twice className="i-btn--sm cz-buy" disabled={!!s.chal} label={<><span>Start</span><small className="cz-cost">{fmt(chalGoal(c, tier, s))} dust</small></>} armed={<><span>Sure?</span><small className="cz-cost">Collapses now</small></>} onDo={() => startChallenge(c.id)} />
                   )}
                 </div>
               );
@@ -913,6 +1047,204 @@ function Beyond({ s }: { s: CosmosSave }) {
   );
 }
 
+// ─── the Board: the daily alignment and bounties ────────────────────────────
+
+const BOUNTY_KANJI: Record<string, string> = { taps: '打', crits: '閃', bodies: '体', dust: '塵', stars: '流', ignite: '点', lab: '研', collapse: '崩', tier: '挑', bang: '爆', transcend: '超' };
+
+function Board({ s, today, now }: { s: CosmosSave; today: string; now: number }) {
+  const claimed = s.daily >= today;
+  const run = claimed ? s.dailyRun : dailyRunOn(s, today);
+  const wait = Math.max(0, s.swapAt + SWAP_MS - now);
+  return (
+    <>
+      <div className={`cz-daily${claimed ? ' is-done' : ''}`}>
+        <div className="cz-daily__sky" aria-hidden="true">
+          <svg viewBox="0 0 120 60">
+            <path d="M6 54 A54 54 0 0 1 114 54" fill="none" stroke="currentColor" strokeOpacity="0.3" strokeDasharray="2 4" />
+            {[0, 1, 2, 3, 4, 5, 6].map((i) => {
+              const a = Math.PI * (1 - (i + 0.5) / 7);
+              const lit = i < Math.min(7, run) && (claimed || i < run - 1);
+              return <circle key={i} cx={60 + 50 * Math.cos(a)} cy={54 - 50 * Math.sin(a)} r={i === 3 ? 6 : 4.2} className={lit ? 'is-lit' : ''} />;
+            })}
+            <circle cx="60" cy="54" r="9" className="cz-daily__sun" />
+          </svg>
+        </div>
+        <div className="cz-card__t">
+          <b>The daily alignment</b>
+          <small>
+            {claimed
+              ? `Claimed today: day ${run} in a row. Come back tomorrow for ${dailyPay(run + 1)} shards.`
+              : `Once a day: ${dailyPay(run)} shards and two minutes of Frenzy. ${run > 1 ? `Day ${run} in a row.` : 'Days in a row pay more, up to 7.'}`}
+          </small>
+        </div>
+        {claimed ? (
+          <em className="cz-owned">Aligned</em>
+        ) : (
+          <button type="button" className="i-btn i-btn--sm i-btn--sig cz-buy" onClick={claimAlignment}>
+            <span>Claim</span>
+            <Cost k="shard" n={dailyPay(run)} />
+          </button>
+        )}
+      </div>
+      <H2 aside={<span className="cz-tally">{fmt(s.bountiesDone)} done</span>}>Bounties</H2>
+      <div className="cz-list">
+        {s.bounties.map((b) => (
+          <BountyRow key={b.n} s={s} b={b} wait={wait} />
+        ))}
+        {s.bounties.length < boardSize(s) && <p className="i-note">Posting new bounties…</p>}
+      </div>
+      <p className="i-note">
+        Bounties count from when they were posted. Finished ones pay shards; a new one goes up in its place. One can be swapped for another every ten minutes{wait > 0 ? ` (next in ${fmtTime(wait / 1000)})` : ''}.
+      </p>
+    </>
+  );
+}
+
+function BountyRow({ s, b, wait }: { s: CosmosSave; b: Bounty; wait: number }) {
+  const k = bountyKind(b.k);
+  if (!k) return null;
+  const have = bountyHave(s, b);
+  const done = have >= b.need;
+  return (
+    <div className={`cz-row cz-bounty${done ? ' is-done' : ''}`}>
+      <span className="cz-card__k" aria-hidden="true">
+        {BOUNTY_KANJI[b.k] ?? '依'}
+      </span>
+      <div className="cz-row__t">
+        <b>{k.ask(b.need)}</b>
+        <Bar pct={have / b.need} label={`${fmt(have)} of ${fmt(b.need)}`} />
+        <small className="cz-row__n">
+          {fmt(have)} of {fmt(b.need)} · pays {b.pay} shard{b.pay === 1 ? '' : 's'}
+        </small>
+      </div>
+      {done ? (
+        <button type="button" className="i-btn i-btn--sm i-btn--sig cz-buy" onClick={() => claimBountyNow(b.n)} aria-label={`Claim ${b.pay} shards: ${k.ask(b.need)}`}>
+          <span>Claim</span>
+          <Cost k="shard" n={b.pay} />
+        </button>
+      ) : (
+        <button type="button" className="i-btn i-btn--sm cz-buy" disabled={wait > 0} onClick={() => swapBountyNow(b.n)} aria-label={`Swap: ${k.ask(b.need)}`}>
+          <span>Swap</span>
+          <small className="cz-cost">{wait > 0 ? fmtTime(wait / 1000) : 'for another'}</small>
+        </button>
+      )}
+    </div>
+  );
+}
+
+// ─── the Lab: research in real time ─────────────────────────────────────────
+
+function Lab({ s, now }: { s: CosmosSave; now: number }) {
+  const slots = labSlots(s);
+  const running = s.lab.map((l) => ({ l, r: LABS.find((x) => x.id === l.id)! })).filter((x) => x.r);
+  const after = (r: Research) => LABS.find((x) => x.id === r.after)?.name;
+  return (
+    <>
+      <H2 aside={<span className="cz-tally">{running.length} / {slots}</span>}>Under way</H2>
+      <div className="cz-list">
+        {running.map(({ l, r }) => {
+          const total = labMs(s, r);
+          const left = Math.max(0, l.end - now);
+          return (
+            <div key={l.id} className="cz-row cz-research is-running">
+              <span className="cz-card__k cz-research__k" aria-hidden="true">
+                {r.kanji}
+              </span>
+              <div className="cz-row__t">
+                <b>{r.name}</b>
+                <small>{r.blurb}</small>
+                <Bar pct={1 - left / Math.max(total, left, 1)} label={`${r.name}: ${fmtTime(left / 1000)} left`} />
+                <small className="cz-row__n">{fmtTime(left / 1000)} left · pays {r.pay} shard{r.pay === 1 ? '' : 's'}</small>
+              </div>
+              <Twice className="i-btn--sm cz-buy" label={<><span>Stop</span><small className="cz-cost">refunds</small></>} armed={<><span>Sure?</span><small className="cz-cost">Tap again</small></>} onDo={() => stopResearch(r.id)} />
+            </div>
+          );
+        })}
+        {!running.length && <p className="i-note">Nothing under way. Pick something below: it carries on while the app is shut.</p>}
+      </div>
+      <H2 aside={<span className="cz-tally">{s.labs.length} / {LABS.length}</span>}>Research</H2>
+      <div className="cz-list">
+        {LABS.map((r) => {
+          const done = hasLab(s, r.id);
+          const busy = s.lab.some((l) => l.id === r.id);
+          const ready = labReady(s, r);
+          return (
+            <div key={r.id} className={`cz-row cz-research${done ? ' is-on' : ''}${!done && !ready ? ' is-locked' : ''}`} data-k={r.coin}>
+              <span className="cz-card__k cz-research__k" aria-hidden="true">
+                {ready || done ? r.kanji : '？'}
+              </span>
+              <div className="cz-row__t">
+                <b>{r.name}</b>
+                <small>{r.blurb}</small>
+                <small className="cz-row__n">{done ? 'Done, for good' : !ready ? `Needs: ${r.after && !hasLab(s, r.after) ? after(r) : r.needText}` : `Takes ${fmtTime(labMs(s, r) / 1000)} · pays ${r.pay} shard${r.pay === 1 ? '' : 's'}`}</small>
+              </div>
+              {done ? (
+                <em className="cz-owned">Done</em>
+              ) : busy ? (
+                <em className="cz-owned">Under way</em>
+              ) : (
+                <button type="button" className="i-btn i-btn--sm cz-buy" disabled={!ready || s.lab.length >= slots || r.cost > s[r.coin]} aria-label={`Start ${r.name} for ${fmt(r.cost)} ${COIN_NAME[r.coin]}`} onClick={() => beginResearch(r.id)}>
+                  <span>Start</span>
+                  <Cost k={r.coin} n={r.cost} />
+                </button>
+              )}
+            </div>
+          );
+        })}
+      </div>
+      <p className="i-note">Research runs in real time, even while the app is shut, and nothing resets it. Each piece pays shards when it’s done. Stopping one gives back what it cost.</p>
+    </>
+  );
+}
+
+// ─── the Orrery: what shards buy ────────────────────────────────────────────
+
+function Orrery({ s }: { s: CosmosSave }) {
+  const owned = ORRERY.filter((u) => (s.orr[u.id] ?? 0) > 0).length;
+  const [still] = useState(reduced);
+  return (
+    <>
+      <div className="cz-orrery" aria-hidden="true">
+        <svg viewBox="-100 -60 200 120">
+          <defs>
+            <radialGradient id="cz-orr-sun">
+              <stop offset="0" stopColor="#fff8dc" />
+              <stop offset="0.5" stopColor="#ffc95e" />
+              <stop offset="1" stopColor="#b8641a" />
+            </radialGradient>
+          </defs>
+          <ellipse cx="0" cy="0" rx="96" ry="56" className="cz-orrery__rim" />
+          {ORRERY.map((u, i) => {
+            const lv = s.orr[u.id] ?? 0;
+            const rx = 16 + i * 7.4;
+            const ry = rx * 0.5;
+            const dur = 18 + i * 7;
+            // Each planet starts somewhere else along its ring.
+            const at = ((i * 137) % 360) / 360;
+            const a = at * Math.PI * 2;
+            return (
+              <g key={u.id}>
+                <ellipse cx="0" cy="0" rx={rx} ry={ry} className={`cz-orrery__ring${lv ? ' is-on' : ''}`} />
+                <circle cx={still ? rx * Math.cos(a) : 0} cy={still ? ry * Math.sin(a) : 0} r={lv ? 2 + (lv / u.max) * 2.6 : 1.4} className={`cz-orrery__planet${lv ? ' is-on' : ''}${lv >= u.max ? ' is-max' : ''}`}>
+                  {!still && <animateMotion dur={`${dur}s`} begin={`-${(at * dur).toFixed(1)}s`} repeatCount="indefinite" path={`M${rx} 0A${rx} ${ry} 0 1 1 ${-rx} 0A${rx} ${ry} 0 1 1 ${rx} 0`} />}
+                </circle>
+              </g>
+            );
+          })}
+          <circle r="9" fill="url(#cz-orr-sun)" />
+          <text y="44" textAnchor="middle" className="cz-orrery__n">
+            {owned} of {ORRERY.length} parts fitted
+          </text>
+        </svg>
+      </div>
+      <Levels title="The Orrery" list={ORRERY} have={s.orr} purse={s.shards} coin="shard" onBuy={buyOrreryPart} />
+      <p className="i-note">
+        Shards come from shooting stars (one about every {Math.round(starGap(s))} seconds while this is open), bounties, research and the daily alignment. Nothing ever resets the Orrery, not even a Transcend.
+      </p>
+    </>
+  );
+}
+
 // ─── automation ─────────────────────────────────────────────────────────────
 
 const AUTO_HINT: Record<string, string> = {
@@ -949,7 +1281,7 @@ function Auto({ s }: { s: CosmosSave }) {
         })}
       </div>
       <p className="i-note">
-        {taps ? `The auto-tapper makes ${taps} taps a second. ` : 'An auto-tapper arrives at your fifth Ignite. '}
+        {taps ? `The auto-tapper makes ${taps} taps a second. ` : 'An auto-tapper arrives at your second Ignite. '}
         Automation runs while this tab is open; while you’re away the sky only gathers.
       </p>
     </>
@@ -1009,6 +1341,12 @@ function Log({ s, ext, now }: { s: CosmosSave; ext: Ext; now: number }) {
         {s.darkAll > 0 && <Stat k="Dark matter ever earned" v={fmt(s.darkAll)} />}
         {s.galAll > 0 && <Stat k="Galaxies ever earned" v={fmt(s.galAll)} />}
         {s.eonAll > 0 && <Stat k="Aeons ever earned" v={fmt(s.eonAll)} />}
+        <Stat k="Shooting stars caught" v={fmt(s.caught)} />
+        <Stat k="Shards ever earned" v={fmt(s.shardsAll)} />
+        <Stat k="Bounties finished" v={fmt(s.bountiesDone)} />
+        <Stat k="Research done" v={`${s.labs.length} of ${LABS.length}`} />
+        <Stat k="Alignments claimed" v={s.dailyAll ? `${fmt(s.dailyAll)} · ${s.dailyRun} in a row` : '0'} />
+        <Stat k="Bodies ever bought" v={fmt(s.bought)} />
       </dl>
       <p className="i-note">The Cosmos is a game of its own: nothing here pays Ryō, Tama or XP, and nothing in the Hangar buys anything here.</p>
     </>

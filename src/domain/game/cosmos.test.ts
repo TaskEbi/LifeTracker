@@ -6,7 +6,26 @@ import {
   bang,
   BODIES,
   bodyCost,
+  bountyHave,
+  bountyKind,
   buyAllBodies,
+  buyOrr,
+  catchStar,
+  claimBounty,
+  claimDaily,
+  dailyPay,
+  fillBoard,
+  FRENZY,
+  LABS,
+  makeBounty,
+  ORRERY,
+  RUSH,
+  starGap,
+  startLab,
+  stopLab,
+  SWAP_MS,
+  swapBounty,
+  upCost,
   buyAsc,
   buyBody,
   buyNode,
@@ -91,14 +110,14 @@ describe('the Cosmos: dust', () => {
     expect(save.life).toBeCloseTo(40);
   });
 
-  it('time away pays half speed, up to eight hours, and says so', () => {
+  it('time away pays 60% speed, up to ten hours, and says so', () => {
     const s = base({ gens: { net: 10 } });
     const { save, away } = settle(s, T0 + 20 * 3600_000, ext);
     expect(away).not.toBeNull();
     expect(away!.capped).toBe(true);
-    expect(away!.worked).toBe(8 * 3600);
-    expect(away!.eff).toBe(0.5);
-    expect(save.dust).toBeCloseTo(4 * 0.5 * 8 * 3600);
+    expect(away!.worked).toBe(10 * 3600);
+    expect(away!.eff).toBe(0.6);
+    expect(save.dust).toBeCloseTo(4 * 0.6 * 10 * 3600);
   });
 
   it('real life makes more dust', () => {
@@ -170,7 +189,7 @@ describe('the Cosmos: starting again', () => {
   });
 
   it('the Big Bang takes dark matter and void upgrades; Transcend takes galaxies; relics and ascensions stay', () => {
-    const s = ripe({ dark: 1e14, darkRun: 4e13, darkAll: 4e13, voids: { density: 5 }, collapses: 3, collapsesAll: 30, relics: { mirror: 2 }, worn: ['mirror'], chals: { thin: 2 }, chal: null });
+    const s = ripe({ dark: 1e15, darkRun: 4e14, darkAll: 4e14, voids: { density: 5 }, collapses: 3, collapsesAll: 30, relics: { mirror: 2 }, worn: ['mirror'], chals: { thin: 2 }, chal: null });
     const g = galGain(s);
     expect(g).toBeGreaterThanOrEqual(1);
     const b = bang(s, T0)!;
@@ -181,9 +200,9 @@ describe('the Cosmos: starting again', () => {
     expect(b.chals).toEqual({ thin: 2 });
     expect(b.bangsAll).toBe(1);
     const far = { ...b, gal: 3e4, galRun: 2e4, galAll: 2e4, asc: { swift: 1 } };
-    expect(eonGain({ ...far, galRun: 9999 })).toBe(0);
+    expect(eonGain({ ...far, galRun: 19999 })).toBe(0);
     expect(eonGain(far)).toBe(1);
-    expect(eonGain({ ...far, galRun: 1e6 })).toBe(3);
+    expect(eonGain({ ...far, galRun: 2e6 })).toBe(3);
     const t = transcend(far, T0)!;
     expect(t.eon).toBe(1);
     expect(t.gal).toBe(0);
@@ -192,9 +211,9 @@ describe('the Cosmos: starting again', () => {
     expect(t.worn).toEqual(['mirror']);
     expect(t.asc).toEqual({ swift: 1 });
     expect(t.transcends).toBe(1);
-    // The next Transcend needs twice the galaxies.
-    expect(eonGain({ ...t, galRun: 1.9e4 })).toBe(0);
-    expect(eonGain({ ...t, galRun: 2e4 })).toBe(1);
+    // The next Transcend needs 1.8 times the galaxies.
+    expect(eonGain({ ...t, galRun: 3.5e4 })).toBe(0);
+    expect(eonGain({ ...t, galRun: 3.6e4 })).toBe(1);
     // Memory keeps the void upgrades through a Big Bang.
     expect(bang({ ...s, asc: { memory: 1 } }, T0)!.voids).toEqual({ density: 5 });
   });
@@ -362,5 +381,138 @@ describe('the Cosmos: the save', () => {
     expect(sameData(mergeCosmos(m, m), m)).toBe(true);
     const row = JSON.parse(JSON.stringify(m));
     expect(sameData(mergeSave('gm_cosmos', row, row), row)).toBe(true);
+  });
+});
+
+describe('the Cosmos: around the layers', () => {
+  it('a shooting star gives one of four gifts, and boosts wear off', () => {
+    const s = base({ gens: { net: 10 } });
+    const frenzy = catchStar(s, T0, ext, 0.1);
+    expect(frenzy.gift.k).toBe('frenzy');
+    expect(frenzy.save.caught).toBe(1);
+    expect(orbitRate(frenzy.save, ext, T0 + 1000) / orbitRate(s, ext, T0 + 1000)).toBeCloseTo(FRENZY);
+    expect(orbitRate(frenzy.save, ext, T0 + 61_000)).toBeCloseTo(orbitRate(s, ext, T0 + 61_000));
+    const wind = catchStar(s, T0, ext, 0.5);
+    expect(wind.gift.k).toBe('windfall');
+    expect(wind.save.dust).toBeCloseTo(rateNow(s, ext, T0) * 180 + 100);
+    const rush = catchStar(s, T0, ext, 0.8);
+    expect(rush.gift.k).toBe('rush');
+    expect(tapValue(rush.save, ext, T0 + 1000) / tapValue(s, ext, T0 + 1000)).toBeCloseTo(RUSH);
+    const shard = catchStar(s, T0, ext, 0.95);
+    expect(shard.gift.k).toBe('shard');
+    expect(shard.save.shards).toBe(1);
+    // Both at once is a feat.
+    const both = catchStar(frenzy.save, T0 + 5000, ext, 0.8).save;
+    expect(check(both).feats.map((f) => f.id)).toContain('both');
+    // More often with the Lodestone and Comet Rain.
+    expect(starGap(base({ orr: { lode: 2 }, asc: { rain: 1 } }))).toBeLessThan(starGap(s) / 2);
+  });
+
+  it('the Orrery is bought with shards and nothing resets it', () => {
+    const s = base({ shards: 10, shardsAll: 10, gens: { net: 1 } });
+    const a = buyOrr(s, 'gears')!;
+    expect(a.shards).toBe(10 - ORRERY.find((u) => u.id === 'gears')!.cost);
+    expect(orbitRate(a, ext, T0) / orbitRate(s, ext, T0)).toBeCloseTo(1.35);
+    expect(buyOrr(base(), 'gears')).toBeNull();
+    const t = transcend({ ...a, gal: 1e9, galRun: 1e6 }, T0)!;
+    expect(t.transcends).toBe(1);
+    expect(t.orr).toEqual({ gears: 1 });
+    expect(t.shards).toBe(a.shards);
+    // Keepsake keeps the dust upgrades through an Ignite, but not without it.
+    const kept = ignite(base({ runDust: 5e9, ups: { focus: 3 }, orr: { keep: 1 } }), T0)!;
+    expect(kept.ups).toEqual({ focus: 3 });
+    expect(ignite(base({ runDust: 5e9, ups: { focus: 3 } }), T0)!.ups).toEqual({});
+  });
+
+  it('research costs its price, runs in real time (even while away) and pays shards', () => {
+    const s = base({ ignitesAll: 1, dust: 1e6 });
+    expect(startLab(base({ dust: 1e6 }), 'r_nets', T0)).toBeNull();
+    const a = startLab(s, 'r_nets', T0)!;
+    expect(a.dust).toBe(1e6 - 1e5);
+    expect(a.lab).toEqual([{ id: 'r_nets', end: T0 + 5 * 60_000 }]);
+    // One at a time, and what comes after waits for it.
+    expect(startLab(a, 'r_tap', T0)).toBeNull();
+    expect(startLab({ ...a, lab: [] }, 'r_mill', T0)).toBeNull();
+    expect(stopLab(a, 'r_nets')!.dust).toBe(1e6);
+    const mid = settle({ ...a, gens: { net: 10 } }, T0 + 60_000, ext).save;
+    expect(mid.labs).toEqual([]);
+    const { save, away } = settle({ ...a, gens: { net: 10 } }, T0 + 3600_000, ext);
+    expect(save.labs).toEqual(['r_nets']);
+    expect(save.lab).toEqual([]);
+    expect(save.shards).toBe(1);
+    expect(away!.labs).toEqual(['r_nets']);
+    expect(orbitRate(save, ext, T0) / orbitRate({ ...save, labs: [] }, ext, T0)).toBeCloseTo(2);
+    // Faster with the Clockwork; two at once with Twin Scopes.
+    const quick = startLab({ ...s, orr: { clock: 5, scope: 1 } }, 'r_nets', T0)!;
+    expect(quick.lab[0].end).toBe(T0 + 2.5 * 60_000);
+    expect(startLab({ ...quick, dust: 1e7 }, 'r_tap', T0)!.lab.length).toBe(2);
+    for (const r of LABS) expect(r.after === undefined || LABS.some((x) => x.id === r.after)).toBe(true);
+  });
+
+  it('bounties fill the board, count from when they were posted, and pay shards when claimed', () => {
+    const s = fillBoard(base({ taps: 50, bought: 7 }), 10);
+    expect(s.bounties.length).toBe(3);
+    expect(new Set(s.bounties.map((b) => b.k)).size).toBe(3);
+    expect(s.bountyN).toBe(3);
+    // Only the kinds that make sense yet.
+    expect(s.bounties.every((b) => ['taps', 'crits', 'bodies', 'dust', 'stars'].includes(b.k))).toBe(true);
+    const b = s.bounties[0];
+    expect(bountyHave(s, b)).toBe(0);
+    expect(claimBounty(s, b.n, 10)).toBeNull();
+    const done = { ...s, taps: s.taps + 1e6, crits: 1e6, bought: 1e6, life: 1e300, caught: 100 };
+    expect(bountyHave(done, b)).toBe(b.need);
+    const c = claimBounty(done, b.n, 10)!;
+    expect(c.shards).toBe(b.pay);
+    expect(c.bountiesDone).toBe(1);
+    expect(c.bounties.length).toBe(3);
+    expect(c.bounties.some((x) => x.n === b.n)).toBe(false);
+    expect(bountyKind(b.k)!.ask(b.need).length).toBeGreaterThan(5);
+    // Swapping: once every ten minutes.
+    const sw = swapBounty(s, b.n, T0 + SWAP_MS, 10)!;
+    expect(sw.bounties.some((x) => x.n === b.n)).toBe(false);
+    expect(swapBounty(sw, sw.bounties[0].n, T0 + SWAP_MS + 1000, 10)).toBeNull();
+    // The same number always makes the same bounty.
+    expect(makeBounty(base(), 42, 10)).toEqual(makeBounty(base(), 42, 10));
+  });
+
+  it('the daily alignment pays once a day, more for days in a row', () => {
+    const a = claimDaily(base(), '2026-11-15', T0)!;
+    expect(a.shards).toBe(dailyPay(1));
+    expect(a.boosts.frenzy).toBeGreaterThan(T0);
+    expect(claimDaily(a, '2026-11-15', T0)).toBeNull();
+    const b = claimDaily(a, '2026-11-16', T0 + 86_400_000)!;
+    expect(b.dailyRun).toBe(2);
+    expect(b.shards).toBe(dailyPay(1) + dailyPay(2));
+    const gap = claimDaily(b, '2026-11-19', T0 + 4 * 86_400_000)!;
+    expect(gap.dailyRun).toBe(1);
+    expect(claimDaily(b, 'nonsense', T0)).toBeNull();
+  });
+
+  it('the new challenges handicap and reward', () => {
+    const s = base({ gens: { net: 50 }, dust: 1e9 });
+    expect(orbitRate({ ...s, chal: 'frail' }, ext, T0)).toBeCloseTo(orbitRate(s, ext, T0) * 0.01);
+    expect(upCost({ ...s, chal: 'cost' }, UPS[0], 0)).toBe(UPS[0].cost * 1e4);
+    expect(buyUp({ ...s, dust: 100, chal: 'cost' }, 'focus')).toBeNull();
+    expect(orbitRate({ ...s, chals: { cost: 1 } }, ext, T0) / orbitRate(s, ext, T0)).toBeCloseTo(3);
+    expect(tapValue({ ...s, chals: { frail: 1 } }, ext, T0) / tapValue(s, ext, T0)).toBeCloseTo(10);
+  });
+
+  it('the new parts of the save read back, and merge without losing anything', () => {
+    const s = base({ shards: 4, shardsAll: 30, orr: { gears: 2 }, boosts: { frenzy: T0 + 5000 }, caught: 9, bought: 40, lab: [{ id: 'r_tap', end: T0 + 9000 }], labs: ['r_nets'], bounties: [{ n: 3, k: 'taps', need: 100, from: 5, pay: 2 }], bountyN: 3, bountiesDone: 2, swapAt: T0 - 5, daily: '2026-11-14', dailyRun: 2, dailyAll: 5 });
+    expect(normaliseCosmos(JSON.parse(JSON.stringify(s)), T0 + 5)).toEqual(s);
+    const junk = normaliseCosmos({ lab: [{ id: 'r_nets', end: 5 }, { id: 'nope', end: 5 }], labs: ['r_nets'], bounties: [{ n: 1, k: 'nope' }, 'x'], daily: 'yesterday', orr: { gears: 99 } }, T0);
+    expect(junk.lab).toEqual([]);
+    expect(junk.bounties).toEqual([]);
+    expect(junk.daily).toBe('');
+    expect(junk.orr.gears).toBe(ORRERY.find((u) => u.id === 'gears')!.max);
+    const phone = { ...s, ignitesAll: 5, labs: ['r_nets', 'r_tap'], lab: [], orr: { gears: 1, lode: 2 }, daily: '2026-11-15', dailyRun: 3 };
+    const m = mergeCosmos(s, phone);
+    expect([...m.labs].sort()).toEqual(['r_nets', 'r_tap']);
+    expect(m.lab).toEqual([]);
+    expect(m.orr).toEqual({ gears: 2, lode: 2 });
+    expect(m.daily).toBe('2026-11-15');
+    expect(m.dailyRun).toBe(3);
+    expect(sameData(mergeCosmos(phone, s), m)).toBe(true);
+    expect(sameData(mergeCosmos(m, m), m)).toBe(true);
   });
 });

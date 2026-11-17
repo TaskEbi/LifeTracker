@@ -47,8 +47,8 @@ test('cosmos: tap for dust, buy a body, and it is still there after a reload', a
   await expect(core).toBeVisible();
   const buy = page.getByRole('button', { name: /^Buy 1 Mote Net for 10 dust/ });
   await expect(buy).toBeDisabled();
-  // The layers above are not on the map yet.
-  await expect(rooms(page).getByRole('button', { name: 'Not found yet' })).toHaveCount(4);
+  // The layers above (and the Lab) are not on the map yet.
+  await expect(rooms(page).getByRole('button', { name: 'Not found yet' })).toHaveCount(5);
   for (let i = 0; i < 12; i++) await core.click();
   await expect(buy).toBeEnabled();
   await buy.click();
@@ -71,7 +71,7 @@ test('cosmos: the sky gathers while you are away; Ignite pays starlight that lig
   await door.click();
   await expect(page).toHaveURL(/\/hangar\/cosmos$/);
   const away = page.locator('.cz-away');
-  await expect(away).toContainText('at 50%');
+  await expect(away).toContainText('at 60%');
   await expect(away).toContainText(/gathered [\d,.]+[A-Za-z]* dust/);
   await away.getByRole('button', { name: 'Carry on' }).click();
   await expect(away).toHaveCount(0);
@@ -100,6 +100,70 @@ test('cosmos: the sky gathers while you are away; Ignite pays starlight that lig
   await expect(page.locator('.cz-layer__n')).toContainText('Done 1 time');
   await expect(page.getByRole('button', { name: 'Polaris: lit' })).toBeVisible();
   await expect(page.locator('.cz-tally')).toContainText('1 / 19');
+});
+
+test('cosmos: the alignment, a bounty, research and the Orrery, kept after a reload', async ({ page }) => {
+  // One Ignite done (so the Lab is open), a bounty already met, and dust to start research.
+  await seed(page, {
+    ignitesAll: 1, dust: 5e6, runDust: 5e6, life: 5e6, taps: 400,
+    bounties: [{ n: 1, k: 'taps', need: 100, from: 200, pay: 2 }, { n: 2, k: 'bodies', need: 50, from: 0, pay: 1 }, { n: 3, k: 'stars', need: 1, from: 0, pay: 2 }],
+    bountyN: 3,
+  });
+  await page.goto('/hangar/cosmos/board');
+  // The alignment: shards and a Frenzy on the stage.
+  await page.locator('.cz-daily').getByRole('button', { name: /Claim/ }).click();
+  await expect(page.locator('.cz-daily')).toContainText('Aligned');
+  await expect(page.locator('.cz-buff')).toContainText('Frenzy');
+  await expect(page.getByRole('group', { name: 'What you hold' })).toContainText('3');
+  // The bounty that's met pays its shards and another goes up.
+  await page.getByRole('button', { name: /Claim 2 shards: Tap the core 100 times/ }).click();
+  await expect(page.locator('.cz-tally')).toContainText('1 done');
+  await expect(page.locator('.cz-bounty')).toHaveCount(3);
+  await expect(page.getByRole('group', { name: 'What you hold' })).toContainText('5');
+  await shot(page, 'board');
+
+  // Research: start Fine Mesh (it costs dust and takes five minutes).
+  await rooms(page).getByRole('button', { name: /Lab/ }).click();
+  await page.getByRole('button', { name: /Start Fine Mesh for 100,000 dust/ }).click();
+  await expect(page.locator('.cz-research.is-running')).toContainText('Fine Mesh');
+  await expect(page.locator('.cz-research.is-running')).toContainText(/[45] m/);
+  await shot(page, 'lab');
+
+  // The Orrery: fit the first part.
+  await rooms(page).getByRole('button', { name: /Orrery/ }).click();
+  await page.getByRole('button', { name: /^Brass Gears, level 0/ }).click();
+  await expect(page.locator('.cz-orrery')).toContainText('1 of 11 parts fitted');
+  await shot(page, 'orrery');
+
+  await leave(page);
+  await page.goto('/hangar/cosmos/lab');
+  await expect(page.locator('.cz-research.is-running')).toContainText('Fine Mesh');
+  await rooms(page).getByRole('button', { name: /Board/ }).click();
+  await expect(page.locator('.cz-daily')).toContainText('Aligned');
+  await expect(page.locator('.cz-tally')).toContainText('1 done');
+  await rooms(page).getByRole('button', { name: /Orrery/ }).click();
+  await expect(page.locator('.cz-orrery')).toContainText('1 of 11 parts fitted');
+});
+
+test('cosmos: a shooting star crosses the stage and can be caught', async ({ page }) => {
+  await seed(page, { gens: { net: 5 }, dust: 10, life: 10 });
+  await page.goto('/hangar/cosmos');
+  await expect(page.getByRole('button', { name: 'Gather dust' })).toBeVisible();
+  // Bring the next star forward rather than wait a couple of minutes for it.
+  await page.evaluate(async () => {
+    const cs = await import('/src/features/game/cosmosStore.ts' as string);
+    cs.cosmos.set({ star: { id: 99, born: Date.now(), top: 0.3, left: false } });
+  });
+  const star = page.getByRole('button', { name: 'Catch the shooting star' });
+  await expect(star).toBeVisible();
+  await page.locator('.cz-stage').evaluate((el) => el.scrollIntoView({ block: 'start' }));
+  await page.waitForTimeout(1500);
+  if (process.env.COSMOS_SHOTS) await page.screenshot({ path: `${process.env.COSMOS_SHOTS}/star-stage.png` });
+  await star.dispatchEvent('click');
+  await expect(star).toHaveCount(0);
+  await expect(page.locator('.cz-flash.is-gift')).toContainText(/Frenzy|Windfall|Rush|A shard/);
+  await rooms(page).getByRole('button', { name: /Log/ }).click();
+  await expect(page.locator('.cz-stats')).toContainText('Shooting stars caught1');
 });
 
 test('cosmos: challenges, relics and automation are kept', async ({ page }) => {
