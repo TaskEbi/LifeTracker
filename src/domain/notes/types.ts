@@ -54,6 +54,11 @@ export interface NoteSubject {
   study: string;
   board: string;
   hue: number;
+  /**
+   * The units are the syllabus topics (Topic 1, Topic 2 …) and their pages follow the class
+   * slides, rather than exam units holding topics. Changes a few labels ("pages", "Topics 1–12").
+   */
+  byTopic?: boolean;
   units: NoteUnit[];
 }
 

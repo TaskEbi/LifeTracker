@@ -19,6 +19,16 @@ export const isLevel = (x: unknown): x is Level => x === 'as' || x === 'a2' || x
 export const inLevel = (u: NoteUnit, level: Level) => level === 'all' || (level === 'a2') === !!u.a2;
 export const unitsAt = (s: NoteSubject, level: Level) => s.units.filter((u) => inLevel(u, level));
 
+/** The units at a level in a few words: "WPH11 · WPH12", or "Topics 1–12" for a subject arranged by topic. */
+export function unitCodes(s: NoteSubject, level: Level, sep = ' · '): string {
+  const us = unitsAt(s, level);
+  if (s.byTopic && us.length > 1) return `Topics ${us[0].code.replace(/^Topic /, '')}–${us[us.length - 1].code.replace(/^Topic /, '')}`;
+  return us.map((u) => u.code).join(sep);
+}
+
+/** What a unit's pages are called: topics within an exam unit, or pages within a syllabus topic. */
+export const pagesWord = (s: NoteSubject, n: number) => `${n} ${s.byTopic ? 'page' : 'topic'}${n === 1 ? '' : 's'}`;
+
 // ── flash cards ──
 
 export type CardKind = 'term' | 'formula';

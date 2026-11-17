@@ -11,7 +11,7 @@ import { navigate, useRoute } from '../../app/router';
 import { openSheet } from '../../app/sheets';
 import { findTopic, minutesOf, NOTE_SUBJECTS, searchNotes, subjectById, subjectProgress, TERMS_ID, topicProgress, topicsOf, type NoteSubject, type NoteTopic, type NoteUnit, type SubjectId } from '../../domain/notes';
 import { useToday } from '../../data/lt';
-import { countTopics, deck, deckStats, glossary, nextUp, unitsAt } from '../../domain/notes/tools';
+import { countTopics, deck, deckStats, glossary, nextUp, pagesWord, unitCodes, unitsAt } from '../../domain/notes/tools';
 import { setSection, type CardMarks, type NotesRead } from './actions';
 import { discFace, discHtml, hashOf, posterArt, tear } from './art';
 import { useCards, useNotes } from './door';
@@ -339,13 +339,13 @@ function HomeView({ read, marks }: { read: NotesRead; marks: CardMarks }) {
         ref: s.board,
         rows: [
           ['Board', s.board],
-          ['AS units', unitsAt(s, 'as').map((u) => u.code).join(' · ')],
-          ['A2 units', unitsAt(s, 'a2').map((u) => u.code).join(' · ')],
+          [s.byTopic ? 'AS' : 'AS units', unitCodes(s, 'as')],
+          [s.byTopic ? 'A2' : 'A2 units', unitCodes(s, 'a2')],
           ['Topics', String(p.topics)],
           ['Understood', `${p.pct}% · ${p.done} of ${p.topics} topics`],
         ],
         hook: TAGLINE[s.id],
-        face: discFace(s.id, s.hue, s.name, unitsAt(s, 'as').map((u) => u.code).join(' ')),
+        face: discFace(s.id, s.hue, s.name, unitCodes(s, 'as', ' ')),
         to: ['notes', s.id],
       })),
     [stats],
@@ -364,7 +364,7 @@ function HomeView({ read, marks }: { read: NotesRead; marks: CardMarks }) {
           </div>
           {stats.map(({ s, p }, i) => (
             <div key={s.id} data-rv="">
-              <IdxRow to={['notes', s.id]} r={pad(i + 1)} title={s.name} covers={`${s.board} · ${s.units.map((u) => u.code).join(' · ')}`} pct={p.pct} i={i} />
+              <IdxRow to={['notes', s.id]} r={pad(i + 1)} title={s.name} covers={`${s.board} · ${unitCodes(s, 'all')}`} pct={p.pct} i={i} />
             </div>
           ))}
           {next.length > 0 && (
@@ -470,7 +470,7 @@ function SubjectView({ subject, read }: { subject: NoteSubject; read: NotesRead 
           title: topic.title,
           ref: topic.ref,
           rows: [
-            ['Unit', `${unit.code} · ${unit.a2 ? 'A2' : 'AS'}`],
+            [subject.byTopic ? 'Topic' : 'Unit', `${unit.code} · ${unit.a2 ? 'A2' : 'AS'}`],
             ['Covers', topic.covers.split(' · ').slice(0, 3).join(', ')],
             ['Key terms', String(topic.terms.length)],
             ['Reading time', `${mins} min`],
@@ -494,7 +494,7 @@ function SubjectView({ subject, read }: { subject: NoteSubject; read: NotesRead 
               <div className={`nt-sect${ui ? ' nt-sect--gap' : ''}`} data-rv="">
                 <h2>{unit.name.replace(/^Unit \d · /, '')}</h2>
                 <span className="nt-lbl">
-                  {unit.code} · {unit.a2 ? 'A2' : 'AS'} · {unit.topics.length} topics
+                  {unit.code} · {unit.a2 ? 'A2' : 'AS'} · {pagesWord(subject, unit.topics.length)}
                 </span>
               </div>
               {unit.topics.map((t) => (
@@ -637,7 +637,7 @@ function TopicView({ subject, unit, topic, index, read }: { subject: NoteSubject
           <div className="nt-credits">
             <div className="nt-credits__t">
               <small>Board</small>
-              {subject.board} <small>Unit</small>
+              {subject.board} <small>{subject.byTopic ? 'Topic' : 'Unit'}</small>
               {unit.code} · {unit.name.replace(/^Unit \d · /, '')} ({unit.a2 ? 'A2' : 'AS'})
               <br />
               <small>Covers</small>

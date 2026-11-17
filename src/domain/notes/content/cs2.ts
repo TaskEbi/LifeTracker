@@ -1,5 +1,6 @@
 /** Computer Science: Cambridge International 9618, the A2 topics 13 to 20 (Papers 3 and 4). */
 import { code, f, ol, sec, tbl, tip, topic, trap, ul, type NoteUnit } from '../types';
+import { topicUnits } from './cs-topics/units';
 
 const theory = [
   topic(
@@ -283,7 +284,5 @@ const practical = [
   ),
 ];
 
-export const CS_A2: NoteUnit[] = [
-  { id: 'p3', code: 'Paper 3', name: 'Advanced Theory', a2: true, topics: theory },
-  { id: 'p4', code: 'Paper 4', name: 'Practical', a2: true, topics: practical },
-];
+/** Topics 13 to 20, one unit each (see `cs-topics/units.ts`). */
+export const CS_A2: NoteUnit[] = topicUnits([...theory, ...practical], true);

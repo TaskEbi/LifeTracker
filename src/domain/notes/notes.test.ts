@@ -29,13 +29,13 @@ const strings = (b: Block): string[] => {
 describe('notes content', () => {
   it('covers the four subjects, every AS unit and then the A2 units', () => {
     expect(NOTE_SUBJECTS.map((s) => s.name)).toEqual(['Physics', 'Maths', 'Further Maths', 'Computer Science']);
-    expect(NOTE_SUBJECTS.flatMap((s) => unitsAt(s, 'as').map((u) => u.code))).toEqual(['WPH11', 'WPH12', 'WPH13', 'WMA11', 'WMA12', 'WME01', 'WST01', 'WFM01', 'Paper 1', 'Paper 2']);
-    expect(NOTE_SUBJECTS.flatMap((s) => unitsAt(s, 'a2').map((u) => u.code))).toEqual(['WPH14', 'WPH15', 'WPH16', 'WMA13', 'WMA14', 'WME02', 'WST02', 'WFM02', 'WFM03', 'Paper 3', 'Paper 4']);
+    expect(NOTE_SUBJECTS.flatMap((s) => unitsAt(s, 'as').map((u) => u.code))).toEqual(['WPH11', 'WPH12', 'WPH13', 'WMA11', 'WMA12', 'WME01', 'WST01', 'WFM01', 'Topic 1', 'Topic 2', 'Topic 3', 'Topic 4', 'Topic 5', 'Topic 6', 'Topic 7', 'Topic 8', 'Topic 9', 'Topic 10', 'Topic 11', 'Topic 12']);
+    expect(NOTE_SUBJECTS.flatMap((s) => unitsAt(s, 'a2').map((u) => u.code))).toEqual(['WPH14', 'WPH15', 'WPH16', 'WMA13', 'WMA14', 'WME02', 'WST02', 'WFM02', 'WFM03', 'Topic 13', 'Topic 14', 'Topic 15', 'Topic 16', 'Topic 17', 'Topic 18', 'Topic 19', 'Topic 20']);
     // within a subject the AS units come first
     for (const s of NOTE_SUBJECTS) expect(s.units.map((u) => !!u.a2)).toEqual([...unitsAt(s, 'as').map(() => false), ...unitsAt(s, 'a2').map(() => true)]);
-    expect(topicsOf(NOTE_SUBJECTS[3])).toHaveLength(22);
-    expect(countTopics('as')).toBe(66);
-    expect(countTopics('a2')).toBe(all.length - 66);
+    expect(topicsOf(NOTE_SUBJECTS[3])).toHaveLength(30);
+    expect(countTopics('as')).toBe(74);
+    expect(countTopics('a2')).toBe(all.length - 74);
     expect(countTopics('a2')).toBeGreaterThanOrEqual(55);
   });
 
