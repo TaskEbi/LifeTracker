@@ -4,7 +4,7 @@
  */
 export type SubjectId = 'physics' | 'maths' | 'further' | 'cs';
 
-export type FigId = 'vt' | 'projectile' | 'moments' | 'stress' | 'wave' | 'standing' | 'photo' | 'circuit' | 'unitcircle' | 'tangent' | 'area' | 'normal' | 'argand' | 'newton' | 'fde' | 'gp';
+export type FigId = 'vt' | 'projectile' | 'moments' | 'stress' | 'wave' | 'standing' | 'photo' | 'circuit' | 'unitcircle' | 'tangent' | 'area' | 'normal' | 'argand' | 'newton' | 'fde' | 'gp' | 'gates';
 
 export type Block =
   | string

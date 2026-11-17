@@ -33,9 +33,9 @@ describe('notes content', () => {
     expect(NOTE_SUBJECTS.flatMap((s) => unitsAt(s, 'a2').map((u) => u.code))).toEqual(['WPH14', 'WPH15', 'WPH16', 'WMA13', 'WMA14', 'WME02', 'WST02', 'WFM02', 'WFM03', 'Paper 3', 'Paper 4']);
     // within a subject the AS units come first
     for (const s of NOTE_SUBJECTS) expect(s.units.map((u) => !!u.a2)).toEqual([...unitsAt(s, 'as').map(() => false), ...unitsAt(s, 'a2').map(() => true)]);
-    expect(topicsOf(NOTE_SUBJECTS[3])).toHaveLength(20);
-    expect(countTopics('as')).toBe(64);
-    expect(countTopics('a2')).toBe(all.length - 64);
+    expect(topicsOf(NOTE_SUBJECTS[3])).toHaveLength(22);
+    expect(countTopics('as')).toBe(66);
+    expect(countTopics('a2')).toBe(all.length - 66);
     expect(countTopics('a2')).toBeGreaterThanOrEqual(55);
   });
 

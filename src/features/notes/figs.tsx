@@ -393,6 +393,38 @@ const FIGS: Record<FigId, () => ReactNode> = {
       </>
     );
   },
+  gates: () => {
+    // Each gate drawn in a 40 × 30 box at (x, y): inputs at y+8 and y+22, output at y+15.
+    const AND = 'M0,0 H20 A15,15 0 0 1 20,30 H0 Z';
+    const OR = 'M0,0 Q24,0 40,15 Q24,30 0,30 Q9,15 0,0 Z';
+    const gate = (x: number, y: number, name: string, i: number) => {
+      const not = name === 'NOT';
+      const or = name === 'OR' || name === 'NOR' || name === 'XOR';
+      const shift = name === 'XOR' ? 6 : 0;
+      const bubble = name === 'NOT' || name === 'NAND' || name === 'NOR';
+      const tip = (not ? 30 : or ? 40 : 35) + shift + (bubble ? 8 : 0);
+      const inEnd = (or ? 4 : 0) + shift;
+      return (
+        <g key={name} transform={`translate(${x},${y})`}>
+          <path className="nt-ink" d={not ? 'M-16,15 H0' : `M-16,8 H${inEnd} M-16,22 H${inEnd}`} />
+          <path className="nt-ink" d={`M${tip},15 H${tip + 16}`} />
+          {name === 'XOR' && <path className="nt-ink" d="M-1,0 Q8,15 -1,30" />}
+          <path className="nt-ink nt-paper" transform={shift ? `translate(${shift},0)` : undefined} d={not ? 'M0,0 L30,15 L0,30 Z' : or ? OR : AND} />
+          <path className="nt-soft nt-pulse" style={d(i * 0.5)} transform={shift ? `translate(${shift},0)` : undefined} d={not ? 'M0,0 L30,15 L0,30 Z' : or ? OR : AND} />
+          {bubble && <circle className="nt-ink nt-paper" cx={tip - 4} cy="15" r="4" />}
+          <text className="nt-txt nt-mono" x="20" y="48" textAnchor="middle">
+            {name}
+          </text>
+        </g>
+      );
+    };
+    return (
+      <>
+        {['NOT', 'AND', 'OR'].map((n, i) => gate(40 + i * 100, 22, n, i))}
+        {['NAND', 'NOR', 'XOR'].map((n, i) => gate(40 + i * 100, 108, n, i + 3))}
+      </>
+    );
+  },
   gp: () => (
     <>
       <path className="nt-ink" d="M30,150 H300" />
