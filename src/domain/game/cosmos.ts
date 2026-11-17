@@ -16,6 +16,9 @@
  * `gm_cosmos` row. Nothing in it is worth anything outside the game: no Ryō, no Tama, no XP.
  */
 import { fmt, type Ext } from './idle';
+import { rungDef, RUNGS } from './cosmosLadder';
+
+export { rungDef, RUNGS };
 
 export { fmt };
 export type { Ext };
@@ -27,8 +30,8 @@ const lvOf = (rec: Record<string, number>, id: string) => rec[id] ?? 0;
 
 // ─── the save ───────────────────────────────────────────────────────────────
 
-export type AutoKey = 'bodies' | 'ups' | 'nodes' | 'ignite' | 'voids' | 'collapse' | 'bang';
-export const AUTO_KEYS: AutoKey[] = ['bodies', 'ups', 'nodes', 'ignite', 'voids', 'collapse', 'bang'];
+export type AutoKey = 'bodies' | 'ups' | 'nodes' | 'ignite' | 'voids' | 'collapse' | 'bang' | 'transcend';
+export const AUTO_KEYS: AutoKey[] = ['bodies', 'ups', 'nodes', 'ignite', 'voids', 'collapse', 'bang', 'transcend'];
 
 export interface CosmosSave {
   v: 1;
@@ -77,9 +80,23 @@ export interface CosmosSave {
   // aeons
   eon: number;
   eonAll: number;
+  /** Aeons earned since the last Unravel (or anything above it). */
+  eonRun: number;
+  /** Transcends since the last Unravel: each needs more galaxies than the one before. */
+  transRun: number;
+  /** When the last Transcend was (ms). */
+  transAt: number;
   asc: Record<string, number>;
 
-  auto: Partial<Record<AutoKey, boolean>>;
+  /** The Ladder: layers 5–30, in order (index 0 is layer 5). */
+  ladder: Rung[];
+  /** The best a layer has ever paid at once, by layer number. Kept for good. */
+  peaks: Record<string, number>;
+  /** Celestial Tree levels, bought with cores. Kept for good. */
+  tree: Record<string, number>;
+
+  /** Automation switches: the AutoKeys, and `L5`–`L29` for the Ladder. */
+  auto: Partial<Record<string, boolean>>;
 
   // for good
   life: number;
@@ -122,6 +139,22 @@ export interface CosmosSave {
   dailyAll: number;
 }
 
+/** One rung of the Ladder. */
+export interface Rung {
+  /** In hand. */
+  c: number;
+  /** Earned since the rung above was last done. */
+  run: number;
+  /** Earned ever. */
+  all: number;
+  /** Times done, ever. */
+  nAll: number;
+  /** Levels of its four upgrades. */
+  ups: number[];
+  /** When it was last done (ms). */
+  at: number;
+}
+
 export interface Bounty {
   /** Its number: also the seed it was made from. */
   n: number;
@@ -139,7 +172,8 @@ export function freshCosmos(now: number): CosmosSave {
     light: 0, lightRun: 0, nodes: [], ignites: 0, colAt: now,
     dark: 0, darkRun: 0, voids: {}, collapses: 0, bangAt: now, chal: null, chals: {},
     gal: 0, galRun: 0, bangs: 0, relics: {}, worn: [],
-    eon: 0, eonAll: 0, asc: {},
+    eon: 0, eonAll: 0, eonRun: 0, transRun: 0, transAt: now, asc: {},
+    ladder: [], peaks: {}, tree: {},
     auto: {},
     life: 0, taps: 0, crits: 0, ignitesAll: 0, collapsesAll: 0, bangsAll: 0, transcends: 0, lightAll: 0, darkAll: 0, galAll: 0, done: [], best: 0,
     shards: 0, shardsAll: 0, orr: {}, boosts: {}, caught: 0, bought: 0, lab: [], labs: [], bounties: [], bountyN: 0, bountiesDone: 0, swapAt: 0, daily: '', dailyRun: 0, dailyAll: 0,
@@ -324,7 +358,7 @@ export const ASCS: Levelled[] = [
   { id: 'deep', name: 'Deeper', kanji: '深', blurb: 'Every challenge has one more tier.', cost: 4, grow: 3, max: 5 },
   { id: 'rain', name: 'Comet Rain', kanji: '雨', blurb: 'Shooting stars come twice as often.', cost: 2, grow: 1, max: 1 },
   { id: 'patience', name: 'Patience', kanji: '忍', blurb: 'Research runs twice as fast.', cost: 2, grow: 3, max: 2 },
-  { id: 'bodhi', name: 'Enlightenment', kanji: '悟', blurb: 'The end of the road. Dust ×10 billion, and the sky turns gold.', cost: 60, grow: 1, max: 1 },
+  { id: 'bodhi', name: 'Enlightenment', kanji: '悟', blurb: 'Dust ×10 billion, and the sky turns gold.', cost: 60, grow: 1, max: 1 },
 ];
 
 // ─── the Orrery (shards; kept for good, even through a Transcend) ───────────
@@ -526,14 +560,161 @@ export const MILES: Mile[] = [
   { layer: 4, at: 10, name: 'Eternal Return', blurb: 'Aeons ×2.' },
 ];
 
-export const timesDone = (s: CosmosSave, layer: Layer) => (layer === 1 ? s.ignitesAll : layer === 2 ? s.collapsesAll : layer === 3 ? s.bangsAll : s.transcends);
+export const timesDone = (s: CosmosSave, layer: number) => (layer === 1 ? s.ignitesAll : layer === 2 ? s.collapsesAll : layer === 3 ? s.bangsAll : layer === 4 ? s.transcends : rungOf(s, layer).nAll);
 const mile = (s: CosmosSave, layer: Layer, at: number) => timesDone(s, layer) >= at;
 
-const AUTO_NEED: Record<AutoKey, [Layer, number]> = { bodies: [1, 1], ups: [1, 4], nodes: [2, 2], ignite: [2, 1], voids: [3, 1], collapse: [3, 1], bang: [4, 1] };
-export const AUTO_NAME: Record<AutoKey, string> = { bodies: 'Buy bodies', ups: 'Buy dust upgrades', nodes: 'Buy constellation stars', ignite: 'Ignite', voids: 'Buy void upgrades', collapse: 'Collapse', bang: 'Big Bang' };
-export const autoOpen = (s: CosmosSave, k: AutoKey) => mile(s, ...AUTO_NEED[k]);
+const AUTO_NEED: Record<Exclude<AutoKey, 'transcend'>, [Layer, number]> = { bodies: [1, 1], ups: [1, 4], nodes: [2, 2], ignite: [2, 1], voids: [3, 1], collapse: [3, 1], bang: [4, 1] };
+export const AUTO_NAME: Record<AutoKey, string> = { bodies: 'Buy bodies', ups: 'Buy dust upgrades', nodes: 'Buy constellation stars', ignite: 'Ignite', voids: 'Buy void upgrades', collapse: 'Collapse', bang: 'Big Bang', transcend: 'Transcend' };
+/** Transcend by itself comes with the first Unravel; the rest with milestones of the layer above. */
+export const autoOpen = (s: CosmosSave, k: AutoKey) => (k === 'transcend' ? rungMile(s, LADDER_FROM, 1) : mile(s, ...AUTO_NEED[k]));
 export const autoOn = (s: CosmosSave, k: AutoKey) => autoOpen(s, k) && s.auto[k] !== false;
-export const autoNeed = (k: AutoKey) => MILES.find((m) => m.layer === AUTO_NEED[k][0] && m.at === AUTO_NEED[k][1])!;
+/** What opens an automation switch: a layer and how many times it must be done. */
+export const autoNeed = (k: AutoKey): { layer: number; at: number; name: string } => {
+  if (k === 'transcend') return { layer: LADDER_FROM, at: 1, name: rungDef(LADDER_FROM)!.verb };
+  const m = MILES.find((x) => x.layer === AUTO_NEED[k][0] && x.at === AUTO_NEED[k][1])!;
+  return { layer: m.layer, at: m.at, name: m.name };
+};
+/** A rung of the Ladder does itself (and buys its upgrades) once the rung above has been done. */
+export const rungAutoOpen = (s: CosmosSave, n: number) => n < LADDER_TO && rungMile(s, n + 1, 1);
+export const rungAutoOn = (s: CosmosSave, n: number) => rungAutoOpen(s, n) && s.auto[`L${n}`] !== false;
+
+// ─── the Ladder (layers 5–30) ───────────────────────────────────────────────
+
+export const LADDER_FROM = 5;
+export const LADDER_TO = 30;
+const EMPTY_RUNG: Rung = { c: 0, run: 0, all: 0, nAll: 0, ups: [], at: 0 };
+export const rungOf = (s: CosmosSave, n: number): Rung => s.ladder[n - LADDER_FROM] ?? EMPTY_RUNG;
+function setRung(s: CosmosSave, n: number, r: Rung): CosmosSave {
+  const ladder = [...s.ladder];
+  while (ladder.length < n - LADDER_FROM) ladder.push({ ...EMPTY_RUNG, ups: [] });
+  ladder[n - LADDER_FROM] = r;
+  return { ...s, ladder };
+}
+/** Layer n's milestone `at`: done that many times, ever. */
+export const rungMile = (s: CosmosSave, n: number, at: number) => rungOf(s, n).nAll >= at;
+/** Names of any layer, base or Ladder. */
+export const layerVerb = (n: number) => (n <= 4 ? LAYERS[n - 1].verb : rungDef(n)?.verb ?? `Layer ${n}`);
+export const layerCoin = (n: number) => (n <= 4 ? LAYERS[n - 1].coin : rungDef(n)?.coin ?? 'it');
+
+/** Each rung's four upgrades, bought with its own currency. Gone when a higher rung is done. */
+export interface RungUp {
+  id: string;
+  name: string;
+  kanji: string;
+  blurb: (n: number) => string;
+  cost: number;
+  grow: number;
+  max: number;
+}
+export const RUNG_UPS: RungUp[] = [
+  { id: 'surge', name: 'Surge', kanji: '奔', blurb: () => 'Dust ×10.', cost: 1, grow: 2, max: 20 },
+  { id: 'echo', name: 'Echo', kanji: '谺', blurb: (n) => `${cap(layerCoin(n - 1))} ×1.5.`, cost: 1, grow: 2.5, max: 10 },
+  { id: 'haste', name: 'Haste', kanji: '疾', blurb: () => 'Everything runs 25% faster.', cost: 2, grow: 4, max: 8 },
+  { id: 'focus', name: 'Focus', kanji: '凝', blurb: (n) => `${cap(layerCoin(n))} ×1.25.`, cost: 3, grow: 3, max: 10 },
+];
+const cap = (x: string) => x.charAt(0).toUpperCase() + x.slice(1);
+const rungUp = (s: CosmosSave, n: number, i: number) => rungOf(s, n).ups[i] ?? 0;
+/** Prices grow with the rung: a rung's upgrades cost about what it needs of the one below. */
+export const rungUpCost = (s: CosmosSave, n: number, i: number, lv: number) => fin(Math.ceil((RUNG_UPS[i].cost * RUNG_UPS[i].grow ** lv * rungNeed(n)) / 10 / 10 ** lvOf(s.tree, 'branch')));
+
+export const RUNG_MILES: { at: number; blurb: (n: number) => string }[] = [
+  { at: 1, blurb: (n) => (n === LADDER_FROM ? 'Transcend can happen by itself.' : `${layerVerb(n - 1)} can happen by itself, and its upgrades buy themselves.`) },
+  { at: 2, blurb: (n) => `${cap(layerCoin(n - 1))} ×3.` },
+  { at: 3, blurb: (n) => `You gain 1% of the ${layerCoin(n)} a ${layerVerb(n)} would pay, every second, without doing it.` },
+  { at: 5, blurb: (n) => `${cap(layerCoin(n))} ×2.` },
+  { at: 10, blurb: (n) => `That ${layerCoin(n)} comes ten times as fast (10% a second).` },
+];
+
+/** What a rung needs of the layer below, earned since it was last done. */
+export const rungNeed = (n: number) => (n === LADDER_FROM ? 10 : fin(NEED_BASE * NEED_GROW ** (n - LADDER_FROM - 1)));
+export const NEED_BASE = 1e4;
+export const NEED_GROW = 3;
+/** What the layer below has earned since this rung was last done. */
+export const rungFeed = (s: CosmosSave, n: number) => (n === LADDER_FROM ? s.eonRun : rungOf(s, n - 1).run);
+
+/** Each layer pays more the more often it has ever been done (the Echoes). */
+export const echo = (s: CosmosSave, layer: number) => (treeOpen(s) ? (1 + timesDone(s, layer)) ** 0.2 : 1);
+/** How much a currency held lifts something: grows with its number of digits, not its size. */
+export const lift = (x: number) => 1 + Math.log10(1 + x);
+
+/** Everything that multiplies what layer n pays (n ≥ 4: aeons and the Ladder). */
+function climbMult(s: CosmosSave, n: number): number {
+  let m = echo(s, n) * 1.5 ** lvOf(s.tree, 'trunk') * altitude(s);
+  if (n >= LADDER_FROM) m *= 1.25 ** rungUp(s, n, 3) * (rungMile(s, n, 5) ? 2 : 1);
+  if (n < LADDER_TO) {
+    const above = rungOf(s, n + 1);
+    m *= lift(above.run) * 1.5 ** rungUp(s, n + 1, 1) * (rungMile(s, n + 1, 2) ? 3 : 1);
+  }
+  return fin(m);
+}
+export const rungMult = (s: CosmosSave, n: number) => climbMult(s, n);
+export function rungGain(s: CosmosSave, n: number): number {
+  const feed = rungFeed(s, n);
+  if (s.chal || feed < rungNeed(n)) return 0;
+  return fin(Math.floor((1 + Math.log10(feed / rungNeed(n))) * climbMult(s, n)));
+}
+
+/** Altitude: every rung ever reached doubles what aeons and the whole Ladder pay, for good. */
+export const ALTITUDE = 2.4;
+export const altitude = (s: CosmosSave) => fin(ALTITUDE ** Math.max(0, topLayer(s) - 4));
+
+/** What the Ladder lifts: every rung's currency (since the one above) multiplies the four layers below it. */
+export const ladderLift = (s: CosmosSave) => fin(s.ladder.reduce((m, r) => m * lift(r.run) ** LIFT_POW, 1));
+export const LIFT_POW = 2;
+const surges = (s: CosmosSave) => s.ladder.reduce((n, r) => n + (r.ups[0] ?? 0), 0);
+const hastes = (s: CosmosSave) => s.ladder.reduce((n, r) => n + (r.ups[2] ?? 0), 0);
+/** The highest layer ever done. */
+export const topLayer = (s: CosmosSave) => {
+  for (let n = LADDER_TO; n >= LADDER_FROM; n--) if (rungOf(s, n).nAll > 0) return n;
+  return s.transcends ? 4 : s.bangsAll ? 3 : s.collapsesAll ? 2 : s.ignitesAll ? 1 : 0;
+};
+export const rungSeen = (s: CosmosSave, n: number) => rungOf(s, n).nAll > 0 || timesDone(s, n - 1) > 0;
+
+// ─── the Celestial Tree (cores; kept for good) and the Peaks ────────────────
+
+export const TREE: Levelled[] = [
+  { id: 'root', name: 'Deep Roots', kanji: '根', blurb: 'Dust ×1,000.', cost: 1, grow: 1.5, max: 30 },
+  { id: 'trunk', name: 'Heartwood', kanji: '幹', blurb: 'Aeons and every rung of the Ladder pay 50% more.', cost: 2, grow: 1.7, max: 20 },
+  { id: 'canopy', name: 'Canopy', kanji: '葉', blurb: 'Starlight, dark matter and galaxies ×10.', cost: 2, grow: 1.7, max: 20 },
+  { id: 'bark', name: 'Bark', kanji: '皮', blurb: 'Everything runs 50% faster.', cost: 3, grow: 2, max: 10 },
+  { id: 'sprout', name: 'Sprout', kanji: '芽', blurb: 'Every run starts with 10 billion times more dust (from 10 billion).', cost: 2, grow: 2, max: 10 },
+  { id: 'branch', name: 'Branches', kanji: '枝', blurb: 'Ladder upgrades cost 10 times less.', cost: 4, grow: 2.5, max: 5 },
+  { id: 'bloom', name: 'Bloom', kanji: '花', blurb: 'Shards come twice as fast.', cost: 5, grow: 3, max: 3 },
+];
+/** The tree grows from the first Transcend. */
+export const treeOpen = (s: CosmosSave) => s.transcends >= 1;
+/**
+ * Cores are never stored: each layer pays its number in cores the first time it's done, and again
+ * at 10, 100, 1,000, 10,000, 100,000 and a million times ever. What the tree holds is what's spent.
+ */
+export function coresEarned(s: CosmosSave): number {
+  let n = 0;
+  for (let l = 1; l <= LADDER_TO; l++) {
+    const t = timesDone(s, l);
+    if (t >= 1) n += l * (1 + Math.min(6, Math.floor(Math.log10(t))));
+  }
+  return n;
+}
+export const coresSpent = (s: CosmosSave) => TREE.reduce((n, u) => { let c = 0; for (let k = 0; k < lvOf(s.tree, u.id); k++) c += levelCost(u, k); return n + c; }, 0);
+export const coresHeld = (s: CosmosSave) => Math.max(0, coresEarned(s) - coresSpent(s));
+export function buyTree(s: CosmosSave, id: string): CosmosSave | null {
+  const u = TREE.find((x) => x.id === id);
+  if (!u || !treeOpen(s)) return null;
+  const lv = lvOf(s.tree, id);
+  if (lv >= u.max || levelCost(u, lv) > coresHeld(s)) return null;
+  return { ...s, tree: { ...s.tree, [id]: lv + 1 } };
+}
+const shardMult = (s: CosmosSave) => 2 ** lvOf(s.tree, 'bloom');
+
+/** The Peaks: the best each layer has ever paid at once multiplies dust, for good. */
+export const peakMult = (s: CosmosSave, layer: number) => 1 + Math.log10(1 + (s.peaks[String(layer)] ?? 0));
+export const peaksMult = (s: CosmosSave) => {
+  if (!treeOpen(s)) return 1;
+  let m = 1;
+  for (let l = 1; l <= LADDER_TO; l++) m *= peakMult(s, l);
+  return fin(m);
+};
+const peakUp = (s: CosmosSave, layer: number, gain: number): CosmosSave => (gain > (s.peaks[String(layer)] ?? 0) ? { ...s, peaks: { ...s.peaks, [String(layer)]: fin(gain) } } : s);
 
 export const relicSlots = (s: CosmosSave) => 2 + (mile(s, 3, 2) ? 1 : 0) + (mile(s, 3, 5) ? 1 : 0) + (mile(s, 3, 15) ? 1 : 0) + (mile(s, 4, 2) ? 1 : 0) + lvOf(s.asc, 'wide') + (hasLab(s, 'r_relic') ? 1 : 0);
 
@@ -622,6 +803,12 @@ export const FEATS: Feat[] = [
   { id: 'ch40', name: 'Iron Will', blurb: 'Finish 40 challenge tiers.', ok: (s) => totalTiers(s) >= 40 },
   { id: 'tr10', name: 'Wheel Turns', blurb: 'Transcend 10 times.', ok: (s) => s.transcends >= 10 },
   { id: 'tr25', name: 'Kalpa', blurb: 'Transcend 25 times.', ok: (s) => s.transcends >= 25 },
+  ...[5, 7, 10, 13, 16, 20, 25, 30].map((n): Feat => ({ id: `rung${n}`, name: `${rungDef(n)!.verb}`, blurb: `Reach layer ${n} of the Ladder: ${rungDef(n)!.verb}.`, ok: (s) => rungOf(s, n).nAll > 0 })),
+  { id: 'rung5x10', name: 'Loose Ends', blurb: 'Unravel 10 times.', ok: (s) => rungOf(s, 5).nAll >= 10 },
+  { id: 'tree1', name: 'Seedling', blurb: 'Grow a branch of the Celestial Tree.', ok: (s) => Object.keys(s.tree).length >= 1 },
+  { id: 'treeAll', name: 'World Tree', blurb: 'Grow every branch of the Celestial Tree.', ok: (s) => TREE.every((u) => lvOf(s.tree, u.id) > 0) },
+  { id: 'cores100', name: 'Heartwood', blurb: 'Earn 100 cores.', ok: (s) => coresEarned(s) >= 100 },
+  { id: 'cores1000', name: 'Ancient', blurb: 'Earn 1,000 cores.', ok: (s) => coresEarned(s) >= 1000 },
 ];
 export const FEAT_MULT = 1.05;
 
@@ -635,7 +822,7 @@ export const lifeMult = (e: Ext) => (1 + 0.15 * Math.max(0, e.sections)) * (1 + 
 /** A constellation star that is lit and doing something (they all go dark in Lights Out). */
 const lit = (s: CosmosSave, id: string) => !inChal(s, 'dim') && s.nodes.includes(id);
 
-export const speed = (s: CosmosSave) => 1.2 ** lvOf(s.voids, 'dilate') * 1.5 ** worn(s, 'glass') * 1.5 ** lvOf(s.asc, 'swift') * 1.15 ** chalTier(s, 'decay') * (mile(s, 4, 5) ? 2 : 1);
+export const speed = (s: CosmosSave) => fin(1.2 ** lvOf(s.voids, 'dilate') * 1.5 ** worn(s, 'glass') * 1.5 ** lvOf(s.asc, 'swift') * 1.15 ** chalTier(s, 'decay') * (mile(s, 4, 5) ? 2 : 1) * 1.25 ** hastes(s) * 1.5 ** lvOf(s.tree, 'bark'));
 
 /** What each doubling at 10 and every 25 of a body is really worth. */
 export const resonance = (s: CosmosSave) => (lit(s, 'harmony') ? 2.25 : 2) + 0.15 * chalTier(s, 'lone') + 0.25 * worn(s, 'fork') + (hasLab(s, 'r_reso') ? 0.05 : 0);
@@ -687,7 +874,10 @@ export function dustParts(s: CosmosSave, ext: Ext, now: number): Part[] {
     { name: 'Constellation', mult: fin(stars) },
     { name: 'Dark matter', mult: fin(2 ** lvOf(s.voids, 'density') * (1 + s.darkRun) ** 0.25) },
     { name: 'Galaxies', mult: fin(Math.sqrt(1 + s.galRun) * 10 ** worn(s, 'mirror')) },
-    { name: 'Aeons', mult: fin((1 + s.eonAll) ** 3 * (lvOf(s.asc, 'bodhi') ? 1e10 : 1)) },
+    { name: 'Aeons', mult: fin((1 + s.eonRun) ** 3 * (lvOf(s.asc, 'bodhi') ? 1e10 : 1)) },
+    { name: 'The Ladder', mult: fin(ladderLift(s) ** 2 * 10 ** surges(s)) },
+    { name: 'Celestial Tree', mult: fin(1000 ** lvOf(s.tree, 'root')) },
+    { name: 'Peaks', mult: peaksMult(s) },
   ];
 }
 
@@ -737,22 +927,23 @@ export const LIGHT_EXP = 0.4;
 export function lightMult(s: CosmosSave): number {
   let m = (lit(s, 'prism') ? 2 : 1) * (lit(s, 'spectrum') ? 3 : 1) * (lit(s, 'corona') ? 5 : 1) * (lit(s, 'zenith') ? 10 : 1) * (mile(s, 1, 25) ? 1.5 : 1) * (mile(s, 1, 200) ? 3 : 1);
   m *= 1.25 ** lvOf(s.orr, 'grind') * (hasLab(s, 'r_light') ? 1.5 : 1);
-  m *= 2 ** lvOf(s.voids, 'lumin') * (1 + s.galRun) ** 0.25 * 5 ** worn(s, 'chart') * (1 + s.eonAll) ** 2 * 2 ** chalTier(s, 'thin');
+  m *= 2 ** lvOf(s.voids, 'lumin') * (1 + s.galRun) ** 0.25 * 5 ** worn(s, 'chart') * (1 + s.eonRun) ** 2 * 2 ** chalTier(s, 'thin');
+  m *= ladderLift(s) * 10 ** lvOf(s.tree, 'canopy') * echo(s, 1);
   return fin(m);
 }
 export const lightGain = (s: CosmosSave) => (s.runDust < NEED.ignite ? 0 : fin(Math.floor((s.runDust / NEED.ignite) ** LIGHT_EXP * lightMult(s))));
 
 export function darkMult(s: CosmosSave): number {
-  return fin(1.5 ** lvOf(s.voids, 'energy') * (lit(s, 'horizon') ? 3 : 1) * (mile(s, 2, 15) ? 2 : 1) * (mile(s, 2, 50) ? 3 : 1) * 2 ** worn(s, 'lantern') * (1 + s.eonAll) * 2 ** chalTier(s, 'dim') * 1.3 ** lvOf(s.orr, 'well') * (hasLab(s, 'r_dark') ? 1.5 : 1));
+  return fin(ladderLift(s) * 10 ** lvOf(s.tree, 'canopy') * echo(s, 2) * 1.5 ** lvOf(s.voids, 'energy') * (lit(s, 'horizon') ? 3 : 1) * (mile(s, 2, 15) ? 2 : 1) * (mile(s, 2, 50) ? 3 : 1) * 2 ** worn(s, 'lantern') * (1 + s.eonRun) * 2 ** chalTier(s, 'dim') * 1.3 ** lvOf(s.orr, 'well') * (hasLab(s, 'r_dark') ? 1.5 : 1));
 }
 export const darkGain = (s: CosmosSave) => (s.lightRun < NEED.collapse || s.chal ? 0 : fin(Math.floor((s.lightRun / NEED.collapse) ** 0.2 * darkMult(s))));
 
-export const galMult = (s: CosmosSave) => fin(1.5 ** worn(s, 'crown') * 2 ** lvOf(s.asc, 'rich') * Math.sqrt(1 + s.eonAll) * (mile(s, 3, 40) ? 2 : 1) * 1.25 ** lvOf(s.orr, 'chart') * (hasLab(s, 'r_gal') ? 1.5 : 1));
+export const galMult = (s: CosmosSave) => fin(ladderLift(s) * 10 ** lvOf(s.tree, 'canopy') * echo(s, 3) * 1.5 ** worn(s, 'crown') * 2 ** lvOf(s.asc, 'rich') * Math.sqrt(1 + s.eonRun) * (mile(s, 3, 40) ? 2 : 1) * 1.25 ** lvOf(s.orr, 'chart') * (hasLab(s, 'r_gal') ? 1.5 : 1));
 export const galGain = (s: CosmosSave) => (s.darkRun < NEED.bang || s.chal ? 0 : fin(Math.floor((s.darkRun / NEED.bang) ** 0.2 * galMult(s))));
 
 /** Galaxies a Transcend needs: 1.8 times as many each time it has been done. */
-export const needTranscend = (s: CosmosSave) => fin(NEED.transcend * 1.8 ** Math.min(1100, s.transcends) * (hasLab(s, 'r_eon') ? 0.75 : 1));
-export const eonGain = (s: CosmosSave) => (s.galRun < needTranscend(s) || s.chal ? 0 : Math.floor(1 + Math.log10(s.galRun / needTranscend(s))) * (mile(s, 4, 10) ? 2 : 1));
+export const needTranscend = (s: CosmosSave) => fin(NEED.transcend * 1.8 ** Math.min(1100, s.transRun) * (hasLab(s, 'r_eon') ? 0.75 : 1));
+export const eonGain = (s: CosmosSave) => (s.galRun < needTranscend(s) || s.chal ? 0 : fin(Math.floor((1 + Math.log10(s.galRun / needTranscend(s))) * (mile(s, 4, 10) ? 2 : 1) * climbMult(s, 4))));
 
 /** Shares of a layer's payout that arrive every second without doing it. */
 export const lightDrip = (s: CosmosSave) => (mile(s, 1, 100) ? 0.01 : 0) + (mile(s, 2, 10) ? 0.1 : 0);
@@ -802,6 +993,15 @@ export function settle(s0: CosmosSave, now: number, ext: Ext): { save: CosmosSav
   if (dark > 0) next = { ...next, dark: fin(next.dark + dark), darkRun: fin(next.darkRun + dark), darkAll: fin(next.darkAll + dark) };
   const gal = fin(galGain(next) * galDrip(next) * t);
   if (gal > 0) next = { ...next, gal: fin(next.gal + gal), galRun: fin(next.galRun + gal), galAll: fin(next.galAll + gal) };
+  // The Ladder's drips: from its third time, a rung pays a share of itself every second.
+  for (let n = LADDER_FROM; n <= LADDER_TO; n++) {
+    if (!rungMile(next, n, 3)) continue;
+    // Real seconds: Haste and the rest speed up the sky, not the Ladder.
+    const share = (rungMile(next, n, 10) ? 0.1 : 0.01) * secs * eff;
+    const g = fin(rungGain(next, n) * share);
+    const r = rungOf(next, n);
+    if (g > 0) next = setRung(next, n, { ...r, c: fin(r.c + g), run: fin(r.run + g), all: fin(r.all + g) });
+  }
   if (rate > next.best) next = { ...next, best: rate };
   const labs = next.labs.filter((id) => !s0.labs.includes(id));
   return { save: next, away: away ? { gap: gap / 1000, worked: secs, capped: gap / 1000 > secs, eff, dust, light, dark, gal, labs } : null };
@@ -811,7 +1011,7 @@ export function settle(s0: CosmosSave, now: number, ext: Ext): { save: CosmosSav
 export function finishLabs(s: CosmosSave, now: number): CosmosSave {
   if (!s.lab.some((l) => l.end <= now)) return s;
   const done = s.lab.filter((l) => l.end <= now && !s.labs.includes(l.id)).map((l) => l.id);
-  const pay = done.reduce((n, id) => n + (labById(id)?.pay ?? 0), 0);
+  const pay = done.reduce((n, id) => n + (labById(id)?.pay ?? 0), 0) * shardMult(s);
   return { ...s, lab: s.lab.filter((l) => l.end > now), labs: [...s.labs, ...done], shards: s.shards + pay, shardsAll: s.shardsAll + pay };
 }
 
@@ -933,7 +1133,7 @@ export function wearRelic(s: CosmosSave, id: string): CosmosSave | null {
   return { ...s, worn: [...s.worn, id] };
 }
 
-export const setAuto = (s: CosmosSave, k: AutoKey, on: boolean): CosmosSave => ({ ...s, auto: { ...s.auto, [k]: on } });
+export const setAuto = (s: CosmosSave, k: string, on: boolean): CosmosSave => ({ ...s, auto: { ...s.auto, [k]: on } });
 
 // ─── research ───────────────────────────────────────────────────────────────
 
@@ -968,7 +1168,8 @@ export function catchStar(s: CosmosSave, now: number, ext: Ext, roll: number): {
     return { save: addDust(caught, dust), gift: { k: 'windfall', name: 'Windfall', text: `+${fmt(dust)} dust` } };
   }
   if (roll < 0.88) return { save: boost('rush', 30), gift: { k: 'rush', name: 'Rush', text: `Taps ×${RUSH} for ${Math.round(30 * len)} seconds` } };
-  return { save: { ...caught, shards: caught.shards + 1, shardsAll: caught.shardsAll + 1 }, gift: { k: 'shard', name: 'A shard', text: '+1 shard' } };
+  const sh = shardMult(s);
+  return { save: { ...caught, shards: caught.shards + sh, shardsAll: caught.shardsAll + sh }, gift: { k: 'shard', name: sh > 1 ? `${sh} shards` : 'A shard', text: `+${sh} shard${sh === 1 ? '' : 's'}` } };
 }
 /** Boosts still running. */
 const live = (b: Record<string, number>, now: number) => Object.fromEntries(Object.entries(b).filter(([, t]) => t > now));
@@ -984,7 +1185,7 @@ export function makeBounty(s: CosmosSave, n: number, rate: number): Bounty {
   const list = pool.length ? pool : kinds;
   const k = list[Math.floor(r() * list.length)];
   const size = r();
-  return { n, k: k.id, need: k.need(size, rate), from: k.count(s), pay: k.pay + (size >= 0.6 ? 1 : 0) + bountyBonus(s) };
+  return { n, k: k.id, need: k.need(size, rate), from: k.count(s), pay: (k.pay + (size >= 0.6 ? 1 : 0) + bountyBonus(s)) * shardMult(s) };
 }
 
 /** Put bounties up until the board is full. */
@@ -1018,7 +1219,7 @@ export const dailyRunOn = (s: CosmosSave, day: string) => (s.daily && s.daily ==
 export function claimDaily(s: CosmosSave, day: string, now: number): CosmosSave | null {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(day) || s.daily >= day) return null;
   const run = dailyRunOn(s, day);
-  const pay = dailyPay(run);
+  const pay = dailyPay(run) * shardMult(s);
   return {
     ...s,
     daily: day,
@@ -1038,14 +1239,14 @@ function newRun(s: CosmosSave, now: number): CosmosSave {
   const gens: Record<string, number> = {};
   if (each) for (const b of BODIES) if (bodyOpen(s, b)) gens[b.id] = each;
   if (s.nodes.includes('ember')) gens.net = (gens.net ?? 0) + 5;
-  const dust = (s.nodes.includes('ember') ? 2000 : 0) + (mile(s, 1, 25) ? 10000 : 0) + (lvOf(s.voids, 'seed') ? 100 * 10 ** lvOf(s.voids, 'seed') : 0);
+  const dust = (s.nodes.includes('ember') ? 2000 : 0) + (mile(s, 1, 10) ? 10000 : 0) + (lvOf(s.voids, 'seed') ? 100 * 10 ** lvOf(s.voids, 'seed') : 0) + (lvOf(s.tree, 'sprout') ? 10 ** (10 * lvOf(s.tree, 'sprout')) : 0);
   return { ...s, at: now, dust: fin(dust), runDust: 0, runAt: now, gens, ups: {} };
 }
 
 export function ignite(s: CosmosSave, now: number): CosmosSave | null {
   const gain = lightGain(s);
   if (gain < 1) return null;
-  const run = newRun({ ...s, light: fin(s.light + gain), lightRun: fin(s.lightRun + gain), lightAll: fin(s.lightAll + gain), ignites: s.ignites + 1, ignitesAll: s.ignitesAll + 1 }, now);
+  const run = newRun(peakUp({ ...s, light: fin(s.light + gain), lightRun: fin(s.lightRun + gain), lightAll: fin(s.lightAll + gain), ignites: s.ignites + 1, ignitesAll: s.ignitesAll + 1 }, 1, gain), now);
   return lvOf(s.orr, 'keep') ? { ...run, ups: s.ups } : run;
 }
 
@@ -1057,7 +1258,7 @@ function collapsed(s: CosmosSave, now: number): CosmosSave {
 export function collapse(s: CosmosSave, now: number): CosmosSave | null {
   const gain = darkGain(s);
   if (gain < 1) return null;
-  return collapsed({ ...s, dark: fin(s.dark + gain), darkRun: fin(s.darkRun + gain), darkAll: fin(s.darkAll + gain), collapses: s.collapses + 1, collapsesAll: s.collapsesAll + 1 }, now);
+  return collapsed(peakUp({ ...s, dark: fin(s.dark + gain), darkRun: fin(s.darkRun + gain), darkAll: fin(s.darkAll + gain), collapses: s.collapses + 1, collapsesAll: s.collapsesAll + 1 }, 2, gain), now);
 }
 
 function banged(s: CosmosSave, now: number): CosmosSave {
@@ -1070,13 +1271,55 @@ function banged(s: CosmosSave, now: number): CosmosSave {
 export function bang(s: CosmosSave, now: number): CosmosSave | null {
   const gain = galGain(s);
   if (gain < 1) return null;
-  return banged({ ...s, gal: fin(s.gal + gain), galRun: fin(s.galRun + gain), galAll: fin(s.galAll + gain), bangs: s.bangs + 1, bangsAll: s.bangsAll + 1 }, now);
+  return banged(peakUp({ ...s, gal: fin(s.gal + gain), galRun: fin(s.galRun + gain), galAll: fin(s.galAll + gain), bangs: s.bangs + 1, bangsAll: s.bangsAll + 1 }, 3, gain), now);
 }
 
 export function transcend(s: CosmosSave, now: number): CosmosSave | null {
   const gain = eonGain(s);
   if (gain < 1) return null;
-  return banged({ ...s, eon: s.eon + gain, eonAll: s.eonAll + gain, transcends: s.transcends + 1, gal: 0, galRun: 0, bangs: 0 }, now);
+  return banged(peakUp({ ...s, eon: fin(s.eon + gain), eonAll: fin(s.eonAll + gain), eonRun: fin(s.eonRun + gain), transcends: s.transcends + 1, transRun: s.transRun + 1, transAt: now, gal: 0, galRun: 0, bangs: 0 }, 4, gain), now);
+}
+
+/**
+ * Do rung n of the Ladder: everything below it starts again (the four first layers as a Transcend
+ * would, plus aeons and every lower rung's currency and upgrades), and the rung is paid.
+ * Relics, ascensions, challenge tiers and everything else kept for good stay.
+ */
+export function climb(s: CosmosSave, n: number, now: number): CosmosSave | null {
+  if (n < LADDER_FROM || n > LADDER_TO) return null;
+  const gain = rungGain(s, n);
+  if (gain < 1) return null;
+  let next = banged({ ...s, eon: 0, eonRun: 0, transRun: 0, transAt: now, gal: 0, galRun: 0, bangs: 0 }, now);
+  next = { ...next, ladder: next.ladder.map((r, i) => (i + LADDER_FROM < n ? { ...r, c: 0, run: 0, ups: [] } : r)) };
+  const r = rungOf(next, n);
+  next = setRung(next, n, { ...r, c: fin(r.c + gain), run: fin(r.run + gain), all: fin(r.all + gain), nAll: r.nAll + 1, ups: [...r.ups], at: now });
+  return peakUp(next, n, gain);
+}
+
+export function buyRungUp(s: CosmosSave, n: number, i: number): CosmosSave | null {
+  const u = RUNG_UPS[i];
+  const r = rungOf(s, n);
+  if (!u || n < LADDER_FROM || n > LADDER_TO || !r.nAll) return null;
+  const lv = r.ups[i] ?? 0;
+  const cost = rungUpCost(s, n, i, lv);
+  if (lv >= u.max || cost > r.c) return null;
+  const ups = [...r.ups];
+  while (ups.length < RUNG_UPS.length) ups.push(0);
+  ups[i] = lv + 1;
+  return setRung(s, n, { ...r, c: r.c - cost, ups });
+}
+
+/** Every rung upgrade the currency buys, cheapest first. */
+export function buyEveryRungUp(s: CosmosSave, n: number): CosmosSave | null {
+  let next = s;
+  for (let guard = 0; guard < 200; guard++) {
+    const r = rungOf(next, n);
+    const order = RUNG_UPS.map((_, i) => i).filter((i) => (r.ups[i] ?? 0) < RUNG_UPS[i].max).sort((a, b) => rungUpCost(next, n, a, r.ups[a] ?? 0) - rungUpCost(next, n, b, r.ups[b] ?? 0));
+    const got = order.length ? buyRungUp(next, n, order[0]) : null;
+    if (!got) break;
+    next = got;
+  }
+  return next === s ? null : next;
 }
 
 export const chalsOpen = (s: CosmosSave) => mile(s, 2, 2);
@@ -1112,6 +1355,16 @@ export function check(s: CosmosSave): { save: CosmosSave; feats: Feat[]; won: { 
 export function autoStep(s: CosmosSave, now: number): CosmosSave {
   let next = s;
   if (!next.chal) {
+    for (let n = LADDER_TO - 1; n >= LADDER_FROM; n--) {
+      if (!rungAutoOn(next, n)) continue;
+      const g = rungGain(next, n);
+      if (g >= 1 && g >= rungOf(next, n).run) next = climb(next, n, now) ?? next;
+      next = buyEveryRungUp(next, n) ?? next;
+    }
+    if (autoOn(next, 'transcend')) {
+      const g = eonGain(next);
+      if (g >= 1 && (g >= next.eonRun || now - next.transAt >= 1_800_000)) next = transcend(next, now) ?? next;
+    }
     if (autoOn(next, 'bang')) {
       const g = galGain(next);
       if (g >= 1 && (g >= next.galRun || now - next.bangAt >= 1_800_000)) next = bang(next, now) ?? next;
@@ -1135,10 +1388,11 @@ export function autoStep(s: CosmosSave, now: number): CosmosSave {
 // ─── what's unlocked, for the screens ───────────────────────────────────────
 
 /** A layer shows once you've done it, or are a good way towards it. */
-export const layerSeen = (s: CosmosSave, layer: Layer) =>
+export const layerSeen = (s: CosmosSave, layer: Layer): boolean =>
   timesDone(s, layer) > 0 ||
   (layer === 1 ? s.life >= 1e6 : layer === 2 ? s.lightAll >= 1e3 : layer === 3 ? s.darkAll >= 1e3 : s.galAll >= 50) ||
-  (layer < 4 && timesDone(s, (layer + 1) as Layer) > 0);
+  (layer < 4 && timesDone(s, (layer + 1) as Layer) > 0) ||
+  (layer === 4 && rungOf(s, LADDER_FROM).nAll > 0);
 
 /** How far the sky has come: 0 dust, 1 a star, 2 a black hole, 3 galaxies, 4 beyond, 5 gold. */
 export const era = (s: CosmosSave) => (lvOf(s.asc, 'bodhi') ? 5 : s.transcends ? 4 : s.bangsAll ? 3 : s.collapsesAll ? 2 : s.ignitesAll ? 1 : 0);
@@ -1148,6 +1402,15 @@ export const era = (s: CosmosSave) => (lvOf(s.asc, 'bodhi') ? 5 : s.transcends ?
 const num = (x: unknown) => (typeof x === 'number' && Number.isFinite(x) && x > 0 ? Math.min(x, CAP) : 0);
 const int = (x: unknown) => Math.floor(num(x));
 const DAY = /^\d{4}-\d{2}-\d{2}$/;
+
+function readLadder(x: unknown, now: number): Rung[] {
+  if (!Array.isArray(x)) return [];
+  return x.slice(0, LADDER_TO - LADDER_FROM + 1).map((r) => {
+    const o = (r && typeof r === 'object' ? r : {}) as Record<string, unknown>;
+    const ups = Array.isArray(o.ups) ? RUNG_UPS.map((u, i) => Math.min(u.max, int((o.ups as unknown[])[i]))) : [];
+    return { c: num(o.c), run: num(o.run), all: num(o.all), nAll: int(o.nAll), ups: ups.some((v) => v > 0) ? ups : [], at: Math.min(num(o.at), now) };
+  });
+}
 
 function readBounties(x: unknown): Bounty[] {
   if (!Array.isArray(x)) return [];
@@ -1190,8 +1453,8 @@ export function normaliseCosmos(v: unknown, now: number): CosmosSave {
   const time = (x: unknown) => Math.min(num(x) || now, now);
   const relics = counts(o.relics, (id) => (relicById(id) ? RELIC_MAX : undefined));
   const asc = counts(o.asc, maxOf(ASCS));
-  const auto: Partial<Record<AutoKey, boolean>> = {};
-  if (o.auto && typeof o.auto === 'object') for (const k of AUTO_KEYS) if (typeof (o.auto as Record<string, unknown>)[k] === 'boolean') auto[k] = (o.auto as Record<string, boolean>)[k];
+  const auto: Partial<Record<string, boolean>> = {};
+  if (o.auto && typeof o.auto === 'object') for (const [k, v] of Object.entries(o.auto as Record<string, unknown>)) if (typeof v === 'boolean' && ((AUTO_KEYS as string[]).includes(k) || /^L([5-9]|1\d|2\d)$/.test(k))) auto[k] = v;
   const s: CosmosSave = {
     v: 1,
     at: time(o.at),
@@ -1217,9 +1480,15 @@ export function normaliseCosmos(v: unknown, now: number): CosmosSave {
     bangs: int(o.bangs),
     relics,
     worn: [],
-    eon: int(o.eon),
-    eonAll: int(o.eonAll),
+    eon: num(o.eon),
+    eonAll: num(o.eonAll),
+    eonRun: o.eonRun === undefined ? num(o.eonAll) : num(o.eonRun),
+    transRun: o.transRun === undefined ? int(o.transcends) : int(o.transRun),
+    transAt: time(o.transAt),
     asc,
+    ladder: readLadder(o.ladder, now),
+    peaks: counts(o.peaks, (id) => (/^([1-9]|[12]\d|30)$/.test(id) ? CAP : undefined)),
+    tree: counts(o.tree, maxOf(TREE)),
     auto,
     life: num(o.life),
     taps: int(o.taps),
@@ -1264,7 +1533,7 @@ const maxRec = (a: Record<string, number>, b: Record<string, number>) => {
 const union = (a: string[], b: string[]) => [...new Set([...a, ...b])];
 
 /** How far along a save is: the layers done, highest first, then dust ever gathered. */
-const rank = (s: CosmosSave) => [s.transcends, s.bangsAll, s.collapsesAll, s.ignitesAll, s.life, s.at];
+const rank = (s: CosmosSave) => [...Array.from({ length: LADDER_TO - LADDER_FROM + 1 }, (_, i) => rungOf(s, LADDER_TO - i).nAll), s.transcends, s.bangsAll, s.collapsesAll, s.ignitesAll, s.life, s.at];
 function ahead(x: CosmosSave, y: CosmosSave): boolean {
   const a = rank(x);
   const b = rank(y);
@@ -1294,6 +1563,13 @@ export function mergeCosmos(x: CosmosSave, y: CosmosSave): CosmosSave {
     relics,
     asc: maxRec(p.asc, o.asc),
     eonAll: Math.max(p.eonAll, o.eonAll),
+    ladder: Array.from({ length: Math.max(p.ladder.length, o.ladder.length) }, (_, i) => {
+      const a = p.ladder[i] ?? EMPTY_RUNG;
+      const b = o.ladder[i] ?? EMPTY_RUNG;
+      return { ...a, ups: [...a.ups], nAll: Math.max(a.nAll, b.nAll), all: Math.max(a.all, b.all) };
+    }),
+    peaks: maxRec(p.peaks, o.peaks),
+    tree: maxRec(p.tree, o.tree),
     life: Math.max(p.life, o.life),
     taps: Math.max(p.taps, o.taps),
     crits: Math.max(p.crits, o.crits),

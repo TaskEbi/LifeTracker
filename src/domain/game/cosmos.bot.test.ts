@@ -110,9 +110,27 @@ describe.skipIf(!env.COSMOS_BOT)('cosmos bot', () => {
           chalStart = t;
         }
       }
+      // The Celestial Tree, cheapest first.
+      for (let k = 0; k < 30; k++) {
+        const u = [...C.TREE].filter((x) => (s.tree[x.id] ?? 0) < x.max).sort((a, b) => C.levelCost(a, s.tree[a.id] ?? 0) - C.levelCost(b, s.tree[b.id] ?? 0))[0];
+        const next = u && C.buyTree(s, u.id);
+        if (!next) break;
+        s = next;
+      }
+      // The Ladder, highest rung first: climb when it would double what that rung holds, or after a while.
+      let climbed = false;
+      for (let n = C.LADDER_TO; n >= C.LADDER_FROM && !climbed; n--) {
+        const g = C.rungGain(s, n);
+        if (g >= 1 && g >= C.rungOf(s, n).run) {
+          s = C.climb(s, n, t) ?? s;
+          climbed = true;
+        }
+      }
+      for (let n = C.LADDER_FROM; n <= C.LADDER_TO; n++) s = C.buyEveryRungUp(s, n) ?? s;
       // Resets: the highest layer that would double what it pays, or after a while.
       const before = s;
-      if (C.eonGain(s) >= 1) s = C.transcend(s, t) ?? s;
+      if (climbed) bestRun = 0;
+      else if (C.eonGain(s) >= 1) s = C.transcend(s, t) ?? s;
       else if (C.galGain(s) >= 1 && (C.galGain(s) >= s.galRun || t - s.bangAt > 1_800_000)) s = C.bang(s, t) ?? s;
       else if (C.darkGain(s) >= 1 && (C.darkGain(s) >= s.darkRun || t - s.colAt > 600_000)) s = C.collapse(s, t) ?? s;
       else if (C.lightGain(s) >= 1 && (C.lightGain(s) >= s.lightRun || t - s.runAt > 120_000)) s = C.ignite(s, t) ?? s;
@@ -132,15 +150,19 @@ describe.skipIf(!env.COSMOS_BOT)('cosmos bot', () => {
       if (relics >= C.RELICS.length) mark('every relic', t);
       for (const n of [1, 2, 5, 10, 20]) if (s.transcends >= n) mark(`Transcend ${n}`, t);
       if (s.asc.bodhi) mark('Enlightenment', t);
+      for (let n = C.LADDER_FROM; n <= C.LADDER_TO; n++) if (C.rungOf(s, n).nAll >= 1) mark(`layer ${n} (${C.rungDef(n)!.verb})`, t);
       for (const n of [10, 30, 50, 70]) if (s.done.length >= n) mark(`${n} feats`, t);
       for (const n of [5, 10, 20]) if (s.labs.length >= n) mark(`${n} research`, t);
       if (s.labs.length >= C.LABS.length) mark('all research', t);
       for (const n of [50, 200, 500]) if (s.shardsAll >= n) mark(`${n} shards earned`, t);
       if (C.ORRERY.every((u) => (s.orr[u.id] ?? 0) >= u.max)) mark('Orrery complete', t);
+      if (env.COSMOS_BOT_LADDER && t - t0 > 12.85 * 3600_000 && t - t0 < 13.2 * 3600_000 && (t - t0) % 60_000 < dt)
+        log.push(`${((t - t0) / 3600_000).toFixed(3)}h eonRun ${C.fmt(s.eonRun)} eg ${C.fmt(C.eonGain(s))} alt ${C.fmt(C.altitude(s))} | ` + [5, 6, 7, 8, 9, 10].map((n) => `${n}: c ${C.fmt(C.rungOf(s, n).run)} g ${C.fmt(C.rungGain(s, n))} m ${C.fmt(C.rungMult(s, n))} need ${C.fmt(C.rungNeed(n))} ups ${C.rungOf(s, n).ups.join('/')}`).join(' | '));
       if (env.COSMOS_BOT_EARLY && t - t0 <= 120_000 && (t - t0) % 10_000 === 0) log.push(`${(t - t0) / 1000}s run ${C.fmt(s.runDust)} rate ${C.fmt(C.rateNow(s, ext, t))} tap ${C.fmt(C.tapValue(s, ext, t))} shards ${s.shards} orr ${JSON.stringify(s.orr)} ups ${JSON.stringify(s.ups)} parts ${C.dustParts(s, ext, t).filter((p) => p.mult > 1).map((p) => `${p.name}=${C.fmt(p.mult)}`).join(",")} bounties ${s.bountiesDone}`);
       if (env.COSMOS_BOT_DEBUG && Math.floor((t - dt - t0) / 3600_000) !== Math.floor((t - t0) / 3600_000))
         log.push(`h${Math.round(h)} dust ${C.fmt(s.runDust)} light ${C.fmt(s.lightRun)} lg ${C.fmt(C.lightGain(s))} dark ${C.fmt(s.darkRun)} dg ${C.fmt(C.darkGain(s))} gal ${C.fmt(s.galRun)} gg ${C.fmt(C.galGain(s))} chal ${s.chal} col ${s.collapsesAll} ig ${s.ignitesAll} shards ${s.shardsAll}`);
     }
+    log.push(`top ${C.topLayer(s)}, cores ${C.coresEarned(s)}, tree ${JSON.stringify(s.tree)}, ladder ${s.ladder.map((r) => `${r.nAll}:${C.fmt(r.run)}`).join(' ')}`);
     log.push(`transcends ${s.transcends}, eon ${s.eon}/${s.eonAll}, asc ${JSON.stringify(s.asc)}, need ${C.fmt(C.needTranscend(s))}, galRun ${C.fmt(s.galRun)}`);
     log.push(`feats ${s.done.length}/${C.FEATS.length}, research ${s.labs.length}/${C.LABS.length}, shards ${s.shardsAll}, bounties ${s.bountiesDone}, stars ${s.caught}, tiers ${JSON.stringify(s.chals)}, orrery ${JSON.stringify(s.orr)}`);
     console.log(log.join('\n'));

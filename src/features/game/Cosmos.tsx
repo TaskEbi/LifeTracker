@@ -9,8 +9,33 @@ import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 
 import { navigate, useRoute } from '../../app/router';
 import { useToday } from '../../data/lt';
 import {
+  altitude,
   ASCS,
   boardSize,
+  coresEarned,
+  coresHeld,
+  echo,
+  LADDER_FROM,
+  LADDER_TO,
+  layerCoin,
+  layerVerb,
+  lift,
+  peakMult,
+  RUNG_MILES,
+  RUNG_UPS,
+  rungAutoOn,
+  rungAutoOpen,
+  rungDef,
+  rungFeed,
+  rungGain,
+  rungMult,
+  rungNeed,
+  rungOf,
+  rungSeen,
+  rungUpCost,
+  topLayer,
+  TREE,
+  treeOpen,
   boostOn,
   bountyHave,
   bountyKind,
@@ -87,6 +112,10 @@ import {
 import { fmtTime } from '../../domain/game/idle';
 import { H2 } from '../../ui/i/bits';
 import {
+  buyEveryRungUpgrade,
+  buyRungUpgrade,
+  climbRung,
+  growTree,
   beginResearch,
   buyOrreryPart,
   catchShootingStar,
@@ -125,6 +154,8 @@ const ROOMS = [
   { id: 'void', label: 'Void', kanji: '闇', layer: 2 },
   { id: 'galaxies', label: 'Galaxies', kanji: '銀', layer: 3 },
   { id: 'beyond', label: 'Beyond', kanji: '劫', layer: 4 },
+  { id: 'ladder', label: 'Ladder', kanji: '梯', layer: 0 },
+  { id: 'legacy', label: 'Legacy', kanji: '遺', layer: 0 },
   { id: 'board', label: 'Board', kanji: '依', layer: 0 },
   { id: 'lab', label: 'Lab', kanji: '研', layer: 0 },
   { id: 'orrery', label: 'Orrery', kanji: '儀', layer: 0 },
@@ -134,10 +165,17 @@ const ROOMS = [
 type RoomId = (typeof ROOMS)[number]['id'];
 type Room = (typeof ROOMS)[number];
 
-const roomOpen = (s: CosmosSave, r: Room) => (r.id === 'lab' ? labOpen(s) : r.layer === 0 || layerSeen(s, r.layer as Layer));
+const roomOpen = (s: CosmosSave, r: Room) => (r.id === 'lab' ? labOpen(s) : r.id === 'ladder' || r.id === 'legacy' ? treeOpen(s) : r.layer === 0 || layerSeen(s, r.layer as Layer));
 
-type Coin = 'dust' | 'light' | 'dark' | 'gal' | 'eon' | 'shard';
-const COIN_NAME: Record<Coin, string> = { dust: 'dust', light: 'starlight', dark: 'dark matter', gal: 'galaxies', eon: 'aeons', shard: 'shards' };
+type Coin = 'dust' | 'light' | 'dark' | 'gal' | 'eon' | 'shard' | 'rung' | 'core';
+const COIN_NAME: Record<Coin, string> = { dust: 'dust', light: 'starlight', dark: 'dark matter', gal: 'galaxies', eon: 'aeons', shard: 'shards', rung: 'of it', core: 'cores' };
+/** A rung's colour, as a CSS custom property for --cz-c. */
+const hueOf = (n: number): CSSProperties => ({ '--cz-c': `hsl(${rungDef(n)?.hue ?? 0} 90% 72%)` }) as CSSProperties;
+/** The rung to show: the highest that could be done now, else the highest done. */
+const pickRung = (s: CosmosSave) => {
+  for (let n = LADDER_TO; n >= LADDER_FROM; n--) if (rungSeen(s, n) && rungGain(s, n) >= 1) return n;
+  return Math.max(LADDER_FROM, topLayer(s));
+};
 
 /** Something in the Lab could start now. */
 const labIdle = (s: CosmosSave) => labOpen(s) && s.lab.length < labSlots(s) && LABS.some((r) => !hasLab(s, r.id) && !s.lab.some((l) => l.id === r.id) && labReady(s, r) && r.cost <= s[r.coin]);
@@ -196,7 +234,7 @@ export default function CosmosTab() {
       <nav className="cz-rooms" aria-label="The Cosmos">
         {ROOMS.map((r) => {
           const open = roomOpen(s, r);
-          const n = r.layer ? ready[r.layer as Layer] : r.id === 'board' ? +boardReady(s, today) : r.id === 'lab' ? +labIdle(s) : 0;
+          const n = r.layer ? ready[r.layer as Layer] : r.id === 'board' ? +boardReady(s, today) : r.id === 'lab' ? +labIdle(s) : r.id === 'ladder' ? +ladderReady(s) : r.id === 'legacy' ? +legacyReady(s) : 0;
           return (
             <button
               key={r.id}
@@ -223,6 +261,10 @@ export default function CosmosTab() {
         <Galaxies s={s} />
       ) : room === 'beyond' ? (
         <Beyond s={s} />
+      ) : room === 'ladder' ? (
+        <Ladder s={s} />
+      ) : room === 'legacy' ? (
+        <Legacy s={s} />
       ) : room === 'board' ? (
         <Board s={s} today={today} now={now} />
       ) : room === 'lab' ? (
@@ -319,7 +361,7 @@ function Stage({ s, ext, now }: { s: CosmosSave; ext: Ext; now: number }) {
     <div className="cz-stage" data-era={e}>
       <SkyCanvas view={view} />
       <div className="cz-count">
-        <p className="cz-count__era">{ERA_NAME[e]}</p>
+        <p className="cz-count__era">{topLayer(s) >= LADDER_FROM ? `Layer ${topLayer(s)} · ${layerVerb(topLayer(s))}` : ERA_NAME[e]}</p>
         <p className="cz-count__n" aria-label={`${fmt(s.dust)} dust`}>
           <CoinArt k="dust" />
           <b aria-hidden="true">{fmt(s.dust)}</b>
@@ -363,7 +405,7 @@ function Stage({ s, ext, now }: { s: CosmosSave; ext: Ext; now: number }) {
       </div>
       <ShootingStar />
       {flash && (
-        <p key={flash.n} className={`cz-flash${flash.layer ? '' : ' is-gift'}`} data-layer={flash.layer || undefined} role="status">
+        <p key={flash.n} className={`cz-flash${flash.layer ? '' : ' is-gift'}`} data-layer={flash.layer && flash.layer <= 4 ? flash.layer : undefined} style={flash.layer >= LADDER_FROM ? hueOf(flash.layer) : undefined} role="status">
           {flash.text}
         </p>
       )}
@@ -463,6 +505,22 @@ function CoinArt({ k }: { k: Coin }) {
           )}
         </radialGradient>
       </defs>
+      {k === 'rung' && (
+        <g>
+          <path d="M12 1.5 21 6.8 21 17.2 12 22.5 3 17.2 3 6.8Z" fill="currentColor" opacity="0.9" />
+          <path d="M12 1.5 21 6.8 12 12 3 6.8Z" fill="#fff" opacity="0.35" />
+          <path d="M12 12 12 22.5 3 17.2 3 6.8Z" fill="#000" opacity="0.18" />
+          <path d="M12 1.5 21 6.8 21 17.2 12 22.5 3 17.2 3 6.8Z" fill="none" stroke="#fff" strokeOpacity="0.7" strokeWidth="0.8" />
+        </g>
+      )}
+      {k === 'core' && (
+        <g>
+          <circle cx="12" cy="12" r="10" fill="none" stroke="#9fe8a0" strokeOpacity="0.55" strokeWidth="1" />
+          <ellipse cx="12" cy="12" rx="10" ry="3.6" fill="none" stroke="#c8ffb0" strokeOpacity="0.7" strokeWidth="0.9" transform="rotate(35 12 12)" />
+          <circle cx="12" cy="12" r="5.2" fill="#7be08a" />
+          <circle cx="10.4" cy="10.2" r="1.9" fill="#fff" opacity="0.8" />
+        </g>
+      )}
       {k === 'shard' && (
         <g>
           <path d="M12 1.5 18.5 9 15 22.5 9 22.5 5.5 9Z" fill={`url(#czg-${k})`} />
@@ -522,16 +580,21 @@ function Purse({ s }: { s: CosmosSave }) {
   if (s.galAll > 0) shown.push({ k: 'gal', n: s.gal });
   if (s.eonAll > 0) shown.push({ k: 'eon', n: s.eon });
   if (s.shardsAll > 0) shown.push({ k: 'shard', n: s.shards });
+  const top = topLayer(s);
+  if (top >= LADDER_FROM) shown.push({ k: 'rung', n: rungOf(s, top).c });
   if (!shown.length) return null;
   return (
     <div className="cz-purse" role="group" aria-label="What you hold">
-      {shown.map((c) => (
-        <span key={c.k} className="cz-amt" data-k={c.k} aria-label={`${fmt(Math.floor(c.n))} ${COIN_NAME[c.k]}`}>
-          <CoinArt k={c.k} />
-          <b aria-hidden="true">{fmt(Math.floor(c.n))}</b>
-          <small aria-hidden="true">{COIN_NAME[c.k]}</small>
-        </span>
-      ))}
+      {shown.map((c) => {
+        const name = c.k === 'rung' ? layerCoin(top) : COIN_NAME[c.k];
+        return (
+          <span key={c.k} className="cz-amt" data-k={c.k} style={c.k === 'rung' ? hueOf(top) : undefined} aria-label={`${fmt(Math.floor(c.n))} ${name}`}>
+            <CoinArt k={c.k} />
+            <b aria-hidden="true">{fmt(Math.floor(c.n))}</b>
+            <small aria-hidden="true">{name}</small>
+          </span>
+        );
+      })}
     </div>
   );
 }
@@ -691,7 +754,7 @@ function Orbit({ s, ext, now }: { s: CosmosSave; ext: Ext; now: number }) {
 }
 
 /** A grid of upgrades that have levels. */
-function Levels({ title, note, list, have, purse, coin, onBuy, onAll, costOf = levelCost }: { title: string; note?: string; list: Levelled[]; have: Record<string, number>; purse: number; coin: Coin; onBuy: (id: string) => void; onAll?: () => void; costOf?: (u: Levelled, lv: number) => number }) {
+function Levels({ title, note, list, have, purse, coin, onBuy, onAll, costOf = levelCost, coinName }: { title: string; note?: string; list: Levelled[]; have: Record<string, number>; purse: number; coin: Coin; onBuy: (id: string) => void; onAll?: () => void; costOf?: (u: Levelled, lv: number) => number; coinName?: string }) {
   const can = list.some((u) => (have[u.id] ?? 0) < u.max && costOf(u, have[u.id] ?? 0) <= purse);
   return (
     <>
@@ -712,7 +775,7 @@ function Levels({ title, note, list, have, purse, coin, onBuy, onAll, costOf = l
           const maxed = lv >= u.max;
           const cost = costOf(u, lv);
           return (
-            <button key={u.id} type="button" className={`cz-card${lv ? ' is-on' : ''}${maxed ? ' is-max' : ''}`} disabled={maxed || cost > purse} aria-label={`${u.name}, level ${lv} of ${u.max}. ${u.blurb} ${maxed ? 'At the top.' : `Next level: ${fmt(cost)} ${COIN_NAME[coin]}.`}`} onClick={() => onBuy(u.id)}>
+            <button key={u.id} type="button" className={`cz-card${lv ? ' is-on' : ''}${maxed ? ' is-max' : ''}`} disabled={maxed || cost > purse} aria-label={`${u.name}, level ${lv} of ${u.max}. ${u.blurb} ${maxed ? 'At the top.' : `Next level: ${fmt(cost)} ${coinName ?? COIN_NAME[coin]}.`}`} onClick={() => onBuy(u.id)}>
               <span className="cz-card__k" aria-hidden="true">
                 {u.kanji}
               </span>
@@ -742,13 +805,13 @@ const RESETS: Record<Layer, string> = {
   1: 'Dust, bodies and dust upgrades start again.',
   2: 'Everything Ignite resets, plus your starlight and the constellation.',
   3: 'Everything Collapse resets, plus your dark matter and void upgrades. A challenge in progress is dropped.',
-  4: 'Everything the Big Bang resets, plus your galaxies. Relics, challenge tiers and ascensions stay. The next one needs twice the galaxies.',
+  4: 'Everything the Big Bang resets, plus your galaxies. Relics, challenge tiers and ascensions stay. The next one needs 1.8 times the galaxies (until the next Unravel).',
 };
 const FEEDS: Record<Layer, string> = {
   1: 'Starlight earned since the last Collapse makes more dust (its square root), and buys the stars below.',
   2: 'Dark matter earned since the last Big Bang makes more dust, and buys void upgrades.',
   3: 'Galaxies earned since the last Transcend make more dust and starlight, and buy relics.',
-  4: 'Aeons ever earned make more of everything below (dust most of all), and buy ascensions.',
+  4: 'Aeons earned since the last Unravel make more of everything below (dust most of all), feed the Ladder, and buy ascensions.',
 };
 
 function LayerPanel({ s, layer }: { s: CosmosSave; layer: Layer }) {
@@ -1037,13 +1100,196 @@ function Beyond({ s }: { s: CosmosSave }) {
       {(s.asc.bodhi ?? 0) > 0 && (
         <div className="cz-end" role="status">
           <b>悟 Enlightened</b>
-          <p>You reached the end of the road. The sky is gold, and everything still turns if you’d like to watch it.</p>
+          <p>The sky is gold. The road goes on: the Ladder above Transcend has 26 more layers.</p>
         </div>
       )}
       <LayerPanel s={s} layer={4} />
       <Levels title="Ascensions" note="Ascensions are kept for good." list={ASCS} have={s.asc} purse={s.eon} coin="eon" onBuy={buyAscension} />
       <Miles s={s} layer={4} />
     </>
+  );
+}
+
+// ─── the Ladder: layers 5–30 ────────────────────────────────────────────────
+
+/** A rung could be done now, or something on it bought. */
+const ladderReady = (s: CosmosSave) => {
+  for (let n = LADDER_FROM; n <= LADDER_TO; n++) if (rungSeen(s, n) && !rungAutoOn(s, n) && rungGain(s, n) >= 1) return true;
+  return false;
+};
+const legacyReady = (s: CosmosSave) => treeOpen(s) && TREE.some((u) => (s.tree[u.id] ?? 0) < u.max && levelCost(u, s.tree[u.id] ?? 0) <= coresHeld(s));
+
+function Ladder({ s }: { s: CosmosSave }) {
+  const [pick, setPick] = useState<number | null>(null);
+  const n = pick !== null && rungSeen(s, pick) ? pick : pickRung(s);
+  const top = topLayer(s);
+  return (
+    <>
+      <div className="cz-alt">
+        <b>Altitude {Math.max(4, top)}</b>
+        <small>
+          {top >= LADDER_FROM
+            ? `Every rung you’ve reached makes aeons and the whole Ladder pay ×2.4 more, for good: ×${fmt(altitude(s))} now.`
+            : 'Above Transcend are 26 more layers. Each one you reach makes aeons and the whole Ladder pay ×2.4 more, for good.'}
+        </small>
+      </div>
+      <div className="cz-rungs" role="group" aria-label="Layers of the Ladder">
+        {Array.from({ length: LADDER_TO - LADDER_FROM + 1 }, (_, i) => LADDER_FROM + i).map((k) => {
+          const seen = rungSeen(s, k);
+          const done = rungOf(s, k).nAll > 0;
+          return (
+            <button
+              key={k}
+              type="button"
+              className={`cz-rungchip${done ? ' is-on' : ''}${seen ? '' : ' is-shut'}`}
+              style={seen ? hueOf(k) : undefined}
+              aria-pressed={n === k}
+              disabled={!seen}
+              aria-label={seen ? `Layer ${k}: ${layerVerb(k)}` : `Layer ${k}: not reached`}
+              onClick={() => setPick(k)}
+            >
+              <span aria-hidden="true">{seen ? rungDef(k)?.kanji : '？'}</span>
+              <i aria-hidden="true">{k}</i>
+              {seen && rungGain(s, k) >= 1 && <em className="cz-dot" aria-hidden="true" />}
+            </button>
+          );
+        })}
+      </div>
+      <Rung s={s} n={n} />
+    </>
+  );
+}
+
+function Rung({ s, n }: { s: CosmosSave; n: number }) {
+  const d = rungDef(n)!;
+  const r = rungOf(s, n);
+  const gain = rungGain(s, n);
+  const feed = rungFeed(s, n);
+  const need = rungNeed(n);
+  const below = layerCoin(n - 1);
+  const ups: Levelled[] = RUNG_UPS.map((u, i) => ({ id: String(i), name: u.name, kanji: u.kanji, blurb: u.blurb(n), cost: u.cost, grow: u.grow, max: u.max }));
+  const have = Object.fromEntries(r.ups.map((lv, i) => [String(i), lv]));
+  const lifted = lift(r.run);
+  return (
+    <div className="cz-rungroom" style={hueOf(n)}>
+      <div className="cz-layer cz-layer--rung">
+        <div className="cz-layer__sigil" aria-hidden="true">
+          <span>{d.kanji}</span>
+        </div>
+        <div className="cz-layer__t">
+          <b>
+            {d.verb} <small className="cz-rung__n">layer {n}</small>
+          </b>
+          <p>
+            {d.blurb} Pays {d.coin} {d.coinKanji} from the {below} earned since it was last done; {d.coin} earned since the next rung multiplies everything below.
+          </p>
+          {gain < 1 ? (
+            <>
+              <Bar pct={logPct(feed, need)} label={`${fmt(feed)} of ${fmt(need)} ${below}`} />
+              <small>{s.chal ? 'Not during a challenge.' : `Needs ${fmt(need)} ${below} since the last ${d.verb}. You have ${fmt(feed)}.`}</small>
+            </>
+          ) : (
+            <small>Everything below starts again: the four first layers, aeons{n > LADDER_FROM ? ` and every rung up to ${layerVerb(n - 1)}` : ''}. What’s kept for good stays.</small>
+          )}
+        </div>
+        <Twice className="i-btn--sig cz-go" disabled={gain < 1} label={<><span>{d.verb}</span><Cost k="rung" n={gain} /></>} armed={<><span>Sure?</span><small className="cz-cost">Tap again</small></>} onDo={() => climbRung(n)} />
+        <p className="cz-layer__n">
+          Done {fmt(r.nAll)} time{r.nAll === 1 ? '' : 's'}
+        </p>
+      </div>
+      <dl className="cz-stats cz-rungstats">
+        <Stat k={`${d.coin} held`} v={fmt(r.c)} />
+        <Stat k={`${d.coin} since the next rung`} v={fmt(r.run)} />
+        <Stat k="Lifts the four first layers" v={`×${fmt(lifted ** 2)}`} />
+        <Stat k={`What ${d.verb} pays is multiplied by`} v={`×${fmt(rungMult(s, n))}`} />
+      </dl>
+      {r.nAll > 0 ? (
+        <Levels title={`${d.verb} upgrades`} note={`Bought with ${d.coin}; they go when a higher rung is done.`} list={ups} have={have} purse={r.c} coin="rung" coinName={d.coin} costOf={(u, lv) => rungUpCost(s, n, Number(u.id), lv)} onBuy={(id) => buyRungUpgrade(n, Number(id))} onAll={() => buyEveryRungUpgrade(n)} />
+      ) : (
+        <p className="i-note">Its four upgrades open once you’ve done it.</p>
+      )}
+      <H2>Milestones</H2>
+      <ol className="cz-miles">
+        {RUNG_MILES.map((m) => (
+          <li key={m.at} className={r.nAll >= m.at ? 'is-on' : ''}>
+            <i aria-hidden="true">{m.at}</i>
+            <span>
+              <b>{d.verb} ×{m.at}</b>
+              <small>{m.blurb(n)}</small>
+            </span>
+            <em>{r.nAll >= m.at ? 'Reached' : `${d.verb} ${m.at - r.nAll} more`}</em>
+          </li>
+        ))}
+      </ol>
+    </div>
+  );
+}
+
+// ─── Legacy: the Celestial Tree, Echoes and Peaks (kept for good) ───────────
+
+function Legacy({ s }: { s: CosmosSave }) {
+  const held = coresHeld(s);
+  const layers = Array.from({ length: Math.max(4, topLayer(s)) }, (_, i) => i + 1).filter((l) => timesDone(s, l) > 0);
+  return (
+    <>
+      <div className="cz-cores">
+        <CoinArt k="core" />
+        <span>
+          <b>{fmt(held)} cores</b>
+          <small>{fmt(coresEarned(s))} earned. Every layer pays its number in cores the first time, and again at 10, 100, 1,000 times and on.</small>
+        </span>
+      </div>
+      <TreeArt s={s} />
+      <Levels title="The Celestial Tree" list={TREE} have={s.tree} purse={held} coin="core" onBuy={growTree} note="Nothing ever resets the tree. Cores are counted from what you’ve done, so they can’t be lost." />
+      <H2>Echoes</H2>
+      <p className="i-note">Every layer pays more the more often you’ve done it, ever: (times + 1) to the power 0.2.</p>
+      <dl className="cz-stats">
+        {layers.map((l) => (
+          <Stat key={l} k={`${layerVerb(l)} · ${fmt(timesDone(s, l))} times`} v={`×${echo(s, l).toFixed(2)}`} />
+        ))}
+      </dl>
+      <H2>Peaks</H2>
+      <p className="i-note">The most each layer has ever paid at once multiplies dust, for good (one more for every digit).</p>
+      <dl className="cz-stats">
+        {layers.map((l) => (
+          <Stat key={l} k={`${layerVerb(l)} · best ${fmt(s.peaks[String(l)] ?? 0)}`} v={`×${peakMult(s, l).toFixed(1)}`} />
+        ))}
+      </dl>
+    </>
+  );
+}
+
+/** The Celestial Tree, drawn: a branch for each part, leaves for its levels. */
+function TreeArt({ s }: { s: CosmosSave }) {
+  return (
+    <div className="cz-tree" aria-hidden="true">
+      <svg viewBox="0 0 200 120">
+        <defs>
+          <radialGradient id="cz-tree-glow">
+            <stop offset="0" stopColor="#c8ffb0" stopOpacity="0.5" />
+            <stop offset="1" stopColor="#c8ffb0" stopOpacity="0" />
+          </radialGradient>
+        </defs>
+        <circle cx="100" cy="60" r="58" fill="url(#cz-tree-glow)" />
+        <path d="M100 118 C98 100 102 86 100 70" className="cz-tree__trunk" />
+        {TREE.map((u, i) => {
+          const lv = s.tree[u.id] ?? 0;
+          const a = Math.PI * (0.12 + (0.76 * i) / (TREE.length - 1));
+          const x = 100 - Math.cos(a) * 70;
+          const y = 72 - Math.sin(a) * 52;
+          const leaves = Math.min(8, Math.ceil((lv / u.max) * 8));
+          return (
+            <g key={u.id} className={lv ? 'is-on' : ''}>
+              <path d={`M100 ${86 - i * 2} Q${(100 + x) / 2} ${y + 18} ${x} ${y}`} className="cz-tree__branch" />
+              {Array.from({ length: leaves }, (_, k) => (
+                <circle key={k} cx={x + Math.cos(k * 2.4) * (3 + k)} cy={y + Math.sin(k * 2.4) * (3 + k) * 0.8} r={2.2} className="cz-tree__leaf" />
+              ))}
+              <circle cx={x} cy={y} r={lv ? 3.4 : 2} className="cz-tree__bud" />
+            </g>
+          );
+        })}
+      </svg>
+    </div>
   );
 }
 
@@ -1248,6 +1494,7 @@ function Orrery({ s }: { s: CosmosSave }) {
 // ─── automation ─────────────────────────────────────────────────────────────
 
 const AUTO_HINT: Record<string, string> = {
+  transcend: 'When it would at least match the aeons since the last Unravel, or after half an hour. Never during a challenge.',
   bodies: 'As many of everything as the dust buys, twice a second.',
   ups: 'Cheapest first, twice a second.',
   nodes: 'Any star you can reach and pay for.',
@@ -1271,7 +1518,7 @@ function Auto({ s }: { s: CosmosSave }) {
             <div key={k} className={`cz-auto${open ? '' : ' is-shut'}${on ? ' is-on' : ''}`}>
               <span className="cz-card__t">
                 <b>{AUTO_NAME[k]}</b>
-                <small>{open ? AUTO_HINT[k] : `${LAYERS[need.layer - 1].verb} ${need.at} time${need.at === 1 ? '' : 's'} (“${need.name}”). You’re at ${timesDone(s, need.layer)}.`}</small>
+                <small>{open ? AUTO_HINT[k] : `${layerVerb(need.layer)} ${need.at} time${need.at === 1 ? '' : 's'}${need.layer <= 4 ? ` (“${need.name}”)` : ''}. You’re at ${timesDone(s, need.layer)}.`}</small>
               </span>
               <button type="button" role="switch" className="cz-switch" aria-checked={on} aria-label={AUTO_NAME[k]} disabled={!open} onClick={() => switchAuto(k, !on)}>
                 <i />
@@ -1279,6 +1526,24 @@ function Auto({ s }: { s: CosmosSave }) {
             </div>
           );
         })}
+        {Array.from({ length: LADDER_TO - LADDER_FROM }, (_, i) => LADDER_FROM + i)
+          .filter((n) => rungSeen(s, n))
+          .map((n) => {
+            const open = rungAutoOpen(s, n);
+            const on = rungAutoOn(s, n);
+            const name = `${layerVerb(n)} (layer ${n})`;
+            return (
+              <div key={n} className={`cz-auto${open ? '' : ' is-shut'}${on ? ' is-on' : ''}`} style={hueOf(n)}>
+                <span className="cz-card__t">
+                  <b>{name}</b>
+                  <small>{open ? 'When it would at least match what the rung holds; its upgrades buy themselves. Never during a challenge.' : `${layerVerb(n + 1)} once to open this.`}</small>
+                </span>
+                <button type="button" role="switch" className="cz-switch" aria-checked={on} aria-label={name} disabled={!open} onClick={() => switchAuto(`L${n}`, !on)}>
+                  <i />
+                </button>
+              </div>
+            );
+          })}
       </div>
       <p className="i-note">
         {taps ? `The auto-tapper makes ${taps} taps a second. ` : 'An auto-tapper arrives at your second Ignite. '}
@@ -1347,6 +1612,8 @@ function Log({ s, ext, now }: { s: CosmosSave; ext: Ext; now: number }) {
         <Stat k="Research done" v={`${s.labs.length} of ${LABS.length}`} />
         <Stat k="Alignments claimed" v={s.dailyAll ? `${fmt(s.dailyAll)} · ${s.dailyRun} in a row` : '0'} />
         <Stat k="Bodies ever bought" v={fmt(s.bought)} />
+        {topLayer(s) >= LADDER_FROM && <Stat k="Highest layer" v={`${topLayer(s)} · ${layerVerb(topLayer(s))}`} />}
+        {treeOpen(s) && <Stat k="Cores ever earned" v={fmt(coresEarned(s))} />}
       </dl>
       <p className="i-note">The Cosmos is a game of its own: nothing here pays Ryō, Tama or XP, and nothing in the Hangar buys anything here.</p>
     </>

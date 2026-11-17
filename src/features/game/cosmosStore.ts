@@ -23,6 +23,13 @@ import {
   buyUp,
   buyVoid,
   buyOrr,
+  buyEveryRungUp,
+  buyRungUp,
+  buyTree,
+  climb,
+  layerCoin,
+  layerVerb,
+  rungDef,
   catchStar,
   check,
   claimBounty,
@@ -51,7 +58,6 @@ import {
   waiting,
   wearRelic,
   type Gift,
-  type AutoKey,
   type Away,
   type CosmosSave,
   type Layer,
@@ -74,7 +80,8 @@ export interface Pop {
 /** A layer that has just been done (or a shooting star's gift, layer 0), for the full-stage flash. */
 export interface Flash {
   n: number;
-  layer: Layer | 0;
+  /** 1–4, the Ladder's 5–30, or 0 for a gift. */
+  layer: number;
   text: string;
 }
 
@@ -291,7 +298,7 @@ export const buyEveryVoidUp = () => act((s) => buyEveryVoid(s));
 export const buyRelicLevel = (id: string) => act((s) => buyRelic(s, id));
 export const toggleRelic = (id: string) => act((s) => wearRelic(s, id));
 export const buyAscension = (id: string) => act((s) => buyAsc(s, id));
-export const switchAuto = (k: AutoKey, on: boolean) => act((s) => setAuto(s, k, on));
+export const switchAuto = (k: string, on: boolean) => act((s) => setAuto(s, k, on));
 export const buyOrreryPart = (id: string) => act((s) => buyOrr(s, id));
 export const beginResearch = (id: string) => act((s, now) => startLab(s, id, now), {}) && (persist(), true);
 export const stopResearch = (id: string) => act((s) => stopLab(s, id));
@@ -333,6 +340,22 @@ export function prestige(layer: Layer): boolean {
   persist();
   return true;
 }
+
+/** Climb rung n of the Ladder by hand. */
+export function climbRung(n: number): boolean {
+  const before = cosmos.get().save;
+  const ok = act((s, now) => climb(s, n, now));
+  if (!ok) return false;
+  const i = n - 5;
+  const gained = (cosmos.get().save.ladder[i]?.all ?? 0) - (before.ladder[i]?.all ?? 0);
+  cosmos.set({ flash: { n: ++flashN, layer: n, text: `${layerVerb(n)}: +${fmt(gained)} ${layerCoin(n)}` } });
+  persist();
+  return true;
+}
+export const buyRungUpgrade = (n: number, i: number) => act((s) => buyRungUp(s, n, i));
+export const buyEveryRungUpgrade = (n: number) => act((s) => buyEveryRungUp(s, n));
+export const growTree = (id: string) => act((s) => buyTree(s, id));
+export const rungName = (n: number) => rungDef(n)?.verb ?? `Layer ${n}`;
 
 export function startChallenge(id: string): boolean {
   const ok = act((s, now) => enterChal(s, id, now));

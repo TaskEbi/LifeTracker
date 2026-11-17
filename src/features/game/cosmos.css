@@ -326,12 +326,12 @@
 /* ─── rooms ─── */
 .cz-rooms {
   display: grid;
-  grid-template-columns: repeat(10, minmax(0, 1fr));
+  grid-template-columns: repeat(6, minmax(0, 1fr));
   gap: 5px;
 }
-@media (max-width: 720px) {
+@media (max-width: 520px) {
   .cz-rooms {
-    grid-template-columns: repeat(5, minmax(0, 1fr));
+    grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 }
 .cz-room {
@@ -1100,6 +1100,171 @@
   color: var(--fg-2);
   font-size: 11px;
   line-height: 1.25;
+}
+
+/* ─── the Ladder ─── */
+.cz-coin[data-k='rung'] {
+  color: var(--cz-c);
+}
+.cz-alt {
+  display: grid;
+  gap: 2px;
+  padding: 10px 12px;
+  border: 1px solid color-mix(in srgb, #ffd36b 45%, var(--rule));
+  border-radius: var(--r-2);
+  background:
+    linear-gradient(90deg, rgb(255 211 107 / 0.16), transparent 70%),
+    linear-gradient(180deg, #0c1030, #140b26);
+  color: #fff;
+}
+.cz-alt b {
+  font: 400 16px/1.1 'Bungee', var(--f-label);
+  color: #ffe28a;
+  letter-spacing: 0.02em;
+}
+.cz-alt small {
+  color: rgb(255 255 255 / 0.75);
+  font-size: 12.5px;
+}
+.cz-rungs {
+  display: grid;
+  grid-template-columns: repeat(13, minmax(0, 1fr));
+  gap: 4px;
+}
+@media (max-width: 640px) {
+  .cz-rungs {
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+  }
+}
+.cz-rungchip {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  gap: 0;
+  min-height: 44px;
+  padding: 4px 0 3px;
+  border: 1px solid color-mix(in srgb, var(--cz-c) 45%, var(--rule));
+  border-radius: var(--r-1);
+  background: var(--surf);
+  color: var(--fg-2);
+  cursor: pointer;
+}
+.cz-rungchip > span {
+  color: var(--cz-c);
+  font: 400 16px/1 'RocknRoll One', var(--f-body);
+}
+.cz-rungchip i {
+  font-size: 10px;
+  font-style: normal;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.cz-rungchip.is-on {
+  background: color-mix(in srgb, var(--cz-c) 14%, var(--surf));
+}
+.cz-rungchip[aria-pressed='true'] {
+  border-color: var(--cz-c);
+  color: var(--fg);
+  box-shadow: 0 0 10px color-mix(in srgb, var(--cz-c) 55%, transparent);
+}
+.cz-rungchip.is-shut {
+  border-style: dashed;
+  opacity: 0.45;
+  cursor: default;
+}
+.cz-rungchip.is-shut > span {
+  color: var(--fg-2);
+}
+.cz-rungchip .cz-dot {
+  top: 3px;
+  right: 3px;
+  width: 7px;
+  height: 7px;
+}
+.cz-rungroom {
+  display: grid;
+  gap: 10px;
+}
+.cz-rung__n {
+  margin-left: 4px;
+  color: var(--fg-2);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.cz-rungstats dd {
+  color: var(--cz-c);
+}
+
+/* ─── Legacy ─── */
+.cz-cores {
+  --cz-c: #9fe8a0;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 10px;
+  align-items: center;
+  padding: 10px 12px;
+  border: 1px solid color-mix(in srgb, var(--cz-c) 50%, var(--rule));
+  border-radius: var(--r-2);
+  background: linear-gradient(180deg, #0b1a16, #0d1024);
+  color: #fff;
+}
+.cz-cores .cz-coin {
+  width: 34px;
+  height: 34px;
+}
+.cz-cores span {
+  display: grid;
+  gap: 2px;
+}
+.cz-cores b {
+  font: 400 18px/1.1 'Bungee', var(--f-label);
+  color: var(--cz-c);
+}
+.cz-cores small {
+  color: rgb(255 255 255 / 0.72);
+  font-size: 12px;
+}
+.cz [data-k='core'] {
+  --cz-c: #9fe8a0;
+}
+.cz-tree {
+  border: 1px solid color-mix(in srgb, #9fe8a0 30%, var(--rule));
+  border-radius: var(--r-2);
+  background: radial-gradient(70% 90% at 50% 100%, rgb(120 220 140 / 0.12), transparent 70%), linear-gradient(180deg, #08121a, #10102a);
+  overflow: hidden;
+}
+.cz-tree svg {
+  display: block;
+  width: 100%;
+  max-height: 180px;
+}
+.cz-tree__trunk {
+  fill: none;
+  stroke: #b08a5a;
+  stroke-width: 6;
+  stroke-linecap: round;
+}
+.cz-tree__branch {
+  fill: none;
+  stroke: rgb(176 138 90 / 0.35);
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+.is-on > .cz-tree__branch {
+  stroke: #c9a26b;
+}
+.cz-tree__bud {
+  fill: rgb(255 255 255 / 0.25);
+}
+.is-on > .cz-tree__bud {
+  fill: #e9ffd6;
+  filter: drop-shadow(0 0 3px #9fe8a0);
+}
+.cz-tree__leaf {
+  fill: #7be08a;
+  opacity: 0.85;
 }
 
 /* ─── boosts on the stage ─── */

@@ -5,7 +5,29 @@ import {
   autoStep,
   bang,
   BODIES,
+  altitude,
+  ALTITUDE,
+  autoOpen,
   bodyCost,
+  buyEveryRungUp,
+  buyRungUp,
+  buyTree,
+  climb,
+  coresEarned,
+  coresHeld,
+  echo,
+  LADDER_FROM,
+  LADDER_TO,
+  peakMult,
+  rungAutoOpen,
+  rungGain,
+  rungMult,
+  rungNeed,
+  rungOf,
+  RUNGS,
+  rungUpCost,
+  topLayer,
+  TREE,
   bountyHave,
   bountyKind,
   buyAllBodies,
@@ -514,5 +536,142 @@ describe('the Cosmos: around the layers', () => {
     expect(m.dailyRun).toBe(3);
     expect(sameData(mergeCosmos(phone, s), m)).toBe(true);
     expect(sameData(mergeCosmos(m, m), m)).toBe(true);
+  });
+});
+
+describe('the Cosmos: the Ladder and what stays', () => {
+  const ladderAt = (top: number, over: Partial<CosmosSave> = {}) =>
+    base({ transcends: 5, transRun: 2, ladder: Array.from({ length: top - LADDER_FROM + 1 }, (_, i) => ({ c: 100, run: 100, all: 500, nAll: 3, ups: [], at: T0 - 1000 * (i + 1) })), ...over });
+
+  it('there are 30 layers, every rung named once', () => {
+    expect(RUNGS.map((r) => r.n)).toEqual(Array.from({ length: 26 }, (_, i) => i + 5));
+    expect(new Set(RUNGS.map((r) => r.verb)).size).toBe(26);
+    expect(LADDER_TO).toBe(30);
+  });
+
+  it('Unravel needs ten aeons since it was last done, pays threads and starts everything below again', () => {
+    const s = base({ transcends: 3, transRun: 3, eon: 9, eonRun: 9, eonAll: 9, gal: 50, galRun: 50, dark: 5, nodes: ['polaris'], relics: { mirror: 1 }, worn: ['mirror'], asc: { twin: 1 } });
+    expect(rungGain(s, 5)).toBe(0);
+    expect(climb(s, 5, T0)).toBeNull();
+    const ripe = { ...s, eon: 40, eonRun: 40, eonAll: 40 };
+    const g = rungGain(ripe, 5);
+    expect(g).toBeGreaterThanOrEqual(1);
+    const a = climb(ripe, 5, T0)!;
+    expect(rungOf(a, 5)).toMatchObject({ c: g, run: g, all: g, nAll: 1 });
+    expect(a.eon).toBe(0);
+    expect(a.eonRun).toBe(0);
+    expect(a.transRun).toBe(0);
+    expect(a.gal).toBe(0);
+    expect(a.dark).toBe(0);
+    expect(a.transcends).toBe(3);
+    expect(a.eonAll).toBe(40);
+    // Kept for good.
+    expect(a.relics).toEqual({ mirror: 1 });
+    expect(a.asc).toEqual({ twin: 1 });
+    expect(a.peaks['5']).toBe(g);
+    expect(topLayer(a)).toBe(5);
+  });
+
+  it('a higher rung starts the lower rungs again, but not the ones above it', () => {
+    const s = ladderAt(8, { eonRun: 50 });
+    const r6 = rungOf(s, 6);
+    expect(rungGain({ ...s, ladder: s.ladder.map((r, i) => (i === 1 ? { ...r, run: 0 } : r)) }, 7)).toBe(0);
+    const ready = { ...s, ladder: s.ladder.map((r, i) => (i === 1 ? { ...r, run: rungNeed(7) * 10 } : r)) };
+    const a = climb(ready, 7, T0)!;
+    expect(rungOf(a, 5).c).toBe(0);
+    expect(rungOf(a, 6).run).toBe(0);
+    expect(rungOf(a, 6).nAll).toBe(r6.nAll);
+    expect(rungOf(a, 7).nAll).toBe(4);
+    expect(rungOf(a, 8)).toEqual(rungOf(s, 8));
+  });
+
+  it('rung upgrades are bought with the rung, and do what they say', () => {
+    let s = ladderAt(6, { gens: { net: 5 } });
+    s = { ...s, ladder: s.ladder.map((r) => ({ ...r, c: 1e12 })) };
+    const before = orbitRate(s, ext, T0);
+    const a = buyRungUp(s, 6, 0)!;
+    expect(rungOf(a, 6).ups[0]).toBe(1);
+    expect(rungOf(a, 6).c).toBe(1e12 - rungUpCost(s, 6, 0, 0));
+    expect(orbitRate(a, ext, T0) / before).toBeCloseTo(10);
+    // Echo on rung 6 makes rung 5 pay more; Focus on rung 5 too.
+    const e = buyRungUp(s, 6, 1)!;
+    expect(rungMult(e, 5) / rungMult(s, 5)).toBeCloseTo(1.5);
+    const f = buyRungUp(s, 5, 3)!;
+    expect(rungMult(f, 5) / rungMult(s, 5)).toBeCloseTo(1.25);
+    expect(buyRungUp(base(), 5, 0)).toBeNull();
+    expect(buyEveryRungUp(s, 5)).not.toBeNull();
+  });
+
+  it('a rung done three times pays a share of itself every second; Altitude grows with the highest rung', () => {
+    const s = ladderAt(6, { eonRun: 1e6 });
+    const g = rungGain(s, 5);
+    expect(g).toBeGreaterThan(0);
+    const after = settle(s, T0 + 10_000, ext).save;
+    expect(rungOf(after, 5).run - rungOf(s, 5).run).toBeCloseTo(g * 0.01 * 10, 0);
+    expect(altitude(ladderAt(10))).toBeCloseTo(ALTITUDE ** 6);
+    expect(altitude(base())).toBe(1);
+  });
+
+  it('automation: Transcend from the first Unravel, each rung from the rung above', () => {
+    const s = base({ transcends: 1 });
+    expect(autoOpen(s, 'transcend')).toBe(false);
+    const u = ladderAt(7);
+    expect(autoOpen(u, 'transcend')).toBe(true);
+    expect(rungAutoOpen(u, 5)).toBe(true);
+    expect(rungAutoOpen(u, 7)).toBe(false);
+    const ready = { ...u, ladder: u.ladder.map((r, i) => (i === 0 ? { ...r, run: 0 } : r)), eonRun: 1e4 };
+    expect(rungOf(autoStep(ready, T0), 5).nAll).toBe(4);
+    expect(rungOf(autoStep({ ...ready, auto: { L5: false } }, T0), 5).nAll).toBe(3);
+  });
+
+  it('cores come from what has been done and are never stored; the tree spends them', () => {
+    expect(coresEarned(base())).toBe(0);
+    const s = base({ ignitesAll: 12, collapsesAll: 1, bangsAll: 1, transcends: 1 });
+    // Ignite: 1 for the first, 1 more at 10; Collapse 2; Big Bang 3; Transcend 4.
+    expect(coresEarned(s)).toBe(2 + 2 + 3 + 4);
+    expect(buyTree(base({ ignitesAll: 5 }), 'root')).toBeNull();
+    const a = buyTree(s, 'root')!;
+    expect(coresHeld(a)).toBe(coresEarned(s) - 1);
+    const g = { ...a, gens: { net: 5 } };
+    expect(orbitRate(g, ext, T0) / orbitRate({ ...g, tree: {} }, ext, T0)).toBeCloseTo(1000);
+    let all = { ...s, transcends: 1e6, ignitesAll: 1e6 };
+    for (let i = 0; i < 100; i++) for (const u of TREE) all = buyTree(all, u.id) ?? all;
+    expect(coresHeld(all)).toBeGreaterThanOrEqual(0);
+  });
+
+  it('Echoes and Peaks only count from the first Transcend, then multiply', () => {
+    const early = base({ ignitesAll: 1000, peaks: { '1': 1e6 } });
+    expect(echo(early, 1)).toBe(1);
+    expect(dustMult(early, ext, T0)).toBeCloseTo(dustMult({ ...early, peaks: {} }, ext, T0));
+    const late = { ...early, transcends: 1 };
+    expect(echo(late, 1)).toBeCloseTo(1001 ** 0.2);
+    expect(peakMult(late, 1)).toBeCloseTo(7, 0);
+  });
+
+  it('old saves read with the Ladder empty, aeons since the last Unravel taken from aeons ever, and merge', () => {
+    const old = { ...base({ transcends: 4, eonAll: 30 }) } as Record<string, unknown>;
+    delete old.ladder;
+    delete old.eonRun;
+    delete old.transRun;
+    const n = normaliseCosmos(JSON.parse(JSON.stringify(old)), T0);
+    expect(n.ladder).toEqual([]);
+    expect(n.eonRun).toBe(30);
+    expect(n.transRun).toBe(4);
+    const s = ladderAt(7, { tree: { root: 2 }, peaks: { '5': 9 }, auto: { L5: false } });
+    expect(normaliseCosmos(JSON.parse(JSON.stringify(s)), T0)).toEqual(s);
+    const phone = ladderAt(9, { tree: { trunk: 1 } });
+    const m = mergeCosmos(s, phone);
+    expect(m.ladder.length).toBe(5);
+    expect(topLayer(m)).toBe(9);
+    expect(m.tree).toEqual({ root: 2, trunk: 1 });
+    expect(sameData(mergeCosmos(phone, s), m)).toBe(true);
+  });
+
+  it('nothing on the Ladder becomes infinite', () => {
+    const huge = ladderAt(30, { eonRun: 1e300, dust: 1e300, runDust: 1e300, galRun: 1e300, tree: { root: 30, trunk: 20, canopy: 20 } });
+    const big = { ...huge, ladder: huge.ladder.map((r) => ({ ...r, run: 1e300, c: 1e300, ups: [20, 10, 8, 10] })) };
+    for (let n = 5; n <= 30; n++) expect(Number.isFinite(rungGain(big, n))).toBe(true);
+    for (const v of [rateNow(big, ext, T0), lightGain(big), darkGain(big), galGain(big), eonGain(big)]) expect(Number.isFinite(v)).toBe(true);
+    expect(Number.isFinite(settle(big, T0 + 60_000, ext).save.dust)).toBe(true);
   });
 });
