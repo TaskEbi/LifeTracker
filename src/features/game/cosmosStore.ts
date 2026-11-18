@@ -29,6 +29,12 @@ import {
   climb,
   layerCoin,
   layerVerb,
+  BODIES,
+  giftLv,
+  masteryOf,
+  rankOf,
+  rankTitle,
+  RUNGS,
   rungDef,
   catchStar,
   check,
@@ -136,9 +142,23 @@ function put(next: CosmosSave, extra: Partial<Live> = {}, soon = 2500) {
   cosmos.set({ save, ...extra });
   for (const id of save.labs) if (!before.labs.includes(id) && cosmos.get().ready) toast(`Research done: ${labById(id)?.name}. +${labById(id)?.pay} shard${labById(id)?.pay === 1 ? '' : 's'}.`);
   if (won) toast(`${won.c.name} tier ${won.tier} done. ${won.c.reward}, for good.`);
-  if (feats.length) toast(feats.length === 1 ? `Feat: ${feats[0].name}. Dust +5%.` : `${feats.length} feats. Dust +${Math.round((1.05 ** feats.length - 1) * 100)}%.`);
+  if (feats.length) toast(feats.length === 1 ? `Feat: ${feats[0].name}.` : `${feats.length} feats.`);
+  if (cosmos.get().ready) cheer(before, save);
   dirty = true;
   schedule(soon);
+}
+
+/** Say so when something kept for good has grown: a rank, a level of Mastery, a gift. */
+function cheer(a: CosmosSave, b: CosmosSave) {
+  const r = rankOf(b);
+  if (r > rankOf(a)) toast(`Renown rank ${r}: ${rankTitle(r)}.`);
+  const up = BODIES.filter((x) => masteryOf(b, x.id) > masteryOf(a, x.id));
+  if (up.length === 1) toast(`${up[0].name}: Mastery ${masteryOf(b, up[0].id)}.`);
+  else if (up.length > 1) toast(`Mastery up for ${up.length} bodies.`);
+  for (const d of RUNGS) {
+    const g = giftLv(b, d.n);
+    if (g > giftLv(a, d.n)) toast(g === 1 ? `Gift of ${d.verb}: ${d.gift}, yours for good.` : `${d.gift} grows to level ${g}.`);
+  }
 }
 
 /** Write the save now (if anything changed and the records are loaded). */
@@ -222,11 +242,15 @@ function tick() {
   }
   if (save === live.save) return;
   const done = check(save);
-  if (done.won || done.feats.length || save.labs.length !== live.save.labs.length) return put(save, {}, 20_000);
+  if (done.won || done.feats.length || save.labs.length !== live.save.labs.length || grew(live.save, save)) return put(save, {}, 20_000);
   cosmos.set({ save });
   dirty = true;
   schedule(20_000);
 }
+
+/** Something kept for good grew in a tick (automation, a drip): worth a toast and a save. */
+const grew = (a: CosmosSave, b: CosmosSave) =>
+  rankOf(b) !== rankOf(a) || BODIES.some((x) => masteryOf(b, x.id) !== masteryOf(a, x.id)) || b.ladder.some((r, i) => r.nAll !== (a.ladder[i]?.nAll ?? 0) && giftLv(b, i + 5) !== giftLv(a, i + 5));
 
 let users = 0;
 let stop: (() => void) | null = null;

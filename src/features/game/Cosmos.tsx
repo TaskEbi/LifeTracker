@@ -9,6 +9,32 @@ import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 
 import { navigate, useRoute } from '../../app/router';
 import { useToday } from '../../data/lt';
 import {
+  chalById,
+  frenzyMult,
+  giftLv,
+  giftNext,
+  giftsHeld,
+  GIFT_MAX,
+  keyMet,
+  keyOf,
+  masteryMult,
+  masteryNext,
+  masteryOf,
+  masteryTotal,
+  MASTERY_MAX,
+  MASTERY_TRAITS,
+  orrMax,
+  PERKS,
+  rankMult,
+  rankNeed,
+  rankOf,
+  rankTitle,
+  RANK_MAX,
+  renownParts,
+  renownXp,
+  resoGap,
+  RUNGS,
+  swapMs,
   altitude,
   ASCS,
   boardSize,
@@ -41,7 +67,6 @@ import {
   bountyKind,
   dailyPay,
   dailyRunOn,
-  FRENZY,
   hasLab,
   labMs,
   labOpen,
@@ -51,7 +76,6 @@ import {
   ORRERY,
   RUSH,
   starGap,
-  SWAP_MS,
   upCost,
   type Bounty,
   type Research,
@@ -165,7 +189,7 @@ const ROOMS = [
 type RoomId = (typeof ROOMS)[number]['id'];
 type Room = (typeof ROOMS)[number];
 
-const roomOpen = (s: CosmosSave, r: Room) => (r.id === 'lab' ? labOpen(s) : r.id === 'ladder' || r.id === 'legacy' ? treeOpen(s) : r.layer === 0 || layerSeen(s, r.layer as Layer));
+const roomOpen = (s: CosmosSave, r: Room) => (r.id === 'lab' ? labOpen(s) : r.id === 'ladder' ? treeOpen(s) : r.layer === 0 || layerSeen(s, r.layer as Layer));
 
 type Coin = 'dust' | 'light' | 'dark' | 'gal' | 'eon' | 'shard' | 'rung' | 'core';
 const COIN_NAME: Record<Coin, string> = { dust: 'dust', light: 'starlight', dark: 'dark matter', gal: 'galaxies', eon: 'aeons', shard: 'shards', rung: 'of it', core: 'cores' };
@@ -373,7 +397,7 @@ function Stage({ s, ext, now }: { s: CosmosSave; ext: Ext; now: number }) {
           <p className="cz-buffs">
             {boostOn(s, 'frenzy', now) && (
               <span className="cz-buff">
-                Frenzy ×{FRENZY} · {Math.ceil((s.boosts.frenzy - now) / 1000)} s
+                Frenzy ×{frenzyMult(s)} · {Math.ceil((s.boosts.frenzy - now) / 1000)} s
               </span>
             )}
             {boostOn(s, 'rush', now) && (
@@ -404,12 +428,33 @@ function Stage({ s, ext, now }: { s: CosmosSave; ext: Ext; now: number }) {
         ))}
       </div>
       <ShootingStar />
+      <RenownStrip s={s} />
       {flash && (
         <p key={flash.n} className={`cz-flash${flash.layer ? '' : ' is-gift'}`} data-layer={flash.layer && flash.layer <= 4 ? flash.layer : undefined} style={flash.layer >= LADDER_FROM ? hueOf(flash.layer) : undefined} role="status">
           {flash.text}
         </p>
       )}
     </div>
+  );
+}
+
+/** Renown across the foot of the stage: rank, title and how far to the next. */
+function RenownStrip({ s }: { s: CosmosSave }) {
+  const xp = renownXp(s);
+  const r = rankOf(s);
+  const from = rankNeed(r);
+  const to = rankNeed(r + 1);
+  const pct = r >= RANK_MAX ? 1 : Math.max(0, Math.min(1, (xp - from) / (to - from)));
+  return (
+    <button type="button" className="cz-renown" onClick={() => navigate('hangar', ['cosmos', 'legacy'], { replace: true })} aria-label={`Renown rank ${r}, ${rankTitle(r)}. ${r >= RANK_MAX ? 'The top.' : `${Math.round(pct * 100)}% of the way to rank ${r + 1}.`} Open Legacy.`}>
+      <b aria-hidden="true">{r}</b>
+      <span aria-hidden="true">
+        <small>{rankTitle(r)}</small>
+        <i className="cz-renown__bar">
+          <i style={{ width: `${pct * 100}%` }} />
+        </i>
+      </span>
+    </button>
   );
 }
 
@@ -681,7 +726,6 @@ function Orbit({ s, ext, now }: { s: CosmosSave; ext: Ext; now: number }) {
   const open = BODIES.filter((b) => bodyOpen(s, b));
   const top = open.reduce((n, b, i) => ((s.gens[b.id] ?? 0) > 0 ? i : n), -1);
   const shown = open.slice(0, Math.min(open.length, top + 3));
-  const reso = resonance(s);
   const total = shown.reduce((n, b) => n + bodyRate(s, b), 0);
   const anyBody = open.some((b) => maxBody(s, b.id) > 0);
   return (
@@ -722,18 +766,27 @@ function Orbit({ s, ext, now }: { s: CosmosSave; ext: Ext; now: number }) {
           const n = amount === 'max' ? Math.max(1, maxBody(s, b.id)) : amount;
           const cost = bodyCost(s, b.id, n);
           const rate = bodyRate(s, b) * mult;
-          const next = resoNext(own);
-          const prev = own < 10 ? 0 : own < 25 ? 10 : own < 50 ? 25 : Math.floor(own / 50) * 50;
+          const gap = resoGap(s);
+          const next = resoNext(own, gap);
+          const prev = own < 10 ? 0 : own < 25 ? 10 : own < gap ? 25 : Math.floor(own / gap) * gap;
+          const m = masteryOf(s, b.id);
           return (
             <div key={b.id} className={`cz-row${own ? ' is-on' : ''}`}>
-              <BodyIcon i={BODIES.indexOf(b)} />
+              <span className="cz-bodybox">
+                <BodyIcon i={BODIES.indexOf(b)} />
+                {m > 0 && (
+                  <i className="cz-mastery" aria-label={`Mastery ${m}`}>
+                    {m}
+                  </i>
+                )}
+              </span>
               <div className="cz-row__t">
                 <b>
                   {b.name}
                   {own > 0 && <em> ×{own}</em>}
                 </b>
                 <small>{b.blurb}</small>
-                <small className="cz-row__n">{own > 0 ? `${fmt(rate)}/s${total > 0 ? ` (${Math.round((bodyRate(s, b) / total) * 100)}%)` : ''} · ` : ''}×{reso.toFixed(2).replace(/\.?0+$/, '')} at {next}</small>
+                <small className="cz-row__n">{own > 0 ? `${fmt(rate)}/s${total > 0 ? ` (${Math.round((bodyRate(s, b) / total) * 100)}%)` : ''} · ` : ''}×{resonance(s, b.id).toFixed(2).replace(/\.?0+$/, '')} at {next}{m < MASTERY_MAX ? ` · Mastery ${m + 1} at ${fmt(masteryNext(m))} bought` : ''}</small>
                 <Bar pct={(own - prev) / (next - prev)} label={`${b.name}: ${own} of ${next} to the next resonance`} />
               </div>
               <button type="button" className="i-btn i-btn--sm cz-buy" disabled={cost > s.dust} aria-label={`Buy ${n} ${b.name} for ${fmt(cost)} dust`} onClick={() => buyBodies(b.id, n)}>
@@ -754,8 +807,8 @@ function Orbit({ s, ext, now }: { s: CosmosSave; ext: Ext; now: number }) {
 }
 
 /** A grid of upgrades that have levels. */
-function Levels({ title, note, list, have, purse, coin, onBuy, onAll, costOf = levelCost, coinName }: { title: string; note?: string; list: Levelled[]; have: Record<string, number>; purse: number; coin: Coin; onBuy: (id: string) => void; onAll?: () => void; costOf?: (u: Levelled, lv: number) => number; coinName?: string }) {
-  const can = list.some((u) => (have[u.id] ?? 0) < u.max && costOf(u, have[u.id] ?? 0) <= purse);
+function Levels({ title, note, list, have, purse, coin, onBuy, onAll, costOf = levelCost, coinName, maxOf = (u) => u.max }: { title: string; note?: string; list: Levelled[]; have: Record<string, number>; purse: number; coin: Coin; onBuy: (id: string) => void; onAll?: () => void; costOf?: (u: Levelled, lv: number) => number; coinName?: string; maxOf?: (u: Levelled) => number }) {
+  const can = list.some((u) => (have[u.id] ?? 0) < maxOf(u) && costOf(u, have[u.id] ?? 0) <= purse);
   return (
     <>
       <H2
@@ -772,10 +825,11 @@ function Levels({ title, note, list, have, purse, coin, onBuy, onAll, costOf = l
       <div className="cz-grid" data-k={coin}>
         {list.map((u) => {
           const lv = have[u.id] ?? 0;
-          const maxed = lv >= u.max;
+          const top = maxOf(u);
+          const maxed = lv >= top;
           const cost = costOf(u, lv);
           return (
-            <button key={u.id} type="button" className={`cz-card${lv ? ' is-on' : ''}${maxed ? ' is-max' : ''}`} disabled={maxed || cost > purse} aria-label={`${u.name}, level ${lv} of ${u.max}. ${u.blurb} ${maxed ? 'At the top.' : `Next level: ${fmt(cost)} ${coinName ?? COIN_NAME[coin]}.`}`} onClick={() => onBuy(u.id)}>
+            <button key={u.id} type="button" className={`cz-card${lv ? ' is-on' : ''}${maxed ? ' is-max' : ''}`} disabled={maxed || cost > purse} aria-label={`${u.name}, level ${lv} of ${top}. ${u.blurb} ${maxed ? 'At the top.' : `Next level: ${fmt(cost)} ${coinName ?? COIN_NAME[coin]}.`}`} onClick={() => onBuy(u.id)}>
               <span className="cz-card__k" aria-hidden="true">
                 {u.kanji}
               </span>
@@ -785,8 +839,8 @@ function Levels({ title, note, list, have, purse, coin, onBuy, onAll, costOf = l
               </span>
               <span className="cz-card__f">
                 <i>
-                  {u.max === 1 ? (lv ? 'Owned' : '') : `Lv ${lv}`}
-                  {u.max > 1 && u.max <= 10 ? ` / ${u.max}` : ''}
+                  {top === 1 ? (lv ? 'Owned' : '') : `Lv ${lv}`}
+                  {top > 1 && top <= 22 ? ` / ${top}` : ''}
                 </i>
                 {maxed ? <small className="cz-cost">Max</small> : <Cost k={coin} n={cost} />}
               </span>
@@ -1100,7 +1154,7 @@ function Beyond({ s }: { s: CosmosSave }) {
       {(s.asc.bodhi ?? 0) > 0 && (
         <div className="cz-end" role="status">
           <b>悟 Enlightened</b>
-          <p>The sky is gold. The road goes on: the Ladder above Transcend has 26 more layers.</p>
+          <p>The sky is gold. The road goes on: the Ladder above Transcend has 36 more layers.</p>
         </div>
       )}
       <LayerPanel s={s} layer={4} />
@@ -1114,7 +1168,7 @@ function Beyond({ s }: { s: CosmosSave }) {
 
 /** A rung could be done now, or something on it bought. */
 const ladderReady = (s: CosmosSave) => {
-  for (let n = LADDER_FROM; n <= LADDER_TO; n++) if (rungSeen(s, n) && !rungAutoOn(s, n) && rungGain(s, n) >= 1) return true;
+  for (let n = LADDER_FROM; n <= LADDER_TO; n++) if (rungSeen(s, n) && !rungAutoOn(s, n) && rungGain(s, n) >= 1 && keyMet(s, n, Date.now())) return true;
   return false;
 };
 const legacyReady = (s: CosmosSave) => treeOpen(s) && TREE.some((u) => (s.tree[u.id] ?? 0) < u.max && levelCost(u, s.tree[u.id] ?? 0) <= coresHeld(s));
@@ -1129,8 +1183,8 @@ function Ladder({ s }: { s: CosmosSave }) {
         <b>Altitude {Math.max(4, top)}</b>
         <small>
           {top >= LADDER_FROM
-            ? `Every rung you’ve reached makes aeons and the whole Ladder pay ×2.4 more, for good: ×${fmt(altitude(s))} now.`
-            : 'Above Transcend are 26 more layers. Each one you reach makes aeons and the whole Ladder pay ×2.4 more, for good.'}
+            ? `Every rung you’ve reached makes aeons and the whole Ladder pay ×${(2.4 + 0.1 * giftLv(s, 29)).toFixed(1)} more, for good: ×${fmt(altitude(s))} now.`
+            : 'Above Transcend are 36 more layers, each asking for something different and giving a gift of its own. Each one you reach makes aeons and the whole Ladder pay ×2.4 more, for good.'}
         </small>
       </div>
       <div className="cz-rungs" role="group" aria-label="Layers of the Ladder">
@@ -1146,11 +1200,12 @@ function Ladder({ s }: { s: CosmosSave }) {
               aria-pressed={n === k}
               disabled={!seen}
               aria-label={seen ? `Layer ${k}: ${layerVerb(k)}` : `Layer ${k}: not reached`}
+              data-gift={done ? giftLv(s, k) : undefined}
               onClick={() => setPick(k)}
             >
               <span aria-hidden="true">{seen ? rungDef(k)?.kanji : '？'}</span>
               <i aria-hidden="true">{k}</i>
-              {seen && rungGain(s, k) >= 1 && <em className="cz-dot" aria-hidden="true" />}
+              {seen && rungGain(s, k) >= 1 && keyMet(s, k, Date.now()) && <em className="cz-dot" aria-hidden="true" />}
             </button>
           );
         })}
@@ -1165,7 +1220,10 @@ function Rung({ s, n }: { s: CosmosSave; n: number }) {
   const r = rungOf(s, n);
   const gain = rungGain(s, n);
   const feed = rungFeed(s, n);
-  const need = rungNeed(n);
+  const need = rungNeed(n, s);
+  const now = Date.now();
+  const open = keyMet(s, n, now);
+  const key = keyOf(n);
   const below = layerCoin(n - 1);
   const ups: Levelled[] = RUNG_UPS.map((u, i) => ({ id: String(i), name: u.name, kanji: u.kanji, blurb: u.blurb(n), cost: u.cost, grow: u.grow, max: u.max }));
   const have = Object.fromEntries(r.ups.map((lv, i) => [String(i), lv]));
@@ -1186,17 +1244,21 @@ function Rung({ s, n }: { s: CosmosSave; n: number }) {
           {gain < 1 ? (
             <>
               <Bar pct={logPct(feed, need)} label={`${fmt(feed)} of ${fmt(need)} ${below}`} />
-              <small>{s.chal ? 'Not during a challenge.' : `Needs ${fmt(need)} ${below} since the last ${d.verb}. You have ${fmt(feed)}.`}</small>
+              <small>{s.chal && s.chal !== key?.chal ? 'Not during a challenge.' : `Needs ${fmt(need)} ${below} since the last ${d.verb}. You have ${fmt(feed)}.`}</small>
             </>
+          ) : !open ? (
+            <small>Ready, but its key isn’t met yet (below).</small>
           ) : (
             <small>Everything below starts again: the four first layers, aeons{n > LADDER_FROM ? ` and every rung up to ${layerVerb(n - 1)}` : ''}. What’s kept for good stays.</small>
           )}
         </div>
-        <Twice className="i-btn--sig cz-go" disabled={gain < 1} label={<><span>{d.verb}</span><Cost k="rung" n={gain} /></>} armed={<><span>Sure?</span><small className="cz-cost">Tap again</small></>} onDo={() => climbRung(n)} />
+        <Twice className="i-btn--sig cz-go" disabled={gain < 1 || !open} label={<><span>{d.verb}</span><Cost k="rung" n={gain} /></>} armed={<><span>Sure?</span><small className="cz-cost">Tap again</small></>} onDo={() => climbRung(n)} />
         <p className="cz-layer__n">
           Done {fmt(r.nAll)} time{r.nAll === 1 ? '' : 's'}
         </p>
       </div>
+      {r.nAll === 0 && key && <KeyBox s={s} n={n} now={now} />}
+      <GiftBox s={s} n={n} />
       <dl className="cz-stats cz-rungstats">
         <Stat k={`${d.coin} held`} v={fmt(r.c)} />
         <Stat k={`${d.coin} since the next rung`} v={fmt(r.run)} />
@@ -1225,9 +1287,239 @@ function Rung({ s, n }: { s: CosmosSave; n: number }) {
   );
 }
 
+/** What a rung asks for before it opens the first time. */
+function KeyBox({ s, n, now }: { s: CosmosSave; n: number; now: number }) {
+  const k = keyOf(n)!;
+  const met = keyMet(s, n, now);
+  const have = k.have ? k.have(s) : 0;
+  const chal = k.chal ? chalById(k.chal) : undefined;
+  return (
+    <div className={`cz-key${met ? ' is-met' : ''}`}>
+      <span className="cz-key__k" aria-hidden="true">
+        鍵
+      </span>
+      <div className="cz-row__t">
+        <b>Key · {met ? 'open' : 'not yet'}</b>
+        <small>{k.text}</small>
+        {k.have && k.need !== undefined && (
+          <>
+            <Bar pct={Math.min(1, have / k.need)} label={`${fmt(have)} of ${fmt(k.need)}`} />
+            <small className="cz-row__n">
+              {fmt(Math.min(have, k.need))} of {fmt(k.need)}
+            </small>
+          </>
+        )}
+        {k.now && <small className="cz-row__n">{met ? 'It holds right now: climb while it does.' : 'It must hold at the moment you climb.'}</small>}
+      </div>
+      {chal && !met && (
+        <button type="button" className="i-btn i-btn--sm cz-buy" disabled={!!s.chal || !chalsOpen(s)} onClick={() => startChallenge(chal.id)}>
+          <span>Enter</span>
+          <small className="cz-cost">{chal.name}</small>
+        </button>
+      )}
+    </div>
+  );
+}
+
+/** A rung's gift: what it gives for good, and how it grows. */
+function GiftBox({ s, n }: { s: CosmosSave; n: number }) {
+  const d = rungDef(n)!;
+  const lv = giftLv(s, n);
+  const next = giftNext(s, n);
+  const t = rungOf(s, n).nAll;
+  return (
+    <div className={`cz-giftbox${lv ? ' is-on' : ''}`}>
+      <span className="cz-gift__k" aria-hidden="true">
+        {d.giftKanji}
+      </span>
+      <div className="cz-row__t">
+        <b>
+          Gift · {d.gift}
+          {lv > 0 && <em> Lv {lv}</em>}
+        </b>
+        <small>{d.giftText(Math.max(1, lv))}</small>
+        <span className="cz-pips" aria-label={`Level ${lv} of ${GIFT_MAX}`}>
+          {Array.from({ length: GIFT_MAX }, (_, i) => (
+            <i key={i} className={i < lv ? 'is-on' : ''} />
+          ))}
+        </span>
+        <small className="cz-row__n">
+          {lv === 0 ? `Yours for good the first time you ${d.verb}.` : next ? `Next level at ${fmt(next)} times done (${fmt(t)} so far): ${d.giftText(lv + 1)}` : 'As high as doing it can take it. Kept for good.'}
+        </small>
+      </div>
+    </div>
+  );
+}
+
 // ─── Legacy: the Celestial Tree, Echoes and Peaks (kept for good) ───────────
 
+const LEGACY_TABS = [
+  { id: 'renown', label: 'Renown', kanji: '誉' },
+  { id: 'mastery', label: 'Mastery', kanji: '熟' },
+  { id: 'gifts', label: 'Gifts', kanji: '賜' },
+  { id: 'tree', label: 'Tree', kanji: '樹' },
+] as const;
+type LegacyTab = (typeof LEGACY_TABS)[number]['id'];
+
+/** Everything kept for good: Renown, Mastery, the Ladder's gifts, and the Celestial Tree. */
 function Legacy({ s }: { s: CosmosSave }) {
+  const [tab, setTab] = useState<LegacyTab>('renown');
+  const shut = (id: LegacyTab) => (id === 'gifts' ? !treeOpen(s) : id === 'tree' ? !treeOpen(s) : false);
+  const t = shut(tab) ? 'renown' : tab;
+  return (
+    <>
+      <div className="cz-tabs" role="tablist" aria-label="Legacy">
+        {LEGACY_TABS.map((x) => (
+          <button key={x.id} type="button" role="tab" aria-selected={t === x.id} disabled={shut(x.id)} onClick={() => setTab(x.id)}>
+            <span aria-hidden="true">{shut(x.id) ? '？' : x.kanji}</span>
+            {shut(x.id) ? '???' : x.label}
+          </button>
+        ))}
+      </div>
+      {t === 'renown' ? <Renown s={s} /> : t === 'mastery' ? <Mastery s={s} /> : t === 'gifts' ? <Gifts s={s} /> : <TreeRoom s={s} />}
+    </>
+  );
+}
+
+function Renown({ s }: { s: CosmosSave }) {
+  const xp = renownXp(s);
+  const r = rankOf(s);
+  const from = rankNeed(r);
+  const to = rankNeed(r + 1);
+  const parts = renownParts(s).filter((p) => p.xp > 0);
+  return (
+    <>
+      <div className="cz-rank">
+        <span className="cz-rank__n" aria-hidden="true">
+          {r}
+        </span>
+        <span>
+          <b>
+            Rank {r} · {rankTitle(r)}
+          </b>
+          <small>
+            {r >= RANK_MAX ? `${fmt(xp)} Renown: as high as it goes.` : `${fmt(xp)} Renown. Rank ${r + 1} at ${fmt(to)}.`} Every rank makes dust ×{(1.15 + 0.05 * giftLv(s, 37)).toFixed(2)}: ×{fmt(rankMult(s))} now.
+          </small>
+          {r < RANK_MAX && <Bar pct={(xp - from) / Math.max(1, to - from)} label={`${fmt(xp - from)} of ${fmt(to - from)} to rank ${r + 1}`} />}
+        </span>
+      </div>
+      <H2 aside={<span className="cz-tally">{PERKS.filter((p) => r >= p.at).length} / {PERKS.length}</span>}>What ranks give</H2>
+      <ol className="cz-miles cz-perks">
+        {PERKS.map((p) => (
+          <li key={p.at} className={r >= p.at ? 'is-on' : ''}>
+            <i aria-hidden="true">{p.at}</i>
+            <span>
+              <b>Rank {p.at}</b>
+              <small>{p.text}</small>
+            </span>
+            <em>{r >= p.at ? 'Reached' : `${fmt(Math.max(0, rankNeed(p.at) - xp))} to go`}</em>
+          </li>
+        ))}
+      </ol>
+      <H2>Where Renown comes from</H2>
+      <dl className="cz-stats">
+        {parts.map((p) => (
+          <Stat key={p.name} k={p.name} v={fmt(p.xp)} />
+        ))}
+      </dl>
+      <p className="i-note">Renown is counted from everything you have ever done in the Cosmos, so it is never lost and nothing resets it. Each layer counts more the higher it is, and more again the more often you do it.</p>
+    </>
+  );
+}
+
+function Mastery({ s }: { s: CosmosSave }) {
+  const open = BODIES.filter((b) => bodyOpen(s, b) || (s.boughtBy[b.id] ?? 0) > 0);
+  return (
+    <>
+      <div className="cz-rank" data-k="shard">
+        <span className="cz-rank__n" aria-hidden="true">
+          {masteryTotal(s)}
+        </span>
+        <span>
+          <b>Mastery</b>
+          <small>Every body grows stronger the more of it you have ever bought: a level at 50, and another each time that doubles. Each level makes it ×{(2 + 0.5 * giftLv(s, 35)).toFixed(1)}, for good.</small>
+        </span>
+      </div>
+      <div className="cz-list">
+        {open.map((b) => {
+          const m = masteryOf(s, b.id);
+          const ever = s.boughtBy[b.id] ?? 0;
+          const next = masteryNext(m);
+          const prev = m ? masteryNext(m - 1) : 0;
+          return (
+            <div key={b.id} className={`cz-row${m ? ' is-on' : ''}`}>
+              <span className="cz-bodybox">
+                <BodyIcon i={BODIES.indexOf(b)} />
+                {m > 0 && <i className="cz-mastery">{m}</i>}
+              </span>
+              <div className="cz-row__t">
+                <b>
+                  {b.name} <em>Mastery {m}</em>
+                </b>
+                {next > 0 && <Bar pct={(ever - prev) / Math.max(1, next - prev)} label={`${fmt(ever)} of ${fmt(next)} bought`} />}
+                <small className="cz-row__n">
+                  {fmt(ever)} bought ever{next ? ` · next at ${fmt(next)}` : ' · the top'} · ×{fmt(masteryMult(s, b.id))}
+                </small>
+                <span className="cz-traits">
+                  {MASTERY_TRAITS.map((x) => (
+                    <i key={x.at} className={m >= x.at ? 'is-on' : ''} title={x.text}>
+                      {x.at} · {x.short}
+                    </i>
+                  ))}
+                </span>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+      <p className="i-note">Mastery is kept for good: nothing resets the count of bodies ever bought. The top is level {MASTERY_MAX}.</p>
+    </>
+  );
+}
+
+function Gifts({ s }: { s: CosmosSave }) {
+  return (
+    <>
+      <div className="cz-rank" data-k="eon">
+        <span className="cz-rank__n" aria-hidden="true">
+          {giftsHeld(s)}
+        </span>
+        <span>
+          <b>Gifts of the Ladder</b>
+          <small>Each rung gives a power of its own the first time it’s done, kept for good even when the rung starts again. Gifts grow at 10, 100, 1,000 and 10,000 times done.</small>
+        </span>
+      </div>
+      <div className="cz-gifts">
+        {RUNGS.map((d) => {
+          const lv = giftLv(s, d.n);
+          const seen = rungSeen(s, d.n);
+          return (
+            <div key={d.n} className={`cz-gift${lv ? ' is-on' : ''}${seen ? '' : ' is-shut'}`} style={seen ? hueOf(d.n) : undefined}>
+              <span className="cz-gift__k" aria-hidden="true">
+                {seen ? d.giftKanji : '？'}
+              </span>
+              <b>{seen ? d.gift : '???'}</b>
+              <small className="cz-gift__l">
+                Layer {d.n}
+                {seen ? ` · ${d.verb}` : ''}
+              </small>
+              {seen && <small>{d.giftText(Math.max(1, lv))}</small>}
+              {lv > 0 && (
+                <span className="cz-pips" aria-label={`Level ${lv} of ${GIFT_MAX}`}>
+                  {Array.from({ length: GIFT_MAX }, (_, i) => (
+                    <i key={i} className={i < lv ? 'is-on' : ''} />
+                  ))}
+                </span>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </>
+  );
+}
+
+function TreeRoom({ s }: { s: CosmosSave }) {
   const held = coresHeld(s);
   const layers = Array.from({ length: Math.max(4, topLayer(s)) }, (_, i) => i + 1).filter((l) => timesDone(s, l) > 0);
   return (
@@ -1242,7 +1534,7 @@ function Legacy({ s }: { s: CosmosSave }) {
       <TreeArt s={s} />
       <Levels title="The Celestial Tree" list={TREE} have={s.tree} purse={held} coin="core" onBuy={growTree} note="Nothing ever resets the tree. Cores are counted from what you’ve done, so they can’t be lost." />
       <H2>Echoes</H2>
-      <p className="i-note">Every layer pays more the more often you’ve done it, ever: (times + 1) to the power 0.2.</p>
+      <p className="i-note">Every layer pays more the more often you’ve done it, ever: (times + 1) to the power {(0.2 + 0.03 * giftLv(s, 13)).toFixed(2)}.</p>
       <dl className="cz-stats">
         {layers.map((l) => (
           <Stat key={l} k={`${layerVerb(l)} · ${fmt(timesDone(s, l))} times`} v={`×${echo(s, l).toFixed(2)}`} />
@@ -1300,7 +1592,7 @@ const BOUNTY_KANJI: Record<string, string> = { taps: '打', crits: '閃', bodies
 function Board({ s, today, now }: { s: CosmosSave; today: string; now: number }) {
   const claimed = s.daily >= today;
   const run = claimed ? s.dailyRun : dailyRunOn(s, today);
-  const wait = Math.max(0, s.swapAt + SWAP_MS - now);
+  const wait = Math.max(0, s.swapAt + swapMs(s) - now);
   return (
     <>
       <div className={`cz-daily${claimed ? ' is-done' : ''}`}>
@@ -1340,7 +1632,7 @@ function Board({ s, today, now }: { s: CosmosSave; today: string; now: number })
         {s.bounties.length < boardSize(s) && <p className="i-note">Posting new bounties…</p>}
       </div>
       <p className="i-note">
-        Bounties count from when they were posted. Finished ones pay shards; a new one goes up in its place. One can be swapped for another every ten minutes{wait > 0 ? ` (next in ${fmtTime(wait / 1000)})` : ''}.
+        Bounties count from when they were posted. Finished ones pay shards; a new one goes up in its place. One can be swapped for another every {Math.round(swapMs(s) / 60_000)} minutes{wait > 0 ? ` (next in ${fmtTime(wait / 1000)})` : ''}.
       </p>
     </>
   );
@@ -1462,7 +1754,7 @@ function Orrery({ s }: { s: CosmosSave }) {
           <ellipse cx="0" cy="0" rx="96" ry="56" className="cz-orrery__rim" />
           {ORRERY.map((u, i) => {
             const lv = s.orr[u.id] ?? 0;
-            const rx = 16 + i * 7.4;
+            const rx = 16 + i * 6.7;
             const ry = rx * 0.5;
             const dur = 18 + i * 7;
             // Each planet starts somewhere else along its ring.
@@ -1471,7 +1763,7 @@ function Orrery({ s }: { s: CosmosSave }) {
             return (
               <g key={u.id}>
                 <ellipse cx="0" cy="0" rx={rx} ry={ry} className={`cz-orrery__ring${lv ? ' is-on' : ''}`} />
-                <circle cx={still ? rx * Math.cos(a) : 0} cy={still ? ry * Math.sin(a) : 0} r={lv ? 2 + (lv / u.max) * 2.6 : 1.4} className={`cz-orrery__planet${lv ? ' is-on' : ''}${lv >= u.max ? ' is-max' : ''}`}>
+                <circle cx={still ? rx * Math.cos(a) : 0} cy={still ? ry * Math.sin(a) : 0} r={lv ? 2 + Math.min(1, lv / orrMax(s, u)) * 2.6 : 1.4} className={`cz-orrery__planet${lv ? ' is-on' : ''}${lv >= orrMax(s, u) ? ' is-max' : ''}`}>
                   {!still && <animateMotion dur={`${dur}s`} begin={`-${(at * dur).toFixed(1)}s`} repeatCount="indefinite" path={`M${rx} 0A${rx} ${ry} 0 1 1 ${-rx} 0A${rx} ${ry} 0 1 1 ${rx} 0`} />}
                 </circle>
               </g>
@@ -1483,7 +1775,7 @@ function Orrery({ s }: { s: CosmosSave }) {
           </text>
         </svg>
       </div>
-      <Levels title="The Orrery" list={ORRERY} have={s.orr} purse={s.shards} coin="shard" onBuy={buyOrreryPart} />
+      <Levels title="The Orrery" list={ORRERY} have={s.orr} purse={s.shards} coin="shard" onBuy={buyOrreryPart} maxOf={(u) => orrMax(s, u)} />
       <p className="i-note">
         Shards come from shooting stars (one about every {Math.round(starGap(s))} seconds while this is open), bounties, research and the daily alignment. Nothing ever resets the Orrery, not even a Transcend.
       </p>
@@ -1614,6 +1906,9 @@ function Log({ s, ext, now }: { s: CosmosSave; ext: Ext; now: number }) {
         <Stat k="Bodies ever bought" v={fmt(s.bought)} />
         {topLayer(s) >= LADDER_FROM && <Stat k="Highest layer" v={`${topLayer(s)} · ${layerVerb(topLayer(s))}`} />}
         {treeOpen(s) && <Stat k="Cores ever earned" v={fmt(coresEarned(s))} />}
+        <Stat k="Renown" v={`rank ${rankOf(s)} · ${fmt(renownXp(s))}`} />
+        <Stat k="Mastery" v={fmt(masteryTotal(s))} />
+        {giftsHeld(s) > 0 && <Stat k="Gifts of the Ladder" v={`${giftsHeld(s)} of ${RUNGS.length}`} />}
       </dl>
       <p className="i-note">The Cosmos is a game of its own: nothing here pays Ryō, Tama or XP, and nothing in the Hangar buys anything here.</p>
     </>

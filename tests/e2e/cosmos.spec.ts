@@ -47,8 +47,8 @@ test('cosmos: tap for dust, buy a body, and it is still there after a reload', a
   await expect(core).toBeVisible();
   const buy = page.getByRole('button', { name: /^Buy 1 Mote Net for 10 dust/ });
   await expect(buy).toBeDisabled();
-  // The layers above (and the Lab, the Ladder and Legacy) are not on the map yet.
-  await expect(rooms(page).getByRole('button', { name: 'Not found yet' })).toHaveCount(7);
+  // The layers above (and the Lab and the Ladder) are not on the map yet; Legacy is, from the start.
+  await expect(rooms(page).getByRole('button', { name: 'Not found yet' })).toHaveCount(6);
   for (let i = 0; i < 12; i++) await core.click();
   await expect(buy).toBeEnabled();
   await buy.click();
@@ -60,6 +60,13 @@ test('cosmos: tap for dust, buy a body, and it is still there after a reload', a
   await expect(page.locator('.cz-stats')).toContainText('Taps12');
   await rooms(page).getByRole('button', { name: 'Orbit' }).click();
   await expect(page.locator('.cz-row', { hasText: 'Mote Net' })).toContainText('×1');
+  // Renown: a rank on the stage, and its room in Legacy (the Tree and the gifts not found yet).
+  await page.getByRole('button', { name: /^Renown rank 0/ }).click();
+  await expect(page).toHaveURL(/\/hangar\/cosmos\/legacy$/);
+  await expect(page.locator('.cz-rank')).toContainText('Rank 0');
+  await expect(page.getByRole('tab', { name: /\?\?\?/ })).toHaveCount(2);
+  await page.getByRole('tab', { name: /Mastery/ }).click();
+  await expect(page.locator('.cz-row', { hasText: 'Mote Net' })).toContainText('1 bought ever');
 });
 
 test('cosmos: the sky gathers while you are away; Ignite pays starlight that lights the constellation', async ({ page }) => {
@@ -132,7 +139,7 @@ test('cosmos: the alignment, a bounty, research and the Orrery, kept after a rel
   // The Orrery: fit the first part.
   await rooms(page).getByRole('button', { name: /Orrery/ }).click();
   await page.getByRole('button', { name: /^Brass Gears, level 0/ }).click();
-  await expect(page.locator('.cz-orrery')).toContainText('1 of 11 parts fitted');
+  await expect(page.locator('.cz-orrery')).toContainText('1 of 12 parts fitted');
   await shot(page, 'orrery');
 
   await leave(page);
@@ -142,7 +149,7 @@ test('cosmos: the alignment, a bounty, research and the Orrery, kept after a rel
   await expect(page.locator('.cz-daily')).toContainText('Aligned');
   await expect(page.locator('.cz-tally')).toContainText('1 done');
   await rooms(page).getByRole('button', { name: /Orrery/ }).click();
-  await expect(page.locator('.cz-orrery')).toContainText('1 of 11 parts fitted');
+  await expect(page.locator('.cz-orrery')).toContainText('1 of 12 parts fitted');
 });
 
 test('cosmos: a shooting star crosses the stage and can be caught', async ({ page }) => {
@@ -170,7 +177,11 @@ test('cosmos: the Ladder above Transcend, and the Celestial Tree, kept after a r
   // Transcended three times, with the aeons for a first Unravel.
   await seed(page, { ignitesAll: 400, collapsesAll: 40, bangsAll: 12, transcends: 3, transRun: 3, eon: 40, eonRun: 40, eonAll: 40, asc: { twin: 1 } });
   await page.goto('/hangar/cosmos/ladder');
-  await expect(page.locator('.cz-alt')).toContainText('26 more layers');
+  await expect(page.locator('.cz-alt')).toContainText('36 more layers');
+  // Unravel's key (the Second Sun) is met, and its gift is shown.
+  await expect(page.locator('.cz-key')).toContainText('Key · open');
+  await expect(page.locator('.cz-key')).toContainText('Second Sun');
+  await expect(page.locator('.cz-giftbox')).toContainText('Loose Ends');
   // Layer 5 is open; layer 6 isn't reached yet.
   await expect(page.getByRole('button', { name: 'Layer 5: Unravel' })).toHaveAttribute('aria-pressed', 'true');
   await expect(page.getByRole('button', { name: 'Layer 6: not reached' })).toBeDisabled();
@@ -183,12 +194,21 @@ test('cosmos: the Ladder above Transcend, and the Celestial Tree, kept after a r
   await expect(page.locator('.cz-count__era')).toContainText('Layer 5 · Unravel');
   // The next rung shows up, and the Transcend switch opened.
   await expect(page.getByRole('button', { name: 'Layer 6: Eclipse' })).toBeEnabled();
+  await expect(page.locator('.cz-key')).toHaveCount(0);
+  await expect(page.locator('.cz-giftbox')).toContainText('Lv 1');
+  // Eclipse asks for something else first: shooting stars.
+  await page.getByRole('button', { name: 'Layer 6: Eclipse' }).click();
+  await expect(page.locator('.cz-key')).toContainText('Catch 12 shooting stars');
+  await expect(page.locator('.cz-key')).toContainText('0 of 12');
   await shot(page, 'ladder');
   await rooms(page).getByRole('button', { name: /Auto/ }).click();
   await expect(page.getByRole('switch', { name: 'Transcend' })).toBeEnabled();
 
   // Legacy: cores from what's been done; grow a root.
   await rooms(page).getByRole('button', { name: /Legacy/ }).click();
+  await page.getByRole('tab', { name: /Gifts/ }).click();
+  await expect(page.locator('.cz-gift.is-on')).toHaveCount(1);
+  await page.getByRole('tab', { name: /Tree/ }).click();
   await expect(page.locator('.cz-cores')).toContainText('cores');
   await page.getByRole('button', { name: /^Deep Roots, level 0/ }).click();
   await expect(page.getByRole('button', { name: /^Deep Roots, level 1/ })).toBeVisible();
@@ -198,6 +218,7 @@ test('cosmos: the Ladder above Transcend, and the Celestial Tree, kept after a r
   await page.goto('/hangar/cosmos/ladder');
   await expect(page.locator('.cz-rungroom .cz-layer__n')).toContainText('Done 1 time');
   await rooms(page).getByRole('button', { name: /Legacy/ }).click();
+  await page.getByRole('tab', { name: /Tree/ }).click();
   await expect(page.getByRole('button', { name: /^Deep Roots, level 1/ })).toBeVisible();
 });
 

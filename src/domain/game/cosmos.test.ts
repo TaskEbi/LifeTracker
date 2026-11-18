@@ -87,6 +87,24 @@ import {
   UPS,
   VOIDS,
   wearRelic,
+  rankMult,
+  KEYS,
+  keyMet,
+  giftLv,
+  giftNext,
+  rankOf,
+  renownXp,
+  renownParts,
+  rankNeed,
+  labSlots,
+  masteryOf,
+  masteryMult,
+  masteryTotal,
+  resoGap,
+  needTranscend,
+  eclipseNext,
+  orrMax,
+  frenzyMult,
   type CosmosSave,
 } from './cosmos';
 import { mergeSave, sameData } from './saves';
@@ -122,7 +140,9 @@ describe('the Cosmos: dust', () => {
   });
 
   it('orbit pays over time, and resonance doubles a body at 10, 25, 50 and every 50 after', () => {
-    expect([9, 10, 24, 25, 49, 50, 99, 100, 150].map(resoSteps)).toEqual([0, 1, 1, 2, 2, 3, 3, 4, 5]);
+    expect([9, 10, 24, 25, 49, 50, 99, 100, 150].map((n) => resoSteps(n))).toEqual([0, 1, 1, 2, 2, 3, 3, 4, 5]);
+    // Fold's gift shortens the gap, and never makes it worse.
+    for (const n of [25, 40, 50, 75, 100, 333]) expect(resoSteps(n, 40)).toBeGreaterThanOrEqual(resoSteps(n));
     const s = base({ gens: { net: 10 } });
     expect(orbitRate(s, ext, T0)).toBeCloseTo(10 * 0.2 * 2);
     const { save, away } = settle(s, T0 + 10_000, ext);
@@ -221,10 +241,10 @@ describe('the Cosmos: starting again', () => {
     expect(b.relics).toEqual({ mirror: 2 });
     expect(b.chals).toEqual({ thin: 2 });
     expect(b.bangsAll).toBe(1);
-    const far = { ...b, gal: 3e4, galRun: 2e4, galAll: 2e4, asc: { swift: 1 } };
-    expect(eonGain({ ...far, galRun: 19999 })).toBe(0);
+    const far = { ...b, gal: 3e4, galRun: 3e3, galAll: 3e3, asc: { swift: 1 } };
+    expect(eonGain({ ...far, galRun: 2999 })).toBe(0);
     expect(eonGain(far)).toBe(1);
-    expect(eonGain({ ...far, galRun: 2e6 })).toBe(3);
+    expect(eonGain({ ...far, galRun: 3e5 })).toBe(3);
     const t = transcend(far, T0)!;
     expect(t.eon).toBe(1);
     expect(t.gal).toBe(0);
@@ -233,9 +253,9 @@ describe('the Cosmos: starting again', () => {
     expect(t.worn).toEqual(['mirror']);
     expect(t.asc).toEqual({ swift: 1 });
     expect(t.transcends).toBe(1);
-    // The next Transcend needs 1.8 times the galaxies.
-    expect(eonGain({ ...t, galRun: 3.5e4 })).toBe(0);
-    expect(eonGain({ ...t, galRun: 3.6e4 })).toBe(1);
+    // The next Transcend needs 1.6 times the galaxies.
+    expect(eonGain({ ...t, galRun: 4.7e3 })).toBe(0);
+    expect(eonGain({ ...t, galRun: 4.8e3 })).toBe(1);
     // Memory keeps the void upgrades through a Big Bang.
     expect(bang({ ...s, asc: { memory: 1 } }, T0)!.voids).toEqual({ density: 5 });
   });
@@ -328,7 +348,7 @@ describe('the Cosmos: things to work on', () => {
     const { save, feats } = check(s);
     expect(feats.map((f) => f.id).sort()).toEqual(['life3', 'life6', 'tap100']);
     expect(check(save).feats).toEqual([]);
-    expect(dustMult(save, ext, T0)).toBeCloseTo(1.05 ** 3);
+    expect(dustMult(save, ext, T0)).toBeCloseTo(1.05 ** 3 * rankMult(save));
     expect(new Set(FEATS.map((f) => f.id)).size).toBe(FEATS.length);
   });
 
@@ -463,7 +483,8 @@ describe('the Cosmos: around the layers', () => {
     expect(save.lab).toEqual([]);
     expect(save.shards).toBe(1);
     expect(away!.labs).toEqual(['r_nets']);
-    expect(orbitRate(save, ext, T0) / orbitRate({ ...save, labs: [] }, ext, T0)).toBeCloseTo(2);
+    const noLab = { ...save, labs: [] };
+    expect(orbitRate(save, ext, T0) / rankMult(save) / (orbitRate(noLab, ext, T0) / rankMult(noLab))).toBeCloseTo(2);
     // Faster with the Clockwork; two at once with Twin Scopes.
     const quick = startLab({ ...s, orr: { clock: 5, scope: 1 } }, 'r_nets', T0)!;
     expect(quick.lab[0].end).toBe(T0 + 2.5 * 60_000);
@@ -543,10 +564,14 @@ describe('the Cosmos: the Ladder and what stays', () => {
   const ladderAt = (top: number, over: Partial<CosmosSave> = {}) =>
     base({ transcends: 5, transRun: 2, ladder: Array.from({ length: top - LADDER_FROM + 1 }, (_, i) => ({ c: 100, run: 100, all: 500, nAll: 3, ups: [], at: T0 - 1000 * (i + 1) })), ...over });
 
-  it('there are 30 layers, every rung named once', () => {
-    expect(RUNGS.map((r) => r.n)).toEqual(Array.from({ length: 26 }, (_, i) => i + 5));
-    expect(new Set(RUNGS.map((r) => r.verb)).size).toBe(26);
-    expect(LADDER_TO).toBe(30);
+  it('there are 40 layers, every rung named once, each with a key and a gift of its own', () => {
+    expect(RUNGS.map((r) => r.n)).toEqual(Array.from({ length: 36 }, (_, i) => i + 5));
+    expect(new Set(RUNGS.map((r) => r.verb)).size).toBe(36);
+    expect(new Set(RUNGS.map((r) => r.kanji)).size).toBe(36);
+    expect(new Set(RUNGS.map((r) => r.gift)).size).toBe(36);
+    expect(KEYS.map((k) => k.n)).toEqual(RUNGS.map((r) => r.n));
+    expect(new Set(KEYS.map((k) => k.text)).size).toBe(36);
+    expect(LADDER_TO).toBe(40);
   });
 
   it('Unravel needs ten aeons since it was last done, pays threads and starts everything below again', () => {
@@ -668,10 +693,145 @@ describe('the Cosmos: the Ladder and what stays', () => {
   });
 
   it('nothing on the Ladder becomes infinite', () => {
-    const huge = ladderAt(30, { eonRun: 1e300, dust: 1e300, runDust: 1e300, galRun: 1e300, tree: { root: 30, trunk: 20, canopy: 20 } });
+    const huge = ladderAt(40, { eonRun: 1e300, dust: 1e300, runDust: 1e300, galRun: 1e300, tree: { root: 30, trunk: 20, canopy: 20 } });
     const big = { ...huge, ladder: huge.ladder.map((r) => ({ ...r, run: 1e300, c: 1e300, ups: [20, 10, 8, 10] })) };
-    for (let n = 5; n <= 30; n++) expect(Number.isFinite(rungGain(big, n))).toBe(true);
+    for (let n = 5; n <= 40; n++) expect(Number.isFinite(rungGain(big, n))).toBe(true);
+    const gifted = { ...big, ladder: big.ladder.map((r) => ({ ...r, nAll: 1e9 })) };
+    for (const v of [rateNow(gifted, ext, T0), rungGain(gifted, 40), renownXp(gifted), coresEarned(gifted)]) expect(Number.isFinite(v)).toBe(true);
     for (const v of [rateNow(big, ext, T0), lightGain(big), darkGain(big), galGain(big), eonGain(big)]) expect(Number.isFinite(v)).toBe(true);
     expect(Number.isFinite(settle(big, T0 + 60_000, ext).save.dust)).toBe(true);
+  });
+});
+
+describe('the Cosmos: keys, gifts, Renown and Mastery', () => {
+  const ladderAt = (top: number, over: Partial<CosmosSave> = {}, nAll = 3) =>
+    base({ transcends: 5, transRun: 2, ladder: Array.from({ length: top - LADDER_FROM + 1 }, (_, i) => ({ c: 100, run: 100, all: 500, nAll, ups: [], at: T0 - 1000 * (i + 1) })), ...over });
+  /** A save with rung n ready to climb the first time (the rung below holds plenty). */
+  const readyFor = (n: number, over: Partial<CosmosSave> = {}) => {
+    const s = ladderAt(n - 1, over);
+    return { ...s, ladder: [...s.ladder.map((r, i) => (i === n - 1 - LADDER_FROM ? { ...r, run: rungNeed(n) * 100 } : r)), { c: 0, run: 0, all: 0, nAll: 0, ups: [], at: 0 }] };
+  };
+
+  it('every rung asks for its key the first time, and stays open after', () => {
+    // Unravel: the Second Sun.
+    const u = base({ transcends: 3, eon: 40, eonRun: 40, eonAll: 40 });
+    expect(rungGain(u, 5)).toBeGreaterThanOrEqual(1);
+    expect(keyMet(u, 5, T0)).toBe(false);
+    expect(climb(u, 5, T0)).toBeNull();
+    const done = climb({ ...u, asc: { twin: 1 } }, 5, T0)!;
+    expect(rungOf(done, 5).nAll).toBe(1);
+    // Done once, it stays open whatever happens to the key.
+    expect(keyMet({ ...done, asc: {} }, 5, T0)).toBe(true);
+    // A count: Eclipse wants 12 shooting stars.
+    const e = readyFor(6, { caught: 11 });
+    expect(climb(e, 6, T0)).toBeNull();
+    expect(climb({ ...e, caught: 12 }, 6, T0)).not.toBeNull();
+    // A state at the moment: Nova during a Frenzy; Sunder with nothing worn.
+    const nova = readyFor(7, { caught: 20 });
+    expect(climb(nova, 7, T0)).toBeNull();
+    expect(climb({ ...nova, boosts: { frenzy: T0 + 5000 } }, 7, T0)).not.toBeNull();
+    const sunder = readyFor(18, { relics: { mirror: 1 }, worn: ['mirror'] });
+    expect(climb(sunder, 18, T0)).toBeNull();
+    expect(climb({ ...sunder, worn: [] }, 18, T0)).not.toBeNull();
+    // A challenge: Hush only from inside Lights Out, which may be run again even with every tier done.
+    const hush = readyFor(21, { collapsesAll: 5, chals: { dim: 10 } });
+    expect(climb(hush, 21, T0)).toBeNull();
+    const inside = enterChal(hush, 'dim', T0)!;
+    expect(inside.chal).toBe('dim');
+    expect(check(inside).save.chals.dim).toBe(10);
+    const h = climb(inside, 21, T0)!;
+    expect(rungOf(h, 21).nAll).toBe(1);
+    expect(h.chal).toBeNull();
+    // Unbind: every switch off.
+    const ub = readyFor(39);
+    expect(climb(ub, 39, T0)).toBeNull();
+    const off = Object.fromEntries(['bodies', 'ups', 'nodes', 'ignite', 'voids', 'collapse', 'bang', 'transcend', ...Array.from({ length: 35 }, (_, i) => `L${i + 5}`)].map((k) => [k, false]));
+    expect(climb({ ...ub, auto: off }, 39, T0)).not.toBeNull();
+  });
+
+  it('gifts grow at 1, 10, 100, 1,000 and 10,000 times done, and Aleph lifts the rest', () => {
+    const at = (t: number) => ladderAt(9, {}, t);
+    expect([0, 1, 9, 10, 100, 1000, 1e4, 1e6].map((t) => giftLv(at(t), 9))).toEqual([0, 1, 1, 2, 3, 4, 5, 5]);
+    expect(giftNext(at(3), 9)).toBe(10);
+    expect(giftNext(at(1e4), 9)).toBe(0);
+    const aleph = ladderAt(30, {}, 1e4);
+    expect(giftLv(aleph, 9)).toBe(6);
+    expect(giftLv(aleph, 30)).toBe(5);
+  });
+
+  it('gifts do what they say', () => {
+    // Fold: resonance comes sooner. Crown: more relic hands. Unravel: Transcends need less each time.
+    expect(resoGap(ladderAt(9, {}, 10))).toBe(40);
+    expect(relicSlots(ladderAt(16, {}, 100)) - relicSlots(ladderAt(15, {}, 100))).toBe(2);
+    expect(needTranscend({ ...ladderAt(5, {}, 1), transRun: 2 })).toBeLessThan(needTranscend({ ...base(), transRun: 2 }));
+    // Drift: dust upgrades kept through an Ignite. Weave: the constellation through a Collapse.
+    const d = { ...ladderAt(8), ups: { focus: 3 }, runDust: 1e10 };
+    expect(ignite(d, T0)!.ups).toEqual({ focus: 3 });
+    const w = { ...ladderAt(10), nodes: ['polaris'], lightRun: 1e12, collapsesAll: 0 };
+    expect(collapse(w, T0)!.nodes).toEqual(['polaris']);
+    // Eclipse: every 5th star is five times as strong.
+    const ec = { ...ladderAt(6, {}, 1), caught: 4 };
+    expect(eclipseNext(ec)).toBe(true);
+    expect(eclipseNext({ ...ec, caught: 5 })).toBe(false);
+    const g = catchStar(ec, T0, ext, 0.95);
+    expect(g.gift.name).toMatch(/^Eclipse!/);
+    expect(g.save.shards).toBe(5);
+    // Absolute: every star brings all four.
+    const ab = catchStar(ladderAt(28, {}, 1), T0, ext, 0.95).save;
+    expect(ab.boosts.frenzy).toBeGreaterThan(T0);
+    expect(ab.boosts.rush).toBeGreaterThan(T0);
+    expect(ab.shards).toBeGreaterThan(0);
+    // Gild: a stronger Frenzy. Tessellate: the Orrery goes higher. Unbind: each rung needs less.
+    // (Aleph, done below them, lifts each by one level.)
+    const gild = ladderAt(32, {}, 1);
+    expect(giftLv(gild, 32)).toBe(2);
+    expect(frenzyMult(gild)).toBe(FRENZY + 6);
+    const gears = ORRERY.find((u) => u.id === 'gears')!;
+    expect(orrMax(ladderAt(34, {}, 1), gears)).toBe(gears.max + 4);
+    expect(rungNeed(30, ladderAt(39, {}, 1))).toBeLessThan(rungNeed(30));
+    // Eternity: the alignment's days in a row never break.
+    const et = { ...ladderAt(27, {}, 1), daily: '2026-11-01', dailyRun: 4 };
+    expect(claimDaily(et, '2026-11-15', T0)!.dailyRun).toBe(5);
+  });
+
+  it('Renown is counted, never stored, only grows, and its ranks give perks', () => {
+    expect(rankOf(base())).toBe(0);
+    expect(rankNeed(1)).toBeGreaterThan(0);
+    const s = base({ ignitesAll: 50, collapsesAll: 5, done: ['life3', 'life6'], caught: 10, labs: ['r_nets'] });
+    expect(renownXp(s)).toBe(renownParts(s).reduce((a, p) => a + p.xp, 0));
+    expect(renownXp({ ...s, ignitesAll: 60 })).toBeGreaterThan(renownXp(s));
+    expect(rankMult(s)).toBeCloseTo(1.15 ** rankOf(s));
+    // Rank 25: a third piece of research.
+    const big = ladderAt(20, {}, 1000);
+    expect(rankOf(big)).toBeGreaterThanOrEqual(25);
+    expect(labSlots(big)).toBe(2);
+    // It isn't in the save.
+    expect(Object.keys(base())).not.toContain('rank');
+  });
+
+  it('Mastery grows with bodies ever bought, is kept for good and merges', () => {
+    let s = base({ dust: 1e12, ignitesAll: 1 });
+    s = buyBody(s, 'net', 60)!;
+    expect(s.boughtBy.net).toBe(60);
+    expect(masteryOf(s, 'net')).toBe(1);
+    expect(masteryMult(s, 'net')).toBe(2);
+    // A reset takes the bodies, not the Mastery.
+    const after = ignite({ ...s, runDust: 1e10 }, T0)!;
+    expect(after.gens.net ?? 0).toBeLessThan(60);
+    expect(masteryOf(after, 'net')).toBe(1);
+    expect(masteryOf(base({ boughtBy: { net: 800 } }), 'net')).toBe(5);
+    expect(bodyCost(base({ boughtBy: { net: 800 } }), 'net')).toBeLessThan(bodyCost(base(), 'net'));
+    expect(masteryTotal(base({ boughtBy: { net: 100, comet: 50 } }))).toBe(3);
+    const phone = base({ boughtBy: { net: 500, mill: 70 }, naps: 2 });
+    const m = mergeCosmos(s, phone);
+    expect(m.boughtBy).toEqual({ net: 500, mill: 70 });
+    expect(m.naps).toBe(2);
+    expect(normaliseCosmos(JSON.parse(JSON.stringify(m)), T0).boughtBy).toEqual(m.boughtBy);
+  });
+
+  it('coming back after an hour counts as a nap (Dream’s key)', () => {
+    const s = base({ gens: { net: 1 } });
+    expect(settle(s, T0 + 30 * 60_000, ext).save.naps).toBe(0);
+    expect(settle(s, T0 + 2 * 3600_000, ext).save.naps).toBe(1);
   });
 });

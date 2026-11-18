@@ -27,12 +27,31 @@ describe.skipIf(!env.COSMOS_BOT)('cosmos bot', () => {
     let s = C.freshCosmos(t0);
     const log: string[] = [];
     const seen = new Set<string>();
-    const mark = (k: string, t: number) => {
+    const mark = (k: string, t: number, more = '') => {
       if (seen.has(k)) return;
       seen.add(k);
-      log.push(`${((t - t0) / 3600_000).toFixed(2).padStart(7)} h  ${k}`);
+      log.push(`${((t - t0) / 3600_000).toFixed(2).padStart(7)} h  ${k}${more}`);
     };
     let chalStart = 0;
+    const waiting = new Set<number>();
+    /** Meet a key that is a state for one moment: no relics worn, every switch off. */
+    const openWith = (x: C.CosmosSave, n: number, at: number): C.CosmosSave | null => {
+      if (C.rungOf(x, n).nAll > 0) return null;
+      if (n === 18) {
+        const y = C.climb({ ...x, worn: [] }, n, at);
+        return y && { ...y, worn: x.worn };
+      }
+      if (n === 23) {
+        const y = C.climb(x, C.LADDER_FROM, at);
+        return y && C.climb(y, n, at);
+      }
+      if (n === 39) {
+        const off = Object.fromEntries([...C.AUTO_KEYS, ...Array.from({ length: 35 }, (_, i) => `L${i + 5}`)].map((k) => [k, false]));
+        const y = C.climb({ ...x, auto: off }, n, at);
+        return y && { ...y, auto: x.auto };
+      }
+      return null;
+    };
     let bestRun = 0;
     let coolUntil = 0;
     let nextStar = t0 + 90_000;
@@ -72,7 +91,7 @@ describe.skipIf(!env.COSMOS_BOT)('cosmos bot', () => {
       // Research: the shortest that can start.
       if (!env.NO_LAB) for (const r of [...C.LABS].sort((a, b) => a.mins - b.mins)) s = C.startLab(s, r.id, t) ?? s;
       for (let k = 0; k < (env.NO_ORR ? 0 : 20); k++) {
-        const u = [...C.ORRERY].filter((x) => (s.orr[x.id] ?? 0) < x.max).sort((a, b) => C.levelCost(a, s.orr[a.id] ?? 0) - C.levelCost(b, s.orr[b.id] ?? 0))[0];
+        const u = [...C.ORRERY].filter((x) => (s.orr[x.id] ?? 0) < C.orrMax(s, x)).sort((a, b) => C.levelCost(a, s.orr[a.id] ?? 0) - C.levelCost(b, s.orr[b.id] ?? 0))[0];
         const next = u && C.buyOrr(s, u.id);
         if (!next) break;
         s = next;
@@ -118,13 +137,32 @@ describe.skipIf(!env.COSMOS_BOT)('cosmos bot', () => {
         s = next;
       }
       // The Ladder, highest rung first: climb when it would double what that rung holds, or after a while.
+      // A rung not yet opened needs its key: the bot does what the key asks when the rest is ready.
       let climbed = false;
       for (let n = C.LADDER_TO; n >= C.LADDER_FROM && !climbed; n--) {
         const g = C.rungGain(s, n);
         if (g >= 1 && g >= C.rungOf(s, n).run) {
-          s = C.climb(s, n, t) ?? s;
-          climbed = true;
+          const next = C.climb(s, n, t) ?? openWith(s, n, t);
+          if (next) {
+            s = next;
+            climbed = true;
+          } else waiting.add(n);
         }
+        // A rung whose key is a challenge: its gain shows only inside, so try from there.
+        const k = C.keyOf(n);
+        if (!climbed && k?.chal && C.rungOf(s, n).nAll === 0 && !s.chal && C.rungFeed(s, n) >= C.rungNeed(n, s)) {
+          const inside = C.enterChal(s, k.chal, t);
+          const next = inside && C.climb(inside, n, t);
+          if (next) {
+            s = next;
+            climbed = true;
+          }
+        }
+      }
+      // Dream's key: a perfect player still has to look away for an hour once.
+      if (!CASUAL && waiting.has(14) && s.naps === 0) {
+        t += 3600_000;
+        s = C.settle(s, t, ext).save;
       }
       for (let n = C.LADDER_FROM; n <= C.LADDER_TO; n++) s = C.buyEveryRungUp(s, n) ?? s;
       // Resets: the highest layer that would double what it pays, or after a while.
@@ -150,18 +188,23 @@ describe.skipIf(!env.COSMOS_BOT)('cosmos bot', () => {
       if (relics >= C.RELICS.length) mark('every relic', t);
       for (const n of [1, 2, 5, 10, 20]) if (s.transcends >= n) mark(`Transcend ${n}`, t);
       if (s.asc.bodhi) mark('Enlightenment', t);
-      for (let n = C.LADDER_FROM; n <= C.LADDER_TO; n++) if (C.rungOf(s, n).nAll >= 1) mark(`layer ${n} (${C.rungDef(n)!.verb})`, t);
-      for (const n of [10, 30, 50, 70]) if (s.done.length >= n) mark(`${n} feats`, t);
+      for (const r of [10, 20, 30, 40, 50, 60, 70, 80, 90, 100]) if (C.rankOf(s) >= r) mark(`rank ${r}`, t);
+      for (const m of [10, 50, 100, 150]) if (C.masteryTotal(s) >= m) mark(`mastery ${m}`, t);
+      for (let n = C.LADDER_FROM; n <= C.LADDER_TO; n++) if (C.rungOf(s, n).nAll >= 1) mark(`layer ${n} (${C.rungDef(n)!.verb})`, t, ` · ig ${s.ignitesAll} co ${s.collapsesAll} bb ${s.bangsAll} tr ${s.transcends} un ${C.rungOf(s, 5).nAll} stars ${s.caught} bodies ${Object.values(s.gens).reduce((a, b) => a + b, 0)} trees ${s.gens.tree ?? 0} rank ${C.rankOf(s)} mast ${C.masteryTotal(s)} shards ${s.shardsAll} tiers ${Object.values(s.chals).reduce((a, b) => a + b, 0)}`);
+      for (const n of [10, 30, 50, 70, 90, 100]) if (s.done.length >= n) mark(`${n} feats`, t);
       for (const n of [5, 10, 20]) if (s.labs.length >= n) mark(`${n} research`, t);
       if (s.labs.length >= C.LABS.length) mark('all research', t);
       for (const n of [50, 200, 500]) if (s.shardsAll >= n) mark(`${n} shards earned`, t);
-      if (C.ORRERY.every((u) => (s.orr[u.id] ?? 0) >= u.max)) mark('Orrery complete', t);
+      if (C.ORRERY.every((u) => u.id === 'spring' || (s.orr[u.id] ?? 0) >= u.max)) mark('Orrery complete', t);
       if (env.COSMOS_BOT_LADDER && t - t0 > 12.85 * 3600_000 && t - t0 < 13.2 * 3600_000 && (t - t0) % 60_000 < dt)
         log.push(`${((t - t0) / 3600_000).toFixed(3)}h eonRun ${C.fmt(s.eonRun)} eg ${C.fmt(C.eonGain(s))} alt ${C.fmt(C.altitude(s))} | ` + [5, 6, 7, 8, 9, 10].map((n) => `${n}: c ${C.fmt(C.rungOf(s, n).run)} g ${C.fmt(C.rungGain(s, n))} m ${C.fmt(C.rungMult(s, n))} need ${C.fmt(C.rungNeed(n))} ups ${C.rungOf(s, n).ups.join('/')}`).join(' | '));
       if (env.COSMOS_BOT_EARLY && t - t0 <= 120_000 && (t - t0) % 10_000 === 0) log.push(`${(t - t0) / 1000}s run ${C.fmt(s.runDust)} rate ${C.fmt(C.rateNow(s, ext, t))} tap ${C.fmt(C.tapValue(s, ext, t))} shards ${s.shards} orr ${JSON.stringify(s.orr)} ups ${JSON.stringify(s.ups)} parts ${C.dustParts(s, ext, t).filter((p) => p.mult > 1).map((p) => `${p.name}=${C.fmt(p.mult)}`).join(",")} bounties ${s.bountiesDone}`);
       if (env.COSMOS_BOT_DEBUG && Math.floor((t - dt - t0) / 3600_000) !== Math.floor((t - t0) / 3600_000))
         log.push(`h${Math.round(h)} dust ${C.fmt(s.runDust)} light ${C.fmt(s.lightRun)} lg ${C.fmt(C.lightGain(s))} dark ${C.fmt(s.darkRun)} dg ${C.fmt(C.darkGain(s))} gal ${C.fmt(s.galRun)} gg ${C.fmt(C.galGain(s))} chal ${s.chal} col ${s.collapsesAll} ig ${s.ignitesAll} shards ${s.shardsAll}`);
     }
+    const stuck = [...waiting].filter((n) => C.rungOf(s, n).nAll === 0);
+    if (stuck.length) log.push(`waited on keys: ${stuck.map((n) => `${n} (${C.keyOf(n)?.text})`).join('; ')}`);
+    log.push(`rank ${C.rankOf(s)} (${C.fmt(C.renownXp(s))} xp), mastery ${C.masteryTotal(s)}, gifts ${C.giftsHeld(s)}`);
     log.push(`top ${C.topLayer(s)}, cores ${C.coresEarned(s)}, tree ${JSON.stringify(s.tree)}, ladder ${s.ladder.map((r) => `${r.nAll}:${C.fmt(r.run)}`).join(' ')}`);
     log.push(`transcends ${s.transcends}, eon ${s.eon}/${s.eonAll}, asc ${JSON.stringify(s.asc)}, need ${C.fmt(C.needTranscend(s))}, galRun ${C.fmt(s.galRun)}`);
     log.push(`feats ${s.done.length}/${C.FEATS.length}, research ${s.labs.length}/${C.LABS.length}, shards ${s.shardsAll}, bounties ${s.bountiesDone}, stars ${s.caught}, tiers ${JSON.stringify(s.chals)}, orrery ${JSON.stringify(s.orr)}`);

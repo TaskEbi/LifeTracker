@@ -1128,12 +1128,17 @@
 }
 .cz-rungs {
   display: grid;
-  grid-template-columns: repeat(13, minmax(0, 1fr));
+  grid-template-columns: repeat(12, minmax(0, 1fr));
   gap: 4px;
 }
 @media (max-width: 640px) {
   .cz-rungs {
-    grid-template-columns: repeat(7, minmax(0, 1fr));
+    grid-template-columns: repeat(9, minmax(0, 1fr));
+  }
+}
+@media (max-width: 380px) {
+  .cz-rungs {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
   }
 }
 .cz-rungchip {
@@ -1529,4 +1534,304 @@
   .cz-flash {
     animation: none;
   }
+}
+
+/* ─── Renown on the stage ─── */
+.cz-renown {
+  position: absolute;
+  left: 8px;
+  bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 9px 3px 3px;
+  border: 1px solid rgb(255 226 138 / 0.45);
+  border-radius: 14px;
+  background: rgb(8 6 20 / 0.6);
+  color: #fff;
+  backdrop-filter: blur(3px);
+  cursor: pointer;
+}
+.cz-renown > b {
+  display: grid;
+  place-items: center;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 4px;
+  border-radius: 11px;
+  background: linear-gradient(145deg, #fff3c2, #ffc94d);
+  color: #2a1a00;
+  font: 400 11px/1 'Bungee', var(--f-label);
+}
+.cz-renown > span {
+  display: grid;
+  gap: 2px;
+  min-width: 64px;
+  text-align: left;
+}
+.cz-renown small {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #ffe28a;
+}
+.cz-renown__bar {
+  display: block;
+  height: 3px;
+  overflow: hidden;
+  border-radius: 2px;
+  background: rgb(255 255 255 / 0.18);
+}
+.cz-renown__bar > i {
+  display: block;
+  height: 100%;
+  background: #ffd36b;
+  box-shadow: 0 0 6px #ffd36b;
+}
+
+/* ─── Mastery on a body ─── */
+.cz-bodybox {
+  position: relative;
+  display: grid;
+}
+.cz-mastery {
+  position: absolute;
+  right: -5px;
+  bottom: -4px;
+  display: grid;
+  place-items: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 3px;
+  border: 1px solid var(--surf);
+  border-radius: 9px;
+  background: linear-gradient(145deg, #c9fff0, var(--cz-shard));
+  color: #06261d;
+  font: 400 10px/1 'Bungee', var(--f-label);
+  font-style: normal;
+}
+
+/* ─── a rung's key and gift ─── */
+.cz-key,
+.cz-giftbox {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+  padding: 9px 10px;
+  border: 1px dashed color-mix(in srgb, var(--cz-c) 60%, var(--rule));
+  border-radius: var(--r-2);
+  background: var(--surf);
+}
+.cz-key.is-met,
+.cz-giftbox.is-on {
+  border-style: solid;
+  border-color: var(--cz-c);
+  background:
+    radial-gradient(120% 140% at 0% 50%, color-mix(in srgb, var(--cz-c) 18%, transparent), transparent 60%),
+    var(--surf);
+}
+.cz-key__k,
+.cz-gift__k {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border: 1px solid color-mix(in srgb, var(--cz-c) 55%, var(--rule));
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, color-mix(in srgb, var(--cz-c) 35%, #1a1838), #0b0a1c 72%);
+  color: color-mix(in srgb, var(--cz-c) 70%, #fff);
+  font: 400 20px/1 'RocknRoll One', var(--f-body);
+}
+.cz-key__k {
+  border-radius: 10px;
+}
+.cz-giftbox.is-on .cz-gift__k,
+.cz-gift.is-on .cz-gift__k {
+  box-shadow:
+    0 0 0 2px var(--surf),
+    0 0 0 3px var(--cz-c),
+    0 0 12px var(--cz-c);
+}
+.cz-giftbox .cz-row__t em,
+.cz-row__t b em {
+  color: var(--cz-c);
+  font-style: normal;
+  font-size: 12px;
+}
+.cz-giftbox .cz-row__t > small:not(.cz-row__n),
+.cz-key .cz-row__t > small:not(.cz-row__n) {
+  color: var(--fg-2);
+  font-size: 12.5px;
+  line-height: 1.3;
+}
+
+/* ─── Legacy: tabs, ranks and gifts ─── */
+.cz-tabs {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 4px;
+  padding: 3px;
+  border: 1px solid var(--rule);
+  border-radius: var(--r-2);
+  background: var(--surf);
+}
+.cz-tabs button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  min-height: 36px;
+  padding: 4px 2px;
+  border: 0;
+  border-radius: var(--r-1);
+  background: none;
+  color: var(--fg-2);
+  font-size: 12.5px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.cz-tabs button span {
+  font: 400 15px/1 'RocknRoll One', var(--f-body);
+  color: #ffd36b;
+}
+.cz-tabs button[aria-selected='true'] {
+  background: linear-gradient(180deg, #1c1a3c, #0e0c22);
+  color: #fff;
+  box-shadow: inset 0 0 0 1px rgb(255 211 107 / 0.55);
+}
+.cz-tabs button:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+.cz-tabs button:disabled span {
+  color: var(--fg-2);
+}
+.cz-rank {
+  --cz-c: #ffd36b;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 12px;
+  align-items: center;
+  padding: 12px;
+  border: 1px solid color-mix(in srgb, var(--cz-c) 55%, var(--rule));
+  border-radius: var(--r-2);
+  background:
+    radial-gradient(90% 160% at 0% 50%, color-mix(in srgb, var(--cz-c) 22%, transparent), transparent 62%),
+    linear-gradient(180deg, #14122b, #0b0a1c);
+  color: #fff;
+}
+.cz-rank[data-k='shard'] {
+  --cz-c: var(--cz-shard);
+}
+.cz-rank[data-k='eon'] {
+  --cz-c: var(--cz-eon);
+}
+.cz-rank > span:last-child {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+.cz-rank b {
+  font: 400 16px/1.15 'Bungee', var(--f-label);
+  color: color-mix(in srgb, var(--cz-c) 80%, #fff);
+}
+.cz-rank small {
+  color: rgb(255 255 255 / 0.78);
+  font-size: 12.5px;
+  line-height: 1.35;
+}
+.cz-rank .cz-bar {
+  background: rgb(255 255 255 / 0.14);
+}
+.cz-rank__n {
+  display: grid;
+  place-items: center;
+  min-width: 54px;
+  height: 54px;
+  padding: 0 6px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #fff8d6, var(--cz-c) 55%, color-mix(in srgb, var(--cz-c) 50%, #000));
+  color: #1d1300;
+  font: 400 20px/1 'Bungee', var(--f-label);
+  box-shadow: 0 0 18px -2px var(--cz-c);
+}
+.cz-perks {
+  --cz-c: #ffd36b;
+}
+.cz-gifts {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 6px;
+}
+.cz-gift {
+  --cz-c: var(--fg-2);
+  display: grid;
+  align-content: start;
+  gap: 3px;
+  padding: 10px;
+  border: 1px dashed var(--rule);
+  border-radius: var(--r-2);
+  background: var(--surf);
+}
+.cz-gift.is-on {
+  border-style: solid;
+  border-color: var(--cz-c);
+  background:
+    radial-gradient(120% 90% at 50% 0%, color-mix(in srgb, var(--cz-c) 20%, transparent), transparent 65%),
+    var(--surf);
+}
+.cz-gift.is-shut {
+  opacity: 0.5;
+}
+.cz-gift .cz-gift__k {
+  margin-bottom: 3px;
+}
+.cz-gift:not(.is-on) .cz-gift__k {
+  filter: grayscale(0.8);
+  opacity: 0.7;
+}
+.cz-gift b {
+  font-size: 13.5px;
+}
+.cz-gift small {
+  color: var(--fg-2);
+  font-size: 12px;
+  line-height: 1.3;
+}
+.cz-gift__l {
+  color: var(--cz-c) !important;
+  font-weight: 700;
+}
+.cz-rungchip[data-gift]::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: 2px;
+  width: 12px;
+  height: 2px;
+  translate: -50% 0;
+  border-radius: 1px;
+  background: var(--cz-c);
+}
+.cz-traits {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 2px;
+}
+.cz-traits i {
+  padding: 1px 7px;
+  border: 1px dashed var(--rule);
+  border-radius: 9px;
+  color: var(--fg-2);
+  font-size: 11px;
+  font-style: normal;
+  font-weight: 700;
+}
+.cz-traits i.is-on {
+  border-style: solid;
+  border-color: var(--cz-shard);
+  color: var(--cz-shard);
 }
