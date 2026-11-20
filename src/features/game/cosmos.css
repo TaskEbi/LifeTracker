@@ -326,12 +326,12 @@
 /* ─── rooms ─── */
 .cz-rooms {
   display: grid;
-  grid-template-columns: repeat(6, minmax(0, 1fr));
+  grid-template-columns: repeat(7, minmax(0, 1fr));
   gap: 5px;
 }
 @media (max-width: 520px) {
   .cz-rooms {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(5, minmax(0, 1fr));
   }
 }
 .cz-room {
@@ -1297,6 +1297,41 @@
   background: rgb(0 40 60 / 0.55);
   color: #c9f8ff;
   box-shadow: 0 0 10px rgb(120 230 255 / 0.45);
+}
+.cz-buff.is-potion {
+  border-color: #d58bff;
+  background: rgb(46 10 60 / 0.6);
+  color: #f1d6ff;
+  box-shadow: 0 0 10px rgb(200 120 255 / 0.45);
+}
+
+/* ─── calling a star ─── */
+.cz-call {
+  position: absolute;
+  right: 8px;
+  bottom: 8px;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 32px;
+  padding: 4px 10px;
+  border: 1px solid #ffd36b;
+  border-radius: 16px;
+  background: rgb(30 22 0 / 0.6);
+  color: #ffe9a8;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.cz-call span {
+  color: #fff6c4;
+  text-shadow: 0 0 6px #ffd36b;
+}
+.cz-call:disabled {
+  opacity: 0.45;
+  cursor: default;
 }
 @keyframes cz-buff {
   50% {

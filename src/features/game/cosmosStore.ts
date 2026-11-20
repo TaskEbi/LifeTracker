@@ -11,8 +11,15 @@ import { commit, data, type DataState } from '../../data/store';
 import { toast } from '../../data/ui';
 import type { LtRecord } from '../../data/types';
 import {
+  applyGrants,
   autoStep,
   bang,
+  bottledHour,
+  buyAllPotions,
+  buyPotion,
+  callStar,
+  catalyst,
+  potionById,
   buyAllBodies,
   buyAsc,
   buyBody,
@@ -98,6 +105,8 @@ export interface Star {
   /** How far down the stage it crosses, 0–1, and which way. */
   top: number;
   left: boolean;
+  /** Paid for: it brings no shards. */
+  called?: boolean;
 }
 
 interface Live {
@@ -125,6 +134,8 @@ let nextStar = 0;
 
 /** When the next shooting star comes: around the average gap, never quite the same. */
 const planStar = (s: CosmosSave, now: number) => now + starGap(s) * 1000 * (0.6 + 0.8 * Math.random());
+
+const newStar = (now: number, called = false): Star => ({ id: ++starN, born: now, top: 0.12 + Math.random() * 0.5, left: Math.random() < 0.5, called });
 
 const rowOf = (st: DataState) => {
   const r = st.lt_records.get(COSMOS_ROW);
@@ -188,7 +199,7 @@ function load() {
   const row = rowOf(st);
   const now = Date.now();
   const ext = extNow();
-  const settled = settle(normaliseCosmos(row?.data, now), now, ext);
+  const settled = settle(applyGrants(normaliseCosmos(row?.data, now)), now, ext);
   const away = settled.away;
   const save = fillBoard(settled.save, rateNow(settled.save, ext, now));
   written = row ? { row, save: normaliseCosmos(row.data, NO_CLAMP) } : null;
@@ -237,7 +248,7 @@ function tick() {
   // Shooting stars: one at a time, gone if not caught in time.
   if (live.star && now - live.star.born > STAR_LIFE) cosmos.set({ star: null });
   else if (!live.star && now >= nextStar && document.visibilityState === 'visible') {
-    cosmos.set({ star: { id: ++starN, born: now, top: 0.12 + Math.random() * 0.5, left: Math.random() < 0.5 } });
+    cosmos.set({ star: newStar(now) });
     nextStar = planStar(save, now) + STAR_LIFE;
   }
   if (save === live.save) return;
@@ -335,10 +346,55 @@ export function catchShootingStar(): Gift | null {
   if (!live.ready || !live.star) return null;
   const now = Date.now();
   const ext = extNow();
-  const { save, gift } = catchStar(settle(live.save, now, ext).save, now, ext, Math.random());
+  const { save, gift } = catchStar(settle(live.save, now, ext).save, now, ext, Math.random(), !!live.star.called);
+  // The next one is planned from the catch, so stars come as often as they're caught.
+  nextStar = Math.min(nextStar, planStar(save, now));
   put(save, { star: null, flash: { n: ++flashN, layer: 0, text: `${gift.name}! ${gift.text}` } });
   return gift;
 }
+
+/** Pay a shard for a shooting star now (not while one is already crossing). */
+export function summonStar(): boolean {
+  const live = cosmos.get();
+  if (!live.ready || live.star) return false;
+  const now = Date.now();
+  return act((s) => callStar(s), { star: newStar(now, true) });
+}
+
+/** Drink a potion. One that brings stars sooner brings the next one sooner too. */
+export function drinkPotion(id: string): boolean {
+  const ok = act((s, now) => buyPotion(s, id, now));
+  if (!ok) return false;
+  const p = potionById(id);
+  if (p) cosmos.set({ flash: { n: ++flashN, layer: 0, text: `${p.name}: ${p.blurb.replace(/\.$/, '')} for ${p.mins} minute${p.mins === 1 ? '' : 's'}` } });
+  nextStar = Math.min(nextStar, planStar(cosmos.get().save, Date.now()));
+  persist();
+  return true;
+}
+
+export function drinkEveryPotion(): boolean {
+  const ok = act((s, now) => buyAllPotions(s, now));
+  if (!ok) return false;
+  cosmos.set({ flash: { n: ++flashN, layer: 0, text: 'Every potion at once!' } });
+  nextStar = Math.min(nextStar, planStar(cosmos.get().save, Date.now()));
+  persist();
+  return true;
+}
+
+/** An hour of dust at once. */
+export function openBottledHour(): boolean {
+  let got = 0;
+  const ok = act((s, now) => {
+    const r = bottledHour(s, now, extNow());
+    got = r?.dust ?? 0;
+    return r?.save ?? null;
+  });
+  if (ok) cosmos.set({ flash: { n: ++flashN, layer: 0, text: `Bottled Hour: +${fmt(got)} dust` } });
+  return ok;
+}
+
+/** Every piece of research running, an hour nearer done. */
+export const applyCatalyst = () => act((s, now) => catalyst(s, now)) && (persist(), true);
 
 /** Today's alignment, if it hasn't been claimed. */
 export function claimAlignment(): boolean {

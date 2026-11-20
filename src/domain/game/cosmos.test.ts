@@ -1,5 +1,19 @@
 import { describe, expect, it } from 'vitest';
 import {
+  ALL_POTIONS_COST,
+  applyGrants,
+  bottledHour,
+  buyAllPotions,
+  buyPotion,
+  CALL_COST,
+  callStar,
+  catalyst,
+  HOUR_COST,
+  POTIONS,
+  potionById,
+  potionOn,
+  speed,
+  STAR_GAP,
   ASCS,
   autoOn,
   autoStep,
@@ -833,5 +847,80 @@ describe('the Cosmos: keys, gifts, Renown and Mastery', () => {
     const s = base({ gens: { net: 1 } });
     expect(settle(s, T0 + 30 * 60_000, ext).save.naps).toBe(0);
     expect(settle(s, T0 + 2 * 3600_000, ext).save.naps).toBe(1);
+  });
+});
+
+describe('the Cosmos: the Apothecary', () => {
+  it('a potion costs shards, multiplies for its time, and another bottle adds as long again', () => {
+    const s = base({ shards: 10, gens: { net: 10 } });
+    expect(buyPotion(base({ shards: 0 }), 'p_dust', T0)).toBeNull();
+    const a = buyPotion(s, 'p_dust', T0)!;
+    expect(a.shards).toBe(9);
+    expect(orbitRate(a, ext, T0 + 1000) / orbitRate(s, ext, T0 + 1000)).toBeCloseTo(potionById('p_dust')!.mult);
+    expect(orbitRate(a, ext, T0 + 10 * 60_000 + 1)).toBeCloseTo(orbitRate(s, ext, T0 + 10 * 60_000 + 1));
+    const b = buyPotion(a, 'p_dust', T0 + 1000)!;
+    expect(b.boosts.p_dust).toBe(T0 + 20 * 60_000);
+    // Time, taps and the layers.
+    const t = buyPotion(s, 'p_time', T0)!;
+    expect(speed(t, T0 + 1) / speed(s, T0 + 1)).toBeCloseTo(5);
+    expect(tapValue(buyPotion(s, 'p_tap', T0)!, ext, T0 + 1) / tapValue(s, ext, T0 + 1)).toBeCloseTo(100);
+    const rich = base({ shards: 10, runDust: 1e12 });
+    expect(lightGain({ ...buyPotion(rich, 'p_light', T0)!, at: T0 + 1 })).toBeGreaterThan(lightGain(rich) * 9);
+    // All at once costs less than one of each.
+    const all = buyAllPotions(base({ shards: ALL_POTIONS_COST }), T0)!;
+    expect(all.shards).toBe(0);
+    for (const p of POTIONS) expect(potionOn(all, p.id, T0 + 1)).toBe(true);
+    expect(ALL_POTIONS_COST).toBeLessThan(POTIONS.reduce((n, p) => n + p.cost, 0));
+  });
+
+  it('time away counts a potion only while it was working', () => {
+    const s = base({ gens: { net: 10 }, at: T0 });
+    const plain = settle(s, T0 + 3_600_000, ext).save.dust;
+    const brewed = settle({ ...s, boosts: { p_dust: T0 + 600_000 } }, T0 + 3_600_000, ext).save.dust;
+    // Ten minutes of the hour at ×25: (50 + 25 × 10) / 60 of what it would be.
+    expect(brewed / plain).toBeCloseTo((50 + 25 * 10) / 60, 1);
+  });
+
+  it('stars come more often, can be called, and called or lured ones bring no shards', () => {
+    const s = base({ shards: 5 });
+    expect(starGap(s)).toBe(STAR_GAP);
+    expect(starGap(buyPotion(s, 'p_bait', T0)!, T0 + 1)).toBeCloseTo(STAR_GAP / 5);
+    expect(starGap(buyPotion(s, 'p_shower', T0)!, T0 + 1)).toBeLessThan(3);
+    expect(callStar(s)!.shards).toBe(5 - CALL_COST);
+    expect(callStar(base())).toBeNull();
+    expect(catchStar(s, T0, ext, 0.99).gift.k).toBe('shard');
+    expect(catchStar(s, T0, ext, 0.99, true).gift.k).not.toBe('shard');
+    expect(catchStar(buyPotion(s, 'p_bait', T0)!, T0 + 1, ext, 0.99).gift.k).not.toBe('shard');
+  });
+
+  it('a Bottled Hour pays an hour of dust, and a Catalyst brings research an hour nearer', () => {
+    const s = base({ shards: 5, gens: { net: 10 } });
+    const h = bottledHour(s, T0, ext)!;
+    expect(h.save.shards).toBe(5 - HOUR_COST);
+    expect(h.dust).toBeCloseTo(rateNow(s, ext, T0) * 3600 + 1000);
+    expect(catalyst(s, T0)).toBeNull();
+    const lab = { ...s, ignitesAll: 1, lab: [{ id: 'r_nets', end: T0 + 30 * 60_000 }, { id: 'r_tap', end: T0 + 3 * 3_600_000 }] };
+    const c = catalyst(lab, T0)!;
+    expect(c.labs).toContain('r_nets');
+    expect(c.lab).toEqual([{ id: 'r_tap', end: T0 + 2 * 3_600_000 }]);
+  });
+
+  it('the gift of shards is given once, read back, and survives merging with a copy that never had it', () => {
+    const s = base({ shards: 3, shardsAll: 3 });
+    const g = applyGrants(s);
+    expect(g.shards).toBe(100_003);
+    expect(g.shardsAll).toBe(3);
+    expect(applyGrants(g)).toBe(g);
+    const back = normaliseCosmos(JSON.parse(JSON.stringify({ ...g, boosts: { p_dust: T0 + 5000 } })), T0);
+    expect(back.fixes).toEqual(['gift-100k-shards']);
+    expect(back.boosts.p_dust).toBe(T0 + 5000);
+    // The other device is further along but never had the gift: it isn't lost.
+    const phone = base({ ignitesAll: 3, shards: 7 });
+    const m = mergeCosmos(g, phone);
+    expect(m.shards).toBe(100_007);
+    expect(m.fixes).toEqual(['gift-100k-shards']);
+    expect(mergeCosmos(phone, g).shards).toBe(100_007);
+    // Both had it: given once.
+    expect(mergeCosmos(applyGrants(phone), g).shards).toBe(100_007);
   });
 });

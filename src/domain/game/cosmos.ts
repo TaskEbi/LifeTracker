@@ -141,6 +141,8 @@ export interface CosmosSave {
   daily: string;
   dailyRun: number;
   dailyAll: number;
+  /** One-off gifts and repairs already applied (see GRANTS). */
+  fixes: string[];
 }
 
 /** One rung of the Ladder. */
@@ -180,7 +182,7 @@ export function freshCosmos(now: number): CosmosSave {
     ladder: [], peaks: {}, tree: {},
     auto: {},
     life: 0, taps: 0, crits: 0, ignitesAll: 0, collapsesAll: 0, bangsAll: 0, transcends: 0, lightAll: 0, darkAll: 0, galAll: 0, done: [], best: 0,
-    shards: 0, shardsAll: 0, orr: {}, boosts: {}, caught: 0, bought: 0, boughtBy: {}, naps: 0, lab: [], labs: [], bounties: [], bountyN: 0, bountiesDone: 0, swapAt: 0, daily: '', dailyRun: 0, dailyAll: 0,
+    shards: 0, shardsAll: 0, orr: {}, boosts: {}, caught: 0, bought: 0, boughtBy: {}, naps: 0, lab: [], labs: [], bounties: [], bountyN: 0, bountiesDone: 0, swapAt: 0, daily: '', dailyRun: 0, dailyAll: 0, fixes: [],
   };
 }
 
@@ -451,15 +453,100 @@ const BODY_LAB: Record<string, string> = { net: 'r_nets', comet: 'r_nets', mill:
 
 /** How long one stays in the sky. */
 export const STAR_LIFE = 12_000;
-export const starFreq = (s: CosmosSave) => (1 + 0.15 * lvOf(s.orr, 'lode')) * (hasLab(s, 'r_comet') ? 1.25 : 1) * (1 + 0.2 * worn(s, 'lure')) * (lvOf(s.asc, 'rain') ? 2 : 1) * (perk(s, 8) ? 1.25 : 1);
+export const starFreq = (s: CosmosSave, now = s.at) => (1 + 0.15 * lvOf(s.orr, 'lode')) * (hasLab(s, 'r_comet') ? 1.25 : 1) * (1 + 0.2 * worn(s, 'lure')) * (lvOf(s.asc, 'rain') ? 2 : 1) * (perk(s, 8) ? 1.25 : 1) * pot(s, 'p_bait', now) * pot(s, 'p_shower', now);
+/** Seconds between shooting stars, on average, before anything makes them come more often. */
+export const STAR_GAP = 45;
 /** Seconds between shooting stars, on average. */
-export const starGap = (s: CosmosSave) => 150 / starFreq(s);
+export const starGap = (s: CosmosSave, now = s.at) => STAR_GAP / starFreq(s, now);
 export const giftLen = (s: CosmosSave) => (1 + 0.25 * lvOf(s.orr, 'tail')) * (1 + 0.25 * worn(s, 'lure'));
 export const FRENZY = 3;
 /** What a Frenzy multiplies dust by (Gild's gift makes it more). */
 export const frenzyMult = (s: CosmosSave) => FRENZY + 3 * giftLv(s, 32);
 export const RUSH = 10;
 export const boostOn = (s: CosmosSave, k: 'frenzy' | 'rush', now: number) => (s.boosts[k] ?? 0) > now;
+
+// ─── the Apothecary (potions bought with shards: big boosts for a while) ────
+
+export interface Potion {
+  id: string;
+  name: string;
+  kanji: string;
+  blurb: string;
+  /** Shards a bottle. */
+  cost: number;
+  /** How long a bottle lasts; another adds as long again. */
+  mins: number;
+  mult: number;
+}
+
+export const POTIONS: Potion[] = [
+  { id: 'p_dust', name: 'Stardust Tonic', kanji: '塵', blurb: 'Dust ×25.', cost: 1, mins: 10, mult: 25 },
+  { id: 'p_tap', name: 'Iron Grip', kanji: '拳', blurb: 'Taps ×100, and the auto-tapper 5 times as fast.', cost: 1, mins: 10, mult: 100 },
+  { id: 'p_time', name: 'Hourglass Draught', kanji: '砂', blurb: 'Time runs 5 times as fast.', cost: 2, mins: 10, mult: 5 },
+  { id: 'p_light', name: 'Bottled Starlight', kanji: '光', blurb: 'Starlight ×10.', cost: 2, mins: 10, mult: 10 },
+  { id: 'p_dark', name: 'Void Brew', kanji: '闇', blurb: 'Dark matter ×10.', cost: 3, mins: 10, mult: 10 },
+  { id: 'p_gal', name: 'Nebula Wine', kanji: '銀', blurb: 'Galaxies ×10.', cost: 4, mins: 10, mult: 10 },
+  { id: 'p_eon', name: 'Aeon Nectar', kanji: '劫', blurb: 'Aeons and every rung of the Ladder ×5.', cost: 5, mins: 10, mult: 5 },
+  { id: 'p_bait', name: 'Comet Bait', kanji: '餌', blurb: 'Shooting stars come 5 times as often.', cost: 1, mins: 10, mult: 5 },
+  { id: 'p_shower', name: 'Meteor Shower', kanji: '雨', blurb: 'A shooting star every couple of seconds.', cost: 2, mins: 1, mult: 25 },
+];
+export const potionById = (id: string) => POTIONS.find((p) => p.id === id);
+/** Every potion at once costs this many shards (a fifth off). */
+export const ALL_POTIONS_COST = Math.floor(POTIONS.reduce((n, p) => n + p.cost, 0) * 0.8);
+export const potionOn = (s: CosmosSave, id: string, now: number) => (s.boosts[id] ?? 0) > now;
+/** What a potion multiplies by: its number while it's working, else 1. */
+const pot = (s: CosmosSave, id: string, now: number) => (potionOn(s, id, now) ? potionById(id)?.mult ?? 1 : 1);
+
+function addPotion(s: CosmosSave, p: Potion, now: number): CosmosSave {
+  return { ...s, boosts: { ...live(s.boosts, now), [p.id]: Math.max(s.boosts[p.id] ?? 0, now) + p.mins * 60_000 } };
+}
+
+/** Drink a potion: it works for its time (or that much longer, if one is working already). */
+export function buyPotion(s: CosmosSave, id: string, now: number): CosmosSave | null {
+  const p = potionById(id);
+  if (!p || s.shards < p.cost) return null;
+  return addPotion({ ...s, shards: s.shards - p.cost }, p, now);
+}
+
+/** Every potion at once. */
+export function buyAllPotions(s: CosmosSave, now: number): CosmosSave | null {
+  if (s.shards < ALL_POTIONS_COST) return null;
+  return POTIONS.reduce((x, p) => addPotion(x, p, now), { ...s, shards: s.shards - ALL_POTIONS_COST });
+}
+
+export const CALL_COST = 1;
+/** Pay for a shooting star now (the stage puts it up). Stars you call or lure never bring shards. */
+export const callStar = (s: CosmosSave): CosmosSave | null => (s.shards < CALL_COST ? null : { ...s, shards: s.shards - CALL_COST });
+
+export const HOUR_COST = 2;
+/** A Bottled Hour: an hour of dust at once, at the rate without boosts. */
+export function bottledHour(s: CosmosSave, now: number, ext: Ext): { save: CosmosSave; dust: number } | null {
+  if (s.shards < HOUR_COST) return null;
+  const dust = fin(rateNow({ ...s, boosts: {} }, ext, now) * 3600 + 1000);
+  return { save: addDust({ ...s, shards: s.shards - HOUR_COST }, dust), dust };
+}
+
+export const CATALYST_COST = 2;
+/** A Catalyst: every piece of research running is an hour nearer done. */
+export function catalyst(s: CosmosSave, now: number): CosmosSave | null {
+  if (s.shards < CATALYST_COST || !s.lab.length) return null;
+  return finishLabs({ ...s, shards: s.shards - CATALYST_COST, lab: s.lab.map((l) => ({ ...l, end: l.end - 3_600_000 })) }, now);
+}
+
+// ─── gifts (one-off, each counted in `fixes` so it is given once) ───────────
+
+export const GRANTS: { id: string; shards: number }[] = [{ id: 'gift-100k-shards', shards: 100_000 }];
+
+/** Give any gift this save hasn't had. */
+export function applyGrants(s: CosmosSave): CosmosSave {
+  let next = s;
+  for (const g of GRANTS) {
+    if (next.fixes.includes(g.id)) continue;
+    // In hand only: a gift isn't shards earned, so it opens no feats or Renown.
+    next = { ...next, shards: fin(next.shards + g.shards), fixes: [...next.fixes, g.id] };
+  }
+  return next;
+}
 
 export interface Gift {
   k: 'frenzy' | 'windfall' | 'rush' | 'shard';
@@ -660,7 +747,7 @@ export const lift = (x: number) => 1 + Math.log10(1 + x);
 
 /** Everything that multiplies what layer n pays (n ≥ 4: aeons and the Ladder). */
 function climbMult(s: CosmosSave, n: number): number {
-  let m = echo(s, n) * 1.5 ** lvOf(s.tree, 'trunk') * altitude(s) * (1 + giftLv(s, 40));
+  let m = echo(s, n) * 1.5 ** lvOf(s.tree, 'trunk') * altitude(s) * (1 + giftLv(s, 40)) * pot(s, 'p_eon', s.at);
   if (n >= LADDER_FROM) m *= 1.25 ** rungUp(s, n, 3) * (rungMile(s, n, 5) ? 2 : 1) * (perk(s, 60) ? 3 : 1) * (perk(s, 110) ? 10 : 1);
   else m *= (perk(s, 50) ? 3 : 1) * (perk(s, 120) ? 100 : 1);
   if (n < LADDER_TO) {
@@ -1043,7 +1130,7 @@ export const lifeMult = (e: Ext) => (1 + 0.15 * Math.max(0, e.sections)) * (1 + 
 /** A constellation star that is lit and doing something (they all go dark in Lights Out). */
 const lit = (s: CosmosSave, id: string) => !inChal(s, 'dim') && s.nodes.includes(id);
 
-export const speed = (s: CosmosSave) => fin(1.2 ** lvOf(s.voids, 'dilate') * 1.5 ** worn(s, 'glass') * 1.5 ** lvOf(s.asc, 'swift') * 1.15 ** chalPow(s, 'decay') * (mile(s, 4, 5) ? 2 : 1) * 1.25 ** hastes(s) * 1.5 ** lvOf(s.tree, 'bark') * (1 + 0.25 * giftLv(s, 17)) * (perk(s, 45) ? 1.5 : 1) * (perk(s, 90) ? 2 : 1));
+export const speed = (s: CosmosSave, now = s.at) => fin(pot(s, 'p_time', now) * 1.2 ** lvOf(s.voids, 'dilate') * 1.5 ** worn(s, 'glass') * 1.5 ** lvOf(s.asc, 'swift') * 1.15 ** chalPow(s, 'decay') * (mile(s, 4, 5) ? 2 : 1) * 1.25 ** hastes(s) * 1.5 ** lvOf(s.tree, 'bark') * (1 + 0.25 * giftLv(s, 17)) * (perk(s, 45) ? 1.5 : 1) * (perk(s, 90) ? 2 : 1));
 
 /** What each doubling at 10 and every 25 of a body is really worth. */
 export const resonance = (s: CosmosSave, id?: string) => (lit(s, 'harmony') ? 2.25 : 2) + 0.15 * chalPow(s, 'lone') + 0.25 * worn(s, 'fork') + (hasLab(s, 'r_reso') ? 0.05 : 0) + (id && masteryOf(s, id) >= 10 ? 0.25 : 0);
@@ -1093,6 +1180,7 @@ export function dustParts(s: CosmosSave, ext: Ext, now: number): Part[] {
     { name: 'Feats', mult: fin(featMult(s) ** s.done.length) },
     { name: 'Renown', mult: rankMult(s) },
     { name: 'Shooting star (Frenzy)', mult: boostOn(s, 'frenzy', now) ? frenzyMult(s) : 1 },
+    { name: 'Potions', mult: pot(s, 'p_dust', now) },
     { name: 'Orrery', mult: fin(1.35 ** lvOf(s.orr, 'gears') * spring(s)) },
     { name: 'Challenges', mult: fin(3 ** chalPow(s, 'cost')) },
     { name: 'Dust upgrades', mult: fin(ups) },
@@ -1132,19 +1220,19 @@ export const critMult = (s: CosmosSave) => (lit(s, 'flare') ? 40 : 10) * 5 ** wo
 /** Dust from one tap. */
 export function tapValue(s: CosmosSave, ext: Ext, now: number, crit = false): number {
   if (inChal(s, 'hands')) return 0;
-  const hand = 2 ** lvOf(s.ups, 'focus') * (lit(s, 'kindle') ? 5 : 1) * 10 ** lvOf(s.voids, 'touch') * 10 ** worn(s, 'metro') * (hasLab(s, 'r_tap') ? 5 : 1) * 10 ** chalPow(s, 'frail') * (boostOn(s, 'rush', now) ? RUSH : 1);
+  const hand = 2 ** lvOf(s.ups, 'focus') * (lit(s, 'kindle') ? 5 : 1) * 10 ** lvOf(s.voids, 'touch') * 10 ** worn(s, 'metro') * (hasLab(s, 'r_tap') ? 5 : 1) * 10 ** chalPow(s, 'frail') * (boostOn(s, 'rush', now) ? RUSH : 1) * pot(s, 'p_tap', now);
   const v = shape(s, hand * dustMult(s, ext, now), now) + 0.03 * lvOf(s.ups, 'tide') * orbitRate(s, ext, now);
   return fin(v * (crit ? critMult(s) : 1));
 }
 
 /** Taps a second the auto-tapper makes. */
-export const autoTaps = (s: CosmosSave) => (mile(s, 1, 2) && !inChal(s, 'hands') ? 5 * (lit(s, 'pulse') ? 4 : 1) * (worn(s, 'metro') ? 3 : 1) * 2 ** lvOf(s.voids, 'arc') * (hasLab(s, 'r_auto') ? 3 : 1) : 0);
+export const autoTaps = (s: CosmosSave, now = s.at) => (mile(s, 1, 2) && !inChal(s, 'hands') ? 5 * (lit(s, 'pulse') ? 4 : 1) * (worn(s, 'metro') ? 3 : 1) * 2 ** lvOf(s.voids, 'arc') * (hasLab(s, 'r_auto') ? 3 : 1) * (potionOn(s, 'p_tap', now) ? 5 : 1) : 0);
 
 /** Dust a second, all told: orbit and auto-tapper, at the speed time runs. */
 export function rateNow(s: CosmosSave, ext: Ext, now: number): number {
-  const taps = autoTaps(s);
+  const taps = autoTaps(s, now);
   const tap = taps ? tapValue(s, ext, now) * (1 + critChance(s) * (critMult(s) - 1)) * taps : 0;
-  return fin((orbitRate(s, ext, now) + tap) * speed(s));
+  return fin((orbitRate(s, ext, now) + tap) * speed(s, now));
 }
 
 // ─── what each layer would pay ──────────────────────────────────────────────
@@ -1158,17 +1246,17 @@ export function lightMult(s: CosmosSave): number {
   let m = (lit(s, 'prism') ? 2 : 1) * (lit(s, 'spectrum') ? 3 : 1) * (lit(s, 'corona') ? 5 : 1) * (lit(s, 'zenith') ? 10 : 1) * (mile(s, 1, 25) ? 1.5 : 1) * (mile(s, 1, 200) ? 3 : 1);
   m *= 1.25 ** lvOf(s.orr, 'grind') * (hasLab(s, 'r_light') ? 1.5 : 1);
   m *= 2 ** lvOf(s.voids, 'lumin') * (1 + s.galRun) ** 0.25 * 5 ** worn(s, 'chart') * (1 + s.eonRun) ** 2 * 2 ** chalPow(s, 'thin');
-  m *= ladderLift(s) * 10 ** lvOf(s.tree, 'canopy') * echo(s, 1) * layerGifts(s) * (perk(s, 20) ? 10 : 1);
+  m *= ladderLift(s) * 10 ** lvOf(s.tree, 'canopy') * echo(s, 1) * layerGifts(s) * (perk(s, 20) ? 10 : 1) * pot(s, 'p_light', s.at);
   return fin(m);
 }
 export const lightGain = (s: CosmosSave) => (s.runDust < NEED.ignite ? 0 : fin(Math.floor((s.runDust / NEED.ignite) ** LIGHT_EXP * lightMult(s))));
 
 export function darkMult(s: CosmosSave): number {
-  return fin(layerGifts(s) * (1 + giftLv(s, 15)) * (perk(s, 30) ? 10 : 1) * ladderLift(s) * 10 ** lvOf(s.tree, 'canopy') * echo(s, 2) * 1.5 ** lvOf(s.voids, 'energy') * (lit(s, 'horizon') ? 3 : 1) * (mile(s, 2, 15) ? 2 : 1) * (mile(s, 2, 50) ? 3 : 1) * 2 ** worn(s, 'lantern') * (1 + s.eonRun) * 2 ** chalPow(s, 'dim') * 1.3 ** lvOf(s.orr, 'well') * (hasLab(s, 'r_dark') ? 1.5 : 1));
+  return fin(pot(s, 'p_dark', s.at) * layerGifts(s) * (1 + giftLv(s, 15)) * (perk(s, 30) ? 10 : 1) * ladderLift(s) * 10 ** lvOf(s.tree, 'canopy') * echo(s, 2) * 1.5 ** lvOf(s.voids, 'energy') * (lit(s, 'horizon') ? 3 : 1) * (mile(s, 2, 15) ? 2 : 1) * (mile(s, 2, 50) ? 3 : 1) * 2 ** worn(s, 'lantern') * (1 + s.eonRun) * 2 ** chalPow(s, 'dim') * 1.3 ** lvOf(s.orr, 'well') * (hasLab(s, 'r_dark') ? 1.5 : 1));
 }
 export const darkGain = (s: CosmosSave) => (s.lightRun < NEED.collapse || s.chal ? 0 : fin(Math.floor((s.lightRun / NEED.collapse) ** 0.2 * darkMult(s))));
 
-export const galMult = (s: CosmosSave) => fin(layerGifts(s) * (perk(s, 40) ? 10 : 1) * ladderLift(s) * 10 ** lvOf(s.tree, 'canopy') * echo(s, 3) * 1.5 ** worn(s, 'crown') * 2 ** lvOf(s.asc, 'rich') * Math.sqrt(1 + s.eonRun) * (mile(s, 3, 40) ? 2 : 1) * 1.25 ** lvOf(s.orr, 'chart') * (hasLab(s, 'r_gal') ? 1.5 : 1));
+export const galMult = (s: CosmosSave) => fin(pot(s, 'p_gal', s.at) * layerGifts(s) * (perk(s, 40) ? 10 : 1) * ladderLift(s) * 10 ** lvOf(s.tree, 'canopy') * echo(s, 3) * 1.5 ** worn(s, 'crown') * 2 ** lvOf(s.asc, 'rich') * Math.sqrt(1 + s.eonRun) * (mile(s, 3, 40) ? 2 : 1) * 1.25 ** lvOf(s.orr, 'chart') * (hasLab(s, 'r_gal') ? 1.5 : 1));
 export const galGain = (s: CosmosSave) => (s.darkRun < NEED.bang || s.chal ? 0 : fin(Math.floor((s.darkRun / NEED.bang) ** 0.2 * galMult(s))));
 
 /** Galaxies a Transcend needs: 1.6 times as many each time it has been done since the last Unravel (Unravel's gift makes it less). */
@@ -1218,9 +1306,20 @@ export function settle(s0: CosmosSave, now: number, ext: Ext): { save: CosmosSav
   const secs = away ? Math.min(gap / 1000, awayHours(s) * 3600) : gap / 1000;
   const eff = away ? awayEff(s) : 1;
   const rate = rateNow(s, ext, now);
-  const dust = rate * secs * eff;
+  // Boosts and potions that wore off part way: each stretch at its own rate, scaled to the time worked.
+  const ends = [...new Set(Object.values(s.boosts).filter((e) => e > s.at && e < now))].sort((x, y) => x - y);
+  let made = 0;
+  let sped = 0;
+  for (let i = 0, from = s.at; i <= ends.length; i++) {
+    const to = i < ends.length ? ends[i] : now;
+    const v: CosmosSave = { ...s, at: now, boosts: Object.fromEntries(Object.entries(s.boosts).map(([k, e]) => [k, e > from ? CAP : 0])) };
+    made += rateNow(v, ext, now) * (to - from);
+    sped += speed(v, now) * (to - from);
+    from = to;
+  }
+  const dust = fin((made / gap) * secs * eff);
   let next = addDust({ ...s, at: now, naps: s.naps + (gap >= NAP_MS ? 1 : 0) }, dust);
-  const t = secs * speed(s);
+  const t = (sped / gap) * secs;
   const light = fin(lightGain(next) * lightDrip(next) * t);
   if (light > 0) next = { ...next, light: fin(next.light + light), lightRun: fin(next.lightRun + light), lightAll: fin(next.lightAll + light) };
   const dark = fin(darkGain(next) * darkDrip(next) * t);
@@ -1388,14 +1487,20 @@ export function stopLab(s: CosmosSave, id: string): CosmosSave | null {
 
 // ─── shooting stars ─────────────────────────────────────────────────────────
 
-/** Catch a shooting star. `roll` in [0, 1) decides the gift. */
 /** The next shooting star is an eclipse (Eclipse's gift): every 5th, then 4th… then every one. */
 export const eclipseNext = (s: CosmosSave) => {
   const g = giftLv(s, 6);
   return g > 0 && (s.caught + 1) % Math.max(1, 6 - g) === 0;
 };
 
-export function catchStar(s: CosmosSave, now: number, ext: Ext, roll: number): { save: CosmosSave; gift: Gift } {
+/**
+ * Catch a shooting star. `roll` in [0, 1) decides the gift. A star that was `called` (paid for), or
+ * came while Comet Bait or a Meteor Shower was working, never brings a shard: shards can't buy more
+ * shards than they cost.
+ */
+export function catchStar(s: CosmosSave, now: number, ext: Ext, roll0: number, called = false): { save: CosmosSave; gift: Gift } {
+  const lured = called || potionOn(s, 'p_bait', now) || potionOn(s, 'p_shower', now);
+  const roll = lured ? roll0 * 0.88 : roll0;
   const eclipse = eclipseNext(s);
   const x = eclipse ? 5 : 1;
   const len = giftLen(s) * x;
@@ -1422,6 +1527,7 @@ export function catchStar(s: CosmosSave, now: number, ext: Ext, roll: number): {
     boost('frenzy', 60);
     boost('rush', 30);
     const dust = windfall();
+    if (lured) return { save: next, gift: { k: 'frenzy', name: `${pre}All three`, text: `Frenzy, Rush and +${fmt(dust)} dust` } };
     const sh = shard();
     return { save: next, gift: { k: 'frenzy', name: `${pre}All four`, text: `Frenzy, Rush, +${fmt(dust)} dust and +${sh} shard${sh === 1 ? '' : 's'}` } };
   }
@@ -1777,7 +1883,7 @@ export function normaliseCosmos(v: unknown, now: number): CosmosSave {
     shards: int(o.shards),
     shardsAll: int(o.shardsAll),
     orr: counts(o.orr, (id) => { const u = ORRERY.find((x) => x.id === id); return u ? u.max + (u.max > 1 ? 2 * GIFT_MAX : 0) : undefined; }),
-    boosts: counts(o.boosts, (id) => (id === 'frenzy' || id === 'rush' || id === 'both' ? CAP : undefined)),
+    boosts: counts(o.boosts, (id) => (id === 'frenzy' || id === 'rush' || id === 'both' || potionById(id) ? CAP : undefined)),
     caught: int(o.caught),
     bought: int(o.bought),
     boughtBy: counts(o.boughtBy, (id) => (bodyById(id) ? CAP : undefined)),
@@ -1791,6 +1897,7 @@ export function normaliseCosmos(v: unknown, now: number): CosmosSave {
     daily: typeof o.daily === 'string' && DAY.test(o.daily) ? o.daily : '',
     dailyRun: int(o.dailyRun),
     dailyAll: int(o.dailyAll),
+    fixes: list(o.fixes, (id) => GRANTS.some((g) => g.id === id)),
   };
   s.lab = readLab(o.lab, s.labs);
   // Orrery parts can go past their top only as far as Tessellate's gift allows.
@@ -1869,7 +1976,12 @@ export function mergeCosmos(x: CosmosSave, y: CosmosSave): CosmosSave {
     bountyN: Math.max(p.bountyN, o.bountyN),
     bountiesDone: Math.max(p.bountiesDone, o.bountiesDone),
     dailyAll: Math.max(p.dailyAll, o.dailyAll),
+    fixes: union(p.fixes, o.fixes),
   };
+  // A gift the other copy had and this one never did: the shards in hand come from this one, so add it.
+  for (const g of GRANTS) {
+    if (o.fixes.includes(g.id) && !p.fixes.includes(g.id)) merged.shards = fin(merged.shards + g.shards);
+  }
   merged.lab = p.lab.filter((l) => !merged.labs.includes(l.id));
   // The alignment: the later day claimed, and its run.
   if (o.daily > p.daily || (o.daily === p.daily && o.dailyRun > p.dailyRun)) {

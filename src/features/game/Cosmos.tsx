@@ -132,10 +132,21 @@ import {
   type Ext,
   type Layer,
   type Levelled,
+  ALL_POTIONS_COST,
+  CALL_COST,
+  CATALYST_COST,
+  HOUR_COST,
+  POTIONS,
+  potionOn,
 } from '../../domain/game/cosmos';
 import { fmtTime } from '../../domain/game/idle';
 import { H2 } from '../../ui/i/bits';
 import {
+  applyCatalyst,
+  drinkEveryPotion,
+  drinkPotion,
+  openBottledHour,
+  summonStar,
   buyEveryRungUpgrade,
   buyRungUpgrade,
   climbRung,
@@ -174,6 +185,7 @@ import './cosmos.css';
 
 const ROOMS = [
   { id: 'orbit', label: 'Orbit', kanji: '軌', layer: 0 },
+  { id: 'shop', label: 'Potions', kanji: '薬', layer: 0 },
   { id: 'stars', label: 'Stars', kanji: '星', layer: 1 },
   { id: 'void', label: 'Void', kanji: '闇', layer: 2 },
   { id: 'galaxies', label: 'Galaxies', kanji: '銀', layer: 3 },
@@ -295,6 +307,8 @@ export default function CosmosTab() {
         <Lab s={s} now={now} />
       ) : room === 'orrery' ? (
         <Orrery s={s} />
+      ) : room === 'shop' ? (
+        <Shop s={s} ext={ext} now={now} />
       ) : room === 'auto' ? (
         <Auto s={s} />
       ) : room === 'log' ? (
@@ -391,10 +405,15 @@ function Stage({ s, ext, now }: { s: CosmosSave; ext: Ext; now: number }) {
           <b aria-hidden="true">{fmt(s.dust)}</b>
         </p>
         <p className="cz-count__r">
-          {fmt(rate)} a second · {fmt(tapValue(s, ext, now))} a tap{speed(s) > 1.001 ? ` · time ×${speed(s).toFixed(2)}` : ''}
+          {fmt(rate)} a second · {fmt(tapValue(s, ext, now))} a tap{speed(s, now) > 1.001 ? ` · time ×${speed(s, now).toFixed(2)}` : ''}
         </p>
-        {(boostOn(s, 'frenzy', now) || boostOn(s, 'rush', now)) && (
+        {(boostOn(s, 'frenzy', now) || boostOn(s, 'rush', now) || POTIONS.some((p) => potionOn(s, p.id, now))) && (
           <p className="cz-buffs">
+            {POTIONS.filter((p) => potionOn(s, p.id, now)).map((p) => (
+              <span key={p.id} className="cz-buff is-potion" title={p.name}>
+                {p.kanji} {p.id === 'p_bait' || p.id === 'p_shower' ? 'stars' : ''} ×{fmt(p.mult)} · {clock((s.boosts[p.id] - now) / 1000)}
+              </span>
+            ))}
             {boostOn(s, 'frenzy', now) && (
               <span className="cz-buff">
                 Frenzy ×{frenzyMult(s)} · {Math.ceil((s.boosts.frenzy - now) / 1000)} s
@@ -429,6 +448,11 @@ function Stage({ s, ext, now }: { s: CosmosSave; ext: Ext; now: number }) {
       </div>
       <ShootingStar />
       <RenownStrip s={s} />
+      {!live.star && (
+        <button type="button" className="cz-call" disabled={s.shards < CALL_COST} onClick={summonStar} aria-label={`Call a shooting star for ${CALL_COST} shard`}>
+          <span aria-hidden="true">✦</span> Call a star · {CALL_COST} 片
+        </button>
+      )}
       {flash && (
         <p key={flash.n} className={`cz-flash${flash.layer ? '' : ' is-gift'}`} data-layer={flash.layer && flash.layer <= 4 ? flash.layer : undefined} style={flash.layer >= LADDER_FROM ? hueOf(flash.layer) : undefined} role="status">
           {flash.text}
@@ -624,7 +648,7 @@ function Purse({ s }: { s: CosmosSave }) {
   if (s.darkAll > 0) shown.push({ k: 'dark', n: s.dark });
   if (s.galAll > 0) shown.push({ k: 'gal', n: s.gal });
   if (s.eonAll > 0) shown.push({ k: 'eon', n: s.eon });
-  if (s.shardsAll > 0) shown.push({ k: 'shard', n: s.shards });
+  if (s.shardsAll > 0 || s.shards > 0) shown.push({ k: 'shard', n: s.shards });
   const top = topLayer(s);
   if (top >= LADDER_FROM) shown.push({ k: 'rung', n: rungOf(s, top).c });
   if (!shown.length) return null;
@@ -1779,6 +1803,102 @@ function Orrery({ s }: { s: CosmosSave }) {
       <p className="i-note">
         Shards come from shooting stars (one about every {Math.round(starGap(s))} seconds while this is open), bounties, research and the daily alignment. Nothing ever resets the Orrery, not even a Transcend.
       </p>
+    </>
+  );
+}
+
+// ─── the Apothecary ─────────────────────────────────────────────────────────
+
+/** 754 → "12:34", 4000 → "1:06:40". */
+const clock = (secs: number) => {
+  const t = Math.max(0, Math.ceil(secs));
+  const h = Math.floor(t / 3600);
+  const m = Math.floor((t % 3600) / 60);
+  const x = String(t % 60).padStart(2, '0');
+  return h ? `${h}:${String(m).padStart(2, '0')}:${x}` : `${m}:${x}`;
+};
+
+function Shop({ s, ext, now }: { s: CosmosSave; ext: Ext; now: number }) {
+  const star = useCosmos().star;
+  const hour = rateNow({ ...s, boosts: {} }, ext, now) * 3600;
+  return (
+    <>
+      <H2
+        aside={
+          <button type="button" className="i-btn i-btn--sm i-btn--sig" disabled={s.shards < ALL_POTIONS_COST} onClick={drinkEveryPotion}>
+            Drink them all · {fmt(ALL_POTIONS_COST)} 片
+          </button>
+        }
+      >
+        The Apothecary
+      </H2>
+      <div className="cz-grid" data-k="shard">
+        {POTIONS.map((p) => {
+          const left = (s.boosts[p.id] ?? 0) - now;
+          const on = left > 0;
+          return (
+            <button key={p.id} type="button" className={`cz-card${on ? ' is-on' : ''}`} disabled={s.shards < p.cost} aria-label={`${p.name}. ${p.blurb} ${p.mins} minute${p.mins === 1 ? '' : 's'} a bottle. ${p.cost} shard${p.cost === 1 ? '' : 's'}.${on ? ` ${clock(left / 1000)} left.` : ''}`} onClick={() => drinkPotion(p.id)}>
+              <span className="cz-card__k" aria-hidden="true">
+                {p.kanji}
+              </span>
+              <span className="cz-card__t">
+                <b>{p.name}</b>
+                <small>
+                  {p.blurb} {p.mins} min a bottle.
+                </small>
+              </span>
+              <span className="cz-card__f">
+                <i>{on ? `${clock(left / 1000)} left` : ''}</i>
+                <Cost k="shard" n={p.cost} />
+              </span>
+            </button>
+          );
+        })}
+      </div>
+      <p className="i-note">Each bottle works for its time, and another adds as long again. They run on the clock, so dust and time potions keep working while the app is shut. Stars you call or lure with Comet Bait or a Meteor Shower never bring shards.</p>
+      <H2>Right now</H2>
+      <div className="cz-grid" data-k="shard">
+        <button type="button" className="cz-card" disabled={!!star || s.shards < CALL_COST} onClick={summonStar}>
+          <span className="cz-card__k" aria-hidden="true">
+            招
+          </span>
+          <span className="cz-card__t">
+            <b>Call a Star</b>
+            <small>{star ? 'One is crossing the sky now: catch it first.' : 'A shooting star crosses the sky straight away.'}</small>
+          </span>
+          <span className="cz-card__f">
+            <i />
+            <Cost k="shard" n={CALL_COST} />
+          </span>
+        </button>
+        <button type="button" className="cz-card" disabled={s.shards < HOUR_COST} onClick={openBottledHour}>
+          <span className="cz-card__k" aria-hidden="true">
+            瓶
+          </span>
+          <span className="cz-card__t">
+            <b>Bottled Hour</b>
+            <small>An hour of dust at once: about {fmt(hour)} now.</small>
+          </span>
+          <span className="cz-card__f">
+            <i />
+            <Cost k="shard" n={HOUR_COST} />
+          </span>
+        </button>
+        <button type="button" className="cz-card" disabled={!s.lab.length || s.shards < CATALYST_COST} onClick={applyCatalyst}>
+          <span className="cz-card__k" aria-hidden="true">
+            媒
+          </span>
+          <span className="cz-card__t">
+            <b>Catalyst</b>
+            <small>{s.lab.length ? 'Every piece of research running is an hour nearer done.' : 'Start some research in the Lab first.'}</small>
+          </span>
+          <span className="cz-card__f">
+            <i />
+            <Cost k="shard" n={CATALYST_COST} />
+          </span>
+        </button>
+      </div>
+      <p className="i-note">Shooting stars now come about every {Math.round(starGap(s, now))} seconds while this is open.</p>
     </>
   );
 }

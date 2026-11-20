@@ -18,7 +18,8 @@ async function seed(page: Page, over: Record<string, unknown>, ago = 0) {
       const cs = await import('/src/features/game/cosmosStore.ts' as string);
       const cosmos = await import('/src/domain/game/cosmos.ts' as string);
       const t = new Date().toISOString();
-      const save = { ...cosmos.freshCosmos(Date.now() - ago), ...over };
+      // The one-off gift of shards is marked as given, so counts are exact (the potion test asks for it).
+      const save = { ...cosmos.freshCosmos(Date.now() - ago), fixes: ['gift-100k-shards'], ...over };
       store.commit('lt_records', [{ id: cs.COSMOS_ROW, section: 'cabinet', kind: 'gm_cosmos', data: save, sort_order: 0, archived_at: null, created_at: t, updated_at: t, deleted_at: null }]);
       for (let i = 0; i < 100; i++) {
         const db = store.currentSession()?.db;
@@ -274,4 +275,25 @@ test('cosmos: challenges, relics and automation are kept', async ({ page }) => {
   await rooms(page).getByRole('button', { name: /Galaxies/ }).click();
   await expect(page.getByRole('button', { name: 'Wear Sun Mirror' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Take off Star Chart' })).toBeVisible();
+});
+
+test('cosmos: the gift of shards, a potion on the stage, and a star called, kept after a reload', async ({ page }) => {
+  await seed(page, { gens: { net: 5 }, dust: 10, life: 10, fixes: [] });
+  await page.goto('/hangar/cosmos/shop');
+  await expect(page.getByRole('group', { name: 'What you hold' })).toContainText(/100(,000|K|k)/);
+  await page.getByRole('button', { name: /^Stardust Tonic\./ }).click();
+  await expect(page.locator('.cz-buff.is-potion')).toContainText('×25');
+  await expect(page.getByRole('button', { name: /^Stardust Tonic\..* left\./ })).toBeVisible();
+  // Call a star and catch it.
+  await page.getByRole('button', { name: /Call a shooting star/ }).click();
+  const star = page.getByRole('button', { name: 'Catch the shooting star' });
+  await expect(star).toBeVisible();
+  await shot(page, 'potions');
+  await star.dispatchEvent('click');
+  await expect(page.locator('.cz-flash.is-gift')).toContainText(/Frenzy|Windfall|Rush/);
+  await leave(page);
+  await page.goto('/hangar/cosmos/shop');
+  await expect(page.locator('.cz-buff.is-potion')).toContainText('×25');
+  await rooms(page).getByRole('button', { name: /Log/ }).click();
+  await expect(page.locator('.cz-stats')).toContainText('Shooting stars caught1');
 });
