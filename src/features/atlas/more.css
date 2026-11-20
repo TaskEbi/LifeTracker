@@ -1,0 +1,923 @@
+/* ── Atlas 地 · the purse, the Chandlery, voyages, quests and mini-games ─────────────────
+   Scoped to .at with classes prefixed at-, on the tokens of theme.css. */
+
+.at-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* ─── charts: the map's colours, bought at the Chandlery ─── */
+.at[data-chart='parchment'],
+.at-swatch[data-chart='parchment'] {
+  --at-sea: #eadcb8;
+  --at-land: #c39662;
+  --at-land-2: #dcc89c;
+  --at-coast: #6b4a2b;
+  --at-grid: rgb(107 74 43 / 0.14);
+  --at-ring: #3b2a17;
+}
+.at[data-chart='blueprint'],
+.at-swatch[data-chart='blueprint'] {
+  --at-sea: #0d3b78;
+  --at-land: #1d5fae;
+  --at-land-2: #144b8e;
+  --at-coast: #dbe9ff;
+  --at-grid: rgb(219 233 255 / 0.13);
+  --at-ring: #ffffff;
+}
+.at[data-chart='daylight'],
+.at-swatch[data-chart='daylight'] {
+  --at-sea: #8fcbea;
+  --at-land: #7aba70;
+  --at-land-2: #c8deb6;
+  --at-coast: #f7fbff;
+  --at-grid: rgb(255 255 255 / 0.28);
+  --at-ring: #1d3b2a;
+}
+.at[data-chart='jade'],
+.at-swatch[data-chart='jade'] {
+  --at-sea: #0a0f0d;
+  --at-land: #3f8f6b;
+  --at-land-2: #1c2c25;
+  --at-coast: #040705;
+  --at-grid: rgb(120 200 160 / 0.07);
+  --at-ring: #bfe8d3;
+}
+.at[data-chart='neon'],
+.at-swatch[data-chart='neon'] {
+  --at-sea: #04040e;
+  --at-land: #121233;
+  --at-land-2: #0a0a1c;
+  --at-coast: #34f5c5;
+  --at-grid: rgb(52 245 197 / 0.09);
+  --at-ring: #34f5c5;
+}
+.at[data-chart='royal'],
+.at-swatch[data-chart='royal'] {
+  --at-sea: #2a0f3d;
+  --at-land: #c9a227;
+  --at-land-2: #4a2a5c;
+  --at-coast: #1a0826;
+  --at-grid: rgb(201 162 39 / 0.12);
+  --at-ring: #f5e6a8;
+}
+.at-swatch {
+  display: block;
+  overflow: hidden;
+  border-radius: var(--r-2);
+  background:
+    repeating-linear-gradient(0deg, var(--at-grid, rgb(140 190 230 / 0.05)) 0 1px, transparent 1px 12px),
+    repeating-linear-gradient(90deg, var(--at-grid, rgb(140 190 230 / 0.05)) 0 1px, transparent 1px 12px),
+    var(--at-sea);
+  box-shadow: inset 0 0 0 1px var(--rule);
+}
+.at-swatch svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+.at-swatch__land {
+  fill: var(--at-land);
+  stroke: var(--at-coast);
+  stroke-width: 1.2;
+}
+.at-swatch__lit {
+  fill: var(--sig);
+  stroke: var(--at-coast);
+  stroke-width: 1;
+}
+
+/* ─── the purse ─── */
+.at-top__right {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+}
+.at-purse {
+  padding: 6px 12px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--surf);
+  box-shadow: inset 0 0 0 1px var(--rule);
+}
+.at-coin {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font: 700 15px var(--f-label);
+  font-variant-numeric: tabular-nums;
+  color: var(--fg);
+}
+.at-coin > i {
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  font: 700 11px/1 var(--f-label);
+  font-style: normal;
+  color: #3a2400;
+  background: radial-gradient(circle at 35% 30%, #fff1b0, #f0b429 55%, #b27509);
+  box-shadow:
+    inset 0 0 0 1.5px rgb(120 70 0 / 0.45),
+    0 1px 0 rgb(0 0 0 / 0.3);
+}
+.at-coin--big {
+  font-size: 34px;
+  letter-spacing: -0.02em;
+  gap: 10px;
+}
+.at-coin--big > i {
+  width: 38px;
+  height: 38px;
+  font-size: 19px;
+}
+.at-pay--db {
+  background: rgb(240 180 41 / 0.12);
+  box-shadow: inset 0 0 0 1px rgb(240 180 41 / 0.35);
+}
+.at-pay--db .at-coin b::before {
+  content: '+';
+}
+
+/* ─── hub: title, anchors, quests, ways to play ─── */
+.at-worn {
+  margin-top: 2px !important;
+  font: italic 600 14px var(--f-body);
+  color: var(--sig);
+}
+.at-anchor {
+  margin-left: 6px;
+  padding: 1px 5px;
+  border-radius: 5px;
+  font: 700 11px var(--f-label);
+  font-style: normal;
+  color: var(--acc2-fg);
+  background: var(--acc2);
+  vertical-align: 3px;
+}
+.at-quests {
+  grid-column: 1 / -1;
+  display: grid;
+  gap: 8px;
+  padding: 13px;
+  border-radius: var(--r-3);
+  background: var(--surf);
+  box-shadow: inset 0 0 0 1px var(--rule);
+}
+.at-quests header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+.at-quests header small {
+  font: 500 11px var(--f-mono);
+  letter-spacing: 0.06em;
+  color: var(--fg-3);
+}
+.at-quests ul {
+  display: grid;
+  gap: 6px;
+}
+.at-quests li {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: var(--r-2);
+  background: var(--bg);
+}
+.at-quests__k {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  font: 700 15px var(--f-label);
+  color: var(--fg-2);
+  background: var(--surf-2);
+}
+.at-quests__t {
+  display: grid;
+  gap: 5px;
+  font-size: 13.5px;
+  font-weight: 600;
+  line-height: 1.25;
+}
+.at-quests li > b {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font: 700 14px var(--f-label);
+  color: var(--fg-2);
+}
+.at-quests li > b i {
+  font: 700 10px var(--f-label);
+  font-style: normal;
+  display: grid;
+  place-items: center;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  color: #3a2400;
+  background: radial-gradient(circle at 35% 30%, #fff1b0, #f0b429 55%, #b27509);
+}
+.at-quests li.is-done .at-quests__k {
+  color: #062012;
+  background: var(--ok);
+}
+.at-quests li.is-done .at-quests__t {
+  color: var(--fg-3);
+}
+.at-quests li.is-done .at-meter i {
+  background: var(--ok);
+}
+
+.at-more {
+  display: grid;
+  gap: 10px;
+}
+.at-ways {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.at-way {
+  position: relative;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-content: start;
+  gap: 2px 10px;
+  padding: 13px;
+  border: 0;
+  border-radius: var(--r-3);
+  background: var(--surf);
+  box-shadow: inset 0 0 0 1px var(--rule);
+  text-align: left;
+  overflow: hidden;
+}
+.at-way:active {
+  transform: translateY(1px);
+}
+.at-way__k {
+  grid-row: span 2;
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  font: 700 20px var(--f-label);
+  color: var(--fg);
+  background: var(--surf-3);
+}
+.at-way b {
+  align-self: center;
+  font: 700 16px/1.15 var(--f-label);
+}
+.at-way small {
+  grid-column: 1 / -1;
+  margin-top: 6px;
+  font-size: 12.5px;
+  line-height: 1.35;
+  color: var(--fg-2);
+}
+.at-way--voyage {
+  grid-column: 1 / -1;
+  grid-template-columns: minmax(0, 1fr) auto;
+  padding: 16px;
+  background:
+    radial-gradient(90% 120% at 100% 100%, rgb(95 212 232 / 0.18), transparent 60%),
+    repeating-linear-gradient(170deg, rgb(95 212 232 / 0.06) 0 2px, transparent 2px 14px),
+    var(--surf);
+}
+.at-way--voyage b {
+  grid-column: 1;
+  font-size: 20px;
+}
+.at-way--voyage b span {
+  color: var(--acc2);
+}
+.at-way--voyage small {
+  grid-column: 1;
+  max-width: 34ch;
+}
+.at-way__ship {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  width: 92px;
+  height: auto;
+  align-self: center;
+  animation: at-bob 3.2s ease-in-out infinite;
+}
+
+/* ─── ships ─── */
+.at-ship {
+  display: block;
+  overflow: visible;
+}
+@keyframes at-bob {
+  0%,
+  100% {
+    transform: translateY(0) rotate(-1.5deg);
+  }
+  50% {
+    transform: translateY(-3px) rotate(1.5deg);
+  }
+}
+
+/* ─── supplies in play ─── */
+.at-aids {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.at-aids button {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 34px;
+  padding: 5px 11px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--surf-2);
+  box-shadow: inset 0 0 0 1px var(--rule);
+  font-size: 13px;
+  font-weight: 600;
+}
+.at-aids button span {
+  font: 700 14px var(--f-label);
+  color: var(--sig);
+}
+.at-aids button small {
+  font: 500 11px var(--f-mono);
+  color: var(--fg-3);
+}
+.at-aids button:disabled {
+  opacity: 0.4;
+}
+.at-clue {
+  padding: 8px 12px;
+  border-radius: var(--r-2);
+  background: rgb(95 212 232 / 0.12);
+  box-shadow: inset 0 0 0 1px rgb(95 212 232 / 0.35);
+  font-size: 14px;
+  line-height: 1.35;
+}
+
+/* ─── the Chandlery ─── */
+.at-shop {
+  display: grid;
+  gap: 14px;
+}
+.at-purse-card {
+  display: grid;
+  gap: 14px;
+  padding: 16px;
+  border-radius: var(--r-3);
+  background:
+    radial-gradient(80% 120% at 0% 0%, rgb(240 180 41 / 0.16), transparent 60%),
+    linear-gradient(160deg, var(--surf-2), var(--surf));
+  box-shadow: inset 0 0 0 1px var(--rule);
+}
+.at-purse-card > div {
+  display: grid;
+  gap: 6px;
+}
+.at-earn {
+  display: grid;
+  gap: 4px;
+  font-size: 13px;
+  line-height: 1.35;
+  color: var(--fg-2);
+}
+.at-earn b {
+  color: var(--fg);
+}
+.at-said {
+  min-height: 1.3em;
+  font-size: 13px;
+  color: var(--sig);
+}
+.at-goods {
+  display: grid;
+  gap: 10px;
+}
+.at-good {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 10px 12px;
+  align-items: start;
+  padding: 13px;
+  border-radius: var(--r-3);
+  background: var(--surf);
+  box-shadow: inset 0 0 0 1px var(--rule);
+}
+.at-good.is-on {
+  box-shadow: inset 0 0 0 2px var(--sig);
+}
+.at-good__k {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  font: 700 22px var(--f-label);
+  color: var(--sig);
+  background: var(--bg);
+  box-shadow: inset 0 0 0 1px var(--rule);
+}
+.at-good__body {
+  display: grid;
+  gap: 3px;
+}
+.at-good h3 {
+  font: 700 16px/1.15 var(--f-label);
+}
+.at-good h3 span {
+  color: var(--sig);
+}
+.at-good__body p {
+  font-size: 13px;
+  line-height: 1.35;
+  color: var(--fg-2);
+}
+.at-good__body small {
+  font: 500 11.5px var(--f-mono);
+  color: var(--fg-3);
+}
+.at-good__body small b {
+  color: var(--fg);
+}
+.at-good__buy {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+.at-good__buy .at-btn {
+  min-height: 40px;
+  padding: 8px 14px;
+}
+.at-good__buy .at-btn i {
+  font-style: normal;
+  font-size: 12px;
+  opacity: 0.8;
+}
+.at-good--ship,
+.at-good--chart {
+  grid-template-columns: 104px minmax(0, 1fr);
+  align-items: center;
+}
+.at-good__art {
+  width: 100%;
+  height: auto;
+}
+.at-good--ship .at-good__art {
+  border-radius: var(--r-2);
+  background: linear-gradient(to bottom, transparent 66%, rgb(95 212 232 / 0.14) 66%);
+}
+.at-good--ship .at-good__art {
+  animation: at-bob 3.2s ease-in-out infinite;
+}
+.at-goods--grid {
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 210px), 1fr));
+}
+.at-tag {
+  display: inline-flex;
+  align-items: center;
+  min-height: 40px;
+  padding: 0 12px;
+  border-radius: var(--r-2);
+  font: 500 12px var(--f-mono);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--sig);
+  background: var(--sig-soft);
+}
+.at-ledger {
+  display: grid;
+  gap: 4px;
+}
+.at-ledger li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 7px 10px;
+  border-radius: var(--r-1);
+  background: var(--bg);
+  font-size: 13.5px;
+}
+.at-ledger li span {
+  display: grid;
+}
+.at-ledger li small {
+  font: 500 11px var(--f-mono);
+  color: var(--fg-3);
+}
+.at-ledger li b {
+  font: 700 15px var(--f-label);
+  color: #f0b429;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ─── voyages ─── */
+.at-voy,
+.at-game {
+  display: grid;
+  gap: 12px;
+}
+.at-hud--plain {
+  grid-template-columns: auto minmax(0, 1fr) auto;
+}
+.at-hud--plain .at-hud__title {
+  font: 800 22px var(--f-label);
+  letter-spacing: -0.02em;
+  text-transform: none;
+  color: var(--fg);
+}
+.at-hud--plain .at-hud__title span {
+  color: var(--sig);
+}
+.at-hud--plain .at-hud__nums {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.at-dock {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 14px;
+  padding: 14px 16px;
+  border-radius: var(--r-3);
+  background:
+    linear-gradient(to bottom, transparent 64%, rgb(95 212 232 / 0.12) 64%),
+    var(--surf);
+  box-shadow: inset 0 0 0 1px var(--rule);
+}
+.at-dock__ship {
+  width: 110px;
+  height: auto;
+  animation: at-bob 3.2s ease-in-out infinite;
+}
+.at-dock h2 {
+  font: 800 24px var(--f-label);
+  letter-spacing: -0.02em;
+}
+.at-dock .at-link {
+  display: inline;
+  padding: 0;
+}
+.at-seg button small {
+  margin-left: 4px;
+  font: 500 11px var(--f-mono);
+  opacity: 0.7;
+}
+.at-voyrow {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border: 0;
+  border-radius: var(--r-2);
+  background: var(--bg);
+  box-shadow: inset 0 0 0 1px var(--rule);
+  text-align: left;
+}
+.at-voyrow .at-flag {
+  width: 40px;
+}
+.at-voyrow span {
+  display: grid;
+  font-weight: 600;
+}
+.at-voyrow small {
+  font: 500 11px var(--f-mono);
+  color: var(--fg-3);
+}
+.at-voyrow b {
+  color: var(--sig);
+  font-size: 14px;
+}
+.at-log {
+  display: grid;
+  gap: 6px;
+}
+.at-log li {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 12px;
+  padding: 8px 10px;
+  border-radius: var(--r-2);
+  background: var(--bg);
+  font-size: 14px;
+  font-weight: 600;
+}
+.at-log li > span:last-child {
+  display: grid;
+}
+.at-log small {
+  font: 500 11px var(--f-mono);
+  font-weight: 500;
+  color: var(--fg-3);
+}
+.at-log__flags {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.at-log__flags .at-flag {
+  width: 30px;
+}
+.at-log__flags i {
+  font-style: normal;
+  color: var(--fg-3);
+}
+.at-route {
+  display: flex;
+  gap: 3px;
+}
+.at-route li {
+  flex: 1 1 0;
+  height: 8px;
+  border-radius: 3px;
+  background: var(--rule);
+}
+.at-route li.is-ok {
+  background: var(--ok);
+}
+.at-route li.is-bad {
+  background: var(--warn);
+}
+.at-route li.is-now {
+  background: var(--sig);
+  animation: at-blink 1.2s ease-in-out infinite;
+}
+@keyframes at-blink {
+  50% {
+    opacity: 0.4;
+  }
+}
+.at-hud__nums dd.is-low {
+  color: var(--warn);
+}
+.at-map--small svg {
+  max-height: 34vh;
+}
+.at-wake {
+  fill: none;
+  stroke: var(--sig);
+  stroke-width: 2;
+  stroke-dasharray: 5 4;
+  stroke-linecap: round;
+  vector-effect: non-scaling-stroke;
+}
+.at-port {
+  stroke: var(--at-coast);
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+  fill: var(--warn);
+}
+.at-port.is-ok {
+  fill: var(--ok);
+}
+.at-shipmark {
+  filter: drop-shadow(0 1px 1px rgb(0 0 0 / 0.6));
+  pointer-events: none;
+}
+.at-over {
+  pointer-events: none;
+}
+.at-storm {
+  padding: 9px 12px;
+  border-radius: var(--r-2);
+  font-weight: 600;
+  font-size: 14px;
+  background: var(--warn-soft);
+  color: var(--warn);
+}
+.at-storm.is-ok {
+  background: var(--ok-soft);
+  color: var(--ok);
+}
+.at-missed li.is-bad small {
+  color: var(--warn);
+}
+
+/* ─── mini-games ─── */
+.at-type--fill {
+  padding: 12px;
+  border-radius: var(--r-3);
+  background: var(--surf);
+  box-shadow: inset 0 0 0 1px var(--rule);
+}
+.at-fill__last {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 28px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--fg-2);
+}
+.at-fill__last .at-flag {
+  width: 30px;
+}
+.at-found {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+.at-found .at-flag {
+  width: 32px;
+}
+.at-stats--3 {
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+}
+.at-pairs__set {
+  display: grid;
+  gap: 8px;
+}
+.at-pairs {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+.at-pc {
+  aspect-ratio: 4 / 3;
+  padding: 0;
+  border: 0;
+  background: none;
+}
+.at-pc__in {
+  display: grid;
+  width: 100%;
+  height: 100%;
+}
+.at-pc__back,
+.at-pc__face {
+  grid-area: 1 / 1;
+  display: grid;
+  place-items: center;
+  border-radius: var(--r-2);
+}
+.at-pc__back {
+  font: 700 26px var(--f-label);
+  color: var(--sig);
+  background:
+    repeating-linear-gradient(45deg, rgb(255 182 39 / 0.07) 0 6px, transparent 6px 12px),
+    var(--surf-2);
+  box-shadow: inset 0 0 0 1px var(--rule);
+}
+.at-pc__face {
+  padding: 6px;
+  background: var(--surf);
+  box-shadow: inset 0 0 0 2px var(--acc2);
+  font: 700 14px/1.15 var(--f-label);
+  text-align: center;
+  overflow: hidden;
+}
+.at-pc:not(.is-up) .at-pc__face,
+.at-pc.is-up .at-pc__back {
+  display: none;
+}
+.at-pc.is-up .at-pc__face {
+  animation: at-turn 0.28s var(--ease);
+}
+@keyframes at-turn {
+  from {
+    transform: scaleX(0.1);
+  }
+}
+.at-pc__face .at-flag {
+  width: 100%;
+  height: 100%;
+}
+.at-pc.is-got .at-pc__face {
+  box-shadow: inset 0 0 0 2px var(--ok);
+  background: var(--ok-soft);
+}
+.at-pairs__learnt {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 6px;
+}
+.at-pairs__learnt li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 600;
+}
+.at-pairs__learnt .at-flag {
+  width: 30px;
+}
+.at-pairs__learnt small {
+  font-weight: 400;
+  color: var(--fg-3);
+}
+.at-compass {
+  display: grid;
+  gap: 12px;
+  padding: 16px;
+  border-radius: var(--r-3);
+  background: var(--surf);
+  box-shadow: inset 0 0 0 1px var(--rule);
+}
+.at-compass__q {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  font: 700 22px/1.15 var(--f-label);
+}
+.at-compass__q b {
+  color: var(--sig);
+}
+.at-compass__dir {
+  position: relative;
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 58px;
+  height: 58px;
+  border-radius: 50%;
+  font: 700 24px var(--f-label);
+  color: var(--sig-fg);
+  background: var(--sig);
+  box-shadow:
+    0 0 0 4px var(--surf),
+    0 0 0 5px rgb(255 182 39 / 0.45);
+}
+.at-compass__dir i {
+  position: absolute;
+  right: -6px;
+  bottom: -6px;
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  font: 700 14px var(--f-body);
+  font-style: normal;
+  color: var(--fg);
+  background: var(--surf-3);
+}
+.at-compass__two {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.at-compass__two .at-opt {
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  padding: 12px;
+  text-align: center;
+}
+.at-compass__two .at-flag {
+  width: 100%;
+  max-width: 120px;
+}
+
+@media (min-width: 900px) {
+  .at-ways {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .at-pairs {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    max-width: 720px;
+  }
+  .at-purse-card {
+    grid-template-columns: auto 1fr;
+    align-items: center;
+    gap: 28px;
+  }
+  .at-goods:not(.at-goods--grid) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .at-goods:not(.at-goods--grid) .at-note {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .at-way__ship,
+  .at-dock__ship,
+  .at-good--ship .at-good__art,
+  .at-route li.is-now {
+    animation: none;
+  }
+  .at-pc.is-up .at-pc__face {
+    animation: none;
+  }
+}

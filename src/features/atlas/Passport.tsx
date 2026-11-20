@@ -1,18 +1,18 @@
 /** The passport: a stamp for every country mastered, the ranks, the medals won in rounds, and the best sprint and survival scores. */
 import { useMemo } from 'react';
-import { useToday } from '../../data/lt';
 import { CONTS, COUNTRIES, country, deck as deckById, DECKS, diff as diffInfo, QTYPES, rankOf, RANKS, STYLES, tally } from '../../domain/atlas/model';
 import { CONT_PRIZE, payTotal, STAMP_COINS } from '../../domain/atlas/pay';
 import { shortDay } from '../../domain/log/dates';
+import { GAMES } from '../../domain/atlas/games';
+import { TITLES } from '../../domain/atlas/shop';
 import { Flag, MedalDot, Pips } from './bits';
-import { atlasStreak, medalKey, useAtlas } from './store';
+import { kitOf, medalKey, useAtlas, useWallet } from './store';
 
 const ASKS = [...QTYPES.map((q) => ({ id: q.id as string, name: q.name })), { id: 'mix', name: 'Mixed' }];
 /** A stamp sits a little crooked, the same way every time. */
 const tilt = (id: string) => ((id.charCodeAt(0) * 7 + id.charCodeAt(1) * 13) % 13) - 6;
 
 export function Passport() {
-  const today = useToday();
   const atlas = useAtlas();
   const stamps = atlas.stamps.size;
   const { i: rankAt } = rankOf(stamps);
@@ -21,6 +21,8 @@ export function Passport() {
   const right = atlas.days.reduce((n, d) => n + d.ok, 0);
   const medalDecks = DECKS.filter((d) => d.group !== 'sub' || ASKS.some((a) => atlas.medals.has(medalKey(d.id, a.id))));
   const bests = [...atlas.bests.values()].sort((a, b) => b.date.localeCompare(a.date));
+  const w = useWallet();
+  const title = TITLES.find((t) => t.id === kitOf(atlas, w).title);
 
   return (
     <div className="at-pass">
@@ -58,7 +60,7 @@ export function Passport() {
         <div>
           <dt>Streak</dt>
           <dd>
-            {atlasStreak(atlas, today)}
+            {w.streak.streak}
             <small>d</small>
           </dd>
         </div>
@@ -71,6 +73,49 @@ export function Passport() {
           earned for the Hangar so far. A stamp pays {STAMP_COINS} Ryō; a whole continent {CONT_PRIZE.coins} Ryō, {CONT_PRIZE.gems} Tama and a gold chest.
         </small>
       </p>
+
+      <section className="at-page" aria-label="Logbook">
+        <header>
+          <span aria-hidden="true">誌</span>
+          <h2>Logbook{title ? ` · ${title.name}` : ''}</h2>
+          <p>Voyages, mini-games and the Doubloons they brought in.</p>
+        </header>
+        <dl className="at-stats">
+          <div>
+            <dt>Voyages</dt>
+            <dd>{atlas.voyages.length}</dd>
+          </div>
+          <div>
+            <dt>Home</dt>
+            <dd>{atlas.voyages.filter((v) => v.done).length}</dd>
+          </div>
+          <div>
+            <dt>Ports</dt>
+            <dd>{atlas.voyages.reduce((n, v) => n + v.ok, 0)}</dd>
+          </div>
+          <div>
+            <dt>Doubloons</dt>
+            <dd>{w.earned.toLocaleString('en-GB')}</dd>
+          </div>
+        </dl>
+        <ul className="at-bests">
+          {GAMES.map((g) => {
+            const best = atlas.days.reduce((n, d) => Math.max(n, d.games[g.id]?.best ?? 0), 0);
+            const plays = atlas.days.reduce((n, d) => n + (d.games[g.id]?.n ?? 0), 0);
+            return (
+              <li key={g.id}>
+                <b>{best}</b>
+                <span>
+                  {g.name} · best
+                  <small>
+                    {plays} {plays === 1 ? 'game' : 'games'} played
+                  </small>
+                </span>
+              </li>
+            );
+          })}
+        </ul>
+      </section>
 
       {CONTS.map((k, at) => {
         const ids = COUNTRIES.filter((c) => c.cont === k.id).map((c) => c.id);

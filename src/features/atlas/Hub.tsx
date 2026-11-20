@@ -28,8 +28,13 @@ import {
   type Diff,
   type Style,
 } from '../../domain/atlas/model';
-import { MedalDot, Meter } from './bits';
-import { atlasStreak, bestKey, deckOf, medalKey, useAtlas } from './store';
+import { GAMES, gamePay } from '../../domain/atlas/games';
+import { QUEST_SET_PAY, questsFor } from '../../domain/atlas/quests';
+import { ship as shipOf, TITLES } from '../../domain/atlas/shop';
+import { voyageOver, VOYAGES_A_DAY } from '../../domain/atlas/voyage';
+import { tallyOf } from '../../domain/atlas/wallet';
+import { MedalDot, Meter, ShipArt } from './bits';
+import { bestKey, deckOf, kitOf, medalKey, useAtlas, useWallet } from './store';
 
 interface Setup {
   style: Style;
@@ -69,8 +74,16 @@ export function Hub() {
   const all = useMemo(() => tally(ALL, atlas.marks), [atlas.marks]);
   const stamps = atlas.stamps.size;
   const { rank, next } = rankOf(stamps);
-  const streak = atlasStreak(atlas, today);
+  const w = useWallet();
+  const kit = kitOf(atlas, w);
+  const title = TITLES.find((t) => t.id === kit.title);
+  const streak = w.streak.streak;
   const day = atlas.days.find((d) => d.date === today);
+  const quests = questsFor(today);
+  const todayTally = tallyOf(day);
+  const questsDone = quests.filter((q) => q.of(todayTally) >= q.target).length;
+  const voyagesToday = atlas.voyages.filter((v) => v.date === today).length;
+  const underWay = atlas.voyages.find((v) => !voyageOver(v));
   const due = dueCount(atlas.marks, today);
   const plan = useMemo(() => reviewPlan(ALL, atlas.marks, today, () => 0.5), [atlas.marks, today]);
   const weak = useMemo(() => weakIds(atlas.marks), [atlas.marks]);
@@ -93,6 +106,7 @@ export function Hub() {
           <div>
             <p className="at-kick">Rank</p>
             <h2>{rank.name}</h2>
+            {title && <p className="at-worn">“{title.name}”</p>}
             <p className="at-rank__next">{next ? `${next.at - stamps} more ${next.at - stamps === 1 ? 'stamp' : 'stamps'} to ${next.name}` : 'Every country stamped'}</p>
           </div>
         </div>
@@ -110,6 +124,11 @@ export function Hub() {
             <dd>
               {streak}
               <small>{streak === 1 ? ' day' : ' days'}</small>
+              {w.stock.anchor > 0 && (
+                <i className="at-anchor" title={`${w.stock.anchor} streak ${w.stock.anchor === 1 ? 'anchor' : 'anchors'} held`} aria-label={`${w.stock.anchor} streak anchors held`}>
+                  錨{w.stock.anchor > 1 ? w.stock.anchor : ''}
+                </i>
+              )}
             </dd>
           </div>
           <div>
@@ -147,6 +166,60 @@ export function Hub() {
           <b>Review</b>
           <small>{due ? `${due} ${due === 1 ? 'card' : 'cards'} due${plan.fresh ? ` · ${plan.fresh} countries not met yet` : ''}` : plan.fresh ? `Nothing due · meet ${Math.min(4, plan.fresh)} new countries` : 'Nothing due today'}</small>
         </button>
+        <section className="at-quests" aria-label="Today’s quests">
+          <header>
+            <h2 className="at-h">Quests</h2>
+            <small>
+              {questsDone}/3 · all three +{QUEST_SET_PAY}
+            </small>
+          </header>
+          <ul>
+            {quests.map((q) => {
+              const got = Math.min(q.of(todayTally), q.target);
+              const done = got >= q.target;
+              return (
+                <li key={q.id} className={done ? 'is-done' : undefined}>
+                  <span className="at-quests__k" aria-hidden="true">
+                    {done ? '✓' : q.kanji}
+                  </span>
+                  <span className="at-quests__t">
+                    {q.text}
+                    <Meter value={got} max={q.target} label={q.text} />
+                  </span>
+                  <b>
+                    <i aria-hidden="true">金</i>
+                    {q.pay}
+                  </b>
+                </li>
+              );
+            })}
+          </ul>
+        </section>
+      </section>
+
+      <section className="at-more" aria-label="More ways to play">
+        <h2 className="at-h">More ways to play</h2>
+        <div className="at-ways">
+          <button type="button" className="at-way at-way--voyage" onClick={() => navigate('atlas', underWay ? ['voyage', underWay.id] : ['voyage'])}>
+            <ShipArt id={kit.ship} className="at-way__ship" />
+            <b>
+              <span aria-hidden="true">航</span> Voyages
+            </b>
+            <small>{underWay ? `Under way: port ${underWay.i + 1} of ${underWay.legs}. Sail on` : `Sail the ${shipOf(kit.ship).name.toLowerCase()} port to port, a question at each. ${Math.max(0, VOYAGES_A_DAY - voyagesToday)} paying today`}</small>
+          </button>
+          {GAMES.map((g) => {
+            const rec = day?.games[g.id];
+            return (
+              <button key={g.id} type="button" className="at-way" onClick={() => navigate('atlas', [g.id])}>
+                <span className="at-way__k" aria-hidden="true">
+                  {g.kanji}
+                </span>
+                <b>{g.name}</b>
+                <small>{rec ? `Best today ${rec.best} · paid ${gamePay(g.id, rec)}` : g.hint}</small>
+              </button>
+            );
+          })}
+        </div>
       </section>
 
       <section className="at-build" aria-label="Set up a game">

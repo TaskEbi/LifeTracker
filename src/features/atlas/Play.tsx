@@ -3,7 +3,7 @@
  * challenge. Every answer is saved as it's given (the country's cards and the day's totals); the
  * medal, best score or daily result is saved when the sitting ends.
  */
-import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } from 'react';
 import { navigate } from '../../app/router';
 import { ltToday } from '../../data/lt';
 import { data } from '../../data/store';
@@ -36,14 +36,16 @@ import {
   type Style,
   type ViewId,
 } from '../../domain/atlas/model';
+import { clue as clueFor, halve, type Clue } from '../../domain/atlas/aids';
 import { payTotal } from '../../domain/atlas/pay';
-import { Flag, MedalDot } from './bits';
+import { SUPPLIES, type SupplyId } from '../../domain/atlas/shop';
+import { Coin, Flag, MedalDot } from './bits';
 import { MapView, Outline, type MapMark } from './MapView';
-import { atlasOf, recordAnswer, recordBest, recordDaily, recordMedal } from './store';
+import { atlasOf, recordAnswer, recordBest, recordDaily, recordFinish, recordMedal, spendSupply, useWallet, walletFor } from './store';
 
 export type Mode = { kind: 'game'; style: Style; ask: Ask; deck: Deck; diff: Diff } | { kind: 'review'; deck: Deck } | { kind: 'daily' };
 
-interface Result {
+export interface Result {
   right: boolean;
   picked?: string;
   typed?: string;
@@ -67,6 +69,9 @@ interface Sess {
   lives: number;
   stamped: string[];
   over: boolean;
+  /** A supply was used on this question. */
+  helped: boolean;
+  clue: Clue | null;
 }
 
 interface Outcome {
@@ -75,6 +80,7 @@ interface Outcome {
   dailyCounted: boolean | null;
   coins: number;
   gems: number;
+  doubloons: number;
 }
 
 const endless = (m: Mode) => m.kind === 'game' && m.style !== 'round';
@@ -104,11 +110,12 @@ function Sitting({ mode, only, again }: { mode: Mode; only: string[] | null; aga
   const today = useMemo(() => ltToday(), []);
   const home = homeView(mode);
   const startPay = useRef(payTotal(atlasOf(data.get()).rows));
+  const startPurse = useRef(walletFor(atlasOf(data.get()), today).earned);
   const ask = useCallback((it: Item) => makeQuestion(it.id, it.type, it.diff, home), [home]);
   const [s, setS] = useState<Sess>(() => {
     const items = itemsFor(mode, only, today);
     const [first, ...rest] = items;
-    return { queue: rest, cur: first ? ask(first) : null, result: null, total: items.length, done: 0, asked: 0, ok: 0, firstTry: 0, missed: [], streak: 0, best: 0, pts: 0, lives: LIVES, stamped: [], over: !first };
+    return { queue: rest, cur: first ? ask(first) : null, result: null, total: items.length, done: 0, asked: 0, ok: 0, firstTry: 0, missed: [], streak: 0, best: 0, pts: 0, lives: LIVES, stamped: [], over: !first, helped: false, clue: null };
   });
   const [outcome, setOutcome] = useState<Outcome | null>(null);
   const sprint = mode.kind === 'game' && mode.style === 'sprint';
@@ -137,9 +144,11 @@ function Sitting({ mode, only, again }: { mode: Mode; only: string[] | null; aga
           const m = medalFor(mode.diff, f.firstTry, f.total);
           if (m.tier) medal = { ...m, change: recordMedal(mode.deck.id, mode.ask, m.tier, m.flawless, today) };
         } else newBest = recordBest(mode.style, mode.deck.id, mode.ask, mode.diff, mode.style === 'sprint' ? f.pts : f.ok, today);
-      }
+        recordFinish(mode.style, mode.style === 'sprint' ? f.pts : mode.style === 'survival' ? f.ok : f.firstTry, false, today);
+      } else if (mode.kind === 'review' && f.total) recordFinish('review', f.firstTry, false, today);
       const now = payTotal(atlasOf(data.get()).rows);
-      setOutcome({ medal, newBest, dailyCounted, coins: now.coins - startPay.current.coins, gems: now.gems - startPay.current.gems });
+      const purse = walletFor(atlasOf(data.get()), today).earned;
+      setOutcome({ medal, newBest, dailyCounted, coins: now.coins - startPay.current.coins, gems: now.gems - startPay.current.gems, doubloons: purse - startPurse.current });
       put({ ...f, over: true, cur: null, result: null });
     },
     [mode, only, today],
@@ -155,7 +164,7 @@ function Sitting({ mode, only, again }: { mode: Mode; only: string[] | null; aga
     if (!queue.length) queue = itemsFor(mode, only, today).filter((i, n) => n > 0 || i.id !== p.cur?.id);
     const [head, ...rest] = queue;
     if (!head) return finish(p);
-    put({ ...p, queue: rest, cur: ask(head), result: null });
+    put({ ...p, queue: rest, cur: ask(head), result: null, helped: false, clue: null });
   }, [ask, finish, mode, only, today]);
 
   const answer = useCallback(
@@ -165,8 +174,9 @@ function Sitting({ mode, only, again }: { mode: Mode; only: string[] | null; aga
       if (!q || p.result || p.over) return;
       const right = picked === q.id;
       const streak = right ? p.streak + 1 : 0;
-      const pts = right ? points(q.diff, p.streak) : 0;
-      const stamped = recordAnswer({ id: q.id, skills: qtype(q.type)!.skills, right, diff: q.diff, pts, streak }, today);
+      // a helped answer scores half and moves the card only as far as Easy
+      const pts = right ? Math.round(points(q.diff, p.streak) / (p.helped ? 2 : 1)) : 0;
+      const stamped = recordAnswer({ id: q.id, skills: qtype(q.type)!.skills, right, diff: p.helped ? 'easy' : q.diff, pts, streak, typed: !!info.typed && !p.helped, review: mode.kind === 'review' }, today);
       const wasMissed = p.missed.includes(q.id);
       const finite = !endless(mode);
       const again = finite && mode.kind !== 'daily' && !right;
@@ -178,7 +188,7 @@ function Sitting({ mode, only, again }: { mode: Mode; only: string[] | null; aga
         asked: p.asked + 1,
         ok: p.ok + (right ? 1 : 0),
         done: p.done + (right || mode.kind === 'daily' ? 1 : 0),
-        firstTry: p.firstTry + (right && !wasMissed ? 1 : 0),
+        firstTry: p.firstTry + (right && !wasMissed && !p.helped ? 1 : 0),
         missed: right || wasMissed ? p.missed : [...p.missed, q.id],
         streak,
         best: Math.max(p.best, streak),
@@ -193,6 +203,31 @@ function Sitting({ mode, only, again }: { mode: Mode; only: string[] | null; aga
       else if (sprint) auto.current = window.setTimeout(next, 1100);
     },
     [mode, next, sprint, today],
+  );
+
+  // supplies from the Chandlery
+  const aid = useCallback(
+    (item: SupplyId) => {
+      const p = live.current;
+      const q = p.cur;
+      if (!q || p.over || mode.kind === 'daily') return;
+      if (item === 'fifty' || item === 'glass') {
+        if (p.result || (item === 'fifty' && q.options && q.options.length <= 2) || !spendSupply(item, today)) return;
+        if (item === 'fifty') put({ ...p, cur: halve(q), helped: true });
+        else {
+          const c = clueFor(q);
+          put({ ...p, cur: c.drop && q.options ? { ...q, options: q.options.filter((id) => id !== c.drop) } : q, clue: c, helped: true });
+        }
+      } else if (item === 'heart') {
+        if (!(mode.kind === 'game' && mode.style === 'survival') || !spendSupply('heart', today)) return;
+        put({ ...p, lives: p.lives + 1 });
+      } else if (item === 'sand') {
+        if (!sprint || !spendSupply('sand', today)) return;
+        endsAt.current += 15000;
+        setLeft(Math.max(0, Math.ceil((endsAt.current - Date.now()) / 1000)));
+      }
+    },
+    [mode, sprint, today],
   );
 
   // the sprint clock
@@ -269,12 +304,60 @@ function Sitting({ mode, only, again }: { mode: Mode; only: string[] | null; aga
           </div>
         </dl>
       </header>
-      <Card key={`${s.asked}:${q.id}:${q.type}`} q={q} result={s.result} onAnswer={answer} onNext={next} waits={!sprint} />
+      <Card
+        key={`${s.asked}:${q.id}:${q.type}`}
+        q={q}
+        result={s.result}
+        onAnswer={answer}
+        onNext={next}
+        waits={!sprint}
+        clue={s.clue}
+        aids={mode.kind === 'daily' ? null : <Aids q={q} answered={!!s.result} lives={mode.kind === 'game' && mode.style === 'survival'} time={sprint} onUse={aid} />}
+      />
     </div>
   );
 }
 
-function Card({ q, result, onAnswer, onNext, waits }: { q: Question; result: Result | null; onAnswer: (picked: string | null, info?: { typed?: string; close?: boolean }) => void; onNext: () => void; waits: boolean }) {
+/** Supplies to hand for this question, as a row of buttons; nothing when none are held. */
+export function Aids({ q, answered, lives, time, onUse }: { q: Question; answered: boolean; lives?: boolean; time?: boolean; onUse: (item: SupplyId) => void }) {
+  const w = useWallet();
+  const show = SUPPLIES.filter((x) => x.id === 'fifty' || x.id === 'glass' || (x.id === 'heart' && lives) || (x.id === 'sand' && time));
+  if (!show.some((x) => w.stock[x.id] > 0)) return null;
+  return (
+    <div className="at-aids" role="group" aria-label="Supplies">
+      {show.map((x) => {
+        const n = w.stock[x.id];
+        const perQ = x.id === 'fifty' || x.id === 'glass';
+        const off = !n || (perQ && answered) || (x.id === 'fifty' && !!q.options && q.options.length <= 2);
+        return (
+          <button key={x.id} type="button" disabled={off} onClick={() => onUse(x.id)} title={x.hint}>
+            <span aria-hidden="true">{x.kanji}</span> {x.id === 'heart' ? '+1 life' : x.id === 'sand' ? '+15 s' : x.name} <small>×{n}</small>
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+export function Card({
+  q,
+  result,
+  onAnswer,
+  onNext,
+  waits,
+  clue,
+  aids,
+  nextLabel = 'Next →',
+}: {
+  q: Question;
+  result: Result | null;
+  onAnswer: (picked: string | null, info?: { typed?: string; close?: boolean }) => void;
+  onNext: () => void;
+  waits: boolean;
+  clue?: Clue | null;
+  aids?: ReactNode;
+  nextLabel?: string;
+}) {
   const t = qtype(q.type)!;
   const c = country(q.id);
   const level = diffInfo(q.diff);
@@ -314,12 +397,14 @@ function Card({ q, result, onAnswer, onNext, waits }: { q: Question; result: Res
         {t.show === 'name' && <h2 className="at-ask__big">{c.name}</h2>}
         {t.show === 'cap' && <h2 className="at-ask__big">{c.cap}</h2>}
         {t.show === 'shape' && <Outline id={q.id} />}
+        {aids}
+        {clue && !result && <p className="at-clue">{clue.text}</p>}
         {t.answer === 'map' && !result && (
           <p className="at-ask__hint">{q.options ? `It’s one of the ${q.options.length} lit up.` : q.view === 'world' ? 'Anywhere in the world. Pinch or use + to zoom; small countries are ringed.' : `Somewhere in ${contName(q.view)}. Pinch or use + to zoom; small countries are ringed.`}</p>
         )}
       </div>
 
-      {hasMap && <MapView view={q.view} marks={mapMarks} cands={t.answer === 'map' && !result ? q.options : null} onPick={t.answer === 'map' && !result ? (id) => onAnswer(id) : undefined} focus={result || t.show === 'map' ? q.id : null} />}
+      {hasMap && <MapView view={q.view} marks={mapMarks} cands={t.answer === 'map' && !result ? q.options : null} onPick={t.answer === 'map' && !result ? (id) => onAnswer(id) : undefined} focus={result || t.show === 'map' ? q.id : (clue?.near ?? null)} />}
 
       <div className="at-ans">
         {t.answer !== 'map' && q.options && (
@@ -374,7 +459,7 @@ function Card({ q, result, onAnswer, onNext, waits }: { q: Question; result: Res
             </div>
             {(waits || result.right) && (
               <button type="button" className="at-btn" ref={nextRef} onClick={onNext}>
-                Next →
+                {nextLabel}
               </button>
             )}
           </div>
@@ -478,6 +563,12 @@ function Summary({ mode, only, s, outcome, again }: { mode: Mode; only: string[]
             <small>Flag, place and capital all known: {s.stamped.map((id) => country(id).name).join(', ')}.</small>
           </div>
         </div>
+      )}
+      {outcome && outcome.doubloons > 0 && (
+        <p className="at-pay at-pay--db">
+          <Coin n={outcome.doubloons} />
+          <small>Doubloons for the Chandlery</small>
+        </p>
       )}
       {outcome && (outcome.coins > 0 || outcome.gems > 0) && (
         <p className="at-pay">

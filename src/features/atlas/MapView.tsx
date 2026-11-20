@@ -3,7 +3,7 @@
  * be lit, marked right or wrong, or offered as a few to choose from; small ones get a ring that
  * stays finger-sized however far you zoom. Each map is its own chunk, loaded when first shown.
  */
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { contName, country, type ViewId } from '../../domain/atlas/model';
 
 export interface MapData {
@@ -66,6 +66,8 @@ export function MapView({
   cands,
   onPick,
   focus,
+  overlay,
+  small,
 }: {
   view: ViewId;
   marks?: Record<string, MapMark>;
@@ -74,6 +76,10 @@ export function MapView({
   onPick?: (id: string) => void;
   /** Zoom to this country; null shows the whole map. */
   focus?: string | null;
+  /** Drawn over the map in its own units (a voyage's route, say). */
+  overlay?: (map: MapData) => ReactNode;
+  /** A shorter map, for a chart above something else. */
+  small?: boolean;
 }) {
   const data = useMap(view);
   const svgRef = useRef<SVGSVGElement>(null);
@@ -277,14 +283,15 @@ export function MapView({
             <circle key={id} className={cls('at-mk', id)} data-id={id} cx={p[0]} cy={p[1]} r={6} />
           ))}
         </g>
+        {overlay && <g className="at-over">{overlay(V)}</g>}
       </>
     );
-  }, [V, marks, cands]);
+  }, [V, marks, cands, overlay]);
 
   if (data === 'failed') return <p className="at-mapfail">The map couldn’t load. Check the connection and open this page again.</p>;
   const lit = marks ? Object.keys(marks).find((id) => marks[id] === 'hl') : undefined;
   return (
-    <figure className="at-map" data-pick={onPick ? '' : undefined}>
+    <figure className={`at-map${small ? ' at-map--small' : ''}`} data-pick={onPick ? '' : undefined}>
       <svg ref={svgRef} role="img" aria-label={`Map of ${view === 'world' ? 'the world' : contName(view)}${lit && !onPick ? ', one country lit' : ''}`} style={V ? { aspectRatio: `${V.w} / ${V.h}` } : undefined}>
         {layers}
       </svg>
